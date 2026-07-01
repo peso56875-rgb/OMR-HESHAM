@@ -64,7 +64,7 @@ export const about = (stats: any = { total_donors: 0, total_campaigns: 0, total_
     </div>
 
     <div class="center" style="margin-top:3rem">
-      <button onclick="showToast('جزاك الله خيراً، وتقبل الله دعاءك ورحم فقيدنا وغفر له وجعل مثواه الجنة.')" class="btn btn-primary btn-lg magnetic">
+      <button onclick="if(window.__toast) window.__toast('جزاك الله خيراً، وتقبل الله دعاءك ورحم فقيدنا وغفر له وجعل مثواه الجنة.')" class="btn btn-primary btn-lg magnetic">
         <i class="fas fa-circle-check"></i> قرأت الفاتحة وتمنيت له الرحمة
       </button>
     </div>

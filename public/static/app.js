@@ -7,6 +7,31 @@
   const $$ = (s, c = document) => Array.from(c.querySelectorAll(s));
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* ---------- Theme (Dark/Light) ---------- */
+  function initTheme() {
+    const saved = localStorage.getItem('omrh_theme');
+    const isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
+    
+    const btn = $('#themeToggle');
+    if (btn) {
+      btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+      btn.addEventListener('click', () => {
+        const currentIsDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (currentIsDark) {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.setItem('omrh_theme', 'light');
+          btn.innerHTML = '<i class="fas fa-moon"></i>';
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('omrh_theme', 'dark');
+          btn.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+      });
+    }
+  }
+  initTheme();
+
   /* ---------- Preloader ---------- */
   function hidePreloader() {
     const pl = $('#preloader');
@@ -233,7 +258,7 @@
   /* ---------- Charts ---------- */
   function initCharts() {
     if (typeof Chart === 'undefined') return;
-    Chart.defaults.font.family = 'Tajawal, sans-serif';
+    Chart.defaults.font.family = 'Cairo, sans-serif';
     Chart.defaults.color = '#4b5b6e';
     const blue = '#1e88e5', emerald = '#43a047', gold = '#f57c00', crimson = '#e53935', grey = '#90a4ae';
 

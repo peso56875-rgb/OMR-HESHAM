@@ -5,7 +5,7 @@
    ============================================================ */
 
 /* ----------  Fonts  ---------- */
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 /* ----------  Design Tokens  ---------- */
 :root {
@@ -90,6 +90,89 @@
   --ease: cubic-bezier(.22,.61,.36,1);
   --ease-out: cubic-bezier(.16,1,.3,1);
 }
+
+/* ----------  Dark Mode Tokens  ---------- */
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg: #0e1525;
+  --surface: #161d2f;
+  --ivory: #0e1525;
+  --cream: #1a2238;
+  --sand: #1e2a42;
+  --white: #161d2f;
+
+  /* Text */
+  --text: #e4e8f0;
+  --ink-900: #e4e8f0;
+  --ink-700: #c4cad6;
+  --ink-500: #8b95a8;
+  --ink-300: #5a6478;
+  --ink-100: #2a3550;
+  --muted: #8b95a8;
+
+  /* Glass */
+  --glass: rgba(22,29,47,.75);
+  --glass-border: rgba(255,255,255,.1);
+  --glass-dark: rgba(0,0,0,.45);
+
+  /* Shadows — toned for dark */
+  --sh-xs: 0 1px 2px rgba(0,0,0,.2);
+  --sh-sm: 0 2px 8px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.15);
+  --sh-md: 0 12px 30px -10px rgba(0,0,0,.5), 0 6px 14px -8px rgba(0,0,0,.3);
+  --sh-lg: 0 30px 60px -18px rgba(0,0,0,.6), 0 12px 28px -12px rgba(0,0,0,.4);
+  --sh-glow-blue: 0 0 50px -8px rgba(30,136,229,.3);
+  --sh-glow-gold: 0 0 50px -8px rgba(245,124,0,.3);
+
+  /* Hero */
+  --grad-hero: radial-gradient(circle at 30% 20%, #0a1a3a 0%, #070e1e 45%, #050b16 100%);
+}
+
+/* Dark mode specific overrides */
+[data-theme="dark"] .nav { background: rgba(14,21,37,.85); backdrop-filter: blur(18px) saturate(160%); border-bottom-color: rgba(255,255,255,.06); }
+[data-theme="dark"] .nav.scrolled { background: rgba(14,21,37,.95); }
+[data-theme="dark"] .topbar { background: #080d18; }
+[data-theme="dark"] .card, [data-theme="dark"] .glass-card { background: var(--surface); border-color: rgba(255,255,255,.06); }
+[data-theme="dark"] .card:hover { border-color: rgba(30,136,229,.3); }
+[data-theme="dark"] .footer { background: #080d18; }
+[data-theme="dark"] .form-card { background: var(--surface); border-color: rgba(255,255,255,.08); }
+[data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background: #1a2238; border-color: rgba(255,255,255,.1); color: var(--text); }
+[data-theme="dark"] input::placeholder { color: #5a6478; }
+[data-theme="dark"] .chip { background: #1a2238; border-color: rgba(255,255,255,.1); color: #c4cad6; }
+[data-theme="dark"] .btn-ghost { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.15); color: #c4cad6; }
+[data-theme="dark"] .btn-ghost:hover { border-color: var(--blue-400); color: var(--blue-400); }
+[data-theme="dark"] .wave-divider svg path { fill: #0e1525; }
+[data-theme="dark"] .stats-strip { background: var(--surface); }
+[data-theme="dark"] .bar-track { background: #1a2238; }
+[data-theme="dark"] .metric-row { border-bottom-color: rgba(255,255,255,.06); }
+[data-theme="dark"] .nav-drop { background: var(--surface); border-color: rgba(255,255,255,.1); }
+[data-theme="dark"] .nav-drop a:hover { background: #1a2238; }
+[data-theme="dark"] .nav-drop a i { background: #1a2238; }
+[data-theme="dark"] .drawer-panel { background: #0e1525; }
+[data-theme="dark"] .drawer-panel a { border-bottom-color: rgba(255,255,255,.06); }
+[data-theme="dark"] .amount-opt { background: #1a2238; border-color: rgba(255,255,255,.1); color: #c4cad6; }
+[data-theme="dark"] .amount-opt.active { background: var(--blue-800); color: #fff; border-color: var(--blue-600); }
+[data-theme="dark"] .tab { background: #1a2238; color: #8b95a8; }
+[data-theme="dark"] .tab.active { background: var(--blue-800); color: #fff; }
+[data-theme="dark"] .acc-head { background: var(--surface); border-color: rgba(255,255,255,.06); }
+[data-theme="dark"] .acc-body { background: #1a2238; }
+[data-theme="dark"] .job-card { background: var(--surface); border-color: rgba(255,255,255,.06); }
+[data-theme="dark"] .kpi { background: var(--surface); }
+[data-theme="dark"] .panel { background: var(--surface); border-color: rgba(255,255,255,.06); }
+[data-theme="dark"] .dtable th { background: #1a2238; color: #8b95a8; }
+[data-theme="dark"] .dtable td { border-bottom-color: rgba(255,255,255,.04); }
+[data-theme="dark"] .dash-side { background: #0a1020; border-color: rgba(255,255,255,.06); }
+[data-theme="dark"] .ds-link:hover, [data-theme="dark"] .ds-link.active { background: rgba(30,136,229,.15); }
+[data-theme="dark"] ::-webkit-scrollbar-track { background: #0e1525; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { border-color: #0e1525; }
+
+/* Dark mode theme toggle button */
+.theme-btn {
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--cream); font-size: 1.1rem; color: var(--ink-700); transition: .25s; cursor: pointer; border: none;
+}
+.theme-btn:hover { background: var(--blue-600); color: #fff; }
+[data-theme="dark"] .theme-btn { background: #1a2238; color: var(--gold-400); }
+[data-theme="dark"] .theme-btn:hover { background: var(--gold-600); color: #fff; }
 
 /* ----------  Reset  ---------- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

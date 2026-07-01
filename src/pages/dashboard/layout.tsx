@@ -36,6 +36,7 @@ export const dashboardLayout = (active: string, title: string, content: string) 
           <div><h1 class="h-lg">${title}</h1></div>
         </div>
         <div style="display:flex;gap:.8rem;align-items:center">
+          <button class="theme-btn" id="themeToggle" title="تبديل المظهر" aria-label="تبديل المظهر" style="width:36px;height:36px;font-size:1rem"><i class="fas fa-moon"></i></button>
           <a href="/" target="_blank" class="btn btn-ghost btn-sm" title="عرض الموقع"><i class="fas fa-external-link-alt"></i></a>
           <span class="avatar placeholder" style="width:44px;height:44px">ع</span>
         </div>

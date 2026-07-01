@@ -84,6 +84,7 @@ export const nav = (active = '') => {
       </a>
       <ul class="nav-links">${NAV.map(link).join('')}</ul>
       <div class="nav-cta">
+        <button class="theme-btn" id="themeToggle" title="تبديل المظهر" aria-label="تبديل المظهر"><i class="fas fa-moon"></i></button>
         <button class="lang-btn" id="langToggle" title="English">EN</button>
         <a href="/donate" class="btn btn-gold magnetic"><i class="fas fa-hand-holding-heart"></i> تبرّع الآن</a>
       </div>

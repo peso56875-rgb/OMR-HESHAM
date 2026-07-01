@@ -87,20 +87,22 @@ app.get('/contact', (c) => c.html(page({ title: 'تواصل معنا', active: '
 app.get('/dashboard', async (c) => {
   const supabase = getSupabaseFromContext(c)
   
-  // Fetch basic stats (approximated counts for now)
-  const [{ count: cDonors }, { count: cCampaigns }, { count: cVolunteers }, { data: recentDonations }] = await Promise.all([
+  const [{ count: cDonors }, { count: cCampaigns }, { count: cVolunteers }, { data: recentDonations }, { data: sumData }] = await Promise.all([
     supabase.from('donations').select('*', { count: 'exact', head: true }),
-    supabase.from('campaigns').select('*', { count: 'exact', head: true }).eq('is_urgent', true), // just active count proxy
+    supabase.from('campaigns').select('*', { count: 'exact', head: true }),
     supabase.from('volunteers').select('*', { count: 'exact', head: true }),
-    supabase.from('donations').select('*').order('created_at', { ascending: false }).limit(5)
+    supabase.from('donations').select('*').order('created_at', { ascending: false }).limit(5),
+    supabase.from('donations').select('amount')
   ])
 
-  // Fake sum for donations since we don't have aggregation here easily
+  // Calculate total donations amount
+  const totalAmount = (sumData || []).reduce((sum: number, d: any) => sum + Number(d.amount || 0), 0)
+
   const stats = {
-    total_donations: 42800000,
-    total_campaigns: cCampaigns || 24,
-    total_donors: (cDonors || 0) + 48250,
-    total_volunteers: (cVolunteers || 0) + 1850
+    total_donations: totalAmount,
+    total_campaigns: cCampaigns || 0,
+    total_donors: cDonors || 0,
+    total_volunteers: cVolunteers || 0
   }
   return c.html(dashOverview(stats, recentDonations || []))
 })

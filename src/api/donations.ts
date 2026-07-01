@@ -65,3 +65,36 @@ donations.get('/my', async (c) => {
   if (error) return c.json({ error: error.message }, 400)
   return c.json({ data })
 })
+
+// Accept donation from the public donate page (HTML form)
+donations.post('/add', async (c) => {
+  const supabase = getSupabaseFromContext(c)
+  const body = await c.req.parseBody()
+
+  const amount = Number(body.amount) || 0
+  const donor_name = (body.donor_name as string || '').trim()
+  const donor_phone = (body.donor_phone as string || '').trim()
+
+  if (!amount || !donor_name || !donor_phone) {
+    return c.redirect('/donate?error=missing')
+  }
+
+  const { error } = await supabase
+    .from('donations')
+    .insert([{
+      amount,
+      donation_type: body.donation_type || 'once',
+      donor_name,
+      donor_phone,
+      donor_email: body.donor_email || null,
+      payment_method: body.payment_method || 'card',
+      status: 'completed'
+    }])
+
+  if (error) {
+    console.error('Donation insert error:', error.message)
+    return c.redirect('/donate?error=db')
+  }
+
+  return c.redirect('/donate?success=1')
+})
