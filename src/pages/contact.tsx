@@ -9,9 +9,9 @@ export const contactPage = () => pageHero(
   <div class="wrap">
     <div class="grid cols-3" style="margin-bottom:3rem">
       ${[
-        { i: 'fa-location-dot', c: 'ic-blue', t: 'العنوان', d: 'القاهرة، جمهورية مصر العربية<br>مدينة نصر — شارع الطيران' },
-        { i: 'fa-phone-volume', c: 'ic-emerald', t: 'الهاتف', d: '‎+20 100 000 0000<br>‎+20 2 1234 5678' },
-        { i: 'fa-envelope-open-text', c: 'ic-gold', t: 'البريد', d: 'info@omarhesham.org<br>support@omarhesham.org' },
+        { i: 'fa-location-dot', c: 'ic-blue', t: 'العنوان', d: 'القاهرة، جمهورية مصر العربية<br>يتم التحديث' },
+        { i: 'fa-phone-volume', c: 'ic-emerald', t: 'الهاتف', d: 'يتم التحديث' },
+        { i: 'fa-envelope-open-text', c: 'ic-gold', t: 'البريد', d: 'يتم التحديث' },
       ].map((m, i) => `
       <article class="card reveal d${i + 1}" style="text-align:center">
         <div class="card-icon ${m.c}" style="margin-inline:auto"><i class="fas ${m.i}"></i></div>

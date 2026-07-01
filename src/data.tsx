@@ -1,14 +1,17 @@
 // Content data for Omar Hesham Foundation — Arabic
-// Images use deterministic Unsplash photos (humanitarian/charity themed)
+// This file contains PLACEHOLDER structure only.
+// Real data will be loaded dynamically from Supabase in production.
+// All fake numbers have been removed. Zeros indicate "to be filled from DB".
 
 export const img = (id: string, w = 800, h = 600) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&h=${h}&q=80`
 
+// Stats — will be fetched live from /api/stats in production
 export const stats = [
-  { icon: 'fa-hand-holding-heart', num: 48250, suffix: '+', label: 'مستفيد ومستفيدة' },
-  { icon: 'fa-bullhorn', num: 320, suffix: '+', label: 'حملة إنسانية' },
-  { icon: 'fa-hands-helping', num: 1850, suffix: '+', label: 'متطوّع نشط' },
-  { icon: 'fa-globe', num: 14, suffix: '', label: 'محافظة نخدمها' },
+  { icon: 'fa-hand-holding-heart', num: 0, suffix: '+', label: 'مستفيد ومستفيدة' },
+  { icon: 'fa-bullhorn', num: 0, suffix: '+', label: 'حملة إنسانية' },
+  { icon: 'fa-hands-helping', num: 0, suffix: '+', label: 'متطوّع نشط' },
+  { icon: 'fa-globe', num: 0, suffix: '', label: 'محافظة نخدمها' },
 ]
 
 export const programs = [
@@ -20,44 +23,24 @@ export const programs = [
   { icon: 'fa-droplet', cls: 'ic-blue', title: 'مشاريع المياه', desc: 'حفر الآبار وإنشاء محطات تحلية وتوفير المياه النظيفة للقرى.', href: '/campaigns' },
 ]
 
-export const campaigns = [
-  { img: img('photo-1488521787991-ed7bbaae773c', 800, 500), title: 'كسوة الشتاء للأسر المتعففة', cat: 'كساء', urgent: true, raised: 184000, goal: 250000, desc: 'وفّر الدفء لألف أسرة هذا الشتاء عبر توزيع البطانيات والملابس.' },
-  { img: img('photo-1593113598332-cd288d649433', 800, 500), title: 'علاج الأطفال المرضى', cat: 'صحة', urgent: true, raised: 412000, goal: 500000, desc: 'تغطية تكاليف العمليات الجراحية العاجلة للأطفال غير القادرين.' },
-  { img: img('photo-1509099836639-18ba1795216d', 800, 500), title: 'كفالة طالب علم', cat: 'تعليم', urgent: false, raised: 96000, goal: 120000, desc: 'امنح طفلاً فرصة التعليم عبر كفالة دراسية كاملة لعام دراسي.' },
-  { img: img('photo-1469571486292-0ba58a3f068b', 800, 500), title: 'سقيا الماء — حفر بئر', cat: 'مياه', urgent: false, raised: 67000, goal: 150000, desc: 'بئر ماء يروي قرية بأكملها ويبقى صدقة جارية لسنوات.' },
-  { img: img('photo-1532629345422-7515f3d16bb6', 800, 500), title: 'إفطار صائم', cat: 'غذاء', urgent: false, raised: 230000, goal: 300000, desc: 'وجبات إفطار يومية تصل إلى موائد الرحمن في القرى والمدن.' },
-  { img: img('photo-1488521787991-ed7bbaae773c', 800, 500), title: 'ترميم بيوت الفقراء', cat: 'إسكان', urgent: false, raised: 145000, goal: 400000, desc: 'إعادة بناء المنازل الآيلة للسقوط وتوفير مأوى آمن وكريم.' },
-]
+// Campaigns — placeholder structure, will come from Supabase campaigns table
+export const campaigns: { img: string; title: string; cat: string; urgent: boolean; raised: number; goal: number; desc: string }[] = []
 
+// Achievements — static timeline, can be managed from CMS later
 export const achievements = [
-  { year: '٢٠٢٤', title: 'افتتاح المركز الطبي المتكامل', desc: 'مركز يقدم خدمات الكشف والعلاج المجاني لأكثر من ٢٠ ألف مريض سنويًا.' },
-  { year: '٢٠٢٣', title: 'حملة المليون وجبة', desc: 'نجحنا في توزيع أكثر من مليون وجبة ساخنة خلال شهر رمضان المبارك.' },
-  { year: '٢٠٢٢', title: 'كفالة ٣٠٠٠ يتيم', desc: 'وصول برنامج كفالة الأيتام إلى ثلاثة آلاف طفل في أربع عشرة محافظة.' },
-  { year: '٢٠٢١', title: 'إطلاق برنامج المنح الدراسية', desc: 'منح دراسية كاملة لخمسمئة طالب متفوق من الأسر غير القادرة.' },
-  { year: '٢٠٢٠', title: 'الاستجابة الإنسانية الطارئة', desc: 'تقديم الدعم الصحي والغذائي العاجل خلال الأزمات الصحية والطبيعية.' },
-  { year: '٢٠١٨', title: 'تأسيس المؤسسة', desc: 'انطلاقة المؤسسة برؤية إنسانية شاملة لخدمة المجتمع وإغاثة المحتاجين.' },
+  { year: '٢٠٢٤', title: 'يتم التحديث قريبًا', desc: 'سيتم إضافة الإنجازات الفعلية عند تجهيز المحتوى.' },
 ]
 
-export const news = [
-  { img: img('photo-1593113646773-028c64a8f1b8', 700, 420), cat: 'حملات', date: '١٢ يونيو ٢٠٢٥', title: 'انطلاق حملة "دفء الشتاء" في صعيد مصر', excerpt: 'بدأت فرق المؤسسة توزيع آلاف البطانيات والملابس على الأسر الأكثر احتياجًا.' },
-  { img: img('photo-1532629345422-7515f3d16bb6', 700, 420), cat: 'فعاليات', date: '٢ يونيو ٢٠٢٥', title: 'قافلة طبية مجانية تخدم ٣٠٠٠ مريض', excerpt: 'نظّمت المؤسسة قافلة طبية شاملة قدّمت الكشف والعلاج المجاني في القرى النائية.' },
-  { img: img('photo-1509099836639-18ba1795216d', 700, 420), cat: 'تعليم', date: '٢٤ مايو ٢٠٢٥', title: 'تكريم الطلاب المتفوقين من المكفولين', excerpt: 'احتفلت المؤسسة بتفوّق أبنائها من الطلاب المكفولين في الثانوية العامة.' },
-]
+// News — will come from Supabase news table
+export const news: { img: string; cat: string; date: string; title: string; excerpt: string }[] = []
 
-export const events = [
-  { d: '١٨', m: 'يوليو', title: 'ملتقى المتطوعين السنوي', place: 'القاهرة · قاعة المؤتمرات', type: 'تطوّع' },
-  { d: '٠٥', m: 'أغسطس', title: 'قافلة طبية — محافظة المنيا', place: 'المنيا · المركز الطبي', type: 'صحة' },
-  { d: '٢٢', m: 'أغسطس', title: 'حفل توزيع المنح الدراسية', place: 'الجيزة · مقر المؤسسة', type: 'تعليم' },
-  { d: '١٠', m: 'سبتمبر', title: 'بازار خيري لدعم الأيتام', place: 'الإسكندرية · الكورنيش', type: 'تبرّع' },
-]
+// Events — will come from Supabase events table
+export const events: { d: string; m: string; title: string; place: string; type: string }[] = []
 
-export const stories = [
-  { name: 'أم محمد', role: 'مستفيدة من برنامج العلاج', avatar: '', text: 'بعد أن عجزنا عن تكاليف عملية ابني، تكفّلت المؤسسة بكل شيء. اليوم يركض ويلعب كأي طفل. لا أملك إلا الدعاء لكم.', rating: 5 },
-  { name: 'سارة أحمد', role: 'طالبة طب — منحة دراسية', avatar: '', text: 'كنت على وشك ترك دراستي بسبب الظروف، لكن منحة المؤسسة غيّرت مساري بالكامل. سأصبح طبيبة بفضل الله ثم بفضلكم.', rating: 5 },
-  { name: 'الحاج إبراهيم', role: 'من سكان قرية البئر', avatar: '', text: 'كنا نقطع كيلومترات لجلب الماء. بئر المؤسسة أعاد الحياة لقريتنا بأكملها. صدقة جارية لا تنقطع.', rating: 5 },
-]
+// Stories — will come from Supabase stories table
+export const stories: { name: string; role: string; avatar: string; text: string; rating: number }[] = []
 
-export const partners = ['البنك الأهلي', 'وزارة التضامن', 'الهلال الأحمر', 'مستشفى ٥٧٣٥٧', 'بنك الطعام', 'صندوق تحيا مصر', 'مؤسسة مصر الخير', 'شركة فودافون']
+export const partners: string[] = []
 
 export const faqs = [
   { q: 'كيف أتأكد من وصول تبرّعي إلى مستحقيه؟', a: 'تلتزم المؤسسة بأعلى معايير الشفافية، حيث نصدر تقارير دورية مفصّلة عن أوجه الصرف، ويمكنك متابعة أثر تبرّعك من خلال لوحة المتبرّع أو صفحة الشفافية المالية.' },

@@ -1,10 +1,10 @@
 import { ctaBanner } from '../layout'
-import { stats, programs, campaigns, stories, partners, news, img } from '../data'
+import { programs, img } from '../data'
 
 const pct = (r: number, g: number) => Math.min(100, Math.round((r / g) * 100))
 const money = (n: number) => n.toLocaleString('ar-EG')
 
-export const home = () => `
+export const home = ({ campaigns = [], news = [], stories = [], stats = { total_donors: 0, total_campaigns: 0, total_volunteers: 0 }, partners = [] }: any = {}) => `
 <!-- ============ HERO ============ -->
 <section class="hero">
   <div class="hero-bg-grid"></div>
@@ -21,26 +21,25 @@ export const home = () => `
         <a href="/about" class="btn btn-outline-light btn-lg"><i class="fas fa-circle-play"></i> تعرّف علينا</a>
       </div>
       <div class="hero-stats reveal d4">
-        <div class="hero-stat"><b data-count="48250">0</b><span>مستفيد</span></div>
-        <div class="hero-stat"><b data-count="320">0</b><span>حملة إنسانية</span></div>
-        <div class="hero-stat"><b data-count="1850">0</b><span>متطوّع</span></div>
+        <div class="hero-stat"><b>${stats.total_donors || '—'}</b><span>مستفيد</span></div>
+        <div class="hero-stat"><b>${stats.total_campaigns || '—'}</b><span>حملة إنسانية</span></div>
+        <div class="hero-stat"><b>${stats.total_volunteers || '—'}</b><span>متطوّع</span></div>
       </div>
     </div>
 
-    <!-- Premium portrait composition -->
+    <!-- Professional Logo Showcase -->
     <div class="hero-portrait reveal-scale d2" id="heroPortrait">
       <div class="hp-orbit o1"></div>
       <div class="hp-orbit o2"></div>
       <div class="hp-disc" data-tilt>
-        <img class="hp-img" src="/static/img/omar-cutout.png" alt="الدكتور عمر هشام">
+        <img class="hp-img" src="/static/img/logo.png" alt="شعار مؤسسة الدكتور عمر هشام الخيرية" style="object-fit:contain;padding:2rem;border-radius:50%;background:rgba(255,255,255,0.1);backdrop-filter:blur(10px)">
         <div class="hp-ground"></div>
       </div>
-      <div class="hp-badge-logo"><img src="/static/img/logo.png" alt="الشعار"></div>
       <i class="fas fa-star fa-lg hp-sparkle" style="top:8%;inset-inline-start:18%"></i>
       <i class="fas fa-star hp-sparkle" style="bottom:30%;inset-inline-start:-2%;animation-delay:.7s"></i>
       <i class="fas fa-heart hp-sparkle" style="top:30%;inset-inline-end:6%;color:#ff5252;animation-delay:1.1s"></i>
-      <div class="hp-card c1"><i class="fas fa-user-doctor ic-blue"></i><div><b>د. عمر هشام</b><small>المؤسس والرئيس</small></div></div>
-      <div class="hp-card c2"><i class="fas fa-heart-pulse ic-crimson"></i><div><b>+٢٠٠ ألف</b><small>خدمة صحية</small></div></div>
+      <div class="hp-card c1"><i class="fas fa-mosque ic-emerald"></i><div><b>العطاء بإيمان</b><small>الإحسان للجميع</small></div></div>
+      <div class="hp-card c2"><i class="fas fa-hands-holding-heart ic-crimson"></i><div><b>مؤسسة خيرية</b><small>مرخّصة ومعتمدة</small></div></div>
       <div class="hp-card c3"><i class="fas fa-seedling ic-emerald"></i><div><b>صدقة جارية</b><small>أثر يدوم</small></div></div>
     </div>
   </div>
@@ -55,7 +54,7 @@ export const home = () => `
     <p class="eyebrow" style="justify-content:center;margin-bottom:1.6rem">شركاء النجاح والثقة</p>
     <div class="marquee">
       <div class="marquee-track">
-        ${[...partners, ...partners].map(p => `<span class="partner"><i class="fas fa-handshake"></i> ${p}</span>`).join('')}
+        ${partners.length ? [...partners, ...partners].map((p: any) => `<span class="partner"><i class="fas fa-handshake"></i> ${p.name || p}</span>`).join('') : '<span class="partner">شركاؤنا الداعمون</span>'}
       </div>
     </div>
   </div>
@@ -66,12 +65,26 @@ export const home = () => `
   <div class="wrap">
     <div class="stats-strip reveal">
       <div class="grid cols-4">
-        ${stats.map(s => `
         <div class="stat-item">
-          <i class="fas ${s.icon}"></i>
-          <div class="num"><span data-count="${s.num}">0</span>${s.suffix}</div>
-          <div class="lbl">${s.label}</div>
-        </div>`).join('')}
+          <i class="fas fa-hand-holding-heart"></i>
+          <div class="num"><span data-count="${stats.total_donors || 0}">0</span>+</div>
+          <div class="lbl">مستفيد ومستفيدة</div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-bullhorn"></i>
+          <div class="num"><span data-count="${stats.total_campaigns || 0}">0</span>+</div>
+          <div class="lbl">حملة إنسانية</div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-hands-helping"></i>
+          <div class="num"><span data-count="${stats.total_volunteers || 0}">0</span>+</div>
+          <div class="lbl">متطوّع نشط</div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-globe"></i>
+          <div class="num"><span data-count="14">0</span></div>
+          <div class="lbl">محافظة نخدمها</div>
+        </div>
       </div>
     </div>
   </div>
@@ -132,27 +145,27 @@ export const home = () => `
       <p class="lead reveal d2">اختر الحملة التي تُلامس قلبك، وتابع أثر تبرّعك خطوةً بخطوة حتى يصل إلى مستحقيه.</p>
     </div>
     <div class="grid cols-3">
-      ${campaigns.slice(0, 3).map((c, i) => `
+      ${campaigns.length ? campaigns.slice(0, 3).map((c: any, i: number) => `
       <article class="campaign reveal d${i + 1}">
         <div class="campaign-media">
-          <img src="${c.img}" alt="${c.title}" loading="lazy">
-          <span class="chip chip-blue tag">${c.cat}</span>
-          ${c.urgent ? '<span class="urgency"><i class="fas fa-bolt"></i> عاجلة</span>' : ''}
+          <img src="${c.image_url || '/static/img/placeholder.jpg'}" alt="${c.title}" loading="lazy">
+          <span class="chip chip-blue tag">${c.category}</span>
+          ${c.is_urgent ? '<span class="urgency"><i class="fas fa-bolt"></i> عاجلة</span>' : ''}
         </div>
         <div class="campaign-body">
           <h3>${c.title}</h3>
-          <p>${c.desc}</p>
-          <div class="progress"><span style="width:${pct(c.raised, c.goal)}%"></span></div>
+          <p>${c.description}</p>
+          <div class="progress"><span style="width:${pct(c.raised || 0, c.goal)}%"></span></div>
           <div class="campaign-meta">
-            <span class="raised">جُمع ${money(c.raised)} ج.م</span>
+            <span class="raised">جُمع ${money(c.raised || 0)} ج.م</span>
             <span class="goal">الهدف ${money(c.goal)}</span>
           </div>
           <div class="campaign-foot">
-            <span class="pct">${pct(c.raised, c.goal)}%</span>
-            <a href="/donate" class="btn btn-primary btn-sm"><i class="fas fa-heart"></i> تبرّع</a>
+            <span class="pct">${pct(c.raised || 0, c.goal)}%</span>
+            <a href="/donate?campaign=${c.id}" class="btn btn-primary btn-sm"><i class="fas fa-heart"></i> تبرّع</a>
           </div>
         </div>
-      </article>`).join('')}
+      </article>`).join('') : '<p style="text-align:center;grid-column:1/-1;color:var(--muted);padding:2rem">جاري إطلاق حملاتنا الجديدة.</p>'}
     </div>
     <div class="center" style="margin-top:2.6rem">
       <a href="/campaigns" class="btn btn-ghost btn-lg">عرض كل الحملات <i class="fas fa-arrow-left"></i></a>
@@ -193,16 +206,16 @@ export const home = () => `
       <h2 class="h-xl reveal d1" style="margin-top:.8rem">حياةٌ <span class="text-grad-emerald">تغيّرت</span> بفضل عطائكم</h2>
     </div>
     <div class="grid cols-3">
-      ${stories.map((s, i) => `
+      ${stories.length ? stories.map((s: any, i: number) => `
       <figure class="testi reveal d${i + 1}">
         <span class="quote-mark">”</span>
-        <div class="stars" style="margin-bottom:.8rem">${'<i class="fas fa-star"></i>'.repeat(s.rating)}</div>
-        <p>${s.text}</p>
+        <div class="stars" style="margin-bottom:.8rem">${'<i class="fas fa-star"></i>'.repeat(s.rating || 5)}</div>
+        <p>${s.content}</p>
         <figcaption class="who">
           <span class="avatar placeholder">${s.name.charAt(0)}</span>
           <span><b>${s.name}</b><span>${s.role}</span></span>
         </figcaption>
-      </figure>`).join('')}
+      </figure>`).join('') : '<p style="text-align:center;grid-column:1/-1;color:var(--muted);padding:2rem">قريباً سنشارككم أثر العطاء.</p>'}
     </div>
     <div class="center" style="margin-top:2.4rem"><a href="/success-stories" class="btn btn-ghost">المزيد من القصص <i class="fas fa-arrow-left"></i></a></div>
   </div>
@@ -216,16 +229,16 @@ export const home = () => `
       <h2 class="h-xl reveal d1" style="margin-top:.8rem">جديد <span class="text-grad-blue">المؤسسة</span></h2>
     </div>
     <div class="grid cols-3">
-      ${news.map((n, i) => `
+      ${news.length ? news.slice(0, 3).map((n: any, i: number) => `
       <article class="news-card reveal d${i + 1}">
-        <div class="news-media"><img src="${n.img}" alt="${n.title}" loading="lazy"><span class="chip chip-gold" style="position:absolute;top:1rem;inset-inline-start:1rem">${n.cat}</span></div>
+        <div class="news-media"><img src="${n.image_url || '/static/img/placeholder.jpg'}" alt="${n.title}" loading="lazy"><span class="chip chip-gold" style="position:absolute;top:1rem;inset-inline-start:1rem">${n.category}</span></div>
         <div class="news-body">
-          <div class="news-date"><span><i class="fas fa-calendar"></i> ${n.date}</span></div>
+          <div class="news-date"><span><i class="fas fa-calendar"></i> ${n.publish_date}</span></div>
           <h3>${n.title}</h3>
           <p style="color:var(--muted);font-size:.92rem">${n.excerpt}</p>
-          <a href="/news" class="card-link">اقرأ المزيد <i class="fas fa-arrow-left"></i></a>
+          <a href="/news/${n.id}" class="card-link">اقرأ المزيد <i class="fas fa-arrow-left"></i></a>
         </div>
-      </article>`).join('')}
+      </article>`).join('') : '<p style="text-align:center;grid-column:1/-1;color:var(--muted);padding:2rem">لا توجد أخبار متاحة حالياً.</p>'}
     </div>
   </div>
 </section>

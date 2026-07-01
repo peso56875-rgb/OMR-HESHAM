@@ -70,8 +70,8 @@ export const nav = (active = '') => {
     <div class="wrap">
       <div class="tb-left"><i class="fas fa-location-dot"></i> القاهرة، جمهورية مصر العربية &nbsp;·&nbsp; <i class="fas fa-clock"></i> السبت – الخميس ٩ص – ٥م</div>
       <div class="tb-right">
-        <a href="tel:+201000000000"><i class="fas fa-phone"></i> ‎+20 100 000 0000</a>
-        <a href="mailto:info@omarhesham.org"><i class="fas fa-envelope"></i> info@omarhesham.org</a>
+        <a href="#"><i class="fas fa-phone"></i> يتم التحديث</a>
+        <a href="#"><i class="fas fa-envelope"></i> يتم التحديث</a>
         <a href="/dashboard"><i class="fas fa-user-shield"></i> دخول الأعضاء</a>
       </div>
     </div>

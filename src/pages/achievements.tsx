@@ -1,7 +1,6 @@
 import { pageHero, ctaBanner } from '../layout'
-import { achievements, stats } from '../data'
 
-export const achievementsPage = () => pageHero(
+export const achievementsPage = (stats: any = { total_donors: 0, total_campaigns: 0, total_volunteers: 0 }) => pageHero(
   'مسيرة من الإنجازات',
   'كل عامٍ نقطع خطوةً أقرب نحو رؤيتنا. هذه محطّاتٌ مضيئة في رحلة عطائنا المستمرة.',
   'الإنجازات'
@@ -10,7 +9,26 @@ export const achievementsPage = () => pageHero(
   <div class="wrap">
     <div class="stats-strip reveal">
       <div class="grid cols-4">
-        ${stats.map(s => `<div class="stat-item"><i class="fas ${s.icon}"></i><div class="num"><span data-count="${s.num}">0</span>${s.suffix}</div><div class="lbl">${s.label}</div></div>`).join('')}
+        <div class="stat-item">
+          <i class="fas fa-hand-holding-heart"></i>
+          <div class="num"><span data-count="${stats.total_donors || 0}">0</span>+</div>
+          <div class="lbl">مستفيد ومستفيدة</div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-bullhorn"></i>
+          <div class="num"><span data-count="${stats.total_campaigns || 0}">0</span>+</div>
+          <div class="lbl">حملة إنسانية</div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-hands-helping"></i>
+          <div class="num"><span data-count="${stats.total_volunteers || 0}">0</span>+</div>
+          <div class="lbl">متطوّع نشط</div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-globe"></i>
+          <div class="num"><span data-count="14">0</span></div>
+          <div class="lbl">محافظة نخدمها</div>
+        </div>
       </div>
     </div>
   </div>
@@ -23,15 +41,7 @@ export const achievementsPage = () => pageHero(
       <h2 class="h-xl reveal d1" style="margin-top:.8rem">رحلتنا <span class="text-grad-brand">عامًا بعد عام</span></h2>
     </div>
     <div class="timeline">
-      ${achievements.map((a, i) => `
-      <div class="tl-item reveal${i % 2 ? '-x' : ''}">
-        <span class="tl-dot"></span>
-        <div class="tl-card">
-          <span class="tl-year">${a.year}</span>
-          <h3>${a.title}</h3>
-          <p>${a.desc}</p>
-        </div>
-      </div>`).join('')}
+      <p style="text-align:center;color:var(--muted);padding:2rem">جاري إعداد التقرير السنوي للإنجازات.</p>
     </div>
   </div>
 </section>

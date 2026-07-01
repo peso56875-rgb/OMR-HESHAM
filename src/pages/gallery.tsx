@@ -1,17 +1,7 @@
 import { pageHero, ctaBanner } from '../layout'
 import { img } from '../data'
 
-const photos = [
-  { id: 'photo-1593113598332-cd288d649433', h: 600, t: 'قافلة طبية في القرى' },
-  { id: 'photo-1488521787991-ed7bbaae773c', h: 760, t: 'توزيع السلال الغذائية' },
-  { id: 'photo-1509099836639-18ba1795216d', h: 540, t: 'تكريم الطلاب المتفوقين' },
-  { id: 'photo-1469571486292-0ba58a3f068b', h: 700, t: 'مشروع سقيا الماء' },
-  { id: 'photo-1532629345422-7515f3d16bb6', h: 560, t: 'موائد الرحمن' },
-  { id: 'photo-1593113646773-028c64a8f1b8', h: 720, t: 'فرق العمل الميدانية' },
-  { id: 'photo-1593113630400-ea4288922497', h: 600, t: 'لقاء المتطوّعين' },
-  { id: 'photo-1488521787991-ed7bbaae773c', h: 640, t: 'كسوة الشتاء' },
-  { id: 'photo-1509099836639-18ba1795216d', h: 700, t: 'يومٌ في المركز التعليمي' },
-]
+const photos: any[] = []
 
 export const galleryPage = () => pageHero(
   'معرض الصور',
@@ -30,11 +20,11 @@ export const galleryPage = () => pageHero(
       </div>
     </div>
     <div class="masonry reveal">
-      ${photos.map((p, i) => `
+      ${photos.length > 0 ? photos.map((p, i) => `
       <div class="g-item">
         <img src="${img(p.id, 600, p.h)}" alt="${p.t}" loading="lazy">
         <div class="g-overlay"><span><i class="fas fa-camera"></i> ${p.t}</span></div>
-      </div>`).join('')}
+      </div>`).join('') : '<p style="text-align:center;grid-column:1/-1;color:var(--muted);padding:4rem 0;font-size:1.1rem">سيتم إضافة صور المعرض قريباً.</p>'}
     </div>
   </div>
 </section>

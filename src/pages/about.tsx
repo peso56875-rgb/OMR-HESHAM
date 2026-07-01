@@ -1,7 +1,7 @@
 import { pageHero, ctaBanner } from '../layout'
-import { values, stats, img } from '../data'
+import { values, img } from '../data'
 
-export const about = () => pageHero(
+export const about = (stats: any = { total_donors: 0, total_campaigns: 0, total_volunteers: 0 }) => pageHero(
   'قصة عطاءٍ لا تتوقّف',
   'تعرّف على مؤسسة الدكتور عمر هشام الخيرية — رؤيتها، رسالتها، وقيمها التي تقود كل ما نفعله.',
   'من نحن'
@@ -71,7 +71,26 @@ export const about = () => pageHero(
   <div class="wrap">
     <div class="stats-strip reveal">
       <div class="grid cols-4">
-        ${stats.map(s => `<div class="stat-item"><i class="fas ${s.icon}"></i><div class="num"><span data-count="${s.num}">0</span>${s.suffix}</div><div class="lbl">${s.label}</div></div>`).join('')}
+        <div class="stat-item">
+          <i class="fas fa-hand-holding-heart"></i>
+          <div class="num"><span data-count="${stats.total_donors || 0}">0</span>+</div>
+          <div class="lbl">مستفيد ومستفيدة</div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-bullhorn"></i>
+          <div class="num"><span data-count="${stats.total_campaigns || 0}">0</span>+</div>
+          <div class="lbl">حملة إنسانية</div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-hands-helping"></i>
+          <div class="num"><span data-count="${stats.total_volunteers || 0}">0</span>+</div>
+          <div class="lbl">متطوّع نشط</div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-globe"></i>
+          <div class="num"><span data-count="14">0</span></div>
+          <div class="lbl">محافظة نخدمها</div>
+        </div>
       </div>
     </div>
   </div>

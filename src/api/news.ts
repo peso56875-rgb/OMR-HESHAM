@@ -30,3 +30,25 @@ news.get('/:id', async (c) => {
   if (error) return c.json({ error: error.message }, 400)
   return c.json({ data })
 })
+
+news.post('/add', async (c) => {
+  const supabase = getSupabaseFromContext(c)
+  const body = await c.req.parseBody()
+  
+  const { error } = await supabase
+    .from('news')
+    .insert([{
+      title: body.title,
+      category: body.category || null,
+      excerpt: body.excerpt,
+      content: body.content,
+      image_url: body.image_url || null
+    }])
+
+  if (error) {
+    // Note: use standard logging in real app
+    console.error('Error creating news:', error.message)
+  }
+  
+  return c.redirect('/dashboard/news')
+})

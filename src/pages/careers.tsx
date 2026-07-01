@@ -1,15 +1,6 @@
 import { pageHero, ctaBanner } from '../layout'
 
-const jobs = [
-  { t: 'منسّق برامج إغاثية', loc: 'القاهرة', type: 'دوام كامل', dept: 'العمليات', icon: 'fa-truck-medical', c: 'ic-crimson' },
-  { t: 'أخصائي جمع تبرّعات', loc: 'القاهرة', type: 'دوام كامل', dept: 'التنمية', icon: 'fa-hand-holding-dollar', c: 'ic-emerald' },
-  { t: 'مدير محتوى ووسائل تواصل', loc: 'عن بُعد', type: 'دوام جزئي', dept: 'الإعلام', icon: 'fa-bullhorn', c: 'ic-blue' },
-  { t: 'محاسب مالي', loc: 'القاهرة', type: 'دوام كامل', dept: 'المالية', icon: 'fa-calculator', c: 'ic-gold' },
-  { t: 'منسّق ميداني — الصعيد', loc: 'المنيا', type: 'دوام كامل', dept: 'العمليات', icon: 'fa-location-dot', c: 'ic-blue' },
-  { t: 'مطوّر نُظم تقنية', loc: 'عن بُعد', type: 'تعاقد', dept: 'التقنية', icon: 'fa-laptop-code', c: 'ic-emerald' },
-]
-
-export const careersPage = () => pageHero(
+export const careersPage = (jobs: any[] = []) => pageHero(
   'انضمّ إلى فريقنا',
   'ابنِ مسيرتك المهنية في بيئةٍ ملهمة، واجعل عملك اليومي رسالةً إنسانية تترك أثرًا.',
   'الوظائف'
@@ -44,21 +35,21 @@ export const careersPage = () => pageHero(
       <h2 class="h-xl reveal d1" style="margin-top:.8rem">فرصٌ <span class="text-grad-emerald">في انتظارك</span></h2>
     </div>
     <div class="flow" style="max-width:900px;margin-inline:auto">
-      ${jobs.map((j, i) => `
+      ${jobs.length ? jobs.map((j: any, i: number) => `
       <article class="job-card reveal d${(i % 3) + 1}">
         <div style="display:flex;gap:1rem;align-items:center">
-          <div class="card-icon ${j.c}" style="margin:0;flex-shrink:0"><i class="fas ${j.icon}"></i></div>
+          <div class="card-icon ic-blue" style="margin:0;flex-shrink:0"><i class="fas fa-briefcase"></i></div>
           <div>
-            <b style="font-size:1.12rem">${j.t}</b>
+            <b style="font-size:1.12rem">${j.title}</b>
             <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.4rem">
-              <span class="chip chip-blue"><i class="fas fa-briefcase"></i> ${j.dept}</span>
-              <span class="chip"><i class="fas fa-location-dot"></i> ${j.loc}</span>
-              <span class="chip chip-emerald"><i class="fas fa-clock"></i> ${j.type}</span>
+              <span class="chip chip-blue"><i class="fas fa-building"></i> ${j.department}</span>
+              <span class="chip"><i class="fas fa-location-dot"></i> ${j.location}</span>
+              <span class="chip chip-emerald"><i class="fas fa-clock"></i> ${j.job_type}</span>
             </div>
           </div>
         </div>
         <a href="#applyForm" class="btn btn-primary btn-sm magnetic">تقدّم الآن <i class="fas fa-arrow-left"></i></a>
-      </article>`).join('')}
+      </article>`).join('') : '<p style="text-align:center;color:var(--muted);padding:2rem">لا توجد شواغر حالياً.</p>'}
     </div>
   </div>
 </section>
@@ -78,7 +69,7 @@ export const careersPage = () => pageHero(
         </div>
         <div class="grid cols-2" style="gap:0 1rem">
           <div class="field"><label>الجوال <span class="req">*</span></label><input required placeholder="01xxxxxxxxx"></div>
-          <div class="field"><label>الوظيفة المتقدّم لها</label><select>${jobs.map(j => `<option>${j.t}</option>`).join('')}</select></div>
+          <div class="field"><label>الوظيفة المتقدّم لها</label><select>${jobs.map(j => `<option value="${j.id}">${j.title}</option>`).join('')}</select></div>
         </div>
         <div class="field"><label>نبذة عنك</label><textarea placeholder="أخبرنا عن خبراتك ولماذا ترغب بالانضمام إلينا"></textarea></div>
         <div class="field"><label>السيرة الذاتية (PDF)</label><input type="file" accept=".pdf,.doc,.docx"></div>

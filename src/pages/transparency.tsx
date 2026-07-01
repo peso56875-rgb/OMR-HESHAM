@@ -10,9 +10,9 @@ export const transparencyPage = () => pageHero(
     <!-- KPI cards -->
     <div class="grid cols-4" style="margin-bottom:3rem">
       ${[
-        { i: 'fa-sack-dollar', c: 'ic-emerald', n: '٤٢.٨', s: 'مليون ج.م', l: 'إجمالي التبرّعات ٢٠٢٤' },
-        { i: 'fa-hand-holding-heart', c: 'ic-blue', n: '٨٨', s: '%', l: 'تُصرف على البرامج' },
-        { i: 'fa-receipt', c: 'ic-gold', n: '٣١', s: '+', l: 'تقرير دوري منشور' },
+        { i: 'fa-sack-dollar', c: 'ic-emerald', n: '٠', s: 'ج.م', l: 'إجمالي التبرّعات (سيتم تحديثه)' },
+        { i: 'fa-hand-holding-heart', c: 'ic-blue', n: '٠', s: '%', l: 'تُصرف على البرامج' },
+        { i: 'fa-receipt', c: 'ic-gold', n: '٠', s: '', l: 'تقرير دوري منشور' },
         { i: 'fa-user-check', c: 'ic-crimson', n: '١٠٠', s: '%', l: 'مراجعة مستقلة' },
       ].map((k, i) => `
       <div class="kpi reveal d${i + 1}">
