@@ -14,19 +14,59 @@ export const about = (stats: any = { total_donors: 0, total_campaigns: 0, total_
         <div class="frame">
           <div class="frame-deco fd1"></div>
           <div class="frame-deco fd2"></div>
-          <img src="/static/img/omar-portrait.png" alt="الدكتور عمر هشام">
+          <img src="/static/img/omar-portrait.png" alt="الدكتور عمر هشام رحمه الله">
         </div>
+        <p style="text-align:center;margin-top:1rem;color:var(--muted);font-style:italic">المرحوم الدكتور عمر هشام (رحمه الله)</p>
       </div>
       <div class="reveal d1">
-        <span class="eyebrow">كلمة المؤسس</span>
-        <h2 class="h-xl" style="margin:.8rem 0 1rem">الدكتور <span class="text-grad-blue">عمر هشام</span></h2>
-        <p class="lead">«آمنتُ منذ البداية أن العطاء ليس فضلاً نمنّ به، بل واجبٌ إنساني وأمانةٌ في أعناقنا. أسّستُ هذه المؤسسة لتكون يدًا تمتد لكل محتاج، وجسرًا يصل المُحسن بمن يستحق العون.»</p>
-        <p style="margin-top:1rem;color:var(--muted)">حملنا الرسالة من حلمٍ صغير إلى مؤسسةٍ تخدم عشرات الآلاف، ونعدكم أن نبقى أوفياء للأمانة، شفّافين في العمل، رحماء بالناس.</p>
+        <span class="eyebrow">قصة الأثر والوفاء</span>
+        <h2 class="h-xl" style="margin:.8rem 0 1rem">تأسيس <span class="text-grad-blue">وفاءً لذكراه</span></h2>
+        <p class="lead">«لم يكن عمر مجرد ابن، بل كان طالباً متميزاً في كلية الطب، يحمل في قلبه حلم مداواة الناس والتخفيف عنهم. بعد أن اختاره الله إلى جواره، أردت أن يمتد حلمه وألا ينقطع أثره الطيب عن الدنيا.»</p>
+        <p style="margin-top:1rem;color:var(--muted)">أسستُ هذه المؤسسة الخيرية كصدقة جارية لتكون يداً ممتدة لكل مريض ومحتاج، ولتستمر رسالة ابني الحبيب في نشر الخير والرحمة والإحسان بين الناس.</p>
         <div style="margin-top:1.6rem;display:flex;gap:1rem;align-items:center">
-          <span class="avatar placeholder" style="width:56px;height:56px">ع</span>
-          <div><b style="font-size:1.05rem">د. عمر هشام</b><br><span style="color:var(--muted);font-size:.9rem">المؤسس والرئيس التنفيذي</span></div>
+          <span class="avatar placeholder" style="width:56px;height:56px">هـ</span>
+          <div><b style="font-size:1.05rem">المهندس هشام صبري</b><br><span style="color:var(--muted);font-size:.9rem">مؤسس المؤسسة ووالد الدكتور عمر</span></div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- Prayers and Remembrance -->
+<section class="section bg-cream" style="border-top: 1px solid rgba(12,26,43,.05); border-bottom: 1px solid rgba(12,26,43,.05);">
+  <div class="wrap">
+    <div class="sec-head center">
+      <span class="eyebrow reveal" style="justify-content:center">دعاء وصدقة</span>
+      <h2 class="h-xl reveal d1" style="margin-top:.8rem">أدعية وأذكار <span class="text-grad-emerald">للدكتور عمر هشام</span></h2>
+      <p class="lead" style="margin-top:1rem">شاركنا بالدعاء لفقيدنا الشاب الدكتور عمر هشام، نسأل الله أن يتقبله في الصالحين ويجعل هذا العمل شفيعاً له.</p>
+    </div>
+    
+    <div class="grid cols-3">
+      <article class="card reveal d1" style="text-align:center; display:flex; flex-direction:column; justify-content:center; padding:2rem;">
+        <div class="card-icon ic-blue" style="margin-inline:auto"><i class="fas fa-hands-praying"></i></div>
+        <h3>دعاء للمتوفى</h3>
+        <p style="font-size:1.05rem; line-height:1.8; color:var(--ink-700); margin-top:1rem">«اللهم اغفر له وارحمه، وعافه واعف عنه، وأكرم نزله، ووسع مدخله، واغسله بالماء والثلج والبرد، ونقه من الخطايا كما ينقى الثوب الأبيض من الدنس.»</p>
+      </article>
+      
+      <article class="card reveal d2" style="text-align:center; display:flex; flex-direction:column; justify-content:center; padding:2rem;">
+        <div class="card-icon ic-gold" style="margin-inline:auto"><i class="fas fa-book-quran"></i></div>
+        <h3>سورة الفاتحة</h3>
+        <p style="font-size:1.1rem; line-height:2; font-weight:700; color:var(--blue-900); margin-top:1rem" dir="rtl">
+          بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ ﴿١﴾ الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ﴿٢﴾ الرَّحْمَنِ الرَّحِيمِ ﴿٣﴾ مَالِكِ يَوْمِ الدِّينِ ﴿٤﴾ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ﴿٥﴾ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ﴿٦﴾ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ ﴿٧﴾
+        </p>
+      </article>
+
+      <article class="card reveal d3" style="text-align:center; display:flex; flex-direction:column; justify-content:center; padding:2rem;">
+        <div class="card-icon ic-emerald" style="margin-inline:auto"><i class="fas fa-heart-pulse"></i></div>
+        <h3>دعاء الأثر والقبول</h3>
+        <p style="font-size:1.05rem; line-height:1.8; color:var(--ink-700); margin-top:1rem">«اللهم اجعل كل عمل خيري وعلاج لمريض ومساعدة لمحتاج تقوم بها هذه المؤسسة صدقة جارية في ميزان حسنات عمر، واجعله شفيعاً له ومقراً لعينيه في جنات النعيم.»</p>
+      </article>
+    </div>
+
+    <div class="center" style="margin-top:3rem">
+      <button onclick="showToast('جزاك الله خيراً، وتقبل الله دعاءك ورحم فقيدنا وغفر له وجعل مثواه الجنة.')" class="btn btn-primary btn-lg magnetic">
+        <i class="fas fa-circle-check"></i> قرأت الفاتحة وتمنيت له الرحمة
+      </button>
     </div>
   </div>
 </section>
@@ -100,12 +140,12 @@ export const about = (stats: any = { total_donors: 0, total_campaigns: 0, total_
 <section class="section bg-cream">
   <div class="wrap">
     <div class="sec-head center">
-      <span class="eyebrow reveal" style="justify-content:center">فريق العمل</span>
-      <h2 class="h-xl reveal d1" style="margin-top:.8rem">أيادٍ <span class="text-grad-emerald">أمينة</span> خلف كل إنجاز</h2>
+      <span class="eyebrow reveal" style="justify-content:center">مجلس الأمناء</span>
+      <h2 class="h-xl reveal d1" style="margin-top:.8rem">إدارة <span class="text-grad-emerald">المؤسسة</span></h2>
     </div>
     <div class="grid cols-4">
       ${[
-        { n: 'د. عمر هشام', r: 'المؤسس والرئيس', i: 'fa-user-doctor' },
+        { n: 'المهندس هشام صبري', r: 'المؤسس ورئيس الأمناء', i: 'fa-user-tie' },
         { n: 'م. ليلى السيد', r: 'مدير العمليات', i: 'fa-user-tie' },
         { n: 'أ. كريم منصور', r: 'مدير الحملات', i: 'fa-bullhorn' },
         { n: 'د. هبة فؤاد', r: 'مدير البرامج الطبية', i: 'fa-stethoscope' },

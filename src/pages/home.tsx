@@ -31,16 +31,13 @@ export const home = ({ campaigns = [], news = [], stories = [], stats = { total_
     <div class="hero-portrait reveal-scale d2" id="heroPortrait">
       <div class="hp-orbit o1"></div>
       <div class="hp-orbit o2"></div>
-      <div class="hp-disc" data-tilt>
-        <img class="hp-img" src="/static/img/logo.png" alt="شعار مؤسسة الدكتور عمر هشام الخيرية" style="object-fit:contain;padding:2rem;border-radius:50%;background:rgba(255,255,255,0.1);backdrop-filter:blur(10px)">
+      <div class="hp-disc" data-tilt style="background:none;box-shadow:none">
+        <img class="hp-img" src="/static/img/logo.png" alt="شعار مؤسسة الدكتور عمر هشام الخيرية" style="object-fit:contain;width:100%;height:100%;filter:drop-shadow(0 20px 40px rgba(0,0,0,0.3))">
         <div class="hp-ground"></div>
       </div>
       <i class="fas fa-star fa-lg hp-sparkle" style="top:8%;inset-inline-start:18%"></i>
       <i class="fas fa-star hp-sparkle" style="bottom:30%;inset-inline-start:-2%;animation-delay:.7s"></i>
       <i class="fas fa-heart hp-sparkle" style="top:30%;inset-inline-end:6%;color:#ff5252;animation-delay:1.1s"></i>
-      <div class="hp-card c1"><i class="fas fa-mosque ic-emerald"></i><div><b>العطاء بإيمان</b><small>الإحسان للجميع</small></div></div>
-      <div class="hp-card c2"><i class="fas fa-hands-holding-heart ic-crimson"></i><div><b>مؤسسة خيرية</b><small>مرخّصة ومعتمدة</small></div></div>
-      <div class="hp-card c3"><i class="fas fa-seedling ic-emerald"></i><div><b>صدقة جارية</b><small>أثر يدوم</small></div></div>
     </div>
   </div>
   <div class="wave-divider">
