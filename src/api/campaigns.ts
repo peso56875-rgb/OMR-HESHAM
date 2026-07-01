@@ -54,7 +54,8 @@ campaigns.post('/add', async (c) => {
 
   if (error) {
     console.error('Error creating campaign:', error.message)
+    return c.redirect('/dashboard/campaigns?error=1')
   }
   
-  return c.redirect('/dashboard/campaigns')
+  return c.redirect('/dashboard/campaigns?success=1')
 })

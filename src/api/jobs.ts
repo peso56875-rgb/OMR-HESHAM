@@ -32,5 +32,10 @@ jobs.post('/add', async (c) => {
       is_active: body.is_active === 'true'
     }])
 
-  return c.redirect('/dashboard/jobs')
+  if (error) {
+    console.error('Error creating job:', error.message)
+    return c.redirect('/dashboard/jobs?error=1')
+  }
+
+  return c.redirect('/dashboard/jobs?success=1')
 })

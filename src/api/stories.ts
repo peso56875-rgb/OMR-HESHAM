@@ -31,5 +31,10 @@ stories.post('/add', async (c) => {
       image_url: body.image_url || null
     }])
 
-  return c.redirect('/dashboard/stories')
+  if (error) {
+    console.error('Insert error:', error.message)
+    return c.redirect('/dashboard/stories?error=1')
+  }
+
+  return c.redirect('/dashboard/stories?success=1')
 })

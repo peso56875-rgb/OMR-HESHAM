@@ -48,7 +48,8 @@ news.post('/add', async (c) => {
   if (error) {
     // Note: use standard logging in real app
     console.error('Error creating news:', error.message)
+    return c.redirect('/dashboard/news?error=1')
   }
   
-  return c.redirect('/dashboard/news')
+  return c.redirect('/dashboard/news?success=1')
 })

@@ -235,6 +235,8 @@
 
   /* ---------- Forms (demo handling) ---------- */
   $$('form').forEach(form => {
+    if (form.hasAttribute('action')) return; // Let real forms submit naturally
+    
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const redirect = form.dataset.redirect;

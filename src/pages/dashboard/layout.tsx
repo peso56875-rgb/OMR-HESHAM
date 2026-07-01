@@ -48,5 +48,18 @@ export const dashboardLayout = (active: string, title: string, content: string) 
   </div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="/static/app.js"></script>
+  <script>
+    (function(){
+      const p = new URLSearchParams(window.location.search);
+      if(p.get('success')==='1') {
+        setTimeout(function(){ if(window.__toast) window.__toast('تمت الإضافة بنجاح ✅'); }, 500);
+        history.replaceState(null,'', window.location.pathname);
+      }
+      if(p.get('error')) {
+        setTimeout(function(){ if(window.__toast) window.__toast('حدث خطأ أثناء الإضافة. تأكد من البيانات وحاول مجدداً ❌'); }, 500);
+        history.replaceState(null,'', window.location.pathname);
+      }
+    })();
+  </script>
 </body>
 </html>`

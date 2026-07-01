@@ -32,5 +32,10 @@ events.post('/add', async (c) => {
       image_url: body.image_url || null
     }])
 
-  return c.redirect('/dashboard/events')
+  if (error) {
+    console.error('Error creating event:', error.message)
+    return c.redirect('/dashboard/events?error=1')
+  }
+
+  return c.redirect('/dashboard/events?success=1')
 })
