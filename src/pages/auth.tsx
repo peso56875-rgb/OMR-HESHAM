@@ -36,6 +36,8 @@ export const loginPage = () => shell('تسجيل الدخول', `
   <h1 class="h-lg" style="margin-bottom:.4rem">أهلاً بك في المؤسسة 👋</h1>
   <p style="color:var(--muted);margin-bottom:2rem">سجّل دخولك لمتابعة أثرك أو تابع كضيف.</p>
   
+  <div id="authError" style="display:none;background:rgba(231,76,60,.12);color:#c0392b;padding:.8rem 1.2rem;border-radius:.6rem;margin-bottom:1.2rem;font-weight:600;font-size:.9rem;text-align:center"></div>
+
   <div style="display:flex;flex-direction:column;gap:1rem">
     <a href="/api/auth/google" class="btn btn-primary btn-block btn-lg magnetic" style="display:flex;align-items:center;justify-content:center;gap:.8rem;background:#fff;color:#333;border:1px solid #ddd">
       <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style="width:24px;height:24px">
@@ -48,8 +50,27 @@ export const loginPage = () => shell('تسجيل الدخول', `
       <span style="flex:1;height:1px;background:var(--ink-100)"></span>
     </div>
     
-    <a href="/dashboard" class="btn btn-ghost btn-block btn-lg">
-      <i class="fas fa-user-astronaut"></i> المتابعة كضيف
+    <a href="/" class="btn btn-ghost btn-block btn-lg">
+      <i class="fas fa-home"></i> العودة للرئيسية
     </a>
   </div>
+
+  <script>
+    (function(){
+      var p = new URLSearchParams(window.location.search);
+      var e = p.get('error');
+      if(e) {
+        var box = document.getElementById('authError');
+        var msgs = {
+          'unauthorized': '⚠️ يرجى تسجيل الدخول أولاً للوصول إلى لوحة التحكم.',
+          'not_admin': '🚫 ليس لديك صلاحية الوصول إلى لوحة التحكم. تواصل مع المدير.',
+          'cancelled': '↩️ تم إلغاء عملية تسجيل الدخول.',
+          'oauth_failed': '❌ حدث خطأ أثناء الاتصال بـ Google. حاول مرة أخرى.'
+        };
+        box.textContent = msgs[e] || 'حدث خطأ غير متوقع.';
+        box.style.display = 'block';
+        history.replaceState(null, '', '/login');
+      }
+    })();
+  </script>
 `)

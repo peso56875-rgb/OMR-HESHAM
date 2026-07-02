@@ -13,7 +13,8 @@ const dashNav = (active: string) => `
     <a href="/dashboard/events" class="${active === 'events' ? 'active' : ''}"><i class="fas fa-calendar-star"></i> الفعاليات</a>
     <a href="/dashboard/stories" class="${active === 'stories' ? 'active' : ''}"><i class="fas fa-star"></i> قصص النجاح</a>
     <a href="/dashboard/jobs" class="${active === 'jobs' ? 'active' : ''}"><i class="fas fa-briefcase"></i> الوظائف</a>
-    <a href="/login" style="margin-top:1.5rem;color:#ff8a80"><i class="fas fa-right-from-bracket"></i> تسجيل الخروج</a>
+    <a href="/dashboard/users" class="${active === 'users' ? 'active' : ''}"><i class="fas fa-users-gear"></i> المسجلين</a>
+    <a href="/api/auth/logout" style="margin-top:1.5rem;color:#ff8a80"><i class="fas fa-right-from-bracket"></i> تسجيل الخروج</a>
   </nav>
 </aside>`
 

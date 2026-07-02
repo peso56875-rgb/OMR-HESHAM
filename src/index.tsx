@@ -26,6 +26,7 @@ import { dashNews } from './pages/dashboard/news'
 import { dashEvents } from './pages/dashboard/events'
 import { dashStories } from './pages/dashboard/stories'
 import { dashJobs } from './pages/dashboard/jobs'
+import { dashUsers } from './pages/dashboard/users'
 import { loginPage } from './pages/auth'
 
 const app = new Hono()
@@ -84,7 +85,7 @@ app.get('/faq', (c) => c.html(page({ title: 'الأسئلة الشائعة', act
 app.get('/contact', (c) => c.html(page({ title: 'تواصل معنا', active: 'more' }, contactPage())))
 
 // Dashboard Protection Middleware
-app.use('/dashboard/*', async (c, next) => {
+const dashboardGuard = async (c: any, next: any) => {
   const supabase = getSupabaseFromContext(c)
   const token = getCookie(c, 'sb-access-token')
   
@@ -108,7 +109,9 @@ app.use('/dashboard/*', async (c, next) => {
   }
 
   await next()
-})
+}
+app.use('/dashboard', dashboardGuard)
+app.use('/dashboard/*', dashboardGuard)
 
 // Dashboard Routes
 app.get('/dashboard', async (c) => {
@@ -184,6 +187,37 @@ app.get('/dashboard/jobs', async (c) => {
   ])
   return c.html(dashJobs(jobs || [], apps || []))
 })
+
+app.get('/dashboard/users', async (c) => {
+  const supabase = getSupabaseFromContext(c)
+  const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
+  return c.html(dashUsers(data || []))
+})
+
+// API: Change user role (admin only)
+app.post('/api/users/:id/role', async (c) => {
+  const supabase = getSupabaseFromContext(c)
+  const token = getCookie(c, 'sb-access-token')
+  if (!token) return c.redirect('/login?error=unauthorized')
+
+  const { data: { user } } = await supabase.auth.getUser(token)
+  if (!user) return c.redirect('/login?error=unauthorized')
+
+  const { data: adminProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (adminProfile?.role !== 'admin') return c.redirect('/login?error=not_admin')
+
+  const targetId = c.req.param('id')
+  const body = await c.req.parseBody()
+  const newRole = body.role as string
+
+  if (!['admin', 'user'].includes(newRole)) {
+    return c.redirect('/dashboard/users?error=invalid_role')
+  }
+
+  await supabase.from('profiles').update({ role: newRole }).eq('id', targetId)
+  return c.redirect('/dashboard/users?success=1')
+})
+
 app.get('/login', (c) => c.html(loginPage()))
 
 // 404
