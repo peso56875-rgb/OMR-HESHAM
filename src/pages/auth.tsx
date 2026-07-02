@@ -57,6 +57,23 @@ export const loginPage = () => shell('تسجيل الدخول', `
 
   <script>
     (function(){
+      // 1. Check for OAuth hash fragment (Implicit Flow)
+      var hash = window.location.hash.substring(1);
+      var params = new URLSearchParams(hash);
+      var accessToken = params.get('access_token');
+      var refreshToken = params.get('refresh_token');
+
+      if (accessToken && refreshToken) {
+        // Set cookies valid for 7 days
+        document.cookie = "sb-access-token=" + accessToken + "; path=/; max-age=604800";
+        document.cookie = "sb-refresh-token=" + refreshToken + "; path=/; max-age=604800";
+        // Clean URL and redirect to dashboard
+        window.location.hash = '';
+        window.location.href = '/dashboard';
+        return; // Stop execution
+      }
+
+      // 2. Check for errors
       var p = new URLSearchParams(window.location.search);
       var e = p.get('error');
       if(e) {
