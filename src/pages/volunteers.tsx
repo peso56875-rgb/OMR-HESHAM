@@ -1,6 +1,6 @@
 import { pageHero, ctaBanner } from '../layout'
 
-export const volunteersPage = (success = false) => pageHero(
+export const volunteersPage = (success = false, errorMsg: string | null = null) => pageHero(
   'كن متطوّعًا معنا',
   'وقتك ومهاراتك هدايا لا تُقدّر بثمن. انضمّ إلى أسرة المتطوّعين وكن جزءًا من صناعة الأثر.',
   'التطوّع'
@@ -47,6 +47,7 @@ export const volunteersPage = (success = false) => pageHero(
       <div class="form-card reveal d1">
         <h3 class="h-lg" style="margin-bottom:1.2rem">استمارة التطوّع</h3>
         ${success ? '<div style="background:var(--emerald-600);color:#fff;padding:1rem;border-radius:.5rem;margin-bottom:1.5rem;text-align:center;font-weight:700"><i class="fas fa-check-circle"></i> شكرًا لك! تم تسجيل طلبك بنجاح وسنتواصل معك قريبًا.</div>' : ''}
+        ${errorMsg ? `<div style="background:#e53935;color:#fff;padding:1rem;border-radius:.5rem;margin-bottom:1.5rem;text-align:center;font-weight:700"><i class="fas fa-exclamation-circle"></i> حدث خطأ: ${errorMsg}</div>` : ''}
         <form action="/api/volunteers" method="POST">
           <div class="grid cols-2" style="gap:0 1rem">
             <div class="field"><label>الاسم <span class="req">*</span></label><input name="full_name" required placeholder="اسمك الكامل"></div>

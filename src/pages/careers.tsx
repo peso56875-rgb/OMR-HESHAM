@@ -1,6 +1,6 @@
 import { pageHero, ctaBanner } from '../layout'
 
-export const careersPage = (jobs: any[] = [], success = false) => pageHero(
+export const careersPage = (jobs: any[] = [], success = false, errorMsg: string | null = null) => pageHero(
   'انضمّ إلى فريقنا',
   'ابنِ مسيرتك المهنية في بيئةٍ ملهمة، واجعل عملك اليومي رسالةً إنسانية تترك أثرًا.',
   'الوظائف'
@@ -63,6 +63,7 @@ export const careersPage = (jobs: any[] = [], success = false) => pageHero(
         <p style="color:var(--muted)">املأ النموذج وأرفق سيرتك الذاتية وسنتواصل معك.</p>
       </div>
       ${success ? '<div style="background:var(--emerald-600);color:#fff;padding:1rem;border-radius:.5rem;margin-bottom:1.5rem;text-align:center;font-weight:700"><i class="fas fa-check-circle"></i> تم استلام طلبك بنجاح، سنتواصل معك قريبًا 📩</div>' : ''}
+      ${errorMsg ? `<div style="background:#e53935;color:#fff;padding:1rem;border-radius:.5rem;margin-bottom:1.5rem;text-align:center;font-weight:700"><i class="fas fa-exclamation-circle"></i> حدث خطأ: ${errorMsg}</div>` : ''}
       <form action="/api/jobs/apply" method="POST">
         <div class="grid cols-2" style="gap:0 1rem">
           <div class="field"><label>الاسم الكامل <span class="req">*</span></label><input name="full_name" required placeholder="اسمك"></div>

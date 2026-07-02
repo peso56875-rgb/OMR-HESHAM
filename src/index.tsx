@@ -95,12 +95,12 @@ app.get('/events', async (c) => {
 })
 app.get('/gallery', (c) => c.html(page({ user: (c as any).get('user'), title: 'معرض الصور', active: 'work' }, galleryPage())))
 app.get('/donate', (c) => c.html(page({ user: (c as any).get('user'), title: 'تبرّع الآن', active: 'join' }, donatePage())))
-app.get('/volunteers', (c) => c.html(page({ user: (c as any).get('user'), title: 'التطوّع', active: 'join' }, volunteersPage(c.req.query('success') === '1'))))
+app.get('/volunteers', (c) => c.html(page({ user: (c as any).get('user'), title: 'التطوّع', active: 'join' }, volunteersPage(c.req.query('success') === '1', c.req.query('error')))))
 
 app.get('/careers', async (c) => {
   const supabase = getSupabaseFromContext(c)
   const { data: jobs } = await supabase.from('jobs').select('*').eq('is_active', true).order('created_at', { ascending: false })
-  return c.html(page({ user: (c as any).get('user'), title: 'الوظائف', active: 'join' }, careersPage(jobs || [], c.req.query('success') === '1')))
+  return c.html(page({ user: (c as any).get('user'), title: 'الوظائف', active: 'join' }, careersPage(jobs || [], c.req.query('success') === '1', c.req.query('error'))))
 })
 
 
@@ -137,7 +137,7 @@ app.get('/profile', async (c) => {
   return c.html(page({ user: sessionUser, title: 'حسابي الشخصي' }, profilePage(sessionUser, donations || [], volunteers?.[0])))
 })
 app.get('/faq', (c) => c.html(page({ user: (c as any).get('user'), title: 'الأسئلة الشائعة', active: 'more' }, faqPage())))
-app.get('/contact', (c) => c.html(page({ user: (c as any).get('user'), title: 'تواصل معنا', active: 'more' }, contactPage(c.req.query('success') === '1'))))
+app.get('/contact', (c) => c.html(page({ user: (c as any).get('user'), title: 'تواصل معنا', active: 'more' }, contactPage(c.req.query('success') === '1', c.req.query('error')))))
 
 
 

@@ -62,7 +62,7 @@ jobs.post('/apply', async (c) => {
     return c.json({ error: 'Missing required fields' }, 400)
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('job_applications')
     .insert([{
       job_id: job_id || null,
@@ -73,15 +73,13 @@ jobs.post('/apply', async (c) => {
       cv_url,
       status: 'pending'
     }])
-    .select()
-    .single()
 
   // If form submission, redirect back
   if (!contentType.includes('application/json')) {
-    if (error) return c.redirect('/careers?error=1')
+    if (error) return c.redirect('/careers?error=' + encodeURIComponent(error.message))
     return c.redirect('/careers?success=1#applyForm')
   }
 
   if (error) return c.json({ error: error.message }, 400)
-  return c.json({ data, message: 'Application submitted successfully.' })
+  return c.json({ message: 'Application submitted successfully.' })
 })

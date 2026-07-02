@@ -25,7 +25,7 @@ contacts.post('/', async (c) => {
     return c.json({ error: 'Missing required fields' }, 400)
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('contacts')
     .insert([{
       name,
@@ -35,15 +35,13 @@ contacts.post('/', async (c) => {
       message,
       status: 'unread'
     }])
-    .select()
-    .single()
 
   // If form submission, redirect back
   if (!contentType.includes('application/json')) {
-    if (error) return c.redirect('/contact?error=1')
+    if (error) return c.redirect('/contact?error=' + encodeURIComponent(error.message))
     return c.redirect('/contact?success=1')
   }
 
   if (error) return c.json({ error: error.message }, 400)
-  return c.json({ data, message: 'Message sent successfully.' })
+  return c.json({ message: 'Message sent successfully.' })
 })

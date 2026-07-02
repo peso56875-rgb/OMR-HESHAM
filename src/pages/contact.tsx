@@ -1,6 +1,6 @@
 import { pageHero } from '../layout'
 
-export const contactPage = (success = false) => pageHero(
+export const contactPage = (success = false, errorMsg: string | null = null) => pageHero(
   'تواصل معنا',
   'نحن هنا لسماعك. سواء كان لديك استفسار، اقتراح، أو رغبة في الشراكة — لا تتردّد في مراسلتنا.',
   'تواصل معنا'
@@ -24,6 +24,7 @@ export const contactPage = (success = false) => pageHero(
         <h2 class="h-lg" style="margin-bottom:.4rem">أرسل لنا رسالة</h2>
         <p style="color:var(--muted);margin-bottom:1.6rem">سنردّ عليك خلال ٢٤–٤٨ ساعة عمل.</p>
         ${success ? '<div style="background:var(--emerald-600);color:#fff;padding:1rem;border-radius:.5rem;margin-bottom:1.5rem;text-align:center;font-weight:700"><i class="fas fa-check-circle"></i> تم إرسال رسالتك بنجاح، شكرًا لتواصلك 💌</div>' : ''}
+        ${errorMsg ? `<div style="background:#e53935;color:#fff;padding:1rem;border-radius:.5rem;margin-bottom:1.5rem;text-align:center;font-weight:700"><i class="fas fa-exclamation-circle"></i> حدث خطأ: ${errorMsg}</div>` : ''}
         <form action="/api/contact" method="POST">
           <div class="grid cols-2" style="gap:0 1rem">
             <div class="field"><label>الاسم <span class="req">*</span></label><input name="name" required placeholder="اسمك الكريم"></div>

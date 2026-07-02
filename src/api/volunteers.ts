@@ -37,7 +37,14 @@ volunteers.post('/', async (c) => {
     return c.json({ error: 'Missing required fields' }, 400)
   }
 
-  const { data, error } = await supabase
+  // Set the session on the supabase client so that RLS knows who is making the request if authenticated
+  if (token) {
+    try {
+      await supabase.auth.setSession({ access_token: token, refresh_token: '' })
+    } catch(e) {}
+  }
+
+  const { error } = await supabase
     .from('volunteers')
     .insert([{
       profile_id,
@@ -49,17 +56,15 @@ volunteers.post('/', async (c) => {
       skills,
       status: 'pending'
     }])
-    .select()
-    .single()
 
   // If form submission, redirect back
   if (!contentType.includes('application/json')) {
-    if (error) return c.redirect('/volunteers?error=1')
+    if (error) return c.redirect('/volunteers?error=' + encodeURIComponent(error.message))
     return c.redirect('/volunteers?success=1#volForm')
   }
 
   if (error) return c.json({ error: error.message }, 400)
-  return c.json({ data, message: 'Application submitted successfully.' })
+  return c.json({ message: 'Application submitted successfully.' })
 })
 
 // Get my volunteer applications (Requires Auth)
