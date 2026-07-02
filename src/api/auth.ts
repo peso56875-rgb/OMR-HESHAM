@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
 import { getSupabaseFromContext } from '../lib/supabase'
 
+import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
+
 export const auth = new Hono()
 
 auth.get('/google', async (c) => {
@@ -26,16 +28,30 @@ auth.get('/google', async (c) => {
 })
 
 auth.get('/callback', async (c) => {
-  // Since we are using standard supabase-js without an SSR package setup for cookies,
-  // the callback will actually be handled by Supabase and the hash fragment will 
-  // be sent to the browser. However, for a simple implementation, if the code 
-  // query param exists, we can try to exchange it. 
-  // In typical Supabase setups without SSR, we just redirect to the dashboard.
+  const supabase = getSupabaseFromContext(c)
+  const code = c.req.query('code')
+  const error = c.req.query('error')
+
+  // If the user canceled the login or there was an OAuth error
+  if (error) {
+    return c.redirect('/login?error=cancelled')
+  }
+
+  // Exchange the code for a session
+  if (code) {
+    const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
+    
+    if (!sessionError && data.session) {
+      setCookie(c, 'sb-access-token', data.session.access_token, { path: '/', maxAge: 604800, httpOnly: true })
+      setCookie(c, 'sb-refresh-token', data.session.refresh_token, { path: '/', maxAge: 604800, httpOnly: true })
+    }
+  }
+
   return c.redirect('/dashboard')
 })
 
 auth.get('/logout', async (c) => {
-  // Since session is managed client-side or implicitly in this setup,
-  // we just redirect to the home page or login page
+  deleteCookie(c, 'sb-access-token', { path: '/' })
+  deleteCookie(c, 'sb-refresh-token', { path: '/' })
   return c.redirect('/login')
 })

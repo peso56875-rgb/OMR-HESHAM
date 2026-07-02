@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { getCookie } from 'hono/cookie'
 import { api } from './api'
 import { getSupabaseFromContext } from './lib/supabase'
 import { page } from './layout'
@@ -82,7 +83,33 @@ app.get('/transparency', (c) => c.html(page({ title: 'الشفافية الما�
 app.get('/faq', (c) => c.html(page({ title: 'الأسئلة الشائعة', active: 'more' }, faqPage())))
 app.get('/contact', (c) => c.html(page({ title: 'تواصل معنا', active: 'more' }, contactPage())))
 
-// Standalone-layout pages
+// Dashboard Protection Middleware
+app.use('/dashboard/*', async (c, next) => {
+  const supabase = getSupabaseFromContext(c)
+  const token = getCookie(c, 'sb-access-token')
+  
+  if (!token) {
+    return c.redirect('/login?error=unauthorized')
+  }
+
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  if (error || !user) {
+    return c.redirect('/login?error=unauthorized')
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin') {
+    return c.redirect('/login?error=not_admin')
+  }
+
+  await next()
+})
+
 // Dashboard Routes
 app.get('/dashboard', async (c) => {
   const supabase = getSupabaseFromContext(c)
