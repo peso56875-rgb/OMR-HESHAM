@@ -69,7 +69,7 @@ export const donatePage = () => pageHero(
           <div style="background:var(--bg-muted);padding:1.2rem;border-radius:.8rem;margin-bottom:1rem">
             <p style="margin-bottom:.5rem"><strong>البنك:</strong> البنك الزراعي المصري</p>
             <p style="margin-bottom:.5rem"><strong>رقم الحساب:</strong></p>
-            <div style="background:var(--ink-900);color:#fff;padding:.8rem 1rem;border-radius:.5rem;font-family:monospace;font-size:1.1rem;text-align:center;letter-spacing:2px;direction:ltr" onclick="navigator.clipboard.writeText('10010397596901014');if(window.__toast) window.__toast('تم نسخ رقم الحساب ✅');" style="cursor:pointer">
+            <div style="background:var(--ink-100);color:var(--ink-900);border:1px dashed var(--ink-300);padding:.8rem 1rem;border-radius:.5rem;font-family:monospace;font-size:1.1rem;text-align:center;letter-spacing:2px;direction:ltr" onclick="navigator.clipboard.writeText('10010397596901014');if(window.__toast) window.__toast('تم نسخ رقم الحساب ✅');" style="cursor:pointer">
               10010397596901014
             </div>
             <p style="text-align:center;margin-top:.5rem;color:var(--muted);font-size:.8rem">اضغط للنسخ</p>

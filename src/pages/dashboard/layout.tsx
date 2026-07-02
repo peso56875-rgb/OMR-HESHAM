@@ -10,7 +10,7 @@ const dashNav = (active: string) => `
     <a href="/dashboard/volunteers" class="${active === 'volunteers' ? 'active' : ''}"><i class="fas fa-hands-helping"></i> المتطوّعون</a>
     <a href="/dashboard/contacts" class="${active === 'contacts' ? 'active' : ''}"><i class="fas fa-envelope"></i> رسائل التواصل</a>
     <a href="/dashboard/news" class="${active === 'news' ? 'active' : ''}"><i class="fas fa-newspaper"></i> الأخبار والمقالات</a>
-    <a href="/dashboard/events" class="${active === 'events' ? 'active' : ''}"><i class="fas fa-calendar-star"></i> الفعاليات</a>
+    <a href="/dashboard/events" class="${active === 'events' ? 'active' : ''}"><i class="fas fa-calendar-check"></i> الفعاليات</a>
     <a href="/dashboard/stories" class="${active === 'stories' ? 'active' : ''}"><i class="fas fa-star"></i> قصص النجاح</a>
     <a href="/dashboard/jobs" class="${active === 'jobs' ? 'active' : ''}"><i class="fas fa-briefcase"></i> الوظائف</a>
     <a href="/dashboard/users" class="${active === 'users' ? 'active' : ''}"><i class="fas fa-users-gear"></i> المسجلين</a>

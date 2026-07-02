@@ -30,7 +30,7 @@ const NAV = [
       { href: '/campaigns', label: 'الحملات', icon: 'fa-bullhorn' },
       { href: '/achievements', label: 'الإنجازات', icon: 'fa-trophy' },
       { href: '/success-stories', label: 'قصص النجاح', icon: 'fa-heart' },
-      { href: '/events', label: 'الفعاليات', icon: 'fa-calendar-star' },
+      { href: '/events', label: 'الفعاليات', icon: 'fa-calendar-check' },
       { href: '/gallery', label: 'معرض الصور', icon: 'fa-images' },
     ]
   },
