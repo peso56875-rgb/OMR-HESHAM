@@ -105,7 +105,7 @@ const dashboardGuard = async (c: any, next: any) => {
     .single()
 
   if (profile?.role !== 'admin') {
-    return c.redirect('/login?error=not_admin')
+    return c.redirect('/')
   }
 
   await next()
