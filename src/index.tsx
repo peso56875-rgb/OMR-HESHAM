@@ -186,22 +186,66 @@ app.use('/dashboard/*', dashboardGuard)
 app.get('/dashboard', async (c) => {
   const supabase = getSupabaseAdminFromContext(c)
   
-  const [{ count: cDonors }, { count: cCampaigns }, { count: cVolunteers }, { data: recentDonations }, { data: sumData }] = await Promise.all([
+  const [
+    { count: cDonations },
+    { count: cCampaigns },
+    { count: cVolunteers },
+    { count: cContacts },
+    { count: cUnreadContacts },
+    { count: cPendingVol },
+    { count: cSubscribers },
+    { count: cNews },
+    { count: cEvents },
+    { data: recentDonations },
+    { data: allDonations },
+  ] = await Promise.all([
     supabase.from('donations').select('*', { count: 'exact', head: true }),
     supabase.from('campaigns').select('*', { count: 'exact', head: true }),
     supabase.from('volunteers').select('*', { count: 'exact', head: true }),
-    supabase.from('donations').select('*').order('created_at', { ascending: false }).limit(5),
-    supabase.from('donations').select('amount')
+    supabase.from('contacts').select('*', { count: 'exact', head: true }),
+    supabase.from('contacts').select('*', { count: 'exact', head: true }).eq('status', 'unread'),
+    supabase.from('volunteers').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('newsletter_subscribers').select('*', { count: 'exact', head: true }),
+    supabase.from('news').select('*', { count: 'exact', head: true }),
+    supabase.from('events').select('*', { count: 'exact', head: true }),
+    supabase.from('donations').select('*').order('created_at', { ascending: false }).limit(7),
+    supabase.from('donations').select('amount, payment_method, created_at'),
   ])
 
   // Calculate total donations amount
-  const totalAmount = (sumData || []).reduce((sum: number, d: any) => sum + Number(d.amount || 0), 0)
+  const totalAmount = (allDonations || []).reduce((sum: number, d: any) => sum + Number(d.amount || 0), 0)
+
+  // Aggregate donations by month (last 12 months) for chart
+  const monthlyData: number[] = new Array(12).fill(0)
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  ;(allDonations || []).forEach((d: any) => {
+    const dt = new Date(d.created_at)
+    if (dt.getFullYear() === currentYear) {
+      monthlyData[dt.getMonth()] += Number(d.amount || 0)
+    }
+  })
+
+  // Aggregate donations by payment method for pie chart
+  const methodCounts: Record<string, number> = {}
+  ;(allDonations || []).forEach((d: any) => {
+    const m = d.payment_method || 'أخرى'
+    methodCounts[m] = (methodCounts[m] || 0) + Number(d.amount || 0)
+  })
 
   const stats = {
     total_donations: totalAmount,
     total_campaigns: cCampaigns || 0,
-    total_donors: cDonors || 0,
-    total_volunteers: cVolunteers || 0
+    total_donors: cDonations || 0,
+    total_volunteers: cVolunteers || 0,
+    total_contacts: cContacts || 0,
+    unread_contacts: cUnreadContacts || 0,
+    pending_volunteers: cPendingVol || 0,
+    total_subscribers: cSubscribers || 0,
+    total_news: cNews || 0,
+    total_events: cEvents || 0,
+    monthly_chart: monthlyData,
+    method_chart: methodCounts,
   }
   return c.html(dashOverview(stats, recentDonations || []))
 })

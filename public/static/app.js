@@ -375,6 +375,7 @@
     Chart.defaults.color = '#4b5b6e';
     const blue = '#1e88e5', emerald = '#43a047', gold = '#f57c00', crimson = '#e53935', grey = '#90a4ae';
 
+
     const spend = $('#spendChart');
     if (spend) new Chart(spend, {
       type: 'doughnut',
@@ -395,27 +396,6 @@
         options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#eceadf' } }, x: { grid: { display: false } } } }
       });
     }
-
-    const dd = $('#dashDonations');
-    if (dd) {
-      const ctx = dd.getContext('2d');
-      const g = ctx.createLinearGradient(0, 0, 0, 180);
-      g.addColorStop(0, 'rgba(67,160,71,.4)'); g.addColorStop(1, 'rgba(67,160,71,0)');
-      new Chart(dd, {
-        type: 'line',
-        data: { labels: ['ينا', 'فبر', 'مار', 'أبر', 'ماي', 'يون', 'يول', 'أغس', 'سبت', 'أكت', 'نوف', 'ديس'],
-          datasets: [{ data: [2100, 2400, 3100, 2800, 3600, 4200, 3900, 4500, 5100, 4800, 5600, 6200], borderColor: emerald, backgroundColor: g, fill: true, tension: .4, borderWidth: 3, pointRadius: 0, pointHoverRadius: 5 }] },
-        options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#eceadf' } }, x: { grid: { display: false } } } }
-      });
-    }
-
-    const ds = $('#dashSources');
-    if (ds) new Chart(ds, {
-      type: 'polarArea',
-      data: { labels: ['أفراد', 'شركات', 'تحويلات', 'فعاليات'],
-        datasets: [{ data: [52, 24, 14, 10], backgroundColor: ['rgba(30,136,229,.7)', 'rgba(67,160,71,.7)', 'rgba(245,124,0,.7)', 'rgba(229,57,53,.7)'], borderWidth: 0 }] },
-      options: { plugins: { legend: { position: 'bottom', labels: { padding: 12, font: { size: 12 } } } } }
-    });
   }
   initCharts();
 })();
