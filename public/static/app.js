@@ -69,12 +69,6 @@
     dashBurger.addEventListener('click', () => $('#dashSide').classList.toggle('open'));
   }
 
-  /* ---------- Lang toggle (demo) ---------- */
-  $('#langToggle') && $('#langToggle').addEventListener('click', function () {
-    this.textContent = this.textContent === 'EN' ? 'ع' : 'EN';
-    toast('قريبًا: النسخة الإنجليزية / English version coming soon');
-  });
-
   /* ---------- Reveal on scroll ---------- */
   const revealEls = $$('.reveal, .reveal-x, .reveal-scale');
   if (revealEls.length) {

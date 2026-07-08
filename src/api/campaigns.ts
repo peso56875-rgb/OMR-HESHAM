@@ -11,6 +11,7 @@ campaigns.get('/', async (c) => {
   const { data, error } = await supabase
     .from('campaigns')
     .select('*')
+    .eq('is_published', true)
     .order('created_at', { ascending: false })
 
   if (error) return c.json({ error: error.message }, 400)
@@ -26,6 +27,7 @@ campaigns.get('/:id', async (c) => {
     .from('campaigns')
     .select('*')
     .eq('id', id)
+    .eq('is_published', true)
     .single()
 
   if (error) return c.json({ error: error.message }, 400)

@@ -29,10 +29,10 @@ export const campaignsPage = (campaigns: any[] = []) => pageHero(
           ${c.is_urgent ? '<span class="urgency"><i class="fas fa-bolt"></i> عاجلة</span>' : ''}
         </div>
         <div class="campaign-body">
-          <h3>${c.title}</h3>
+          <h3><a href="/campaigns/${c.id}">${c.title}</a></h3>
           <p>${c.description}</p>
           <div class="campaign-foot">
-            <span class="chip chip-emerald"><i class="fas fa-seedling"></i> متاحة للدعم</span>
+            <a href="/campaigns/${c.id}" class="chip chip-emerald"><i class="fas fa-seedling"></i> التفاصيل</a>
             <a href="/donate?campaign=${c.id}" class="btn btn-primary btn-sm"><i class="fas fa-heart"></i> تبرّع</a>
           </div>
         </div>

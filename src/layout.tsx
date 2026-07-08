@@ -5,6 +5,8 @@ export interface PageOpts {
   title: string
   active?: string
   desc?: string
+  image?: string
+  canonical?: string
   user?: any
 }
 
@@ -88,7 +90,6 @@ export const nav = (active = '', user?: any) => {
       <div class="nav-cta">
         ${authLink}
         <button class="theme-btn" id="themeToggle" title="تبديل المظهر" aria-label="تبديل المظهر"><i class="fas fa-moon"></i></button>
-        <button class="lang-btn" id="langToggle" title="English">EN</button>
         <a href="/donate" class="btn btn-gold magnetic"><i class="fas fa-hand-holding-heart"></i> تبرّع الآن</a>
       </div>
       <button class="burger" id="burger" aria-label="القائمة"><span></span></button>
@@ -193,6 +194,25 @@ export const page = (opts: PageOpts, content: string) => `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${opts.title} · مؤسسة الدكتور عمر هشام الخيرية</title>
   <meta name="description" content="${opts.desc || 'مؤسسة الدكتور عمر هشام الخيرية — العطاء بإيمان والإحسان للجميع'}">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ar_EG">
+  <meta property="og:site_name" content="مؤسسة الدكتور عمر هشام الخيرية">
+  <meta property="og:title" content="${opts.title} · مؤسسة الدكتور عمر هشام الخيرية">
+  <meta property="og:description" content="${opts.desc || 'مؤسسة الدكتور عمر هشام الخيرية — العطاء بإيمان والإحسان للجميع'}">
+  <meta property="og:image" content="${opts.image || '/static/img/og-image.png'}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${opts.title} · مؤسسة الدكتور عمر هشام الخيرية">
+  <meta name="twitter:description" content="${opts.desc || 'مؤسسة الدكتور عمر هشام الخيرية — العطاء بإيمان والإحسان للجميع'}">
+  <meta name="twitter:image" content="${opts.image || '/static/img/og-image.png'}">
+  ${opts.canonical ? `<link rel="canonical" href="${opts.canonical}">` : ''}
+  <script type="application/ld+json">${JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'NGO',
+    name: 'مؤسسة الدكتور عمر هشام الخيرية',
+    url: 'https://omarhesham.org/',
+    logo: 'https://omarhesham.org/static/img/logo.png',
+    areaServed: 'Egypt'
+  })}</script>
   <link rel="icon" type="image/png" href="${LOGO}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" rel="stylesheet">

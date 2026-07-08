@@ -18,9 +18,9 @@ export const eventsPage = (events: any[] = []) => pageHero(
             <p>${events[0].description}</p>
             <div style="display:flex;gap:1.4rem;flex-wrap:wrap;margin:.6rem 0">
               <span class="chip chip-blue"><i class="fas fa-calendar"></i> موعد يعلن لاحقًا</span>
-              <span class="chip"><i class="fas fa-location-dot"></i> ${events[0].location}</span>
+              <span class="chip"><i class="fas fa-location-dot"></i> ${events[0].place || 'المكان يعلن لاحقًا'}</span>
             </div>
-            <a href="#" class="btn btn-primary magnetic"><i class="fas fa-ticket"></i> احجز مقعدك</a>
+            <a href="/events/${events[0].id}" class="btn btn-primary magnetic"><i class="fas fa-ticket"></i> تفاصيل الفعالية</a>
           </div>
         </article>
         ` : '<p style="color:var(--muted)">لا توجد فعاليات مميزة حالياً.</p>'}
@@ -36,9 +36,9 @@ export const eventsPage = (events: any[] = []) => pageHero(
               <div style="flex:1">
                 <span class="chip chip-blue" style="margin-bottom:.4rem">فعالية</span>
                 <h3 style="font-size:1.08rem">${e.title}</h3>
-                <p style="color:var(--muted);font-size:.88rem"><i class="fas fa-location-dot"></i> ${e.location}</p>
+                <p style="color:var(--muted);font-size:.88rem"><i class="fas fa-location-dot"></i> ${e.place || 'المكان يعلن لاحقًا'}</p>
               </div>
-              <a href="#" class="btn btn-ghost btn-sm">التفاصيل</a>
+              <a href="/events/${e.id}" class="btn btn-ghost btn-sm">التفاصيل</a>
             </div>`).join('') : '<p style="text-align:center;color:var(--muted);padding:2rem">لا توجد فعاليات قادمة حالياً.</p>'}
         </div>
       </div>

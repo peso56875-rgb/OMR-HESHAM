@@ -11,6 +11,7 @@ events.get('/', async (c) => {
   const { data, error } = await supabase
     .from('events')
     .select('*')
+    .eq('is_published', true)
     .order('event_date', { ascending: false })
 
   if (error) return c.json({ error: error.message }, 400)

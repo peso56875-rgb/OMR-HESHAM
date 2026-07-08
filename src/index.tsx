@@ -17,6 +17,7 @@ import { faqPage } from './pages/faq'
 import { storiesPage } from './pages/stories'
 import { transparencyPage } from './pages/transparency'
 import { careersPage } from './pages/careers'
+import { campaignDetailPage, eventDetailPage, newsDetailPage } from './pages/details'
 import { dashOverview } from './pages/dashboard/overview'
 import { dashCampaigns } from './pages/dashboard/campaigns'
 import { dashDonations } from './pages/dashboard/donations'
@@ -81,9 +82,9 @@ app.get('/', async (c) => {
     { data: stories },
     // Later we can add a stats query here
   ] = await Promise.all([
-    supabase.from('campaigns').select('*').order('created_at', { ascending: false }).limit(3),
-    supabase.from('news').select('*').order('publish_date', { ascending: false }).limit(3),
-    supabase.from('stories').select('*').order('created_at', { ascending: false }).limit(3)
+    supabase.from('campaigns').select('*').eq('is_published', true).order('created_at', { ascending: false }).limit(3),
+    supabase.from('news').select('*').eq('is_published', true).order('publish_date', { ascending: false }).limit(3),
+    supabase.from('stories').select('*').eq('is_published', true).order('created_at', { ascending: false }).limit(3)
   ])
 
   return c.html(page({ user: (c as any).get('user'), title: 'الرئيسية', active: 'home', desc: 'مؤسسة الدكتور عمر هشام الخيرية — نزرع الأمل ونصنع حياةً كريمة عبر برامج الإغاثة والصحة والتعليم.' }, home({ campaigns, news, stories })))
@@ -91,19 +92,43 @@ app.get('/', async (c) => {
 app.get('/about', (c) => c.html(page({ user: (c as any).get('user'), title: 'من نحن', active: 'about' }, about())))
 app.get('/campaigns', async (c) => {
   const supabase = getSupabaseFromContext(c)
-  const { data: campaigns } = await supabase.from('campaigns').select('*').order('created_at', { ascending: false })
+  const { data: campaigns } = await supabase.from('campaigns').select('*').eq('is_published', true).order('created_at', { ascending: false })
   return c.html(page({ user: (c as any).get('user'), title: 'الحملات', active: 'work' }, campaignsPage(campaigns || [])))
+})
+app.get('/campaigns/:id', async (c) => {
+  const supabase = getSupabaseFromContext(c)
+  const { data, error } = await supabase.from('campaigns').select('*').eq('id', c.req.param('id')).eq('is_published', true).single()
+  if (error || !data) return c.notFound()
+  return c.html(page({
+    user: (c as any).get('user'),
+    title: data.title,
+    active: 'work',
+    desc: data.description || 'تفاصيل حملة من حملات مؤسسة الدكتور عمر هشام الخيرية',
+    image: data.image_url
+  }, campaignDetailPage(data)))
 })
 app.get('/achievements', (c) => c.html(page({ user: (c as any).get('user'), title: 'الإنجازات', active: 'work' }, achievementsPage())))
 app.get('/success-stories', async (c) => {
   const supabase = getSupabaseFromContext(c)
-  const { data: stories } = await supabase.from('stories').select('*').order('created_at', { ascending: false })
+  const { data: stories } = await supabase.from('stories').select('*').eq('is_published', true).order('created_at', { ascending: false })
   return c.html(page({ user: (c as any).get('user'), title: 'قصص النجاح', active: 'work' }, storiesPage(stories || [])))
 })
 app.get('/events', async (c) => {
   const supabase = getSupabaseFromContext(c)
-  const { data: events } = await supabase.from('events').select('*').order('event_date', { ascending: true })
+  const { data: events } = await supabase.from('events').select('*').eq('is_published', true).order('event_date', { ascending: true })
   return c.html(page({ user: (c as any).get('user'), title: 'الفعاليات', active: 'work' }, eventsPage(events || [])))
+})
+app.get('/events/:id', async (c) => {
+  const supabase = getSupabaseFromContext(c)
+  const { data, error } = await supabase.from('events').select('*').eq('id', c.req.param('id')).eq('is_published', true).single()
+  if (error || !data) return c.notFound()
+  return c.html(page({
+    user: (c as any).get('user'),
+    title: data.title,
+    active: 'work',
+    desc: data.description || 'تفاصيل فعالية من فعاليات مؤسسة الدكتور عمر هشام الخيرية',
+    image: data.image_url
+  }, eventDetailPage(data)))
 })
 app.get('/gallery', (c) => c.html(page({ user: (c as any).get('user'), title: 'معرض الصور', active: 'work' }, galleryPage())))
 app.get('/donate', (c) => c.html(page({ user: (c as any).get('user'), title: 'تبرّع الآن', active: 'join' }, donatePage())))
@@ -111,15 +136,27 @@ app.get('/volunteers', (c) => c.html(page({ user: (c as any).get('user'), title:
 
 app.get('/careers', async (c) => {
   const supabase = getSupabaseFromContext(c)
-  const { data: jobs } = await supabase.from('jobs').select('*').eq('is_active', true).order('created_at', { ascending: false })
+  const { data: jobs } = await supabase.from('jobs').select('*').eq('is_active', true).eq('is_published', true).order('created_at', { ascending: false })
   return c.html(page({ user: (c as any).get('user'), title: 'الوظائف', active: 'join' }, careersPage(jobs || [], c.req.query('success') === '1', c.req.query('error'))))
 })
 
 
 app.get('/news', async (c) => {
   const supabase = getSupabaseFromContext(c)
-  const { data: news } = await supabase.from('news').select('*').order('publish_date', { ascending: false })
+  const { data: news } = await supabase.from('news').select('*').eq('is_published', true).order('publish_date', { ascending: false })
   return c.html(page({ user: (c as any).get('user'), title: 'المركز الإعلامي', active: 'news' }, newsPage(news || [])))
+})
+app.get('/news/:id', async (c) => {
+  const supabase = getSupabaseFromContext(c)
+  const { data, error } = await supabase.from('news').select('*').eq('id', c.req.param('id')).eq('is_published', true).single()
+  if (error || !data) return c.notFound()
+  return c.html(page({
+    user: (c as any).get('user'),
+    title: data.title,
+    active: 'news',
+    desc: data.excerpt || data.content || 'خبر من أخبار مؤسسة الدكتور عمر هشام الخيرية',
+    image: data.image_url
+  }, newsDetailPage(data)))
 })
 app.get('/transparency', (c) => c.html(page({ user: (c as any).get('user'), title: 'الشفافية المالية', active: 'more' }, transparencyPage())))
 

@@ -38,7 +38,8 @@ donations.post('/', async (c) => {
       donor_phone,
       donor_email: donor_email || null,
       payment_method,
-      status: 'completed' // Direct completed donation in this version (no payment gateway check needed as per user request)
+      payment_status: 'pending',
+      status: 'pending'
     }])
     .select()
     .single()
@@ -84,7 +85,8 @@ donations.post('/add', async (c) => {
       donor_phone,
       donor_email: body.donor_email || null,
       payment_method: body.payment_method || 'card',
-      status: 'completed'
+      payment_status: 'pending',
+      status: 'pending'
     }])
 
   if (error) {

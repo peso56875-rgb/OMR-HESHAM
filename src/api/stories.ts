@@ -11,6 +11,7 @@ stories.get('/', async (c) => {
   const { data, error } = await supabase
     .from('stories')
     .select('*')
+    .eq('is_published', true)
     .order('created_at', { ascending: false })
 
   if (error) return c.json({ error: error.message }, 400)

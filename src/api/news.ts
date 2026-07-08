@@ -11,6 +11,7 @@ news.get('/', async (c) => {
   const { data, error } = await supabase
     .from('news')
     .select('*')
+    .eq('is_published', true)
     .order('publish_date', { ascending: false })
 
   if (error) return c.json({ error: error.message }, 400)
@@ -26,6 +27,7 @@ news.get('/:id', async (c) => {
     .from('news')
     .select('*')
     .eq('id', id)
+    .eq('is_published', true)
     .single()
 
   if (error) return c.json({ error: error.message }, 400)
