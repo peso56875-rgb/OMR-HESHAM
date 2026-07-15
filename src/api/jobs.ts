@@ -38,7 +38,7 @@ jobs.post('/add', adminMiddleware, async (c) => {
       job_type: body.job_type || 'دوام كامل',
       location: body.location || 'كفر العنانية',
       description: body.description || '',
-      is_active: body.is_active === 'true' || body.is_active === true,
+      is_active: body.is_active === 'true' || body.is_active === 'on',
       is_published: true,
       created_at: new Date().toISOString()
     })
@@ -68,7 +68,7 @@ jobs.post('/edit/:id', adminMiddleware, async (c) => {
       job_type: body.job_type || 'دوام كامل',
       location: body.location || 'كفر العنانية',
       description: body.description || '',
-      is_active: body.is_active === 'true' || body.is_active === true
+      is_active: body.is_active === 'true' || body.is_active === 'on'
     })
 
     return c.redirect('/dashboard/jobs?success=1')

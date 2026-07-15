@@ -72,7 +72,7 @@ volunteers.post('/', async (c) => {
 
 // Get my volunteer applications (Requires Auth)
 volunteers.get('/my', authMiddleware, async (c) => {
-  const user = c.get('user')
+  const user = (c as any).get('user') as { id: string }
   const db = getFirestore(c)
 
   try {
