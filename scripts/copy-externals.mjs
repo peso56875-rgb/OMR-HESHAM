@@ -1,11 +1,17 @@
 /**
  * Copies externalized server packages (firebase-admin + full transitive
  * dependency tree) into the Vercel function directory so they exist at
- * runtime in /var/task. Exported as a function so it can run both as a
+ * runtime in /var/task.  Exported as a function so it can run both as a
  * Vite plugin hook (closeBundle) and as a standalone postbuild script.
+ *
+ * Strategy: walk the source node_modules tree starting from each EXTERNAL
+ * package, resolving dependencies *exactly* as npm laid them out (including
+ * nested node_modules for deduplication-resistant copies). Each resolved
+ * source path is mapped to its corresponding destination path so the
+ * on-disk layout in the function mirrors the project's node_modules.
  */
-import { existsSync, mkdirSync, readFileSync, cpSync, rmSync } from 'node:fs'
-import { join, dirname } from 'node:path'
+import { existsSync, mkdirSync, readFileSync, cpSync, rmSync, readdirSync, statSync } from 'node:fs'
+import { join, dirname, relative, sep } from 'node:path'
 
 export const EXTERNAL_PACKAGES = ['firebase-admin']
 
@@ -27,36 +33,57 @@ export function copyExternalsIntoFunction(rootDir, log = console.log) {
     }
   }
 
-  // Resolve like Node: nested node_modules first, then root
+  // Walk up from `fromDir` to find `pkgName` — mirrors Node's resolution.
+  // Returns the absolute path to the package directory, or null.
   const resolvePkgDir = (pkgName, fromDir) => {
-    const nested = join(fromDir, 'node_modules', pkgName)
-    if (existsSync(join(nested, 'package.json'))) return nested
-    const root = join(ROOT_NM, pkgName)
-    if (existsSync(join(root, 'package.json'))) return root
+    let dir = fromDir
+    while (true) {
+      const candidate = join(dir, 'node_modules', pkgName)
+      if (existsSync(join(candidate, 'package.json'))) return candidate
+      const parent = dirname(dir)
+      if (parent === dir) break          // filesystem root
+      if (!parent.startsWith(rootDir)) break  // don't escape project
+      dir = parent
+    }
     return null
   }
 
-  const toCopy = new Map()
-  const queue = EXTERNAL_PACKAGES.map((name) => ({ name, fromDir: rootDir }))
+  // --- Collect every (srcDir → relative destPath) pair ---
+  // Key: absolute source path, Value: relative path inside FUNC_NM
+  const copyMap = new Map()   // srcAbsPath → destRelPath
+  const visited = new Set()   // absolute source paths already queued
+
+  // Queue items carry: package name, the directory to resolve from, and
+  // the destination prefix (so nested node_modules are preserved).
+  const queue = EXTERNAL_PACKAGES.map((name) => ({
+    name,
+    resolveFrom: rootDir,
+    destPrefix: '',     // top-level inside FUNC_NM
+  }))
   const missing = []
 
   while (queue.length > 0) {
-    const { name, fromDir } = queue.shift()
-    if (toCopy.has(name)) continue
+    const { name, resolveFrom, destPrefix } = queue.shift()
 
-    const pkgDir = resolvePkgDir(name, fromDir)
+    const pkgDir = resolvePkgDir(name, resolveFrom)
     if (!pkgDir) {
       missing.push(name)
       continue
     }
-    toCopy.set(name, pkgDir)
+    if (visited.has(pkgDir)) continue
+    visited.add(pkgDir)
+
+    // Compute the relative path from ROOT_NM so nested deps keep their
+    // nesting structure, e.g. google-auth-library/node_modules/node-fetch
+    const relFromRootNM = relative(ROOT_NM, pkgDir)
+    copyMap.set(pkgDir, relFromRootNM)
 
     const pkg = readPkgJson(pkgDir)
     if (!pkg) continue
 
     const deps = { ...(pkg.dependencies || {}), ...(pkg.optionalDependencies || {}) }
     for (const depName of Object.keys(deps)) {
-      if (!toCopy.has(depName)) queue.push({ name: depName, fromDir: pkgDir })
+      queue.push({ name: depName, resolveFrom: pkgDir, destPrefix: '' })
     }
   }
 
@@ -64,12 +91,13 @@ export function copyExternalsIntoFunction(rootDir, log = console.log) {
     log(`⚠ Skipped (not installed, likely optional): ${missing.join(', ')}`)
   }
 
+  // --- Wipe & recreate, then copy ---
   rmSync(FUNC_NM, { recursive: true, force: true })
   mkdirSync(FUNC_NM, { recursive: true })
 
   let count = 0
-  for (const [name, srcDir] of toCopy) {
-    const destDir = join(FUNC_NM, name)
+  for (const [srcDir, relPath] of copyMap) {
+    const destDir = join(FUNC_NM, relPath)
     mkdirSync(dirname(destDir), { recursive: true })
     cpSync(srcDir, destDir, { recursive: true, dereference: true })
     count++
