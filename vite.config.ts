@@ -12,5 +12,8 @@ export default defineConfig({
       adapter,
       entry: 'src/index.tsx'
     })
-  ]
+  ],
+  ssr: {
+    external: ['firebase-admin', 'googleapis', 'firebase']
+  }
 })
