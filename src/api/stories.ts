@@ -39,7 +39,7 @@ stories.post('/add', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ error: 'الاسم والمحتوى مطلوبان' }, 400)
     }
-    return c.redirect('/dashboard/stories?error=missing_fields')
+    return c.redirect('/dashboard?view=stories&error=missing_fields')
   }
 
   try {
@@ -56,13 +56,13 @@ stories.post('/add', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم إضافة قصة النجاح بنجاح' })
     }
-    return c.redirect('/dashboard/stories?success=1')
+    return c.redirect('/dashboard?view=stories&success=1')
   } catch (error: any) {
     console.error('Error creating success story:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/stories?error=db_error')
+    return c.redirect('/dashboard?view=stories&error=db_error')
   }
 })
 
@@ -86,7 +86,7 @@ stories.post('/edit/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ error: 'الاسم والمحتوى مطلوبان' }, 400)
     }
-    return c.redirect('/dashboard/stories?error=missing_fields')
+    return c.redirect('/dashboard?view=stories&error=missing_fields')
   }
 
   try {
@@ -101,13 +101,13 @@ stories.post('/edit/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم تعديل قصة النجاح بنجاح' })
     }
-    return c.redirect('/dashboard/stories?success=1')
+    return c.redirect('/dashboard?view=stories&success=1')
   } catch (error: any) {
     console.error('Error updating success story:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/stories?error=db_error')
+    return c.redirect('/dashboard?view=stories&error=db_error')
   }
 })
 
@@ -123,12 +123,12 @@ stories.post('/delete/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم حذف قصة النجاح بنجاح' })
     }
-    return c.redirect('/dashboard/stories?success=1')
+    return c.redirect('/dashboard?view=stories&success=1')
   } catch (error: any) {
     console.error('Error deleting success story:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/stories?error=db_error')
+    return c.redirect('/dashboard?view=stories&error=db_error')
   }
 })

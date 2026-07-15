@@ -155,7 +155,7 @@ donations.post('/status/:id', adminMiddleware, async (c) => {
     const donationDoc = await donationRef.get()
 
     if (!donationDoc.exists) {
-      return c.redirect('/dashboard/donations?error=not_found')
+      return c.redirect('/dashboard?view=donations&error=not_found')
     }
 
     const donationData = donationDoc.data()!
@@ -192,10 +192,10 @@ donations.post('/status/:id', adminMiddleware, async (c) => {
       }
     })
 
-    return c.redirect('/dashboard/donations?success=1')
+    return c.redirect('/dashboard?view=donations&success=1')
   } catch (error: any) {
     console.error('Error updating donation status:', error.message)
-    return c.redirect('/dashboard/donations?error=1')
+    return c.redirect('/dashboard?view=donations&error=1')
   }
 })
 

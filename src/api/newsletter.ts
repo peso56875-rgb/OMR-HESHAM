@@ -73,10 +73,10 @@ newsletter.post('/status/:id', adminMiddleware, async (c) => {
 
   try {
     await db.collection('newsletter_subscribers').doc(id).update({ status })
-    return c.redirect('/dashboard/newsletter?success=1')
+    return c.redirect('/dashboard?view=newsletter&success=1')
   } catch (error: any) {
     console.error('Error updating newsletter subscriber status:', error.message)
-    return c.redirect('/dashboard/newsletter?error=1')
+    return c.redirect('/dashboard?view=newsletter&error=1')
   }
 })
 
@@ -87,9 +87,9 @@ newsletter.post('/delete/:id', adminMiddleware, async (c) => {
 
   try {
     await db.collection('newsletter_subscribers').doc(id).delete()
-    return c.redirect('/dashboard/newsletter?success=1')
+    return c.redirect('/dashboard?view=newsletter&success=1')
   } catch (error: any) {
     console.error('Error deleting newsletter subscriber:', error.message)
-    return c.redirect('/dashboard/newsletter?error=1')
+    return c.redirect('/dashboard?view=newsletter&error=1')
   }
 })

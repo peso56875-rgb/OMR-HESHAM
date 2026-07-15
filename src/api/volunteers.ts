@@ -97,9 +97,9 @@ volunteers.post('/status/:id', adminMiddleware, async (c) => {
 
   try {
     await db.collection('volunteers').doc(id).update({ status })
-    return c.redirect('/dashboard/volunteers?success=1')
+    return c.redirect('/dashboard?view=volunteers&success=1')
   } catch (error: any) {
     console.error('Error updating volunteer status:', error.message)
-    return c.redirect('/dashboard/volunteers?error=1')
+    return c.redirect('/dashboard?view=volunteers&error=1')
   }
 })

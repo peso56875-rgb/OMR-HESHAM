@@ -45,7 +45,8 @@ app.use('*', async (c, next) => {
         email: decodedClaims.email,
         name: profileData?.full_name || decodedClaims.name || decodedClaims.email || 'فاعل خير',
         avatar: profileData?.avatar_url || decodedClaims.picture || '',
-        role: profileData?.role || 'user'
+        role: profileData?.role || 'user',
+        phone: profileData?.phone || ''
       })
     } catch(e) {}
   }
@@ -726,72 +727,198 @@ function Login({ firebaseConfig }: { firebaseConfig: any }){
 }
 
 function Profile({ user, donations = [], volunteer }: { user: any, donations?: any[], volunteer?: any }){
+  // Calculate statistics
+  const completedDonations = donations.filter((d: any) => d.status === 'completed')
+  const totalDonated = completedDonations.reduce((sum: number, d: any) => sum + Number(d.amount || 0), 0)
+  const donationsCount = completedDonations.length
+  
+  // Determine Donation Tier
+  let tierName = 'صديق المؤسسة'
+  let tierClass = 'none'
+  let tierIcon = 'fa-user'
+  
+  if (totalDonated >= 5000) {
+    tierName = 'متبرع ذهبي ✦'
+    tierClass = 'gold'
+    tierIcon = 'fa-award'
+  } else if (totalDonated >= 1000) {
+    tierName = 'متبرع فضي ✦'
+    tierClass = 'silver'
+    tierIcon = 'fa-medal'
+  } else if (totalDonated > 0) {
+    tierName = 'متبرع برونزي'
+    tierClass = 'bronze'
+    tierIcon = 'fa-ribbon'
+  }
+
+  // Get user avatar initials
+  const initials = user.name ? user.name.split(' ').slice(0, 2).map((n: string) => n[0]).join('') : 'ف خ'
+
   return <Layout user={user} title="حسابي | مؤسسة الدكتور عمر هشام">
-    <PageHero kicker="ملفي الشخصي" title={`مرحبًا بك يا<br/><em>${user.name}</em>`} text="هنا يمكنك مراجعة تبرعاتك، وحالة طلبك للتطوع، وتحديث بياناتك الشخصية."/>
+    <PageHero kicker="ملفي الشخصي" title={'لوحة التحكم الشخصية<br/><em>شركاء الخير والعطاء.</em>'} text="مرحبًا بك في مساحتك الخاصة بالمؤسسة. يمكنك متابعة مساهماتك، حالة تطوعك، وإدارة ملفك الشخصي."/>
     
-    <section class="donate-layout section-pad" style="grid-template-columns: 1.5fr 1fr">
-      <div class="donation-journey reveal">
-        <p class="eyebrow">سجل عطائك</p>
-        <h2 style="margin-bottom:1.5rem">مساهماتك الكريمة</h2>
-        
-        {donations.length === 0 ? (
-          <p style="color:var(--muted); padding:2rem 0">لم تسجل تبرعات باسم هذا الحساب بعد. شكرًا لدعمك الدائم.</p>
-        ) : (
-          <div class="dash-table" style="box-shadow:none; padding:0; background:transparent">
-            <table style="width:100%; border-collapse:collapse">
-              <thead>
-                <tr>
-                  <th style="text-align:right; padding:12px">الحملة</th>
-                  <th style="text-align:right; padding:12px">المبلغ</th>
-                  <th style="text-align:right; padding:12px">التاريخ</th>
-                  <th style="text-align:right; padding:12px">الحالة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {donations.map((d: any) => {
-                  const date = new Date(d.created_at).toLocaleDateString('ar-EG')
-                  const isCompleted = d.status === 'completed'
-                  
-                  return <tr style="border-bottom:1px solid var(--border)">
-                    <td style="padding:12px">{d.campaign_title || 'الصندوق العام'}</td>
-                    <td style="padding:12px; font-weight:bold">{Number(d.amount).toLocaleString('ar-EG')} ج.م</td>
-                    <td style="padding:12px">{date}</td>
-                    <td style="padding:12px">
-                      <span style={`font-size:.8rem; padding:4px 8px; border-radius:6px; font-weight:600; background:${isCompleted ? 'rgba(67,160,71,.12)' : 'rgba(245,124,0,.12)'}; color:${isCompleted ? 'var(--emerald-600)' : 'var(--gold-600)'}`}>
-                        {isCompleted ? 'مكتمل' : 'قيد المراجعة'}
-                      </span>
-                    </td>
-                  </tr>
-                })}
-              </tbody>
-            </table>
+    <section class="section-pad" style="padding-top: 0">
+      {/* Premium Header Banner */}
+      <div class="profile-header reveal">
+        <div class="profile-user-info">
+          <div class="profile-user-avatar">{initials}</div>
+          <div class="profile-user-details">
+            <h1>{user.name}</h1>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+              <span class="role-pill">
+                {icon(user.role === 'admin' ? 'fa-user-shield' : 'fa-user')} {user.role === 'admin' ? 'مشرف الموقع' : 'عضو المؤسسة'}
+              </span>
+              {totalDonated > 0 && (
+                <span class={`profile-badge-tier ${tierClass}`}>
+                  {icon(tierIcon)} {tierName}
+                </span>
+              )}
+            </div>
           </div>
-        )}
+        </div>
+        
+        {/* Quick Stats Grid */}
+        <div class="profile-quick-stats">
+          <div class="profile-stat-box">
+            <span>إجمالي العطاء</span>
+            <strong>{(totalDonated).toLocaleString('ar-EG')} <small style="font-size:0.75rem">ج.م</small></strong>
+          </div>
+          <div class="profile-stat-box">
+            <span>عدد المساهمات</span>
+            <strong>{donationsCount.toLocaleString('ar-EG')} <small style="font-size:0.75rem">مساهمة</small></strong>
+          </div>
+          <div class="profile-stat-box">
+            <span>حالة العضوية</span>
+            <strong>نشط</strong>
+          </div>
+        </div>
       </div>
 
-      <aside class="payment-panel reveal">
-        <p class="eyebrow">البيانات والملف الشخصي</p>
-        <h2 style="margin-bottom:1.5rem">حالة الحساب</h2>
+      {/* Main Profile Grid Layout */}
+      <div class="donate-layout" style="grid-template-columns: 1.6fr 1fr; gap: 30px; background: transparent; padding: 0">
         
-        <form class="ajax-form" data-endpoint="/api/profile/update" method="post" style="display:flex; flex-direction:column; gap:1.2rem; background:var(--surface); border:1px solid var(--border); padding:1.8rem; border-radius:16px">
-          <label>الاسم الكامل<input name="full_name" value={user.name} required/></label>
-          <label>البريد الإلكتروني<input name="email" value={user.email} disabled/></label>
-          <label>رقم الهاتف<input name="phone" value={user.phone || ''} placeholder="01xxxxxxxxx"/></label>
-          <button class="primary-btn submit-btn" type="submit" style="width:100%">تحديث بياناتي</button>
-        </form>
-
-        {volunteer && (
-          <div style="background:var(--surface); border:1px solid var(--border); padding:1.5rem; border-radius:16px; margin-top:1.5rem">
-            <h4 style="font-weight:bold; margin-bottom:.5rem">{icon('fa-hand-holding-hand')} طلب التطوع الخاص بك</h4>
-            <p style="font-size:.9rem; color:var(--muted); margin-bottom:.8rem">المجال: {volunteer.preferred_role}</p>
-            <span style={`font-size:.8rem; padding:4px 8px; border-radius:6px; font-weight:600; background:${volunteer.status === 'approved' ? 'rgba(67,160,71,.12)' : volunteer.status === 'rejected' ? 'rgba(231,76,60,.12)' : 'rgba(245,124,0,.12)'}; color:${volunteer.status === 'approved' ? 'var(--emerald-600)' : volunteer.status === 'rejected' ? '#e53935' : 'var(--gold-600)'}`}>
-              حالة التطوع: {volunteer.status === 'approved' ? 'مقبول' : volunteer.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
-            </span>
+        {/* Right Column: History & Activities */}
+        <div style="display: flex; flex-direction: column; gap: 25px">
+          
+          {/* Donations Card */}
+          <div class="profile-card-modern reveal">
+            <h3>{icon('fa-hand-holding-dollar')} سجل التبرعات والمساهمات</h3>
+            
+            {donations.length === 0 ? (
+              <div class="profile-empty-donations">
+                <i class="fa-solid fa-heart-pulse"></i>
+                <h4>لا توجد تبرعات مسجلة حتى الآن</h4>
+                <p>عطاؤك المستمر هو النور الذي يضيء دروب المحتاجين ويصنع فرقًا حقيقيًا.</p>
+                <a class="primary-btn" href="/donate">ابدأ أول مساهمة الآن {icon('fa-heart')}</a>
+              </div>
+            ) : (
+              <div class="dash-table" style="box-shadow:none; padding:0; background:transparent">
+                <table style="width:100%; border-collapse:collapse">
+                  <thead>
+                    <tr style="border-bottom: 2px solid var(--line)">
+                      <th style="text-align:right; padding:15px; font-weight:800; color:var(--text)">الحملة والمجال</th>
+                      <th style="text-align:right; padding:15px; font-weight:800; color:var(--text)">المبلغ</th>
+                      <th style="text-align:right; padding:15px; font-weight:800; color:var(--text)">التاريخ</th>
+                      <th style="text-align:right; padding:15px; font-weight:800; color:var(--text)">الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {donations.map((d: any) => {
+                      const date = new Date(d.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })
+                      const isCompleted = d.status === 'completed'
+                      
+                      return <tr style="border-bottom:1px solid var(--line)">
+                        <td style="padding:15px; font-weight: 600; color: var(--text)">{d.campaign_title || 'الصندوق العام'}</td>
+                        <td style="padding:15px; font-weight:bold; color:var(--emerald)">{Number(d.amount).toLocaleString('ar-EG')} ج.م</td>
+                        <td style="padding:15px; color:var(--muted); font-size: 0.9rem">{date}</td>
+                        <td style="padding:15px">
+                          <span style={`font-size:.78rem; padding:6px 12px; border-radius:8px; font-weight:800; background:${isCompleted ? 'rgba(22,138,112,.09)' : 'rgba(245,124,0,.09)'}; color:${isCompleted ? 'var(--emerald)' : 'var(--gold)'}; border: 1px solid ${isCompleted ? 'rgba(22,138,112,.15)' : 'rgba(245,124,0,.15)'}`}>
+                            {isCompleted ? 'مكتمل' : 'قيد المراجعة'}
+                          </span>
+                        </td>
+                      </tr>
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        )}
 
-        <a href="/api/auth/logout" class="primary-btn" style="background:#ff6b6b; color:#fff; border:none; margin-top:2rem; width:100%; text-align:center; display:block">تسجيل الخروج {icon('fa-right-from-bracket')}</a>
-      </aside>
+          {/* Volunteering Card */}
+          <div class="profile-card-modern reveal">
+            <h3>{icon('fa-people-group')} مسيرتك التطوعية</h3>
+            
+            {volunteer ? (
+              <div style="background:var(--ivory); border:1px solid var(--line); padding:25px; border-radius:20px; display:flex; flex-direction:column; gap:15px">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px">
+                  <div>
+                    <h4 style="margin:0 0 5px; font-weight:800; font-size:1.15rem">{volunteer.preferred_role}</h4>
+                    <span style="font-size:0.85rem; color:var(--muted)">رقم الهاتف: {volunteer.phone}</span>
+                  </div>
+                  <span class={`profile-vol-badge ${volunteer.status === 'approved' ? 'approved' : volunteer.status === 'rejected' ? 'rejected' : 'pending'}`}>
+                    {volunteer.status === 'approved' ? icon('fa-circle-check') : volunteer.status === 'rejected' ? icon('fa-circle-xmark') : icon('fa-clock')}
+                    {volunteer.status === 'approved' ? 'عضو متطوع نشط' : volunteer.status === 'rejected' ? 'مرفوض حاليًا' : 'طلب قيد المراجعة'}
+                  </span>
+                </div>
+                <p style="margin: 0; font-size:0.92rem; color:var(--muted); line-height:1.6">
+                  {volunteer.status === 'approved' 
+                    ? 'أهلاً بك في عائلة متطوعي مؤسسة الدكتور عمر هشام. سنقوم بالتواصل معك قريباً للمشاركة في مبادراتنا الميدانية والمجتمعية القادمة.' 
+                    : volunteer.status === 'rejected' 
+                    ? 'نشكرك على اهتمامك ورغبتك بالتطوع. تعذر قبول طلبك حالياً، ونرحب بتقديمك مجدداً في المبادرات المستقبلية.'
+                    : 'نقوم بمراجعة طلبك وخبراتك للتأكد من ملاءمتها للمشاريع الحالية. سيقوم فريق العمل بالتواصل معك فور اعتماد الطلب.'}
+                </p>
+              </div>
+            ) : (
+              <div class="profile-vol-incentive">
+                <div class="profile-vol-incentive-text">
+                  <h4>هل ترغب في ترك أثر بوقتك وجهدك؟</h4>
+                  <p>باب التطوع مفتوح للمساهمة في القوافل الطبية والمجتمعية والتعليمية.</p>
+                </div>
+                <a class="primary-btn magnetic" href="/volunteers">قدم طلب تطوع الآن {icon('fa-hand-holding-hand')}</a>
+              </div>
+            )}
+          </div>
+
+        </div>
+
+        {/* Left Column: Account Info & Actions */}
+        <div style="display: flex; flex-direction: column; gap: 25px">
+          
+          {/* Settings Card */}
+          <div class="profile-card-modern reveal">
+            <h3>{icon('fa-id-card')} تعديل بيانات الحساب</h3>
+            <form class="ajax-form" data-endpoint="/api/profile/update" method="post" style="display:flex; flex-direction:column; gap:1.2rem">
+              <label>الاسم الكامل
+                <input name="full_name" value={user.name} required style="background:var(--ivory); font-weight:600"/>
+              </label>
+              <label>البريد الإلكتروني
+                <input name="email" value={user.email} disabled style="background:var(--line); color:var(--muted); cursor:not-allowed"/>
+              </label>
+              <label>رقم الهاتف
+                <input name="phone" value={user.phone || ''} placeholder="01xxxxxxxxx" style="background:var(--ivory); font-weight:600"/>
+              </label>
+              <button class="primary-btn submit-btn" type="submit" style="width:100%; justify-content:center">حفظ التغييرات</button>
+            </form>
+          </div>
+
+          {/* Quick Actions Card */}
+          <div class="profile-card-modern reveal" style="padding: 25px">
+            <h3>{icon('fa-gears')} إجراءات سريعة</h3>
+            <div style="display:flex; flex-direction:column; gap:12px">
+              {user.role === 'admin' && (
+                <a href="/dashboard" class="outline-btn" style="width:100%; border-color:var(--gold); color:var(--text); text-align:center; display:flex; justify-content:center">
+                  {icon('fa-gauge-high')} لوحة تحكم المشرفين
+                </a>
+              )}
+              <a href="/api/auth/logout" class="primary-btn" style="background:#e86f51; color:#fff; border:none; width:100%; text-align:center; display:flex; justify-content:center">
+                تسجيل الخروج {icon('fa-right-from-bracket')}
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
     </section>
   </Layout>
 }

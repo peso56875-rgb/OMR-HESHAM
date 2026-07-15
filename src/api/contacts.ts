@@ -60,9 +60,9 @@ contacts.post('/status/:id', adminMiddleware, async (c) => {
 
   try {
     await db.collection('contacts').doc(id).update({ status })
-    return c.redirect('/dashboard/contacts?success=1')
+    return c.redirect('/dashboard?view=contacts&success=1')
   } catch (error: any) {
     console.error('Error updating contact status:', error.message)
-    return c.redirect('/dashboard/contacts?error=1')
+    return c.redirect('/dashboard?view=contacts&error=1')
   }
 })

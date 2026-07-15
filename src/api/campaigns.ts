@@ -58,7 +58,7 @@ campaigns.post('/add', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ error: 'بيانات غير صالحة' }, 400)
     }
-    return c.redirect('/dashboard/campaigns?error=invalid_inputs')
+    return c.redirect('/dashboard?view=campaigns&error=invalid_inputs')
   }
 
   try {
@@ -77,13 +77,13 @@ campaigns.post('/add', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم إضافة الحملة بنجاح' })
     }
-    return c.redirect('/dashboard/campaigns?success=1')
+    return c.redirect('/dashboard?view=campaigns&success=1')
   } catch (error: any) {
     console.error('Error creating campaign:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/campaigns?error=db_error')
+    return c.redirect('/dashboard?view=campaigns&error=db_error')
   }
 })
 
@@ -109,7 +109,7 @@ campaigns.post('/edit/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ error: 'بيانات غير صالحة' }, 400)
     }
-    return c.redirect('/dashboard/campaigns?error=invalid_inputs')
+    return c.redirect('/dashboard?view=campaigns&error=invalid_inputs')
   }
 
   try {
@@ -131,13 +131,13 @@ campaigns.post('/edit/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم تعديل الحملة بنجاح' })
     }
-    return c.redirect('/dashboard/campaigns?success=1')
+    return c.redirect('/dashboard?view=campaigns&success=1')
   } catch (error: any) {
     console.error('Error updating campaign:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/campaigns?error=db_error')
+    return c.redirect('/dashboard?view=campaigns&error=db_error')
   }
 })
 
@@ -153,12 +153,12 @@ campaigns.post('/delete/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم حذف الحملة بنجاح' })
     }
-    return c.redirect('/dashboard/campaigns?success=1')
+    return c.redirect('/dashboard?view=campaigns&success=1')
   } catch (error: any) {
     console.error('Error deleting campaign:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/campaigns?error=db_error')
+    return c.redirect('/dashboard?view=campaigns&error=db_error')
   }
 })

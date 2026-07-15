@@ -37,7 +37,7 @@ events.post('/add', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ error: 'العنوان مطلوب' }, 400)
     }
-    return c.redirect('/dashboard/events?error=missing_fields')
+    return c.redirect('/dashboard?view=events&error=missing_fields')
   }
 
   try {
@@ -55,13 +55,13 @@ events.post('/add', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم إضافة الفعالية بنجاح' })
     }
-    return c.redirect('/dashboard/events?success=1')
+    return c.redirect('/dashboard?view=events&success=1')
   } catch (error: any) {
     console.error('Error creating event:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/events?error=db_error')
+    return c.redirect('/dashboard?view=events&error=db_error')
   }
 })
 
@@ -83,7 +83,7 @@ events.post('/edit/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ error: 'العنوان مطلوب' }, 400)
     }
-    return c.redirect('/dashboard/events?error=missing_fields')
+    return c.redirect('/dashboard?view=events&error=missing_fields')
   }
 
   try {
@@ -99,13 +99,13 @@ events.post('/edit/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم تعديل الفعالية بنجاح' })
     }
-    return c.redirect('/dashboard/events?success=1')
+    return c.redirect('/dashboard?view=events&success=1')
   } catch (error: any) {
     console.error('Error updating event:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/events?error=db_error')
+    return c.redirect('/dashboard?view=events&error=db_error')
   }
 })
 
@@ -121,12 +121,12 @@ events.post('/delete/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم حذف الفعالية بنجاح' })
     }
-    return c.redirect('/dashboard/events?success=1')
+    return c.redirect('/dashboard?view=events&success=1')
   } catch (error: any) {
     console.error('Error deleting event:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/events?error=db_error')
+    return c.redirect('/dashboard?view=events&error=db_error')
   }
 })

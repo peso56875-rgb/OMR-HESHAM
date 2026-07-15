@@ -28,7 +28,7 @@ jobs.post('/add', adminMiddleware, async (c) => {
 
   const title = body.title as string
   if (!title) {
-    return c.redirect('/dashboard/jobs?error=missing_title')
+    return c.redirect('/dashboard?view=jobs&error=missing_title')
   }
 
   try {
@@ -43,10 +43,10 @@ jobs.post('/add', adminMiddleware, async (c) => {
       created_at: new Date().toISOString()
     })
 
-    return c.redirect('/dashboard/jobs?success=1')
+    return c.redirect('/dashboard?view=jobs&success=1')
   } catch (error: any) {
     console.error('Error creating job:', error.message)
-    return c.redirect('/dashboard/jobs?error=1')
+    return c.redirect('/dashboard?view=jobs&error=1')
   }
 })
 
@@ -58,7 +58,7 @@ jobs.post('/edit/:id', adminMiddleware, async (c) => {
 
   const title = body.title as string
   if (!title) {
-    return c.redirect('/dashboard/jobs?error=missing_title')
+    return c.redirect('/dashboard?view=jobs&error=missing_title')
   }
 
   try {
@@ -71,10 +71,10 @@ jobs.post('/edit/:id', adminMiddleware, async (c) => {
       is_active: body.is_active === 'true' || body.is_active === 'on'
     })
 
-    return c.redirect('/dashboard/jobs?success=1')
+    return c.redirect('/dashboard?view=jobs&success=1')
   } catch (error: any) {
     console.error('Error updating job:', error.message)
-    return c.redirect('/dashboard/jobs?error=1')
+    return c.redirect('/dashboard?view=jobs&error=1')
   }
 })
 
@@ -85,10 +85,10 @@ jobs.post('/delete/:id', adminMiddleware, async (c) => {
 
   try {
     await db.collection('jobs').doc(id).delete()
-    return c.redirect('/dashboard/jobs?success=1')
+    return c.redirect('/dashboard?view=jobs&success=1')
   } catch (error: any) {
     console.error('Error deleting job:', error.message)
-    return c.redirect('/dashboard/jobs?error=1')
+    return c.redirect('/dashboard?view=jobs&error=1')
   }
 })
 

@@ -2,7 +2,19 @@
   const $ = (s, root = document) => root.querySelector(s)
   const $$ = (s, root = document) => [...root.querySelectorAll(s)]
 
-  const toastConfig = { success:['fa-check','تم بنجاح'], error:['fa-xmark','تعذر التنفيذ'], warning:['fa-triangle-exclamation','تنبيه'], info:['fa-circle-info','معلومة'] }
+  const toastConfig = {
+    success:    ['fa-check',              'تم بنجاح'],
+    error:      ['fa-xmark',              'تعذر التنفيذ'],
+    warning:    ['fa-triangle-exclamation','تنبيه'],
+    info:       ['fa-circle-info',        'معلومة'],
+    prayer:     ['fa-hands-praying',       'جزاك الله خيرًا'],
+    gratitude:  ['fa-hand-holding-heart',  'بارك الله فيك'],
+    copy:       ['fa-clipboard-check',     'تم النسخ'],
+    subscribe:  ['fa-bell',               'أهلًا بك معنا'],
+    volunteer:  ['fa-people-carry-box',    'شكرًا لروحك الطيبة'],
+    contact:    ['fa-envelope-circle-check','وصلتنا رسالتك'],
+    donate:     ['fa-heart',              'أثابك الله']
+  }
   const hideToast = () => $('#toast')?.classList.remove('show')
   const toast = (message, type = 'success') => {
     const box = $('#toast')
@@ -106,7 +118,8 @@
     try {
       const response = await fetch(form.action,{ method:(form.method || 'POST').toUpperCase(), body:new FormData(form) })
       if (!response.ok) throw new Error('تعذر تنفيذ الطلب')
-      toast('تم حفظ التغييرات بنجاح'); setTimeout(() => location.reload(),650)
+      toast('تم حفظ التغييرات بنجاح', 'success')
+      setTimeout(() => location.reload(),650)
     } catch (error) { toast(error.message || 'تعذر تنفيذ الطلب','error'); if (submit) { submit.disabled=false; submit.innerHTML=original } }
   }))
 
@@ -141,7 +154,7 @@
   $$('.copy-btn').forEach(button => button.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(button.dataset.copy)
-      toast('تم نسخ الرقم بنجاح')
+      toast('تم نسخ الرقم — حوّل وأرسل الأثر', 'copy')
       const original = button.innerHTML
       button.innerHTML = '<i class="fa-solid fa-check"></i> تم النسخ'
       setTimeout(() => { button.innerHTML = original }, 1800)
@@ -150,7 +163,10 @@
     }
   }))
 
-  $$('.toast-trigger').forEach(button => button.addEventListener('click', () => toast(button.dataset.message)))
+  $$('.toast-trigger').forEach(button => button.addEventListener('click', () => {
+    const type = button.dataset.toastType || 'prayer'
+    toast(button.dataset.message, type)
+  }))
 
   $$('.amount-picks button').forEach(button => button.addEventListener('click', () => {
     $$('.amount-picks button').forEach(item => item.classList.remove('active'))
@@ -175,7 +191,14 @@
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.message)
-      toast(result.message || 'تم استلام طلبك بنجاح')
+      // Detect form context for smart toast type
+      const endpoint = (form.dataset.endpoint || '').toLowerCase()
+      let toastType = 'success'
+      if (endpoint.includes('donation'))    toastType = 'donate'
+      else if (endpoint.includes('volunteer')) toastType = 'volunteer'
+      else if (endpoint.includes('newsletter')) toastType = 'subscribe'
+      else if (endpoint.includes('contact'))   toastType = 'contact'
+      toast(result.message || 'تم استلام طلبك بنجاح', toastType)
       if (!form.classList.contains('donation-form')) form.reset()
     } catch (error) {
       toast(error.message || 'تعذر الإرسال الآن، حاول مرة أخرى', 'error')

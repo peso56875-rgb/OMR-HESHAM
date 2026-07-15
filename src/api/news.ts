@@ -57,7 +57,7 @@ news.post('/add', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ error: 'الرجاء ملء جميع الحقول المطلوبة' }, 400)
     }
-    return c.redirect('/dashboard/news?error=missing_fields')
+    return c.redirect('/dashboard?view=news&error=missing_fields')
   }
 
   try {
@@ -75,13 +75,13 @@ news.post('/add', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم إضافة الخبر بنجاح' })
     }
-    return c.redirect('/dashboard/news?success=1')
+    return c.redirect('/dashboard?view=news&success=1')
   } catch (error: any) {
     console.error('Error creating news:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/news?error=db_error')
+    return c.redirect('/dashboard?view=news&error=db_error')
   }
 })
 
@@ -106,7 +106,7 @@ news.post('/edit/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ error: 'الرجاء ملء جميع الحقول المطلوبة' }, 400)
     }
-    return c.redirect('/dashboard/news?error=missing_fields')
+    return c.redirect('/dashboard?view=news&error=missing_fields')
   }
 
   try {
@@ -121,13 +121,13 @@ news.post('/edit/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم تعديل الخبر بنجاح' })
     }
-    return c.redirect('/dashboard/news?success=1')
+    return c.redirect('/dashboard?view=news&success=1')
   } catch (error: any) {
     console.error('Error updating news:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/news?error=db_error')
+    return c.redirect('/dashboard?view=news&error=db_error')
   }
 })
 
@@ -143,12 +143,12 @@ news.post('/delete/:id', adminMiddleware, async (c) => {
     if (contentType.includes('application/json')) {
       return c.json({ success: true, message: 'تم حذف الخبر بنجاح' })
     }
-    return c.redirect('/dashboard/news?success=1')
+    return c.redirect('/dashboard?view=news&success=1')
   } catch (error: any) {
     console.error('Error deleting news:', error.message)
     if (contentType.includes('application/json')) {
       return c.json({ error: error.message }, 500)
     }
-    return c.redirect('/dashboard/news?error=db_error')
+    return c.redirect('/dashboard?view=news&error=db_error')
   }
 })
