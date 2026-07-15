@@ -1,97 +1,132 @@
 import { Hono } from 'hono'
-import { getSupabaseFromContext, getSupabaseAdminFromContext } from '../lib/supabase'
+import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 
 export const events = new Hono()
 
-// Get all events
+// Get all published events
 events.get('/', async (c) => {
-  const supabase = getSupabaseFromContext(c)
-  
-  const { data, error } = await supabase
-    .from('events')
-    .select('*')
-    .eq('is_published', true)
-    .order('event_date', { ascending: false })
+  try {
+    const db = getFirestore(c)
+    const snapshot = await db.collection('events')
+      .where('is_published', '==', true)
+      .orderBy('event_date', 'asc')
+      .get()
 
-  if (error) return c.json({ error: error.message }, 400)
-  return c.json({ data })
+    const data = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+    return c.json({ data })
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
 })
 
 // Add event (Admin only)
 events.post('/add', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const body = await c.req.parseBody()
+  const db = getFirestore(c)
+  const contentType = c.req.header('content-type') || ''
+  
+  let body: any
+  if (contentType.includes('application/json')) {
+    body = await c.req.json()
+  } else {
+    body = await c.req.parseBody()
+  }
   
   const title = body.title as string
   if (!title) {
+    if (contentType.includes('application/json')) {
+      return c.json({ error: 'العنوان مطلوب' }, 400)
+    }
     return c.redirect('/dashboard/events?error=missing_fields')
   }
 
-  const { error } = await supabase
-    .from('events')
-    .insert([{
+  try {
+    await db.collection('events').add({
       title,
-      type: (body.type as string) || null,
-      place: (body.place as string) || null,
-      event_date: body.event_date ? new Date(body.event_date as string).toISOString() : null,
-      description: body.description as string,
-      image_url: (body.image_url as string) || null
-    }])
+      type: body.type || 'عام',
+      place: body.place || '',
+      event_date: body.event_date ? new Date(body.event_date as string).toISOString() : new Date().toISOString(),
+      description: body.description || '',
+      image_url: body.image_url || '',
+      is_published: true,
+      created_at: new Date().toISOString()
+    })
 
-  if (error) {
+    if (contentType.includes('application/json')) {
+      return c.json({ success: true, message: 'تم إضافة الفعالية بنجاح' })
+    }
+    return c.redirect('/dashboard/events?success=1')
+  } catch (error: any) {
     console.error('Error creating event:', error.message)
+    if (contentType.includes('application/json')) {
+      return c.json({ error: error.message }, 500)
+    }
     return c.redirect('/dashboard/events?error=db_error')
   }
-
-  return c.redirect('/dashboard/events?success=1')
 })
 
 // Edit event (Admin only)
 events.post('/edit/:id', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const id = c.req.param('id')
-  const body = await c.req.parseBody()
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
+  const contentType = c.req.header('content-type') || ''
+  
+  let body: any
+  if (contentType.includes('application/json')) {
+    body = await c.req.json()
+  } else {
+    body = await c.req.parseBody()
+  }
   
   const title = body.title as string
   if (!title) {
+    if (contentType.includes('application/json')) {
+      return c.json({ error: 'العنوان مطلوب' }, 400)
+    }
     return c.redirect('/dashboard/events?error=missing_fields')
   }
 
-  const { error } = await supabase
-    .from('events')
-    .update({
+  try {
+    await db.collection('events').doc(id).update({
       title,
-      type: (body.type as string) || null,
-      place: (body.place as string) || null,
-      event_date: body.event_date ? new Date(body.event_date as string).toISOString() : null,
-      description: body.description as string,
-      image_url: (body.image_url as string) || null
+      type: body.type || 'عام',
+      place: body.place || '',
+      event_date: body.event_date ? new Date(body.event_date as string).toISOString() : new Date().toISOString(),
+      description: body.description || '',
+      image_url: body.image_url || ''
     })
-    .eq('id', id)
 
-  if (error) {
+    if (contentType.includes('application/json')) {
+      return c.json({ success: true, message: 'تم تعديل الفعالية بنجاح' })
+    }
+    return c.redirect('/dashboard/events?success=1')
+  } catch (error: any) {
     console.error('Error updating event:', error.message)
+    if (contentType.includes('application/json')) {
+      return c.json({ error: error.message }, 500)
+    }
     return c.redirect('/dashboard/events?error=db_error')
   }
-
-  return c.redirect('/dashboard/events?success=1')
 })
 
 // Delete event (Admin only)
 events.post('/delete/:id', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const id = c.req.param('id')
-  
-  const { error } = await supabase
-    .from('events')
-    .delete()
-    .eq('id', id)
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
+  const contentType = c.req.header('content-type') || ''
 
-  if (error) {
+  try {
+    await db.collection('events').doc(id).delete()
+
+    if (contentType.includes('application/json')) {
+      return c.json({ success: true, message: 'تم حذف الفعالية بنجاح' })
+    }
+    return c.redirect('/dashboard/events?success=1')
+  } catch (error: any) {
     console.error('Error deleting event:', error.message)
+    if (contentType.includes('application/json')) {
+      return c.json({ error: error.message }, 500)
+    }
     return c.redirect('/dashboard/events?error=db_error')
   }
-
-  return c.redirect('/dashboard/events?success=1')
 })

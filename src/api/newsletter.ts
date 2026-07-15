@@ -1,14 +1,13 @@
 import { Hono } from 'hono'
-import { getSupabaseAdminFromContext } from '../lib/supabase'
+import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 
 export const newsletter = new Hono()
 
-// Subscribe to newsletter (accepts form data from browser)
+// Subscribe to newsletter (accepts form data from browser or JSON)
 newsletter.post('/', async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
+  const db = getFirestore(c)
 
-  // Accept both JSON and form data
   const contentType = c.req.header('content-type') || ''
   let body: any
   if (contentType.includes('application/json')) {
@@ -27,50 +26,70 @@ newsletter.post('/', async (c) => {
     return c.json({ error: 'البريد الإلكتروني مطلوب' }, 400)
   }
 
-  const { error } = await supabase
-    .from('newsletter_subscribers')
-    .upsert([{ email, status: 'subscribed' }], { onConflict: 'email' })
+  try {
+    // Find if subscriber already exists
+    const querySnapshot = await db.collection('newsletter_subscribers')
+      .where('email', '==', email.trim().toLowerCase())
+      .get()
 
-  // If form submission, redirect back to referer
-  if (!contentType.includes('application/json')) {
-    const referer = c.req.header('referer') || '/'
-    const separator = referer.includes('?') ? '&' : '?'
-    if (error) {
-      console.error('Newsletter subscription error:', error.message)
+    if (!querySnapshot.empty) {
+      // Update status to active if already exists
+      const docId = querySnapshot.docs[0].id
+      await db.collection('newsletter_subscribers').doc(docId).update({
+        status: 'subscribed'
+      })
+    } else {
+      // Insert new subscriber
+      await db.collection('newsletter_subscribers').add({
+        email: email.trim().toLowerCase(),
+        status: 'subscribed',
+        created_at: new Date().toISOString()
+      })
+    }
+
+    if (!contentType.includes('application/json')) {
+      const referer = c.req.header('referer') || '/'
+      const separator = referer.includes('?') ? '&' : '?'
+      return c.redirect(referer + separator + 'news_success=1')
+    }
+    return c.json({ message: 'تم الاشتراك بنجاح في النشرة البريدية.' })
+  } catch (error: any) {
+    console.error('Newsletter subscription error:', error.message)
+    if (!contentType.includes('application/json')) {
+      const referer = c.req.header('referer') || '/'
+      const separator = referer.includes('?') ? '&' : '?'
       return c.redirect(referer + separator + 'news_error=1')
     }
-    return c.redirect(referer + separator + 'news_success=1')
+    return c.json({ error: error.message }, 400)
   }
-
-  if (error) return c.json({ error: error.message }, 400)
-  return c.json({ message: 'تم الاشتراك بنجاح في النشرة البريدية.' })
 })
 
 // Update subscriber status (Admin only)
 newsletter.post('/status/:id', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const id = c.req.param('id')
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
   const body = await c.req.parseBody()
-  
-  const { error } = await supabase
-    .from('newsletter_subscribers')
-    .update({ status: body.status })
-    .eq('id', id)
+  const status = body.status as string
 
-  if (error) return c.redirect('/dashboard/newsletter?error=1')
-  return c.redirect('/dashboard/newsletter?success=1')
+  try {
+    await db.collection('newsletter_subscribers').doc(id).update({ status })
+    return c.redirect('/dashboard/newsletter?success=1')
+  } catch (error: any) {
+    console.error('Error updating newsletter subscriber status:', error.message)
+    return c.redirect('/dashboard/newsletter?error=1')
+  }
 })
 
 // Delete subscriber (Admin only)
 newsletter.post('/delete/:id', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const id = c.req.param('id')
-  
-  const { error } = await supabase
-    .from('newsletter_subscribers')
-    .delete()
-    .eq('id', id)
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
 
-  if (error) return c.redirect('/dashboard/newsletter?error=1')
-  return c.redirect('/dashboard/newsletter?success=1')
+  try {
+    await db.collection('newsletter_subscribers').doc(id).delete()
+    return c.redirect('/dashboard/newsletter?success=1')
+  } catch (error: any) {
+    console.error('Error deleting newsletter subscriber:', error.message)
+    return c.redirect('/dashboard/newsletter?error=1')
+  }
 })

@@ -1,76 +1,113 @@
 import { Context, Next } from 'hono'
 import { getCookie } from 'hono/cookie'
-import { getSupabaseFromContext, createSupabaseAuth, Env } from '../lib/supabase'
+import { getAuth, getFirestore } from '../lib/firebase-admin'
 
 /**
- * Authentication middleware — verifies user is logged in.
- * Extracts JWT from Bearer token or cookie, validates with Supabase,
- * and sets user info in context.
+ * Authentication middleware — verifies user is logged in via Firebase session cookie.
  */
 export const authMiddleware = async (c: Context, next: Next) => {
+  const sessionCookie = getCookie(c, 'fb-session')
   const authHeader = c.req.header('Authorization')
   const bearerToken = authHeader?.toLowerCase().startsWith('bearer ')
     ? authHeader.slice(7).trim()
     : undefined
-  const cookieToken = getCookie(c, 'sb-access-token')
-  const token = bearerToken || cookieToken
+  const token = sessionCookie || bearerToken
 
   if (!token) {
     return c.json({ error: 'غير مصرّح: يرجى تسجيل الدخول أولاً' }, 401)
   }
 
   try {
-    const supabase = createSupabaseAuth(c.env as Env, token)
-    const { data: { user }, error } = await supabase.auth.getUser(token)
+    const auth = getAuth(c)
+    let decodedClaims: any
 
-    if (error || !user) {
+    if (sessionCookie) {
+      // Verify session cookie
+      decodedClaims = await auth.verifySessionCookie(sessionCookie, true)
+    } else if (bearerToken) {
+      // Verify ID token (Bearer)
+      decodedClaims = await auth.verifyIdToken(bearerToken)
+    }
+
+    if (!decodedClaims) {
       return c.json({ error: 'جلسة غير صالحة: يرجى إعادة تسجيل الدخول' }, 401)
     }
 
-    // Set user info in context
-    c.set('user', user)
+    // Get user profile from Firestore to fetch role and full name
+    const db = getFirestore(c)
+    const profileDoc = await db.collection('profiles').doc(decodedClaims.uid).get()
+    const profileData = profileDoc.exists ? profileDoc.data() : {}
+
+    const sessionUser = {
+      id: decodedClaims.uid,
+      email: decodedClaims.email,
+      name: profileData?.full_name || decodedClaims.name || decodedClaims.email,
+      avatar: profileData?.avatar_url || decodedClaims.picture || '',
+      role: profileData?.role || 'user'
+    }
+
+    c.set('user', sessionUser)
     c.set('token', token)
     await next()
-  } catch (err) {
-    return c.json({ error: 'خطأ في التحقق من الهوية' }, 500)
+  } catch (err: any) {
+    console.error('[Auth Middleware Error]', err.message)
+    return c.json({ error: 'خطأ في التحقق من الهوية' }, 401)
   }
 }
 
 /**
  * Admin middleware — verifies user is an admin.
- * Must be used AFTER authMiddleware.
+ * Must be used AFTER authMiddleware or independently.
  */
 export const adminMiddleware = async (c: Context, next: Next) => {
-  const token = c.get('token') || getCookie(c, 'sb-access-token')
+  const sessionCookie = getCookie(c, 'fb-session')
+  const authHeader = c.req.header('Authorization')
+  const bearerToken = authHeader?.toLowerCase().startsWith('bearer ')
+    ? authHeader.slice(7).trim()
+    : undefined
+  const token = sessionCookie || bearerToken
 
   if (!token) {
     return c.json({ error: 'غير مصرّح: يرجى تسجيل الدخول أولاً' }, 401)
   }
 
   try {
-    const supabase = createSupabaseAuth(c.env as Env, token)
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const auth = getAuth(c)
+    let decodedClaims: any
 
-    if (authError || !user) {
+    if (sessionCookie) {
+      decodedClaims = await auth.verifySessionCookie(sessionCookie, true)
+    } else if (bearerToken) {
+      decodedClaims = await auth.verifyIdToken(bearerToken)
+    }
+
+    if (!decodedClaims) {
       return c.json({ error: 'جلسة غير صالحة' }, 401)
     }
 
-    // Check admin role from profiles table
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
+    // Check admin role from Firestore profiles collection
+    const db = getFirestore(c)
+    const profileDoc = await db.collection('profiles').doc(decodedClaims.uid).get()
+    
+    if (!profileDoc.exists || profileDoc.data()?.role !== 'admin') {
       return c.json({ error: 'ليس لديك صلاحية للقيام بهذا الإجراء' }, 403)
     }
 
-    c.set('user', user)
+    const profileData = profileDoc.data()
+    const sessionUser = {
+      id: decodedClaims.uid,
+      email: decodedClaims.email,
+      name: profileData?.full_name || decodedClaims.name || decodedClaims.email,
+      avatar: profileData?.avatar_url || decodedClaims.picture || '',
+      role: 'admin'
+    }
+
+    c.set('user', sessionUser)
     c.set('token', token)
     await next()
-  } catch (err) {
-    return c.json({ error: 'خطأ في التحقق من الصلاحيات' }, 500)
+  } catch (err: any) {
+    console.error('[Admin Middleware Error]', err.message)
+    return c.json({ error: 'خطأ في التحقق من الصلاحيات' }, 401)
   }
 }
 
@@ -78,32 +115,37 @@ export const adminMiddleware = async (c: Context, next: Next) => {
  * Admin guard for HTML pages — redirects to login if not admin.
  */
 export const adminPageGuard = async (c: Context, next: Next) => {
-  const token = getCookie(c, 'sb-access-token')
+  const sessionCookie = getCookie(c, 'fb-session')
 
-  if (!token) {
+  if (!sessionCookie) {
     return c.redirect('/login?error=unauthorized')
   }
 
   try {
-    const supabase = createSupabaseAuth(c.env as Env, token)
-    const { data: { user }, error } = await supabase.auth.getUser(token)
+    const auth = getAuth(c)
+    const decodedClaims = await auth.verifySessionCookie(sessionCookie, true)
 
-    if (error || !user) {
+    if (!decodedClaims) {
       return c.redirect('/login?error=unauthorized')
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+    const db = getFirestore(c)
+    const profileDoc = await db.collection('profiles').doc(decodedClaims.uid).get()
 
-    if (profile?.role !== 'admin') {
-      return c.redirect('/')
+    if (!profileDoc.exists || profileDoc.data()?.role !== 'admin') {
+      return c.redirect('/login?error=not_admin')
     }
 
-    c.set('user', user)
-    c.set('token', token)
+    const profileData = profileDoc.data()
+    const sessionUser = {
+      id: decodedClaims.uid,
+      email: decodedClaims.email,
+      name: profileData?.full_name || decodedClaims.name || decodedClaims.email,
+      avatar: profileData?.avatar_url || decodedClaims.picture || '',
+      role: 'admin'
+    }
+
+    c.set('user', sessionUser)
     await next()
   } catch (err) {
     return c.redirect('/login?error=unauthorized')
@@ -112,7 +154,6 @@ export const adminPageGuard = async (c: Context, next: Next) => {
 
 /**
  * Simple in-memory rate limiter.
- * Tracks requests per IP with a sliding window.
  */
 const rateLimitMap = new Map<string, { count: number; reset: number }>()
 
@@ -144,7 +185,6 @@ export const rateLimiter = (maxRequests: number = 30, windowMs: number = 60000) 
 
 /**
  * Validate request body against a schema.
- * Schema is an object where keys are field names and values are validation rules.
  */
 export type ValidationRule = {
   required?: boolean

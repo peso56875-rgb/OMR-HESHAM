@@ -1,25 +1,25 @@
 import { Hono } from 'hono'
-import { getSupabaseFromContext, getSupabaseAdminFromContext } from '../lib/supabase'
+import { getFirestore } from '../lib/firebase-admin'
 import { getCookie } from 'hono/cookie'
 import { adminMiddleware, authMiddleware } from './middleware'
 
 export const volunteers = new Hono()
 
-// Submit a volunteer application (accepts form data from browser)
+// Submit a volunteer application (accepts form data from browser or JSON)
 volunteers.post('/', async (c) => {
-  const supabase = getSupabaseAdminFromContext(c) // Use admin context to insert public applications securely
+  const db = getFirestore(c)
 
-  // Get user from cookie if logged in
+  // Extract profile ID from cookie if logged in
   let profile_id = null
-  const token = getCookie(c, 'sb-access-token')
-  if (token) {
+  const sessionCookie = getCookie(c, 'fb-session')
+  if (sessionCookie) {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      profile_id = payload.sub
+      // Decode JWT token directly on client session cookie without verification if we just want uid for relation
+      const payload = JSON.parse(atob(sessionCookie.split('.')[1]))
+      profile_id = payload.uid || payload.sub
     } catch(e) {}
   }
 
-  // Accept both JSON and form data
   const contentType = c.req.header('content-type') || ''
   let body: any
   if (contentType.includes('application/json')) {
@@ -28,7 +28,12 @@ volunteers.post('/', async (c) => {
     body = await c.req.parseBody()
   }
 
-  const { full_name, age, phone, city, preferred_role, skills } = body
+  const full_name = (body.name || body.full_name) as string
+  const phone = body.phone as string
+  const age = body.age ? parseInt(body.age as string) : null
+  const city = body.city as string
+  const preferred_role = (body.role || body.preferred_role) as string
+  const skills = body.skills as string
 
   if (!full_name || !phone) {
     if (!contentType.includes('application/json')) {
@@ -37,55 +42,64 @@ volunteers.post('/', async (c) => {
     return c.json({ error: 'الاسم ورقم الهاتف مطلوبان' }, 400)
   }
 
-  const { error } = await supabase
-    .from('volunteers')
-    .insert([{
+  try {
+    const volData = {
       profile_id,
       full_name,
-      age: age ? parseInt(age as string) : null,
+      age,
       phone,
-      city,
-      preferred_role,
-      skills,
-      status: 'pending'
-    }])
+      city: city || '',
+      preferred_role: preferred_role || '',
+      skills: skills || '',
+      status: 'pending',
+      created_at: new Date().toISOString()
+    }
 
-  // If form submission, redirect back
-  if (!contentType.includes('application/json')) {
-    if (error) return c.redirect('/volunteers?error=' + encodeURIComponent(error.message))
-    return c.redirect('/volunteers?success=1#volForm')
+    await db.collection('volunteers').add(volData)
+
+    if (!contentType.includes('application/json')) {
+      return c.redirect('/volunteers?success=1#volForm')
+    }
+    return c.json({ message: 'تم إرسال طلب التطوع بنجاح.' })
+  } catch (error: any) {
+    console.error('Error submitting volunteer app:', error.message)
+    if (!contentType.includes('application/json')) {
+      return c.redirect('/volunteers?error=' + encodeURIComponent(error.message))
+    }
+    return c.json({ error: error.message }, 500)
   }
-
-  if (error) return c.json({ error: error.message }, 400)
-  return c.json({ message: 'تم إرسال طلب التطوع بنجاح.' })
 })
 
 // Get my volunteer applications (Requires Auth)
 volunteers.get('/my', authMiddleware, async (c) => {
-  const user = (c as any).get('user')
-  const supabase = getSupabaseAdminFromContext(c)
+  const user = c.get('user')
+  const db = getFirestore(c)
 
-  const { data, error } = await supabase
-    .from('volunteers')
-    .select('*')
-    .eq('profile_id', user.id)
-    .order('created_at', { ascending: false })
+  try {
+    const snapshot = await db.collection('volunteers')
+      .where('profile_id', '==', user.id)
+      .orderBy('created_at', 'desc')
+      .get()
 
-  if (error) return c.json({ error: error.message }, 400)
-  return c.json({ data })
+    const data = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+    return c.json({ data })
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
 })
 
 // Update status (Admin only)
 volunteers.post('/status/:id', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const id = c.req.param('id')
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
   const body = await c.req.parseBody()
-  
-  const { error } = await supabase
-    .from('volunteers')
-    .update({ status: body.status })
-    .eq('id', id)
+  const status = body.status as string
 
-  if (error) return c.redirect('/dashboard/volunteers?error=1')
-  return c.redirect('/dashboard/volunteers?success=1')
+  try {
+    await db.collection('volunteers').doc(id).update({ status })
+    return c.redirect('/dashboard/volunteers?success=1')
+  } catch (error: any) {
+    console.error('Error updating volunteer status:', error.message)
+    return c.redirect('/dashboard/volunteers?error=1')
+  }
 })

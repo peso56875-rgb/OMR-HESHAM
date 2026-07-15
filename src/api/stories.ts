@@ -1,99 +1,134 @@
 import { Hono } from 'hono'
-import { getSupabaseFromContext, getSupabaseAdminFromContext } from '../lib/supabase'
+import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 
 export const stories = new Hono()
 
-// Get all stories
+// Get all published stories
 stories.get('/', async (c) => {
-  const supabase = getSupabaseFromContext(c)
-  
-  const { data, error } = await supabase
-    .from('stories')
-    .select('*')
-    .eq('is_published', true)
-    .order('created_at', { ascending: false })
+  try {
+    const db = getFirestore(c)
+    const snapshot = await db.collection('stories')
+      .where('is_published', '==', true)
+      .orderBy('created_at', 'desc')
+      .get()
 
-  if (error) return c.json({ error: error.message }, 400)
-  return c.json({ data })
+    const data = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+    return c.json({ data })
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
 })
 
 // Add story (Admin only)
 stories.post('/add', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const body = await c.req.parseBody()
+  const db = getFirestore(c)
+  const contentType = c.req.header('content-type') || ''
+  
+  let body: any
+  if (contentType.includes('application/json')) {
+    body = await c.req.json()
+  } else {
+    body = await c.req.parseBody()
+  }
   
   const name = body.name as string
   const content = body.content as string
 
   if (!name || !content) {
+    if (contentType.includes('application/json')) {
+      return c.json({ error: 'الاسم والمحتوى مطلوبان' }, 400)
+    }
     return c.redirect('/dashboard/stories?error=missing_fields')
   }
 
-  const { error } = await supabase
-    .from('stories')
-    .insert([{
+  try {
+    await db.collection('stories').add({
       name,
-      role: (body.role as string) || null,
+      role: body.role || 'مستفيد',
       rating: body.rating ? Number(body.rating) : 5,
       content,
-      image_url: (body.image_url as string) || null
-    }])
+      image_url: body.image_url || '',
+      is_published: true,
+      created_at: new Date().toISOString()
+    })
 
-  if (error) {
-    console.error('Insert error:', error.message)
+    if (contentType.includes('application/json')) {
+      return c.json({ success: true, message: 'تم إضافة قصة النجاح بنجاح' })
+    }
+    return c.redirect('/dashboard/stories?success=1')
+  } catch (error: any) {
+    console.error('Error creating success story:', error.message)
+    if (contentType.includes('application/json')) {
+      return c.json({ error: error.message }, 500)
+    }
     return c.redirect('/dashboard/stories?error=db_error')
   }
-
-  return c.redirect('/dashboard/stories?success=1')
 })
 
 // Edit story (Admin only)
 stories.post('/edit/:id', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const id = c.req.param('id')
-  const body = await c.req.parseBody()
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
+  const contentType = c.req.header('content-type') || ''
+  
+  let body: any
+  if (contentType.includes('application/json')) {
+    body = await c.req.json()
+  } else {
+    body = await c.req.parseBody()
+  }
   
   const name = body.name as string
   const content = body.content as string
 
   if (!name || !content) {
+    if (contentType.includes('application/json')) {
+      return c.json({ error: 'الاسم والمحتوى مطلوبان' }, 400)
+    }
     return c.redirect('/dashboard/stories?error=missing_fields')
   }
 
-  const { error } = await supabase
-    .from('stories')
-    .update({
+  try {
+    await db.collection('stories').doc(id).update({
       name,
-      role: (body.role as string) || null,
+      role: body.role || 'مستفيد',
       rating: body.rating ? Number(body.rating) : 5,
       content,
-      image_url: (body.image_url as string) || null
+      image_url: body.image_url || ''
     })
-    .eq('id', id)
 
-  if (error) {
-    console.error('Update error:', error.message)
+    if (contentType.includes('application/json')) {
+      return c.json({ success: true, message: 'تم تعديل قصة النجاح بنجاح' })
+    }
+    return c.redirect('/dashboard/stories?success=1')
+  } catch (error: any) {
+    console.error('Error updating success story:', error.message)
+    if (contentType.includes('application/json')) {
+      return c.json({ error: error.message }, 500)
+    }
     return c.redirect('/dashboard/stories?error=db_error')
   }
-
-  return c.redirect('/dashboard/stories?success=1')
 })
 
 // Delete story (Admin only)
 stories.post('/delete/:id', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const id = c.req.param('id')
-  
-  const { error } = await supabase
-    .from('stories')
-    .delete()
-    .eq('id', id)
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
+  const contentType = c.req.header('content-type') || ''
 
-  if (error) {
-    console.error('Delete error:', error.message)
+  try {
+    await db.collection('stories').doc(id).delete()
+
+    if (contentType.includes('application/json')) {
+      return c.json({ success: true, message: 'تم حذف قصة النجاح بنجاح' })
+    }
+    return c.redirect('/dashboard/stories?success=1')
+  } catch (error: any) {
+    console.error('Error deleting success story:', error.message)
+    if (contentType.includes('application/json')) {
+      return c.json({ error: error.message }, 500)
+    }
     return c.redirect('/dashboard/stories?error=db_error')
   }
-
-  return c.redirect('/dashboard/stories?success=1')
 })

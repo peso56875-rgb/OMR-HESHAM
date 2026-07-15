@@ -1,14 +1,13 @@
 import { Hono } from 'hono'
-import { getSupabaseAdminFromContext } from '../lib/supabase'
+import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 
 export const contacts = new Hono()
 
-// Submit a contact message (accepts form data from browser)
+// Submit a contact message (accepts form data from browser or JSON)
 contacts.post('/', async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
+  const db = getFirestore(c)
 
-  // Accept both JSON and form data
   const contentType = c.req.header('content-type') || ''
   let body: any
   if (contentType.includes('application/json')) {
@@ -26,38 +25,44 @@ contacts.post('/', async (c) => {
     return c.json({ error: 'الرجاء ملء جميع الحقول المطلوبة' }, 400)
   }
 
-  const { error } = await supabase
-    .from('contacts')
-    .insert([{
+  try {
+    const contactData = {
       name,
       email,
-      phone: phone || null,
-      subject: subject || null,
+      phone: phone || '',
+      subject: subject || 'استفسار عام',
       message,
-      status: 'unread'
-    }])
+      status: 'unread',
+      created_at: new Date().toISOString()
+    }
 
-  // If form submission, redirect back
-  if (!contentType.includes('application/json')) {
-    if (error) return c.redirect('/contact?error=' + encodeURIComponent(error.message))
-    return c.redirect('/contact?success=1')
+    await db.collection('contacts').add(contactData)
+
+    if (!contentType.includes('application/json')) {
+      return c.redirect('/contact?success=1')
+    }
+    return c.json({ message: 'تم إرسال رسالتك بنجاح.' })
+  } catch (error: any) {
+    console.error('Error submitting contact message:', error.message)
+    if (!contentType.includes('application/json')) {
+      return c.redirect('/contact?error=' + encodeURIComponent(error.message))
+    }
+    return c.json({ error: error.message }, 500)
   }
-
-  if (error) return c.json({ error: error.message }, 400)
-  return c.json({ message: 'تم إرسال رسالتك بنجاح.' })
 })
 
 // Update status (Admin only)
 contacts.post('/status/:id', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const id = c.req.param('id')
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
   const body = await c.req.parseBody()
-  
-  const { error } = await supabase
-    .from('contacts')
-    .update({ status: body.status })
-    .eq('id', id)
+  const status = body.status as string
 
-  if (error) return c.redirect('/dashboard/contacts?error=1')
-  return c.redirect('/dashboard/contacts?success=1')
+  try {
+    await db.collection('contacts').doc(id).update({ status })
+    return c.redirect('/dashboard/contacts?success=1')
+  } catch (error: any) {
+    console.error('Error updating contact status:', error.message)
+    return c.redirect('/dashboard/contacts?error=1')
+  }
 })

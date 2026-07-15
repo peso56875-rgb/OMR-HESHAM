@@ -1,88 +1,101 @@
 import { Hono } from 'hono'
-import { getSupabaseFromContext, getSupabaseAdminFromContext } from '../lib/supabase'
+import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 
 export const jobs = new Hono()
 
-// Get all jobs
+// Get all active published jobs
 jobs.get('/', async (c) => {
-  const supabase = getSupabaseFromContext(c)
+  try {
+    const db = getFirestore(c)
+    const snapshot = await db.collection('jobs')
+      .where('is_published', '==', true)
+      .where('is_active', '==', true)
+      .orderBy('created_at', 'desc')
+      .get()
 
-  const { data, error } = await supabase
-    .from('jobs')
-    .select('*')
-    .eq('is_published', true)
-    .order('created_at', { ascending: false })
-
-  if (error) return c.json({ error: error.message }, 400)
-  return c.json({ data })
+    const data = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+    return c.json({ data })
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
 })
 
 // Add job (Admin only)
 jobs.post('/add', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
+  const db = getFirestore(c)
   const body = await c.req.parseBody()
 
-  const { error } = await supabase
-    .from('jobs')
-    .insert([{
-      title: body.title,
-      department: body.department || null,
-      job_type: body.job_type || null,
-      location: body.location || null,
-      description: body.description || null,
-      is_active: body.is_active === 'true'
-    }])
+  const title = body.title as string
+  if (!title) {
+    return c.redirect('/dashboard/jobs?error=missing_title')
+  }
 
-  if (error) {
+  try {
+    await db.collection('jobs').add({
+      title,
+      department: body.department || 'عام',
+      job_type: body.job_type || 'دوام كامل',
+      location: body.location || 'كفر العنانية',
+      description: body.description || '',
+      is_active: body.is_active === 'true' || body.is_active === true,
+      is_published: true,
+      created_at: new Date().toISOString()
+    })
+
+    return c.redirect('/dashboard/jobs?success=1')
+  } catch (error: any) {
     console.error('Error creating job:', error.message)
     return c.redirect('/dashboard/jobs?error=1')
   }
-
-  return c.redirect('/dashboard/jobs?success=1')
 })
 
 // Edit job (Admin only)
 jobs.post('/edit/:id', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const id = c.req.param('id')
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
   const body = await c.req.parseBody()
-  
-  const { error } = await supabase
-    .from('jobs')
-    .update({
-      title: body.title,
-      department: body.department || null,
-      job_type: body.job_type || null,
-      location: body.location || null,
-      description: body.description || null,
-      is_active: body.is_active === 'true'
-    })
-    .eq('id', id)
 
-  if (error) return c.redirect('/dashboard/jobs?error=1')
-  return c.redirect('/dashboard/jobs?success=1')
+  const title = body.title as string
+  if (!title) {
+    return c.redirect('/dashboard/jobs?error=missing_title')
+  }
+
+  try {
+    await db.collection('jobs').doc(id).update({
+      title,
+      department: body.department || 'عام',
+      job_type: body.job_type || 'دوام كامل',
+      location: body.location || 'كفر العنانية',
+      description: body.description || '',
+      is_active: body.is_active === 'true' || body.is_active === true
+    })
+
+    return c.redirect('/dashboard/jobs?success=1')
+  } catch (error: any) {
+    console.error('Error updating job:', error.message)
+    return c.redirect('/dashboard/jobs?error=1')
+  }
 })
 
 // Delete job (Admin only)
 jobs.post('/delete/:id', adminMiddleware, async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
-  const id = c.req.param('id')
-  
-  const { error } = await supabase
-    .from('jobs')
-    .delete()
-    .eq('id', id)
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
 
-  if (error) return c.redirect('/dashboard/jobs?error=1')
-  return c.redirect('/dashboard/jobs?success=1')
+  try {
+    await db.collection('jobs').doc(id).delete()
+    return c.redirect('/dashboard/jobs?success=1')
+  } catch (error: any) {
+    console.error('Error deleting job:', error.message)
+    return c.redirect('/dashboard/jobs?error=1')
+  }
 })
 
-// Apply for a job (accepts form data from browser)
+// Apply for a job (accepts form data from browser or JSON)
 jobs.post('/apply', async (c) => {
-  const supabase = getSupabaseAdminFromContext(c)
+  const db = getFirestore(c)
 
-  // Accept both JSON and form data
   const contentType = c.req.header('content-type') || ''
   let body: any
   if (contentType.includes('application/json')) {
@@ -100,24 +113,36 @@ jobs.post('/apply', async (c) => {
     return c.json({ error: 'الرجاء ملء جميع الحقول الإلزامية' }, 400)
   }
 
-  const { error } = await supabase
-    .from('job_applications')
-    .insert([{
+  try {
+    let job_title = ''
+    if (job_id) {
+      const jobDoc = await db.collection('jobs').doc(job_id).get()
+      if (jobDoc.exists) {
+        job_title = jobDoc.data()?.title || ''
+      }
+    }
+
+    await db.collection('job_applications').add({
       job_id: job_id || null,
+      job_title: job_title || 'عام',
       full_name,
       email,
       phone,
-      bio,
-      cv_url,
-      status: 'pending'
-    }])
+      bio: bio || '',
+      cv_url: cv_url || '',
+      status: 'pending',
+      created_at: new Date().toISOString()
+    })
 
-  // If form submission, redirect back
-  if (!contentType.includes('application/json')) {
-    if (error) return c.redirect('/careers?error=' + encodeURIComponent(error.message))
-    return c.redirect('/careers?success=1#applyForm')
+    if (!contentType.includes('application/json')) {
+      return c.redirect('/careers?success=1#applyForm')
+    }
+    return c.json({ message: 'تم تقديم طلبك بنجاح.' })
+  } catch (error: any) {
+    console.error('Error submitting job application:', error.message)
+    if (!contentType.includes('application/json')) {
+      return c.redirect('/careers?error=' + encodeURIComponent(error.message))
+    }
+    return c.json({ error: error.message }, 500)
   }
-
-  if (error) return c.json({ error: error.message }, 400)
-  return c.json({ message: 'تم تقديم طلبك بنجاح.' })
 })

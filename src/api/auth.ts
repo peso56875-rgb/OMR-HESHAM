@@ -1,57 +1,76 @@
 import { Hono } from 'hono'
-import { getSupabaseFromContext } from '../lib/supabase'
-
-import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
+import { getAuth, getFirestore } from '../lib/firebase-admin'
+import { setCookie, deleteCookie } from 'hono/cookie'
 
 export const auth = new Hono()
 
-auth.get('/google', async (c) => {
-  const supabase = getSupabaseFromContext(c)
-  
-  // Create a redirect URL that points to our callback route
-  const redirectUrl = new URL('/api/auth/callback', new URL(c.req.url).origin).href
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: redirectUrl
-    }
-  })
-
-  if (error || !data.url) {
-    console.error('Google OAuth error:', error?.message)
-    return c.redirect('/login?error=oauth_failed')
+auth.post('/session', async (c) => {
+  let body: any
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'بيانات غير صالحة' }, 400)
   }
 
-  // Redirect the user to Google's consent screen
-  return c.redirect(data.url)
-})
-
-auth.get('/callback', async (c) => {
-  const supabase = getSupabaseFromContext(c)
-  const code = c.req.query('code')
-  const error = c.req.query('error')
-
-  // If the user canceled the login or there was an OAuth error
-  if (error) {
-    return c.redirect('/login?error=cancelled')
+  const { idToken } = body
+  if (!idToken) {
+    return c.json({ error: 'الرمز التعريفي مطلوب' }, 400)
   }
 
-  // Exchange the code for a session
-  if (code) {
-    const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
+  try {
+    const firebaseAuth = getAuth(c)
+    const expiresIn = 60 * 60 * 24 * 5 * 1000 // 5 days
     
-    if (!sessionError && data.session) {
-      setCookie(c, 'sb-access-token', data.session.access_token, { path: '/', maxAge: 604800, httpOnly: true })
-      setCookie(c, 'sb-refresh-token', data.session.refresh_token, { path: '/', maxAge: 604800, httpOnly: true })
-    }
-  }
+    // Create the session cookie
+    const sessionCookie = await firebaseAuth.createSessionCookie(idToken, { expiresIn })
+    
+    // Set the cookie
+    setCookie(c, 'fb-session', sessionCookie, {
+      path: '/',
+      maxAge: expiresIn / 1000,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Lax'
+    })
 
-  return c.redirect('/dashboard')
+    // Get user details
+    const decodedToken = await firebaseAuth.verifySessionCookie(sessionCookie)
+    const db = getFirestore(c)
+    
+    const profileRef = db.collection('profiles').doc(decodedToken.uid)
+    const profileDoc = await profileRef.get()
+
+    let role = 'donor'
+    if (!profileDoc.exists) {
+      // Check if it's the first profile in the collection to set as admin
+      const profilesSnapshot = await db.collection('profiles').limit(1).get()
+      const isFirst = profilesSnapshot.empty
+      
+      // Let's also check if user has custom admin emails
+      const email = decodedToken.email || ''
+      const isAdminEmail = email === 'dr.omarheshamfoundation@gmail.com' || email === 'rahmmaaa9900@gmail.com' || email.startsWith('admin')
+      role = (isFirst || isAdminEmail) ? 'admin' : 'donor'
+
+      await profileRef.set({
+        full_name: decodedToken.name || email.split('@')[0] || 'فاعل خير',
+        phone: '',
+        role: role,
+        avatar_url: decodedToken.picture || '',
+        email: email,
+        created_at: new Date().toISOString()
+      })
+    } else {
+      role = profileDoc.data()?.role || 'donor'
+    }
+
+    return c.json({ success: true, role, message: 'تم تسجيل الدخول بنجاح' })
+  } catch (error: any) {
+    console.error('[Session Auth Error]', error.message)
+    return c.json({ error: 'فشل في إنشاء الجلسة، رمز غير صالح' }, 401)
+  }
 })
 
 auth.get('/logout', async (c) => {
-  deleteCookie(c, 'sb-access-token', { path: '/' })
-  deleteCookie(c, 'sb-refresh-token', { path: '/' })
+  deleteCookie(c, 'fb-session', { path: '/' })
   return c.redirect('/login')
 })
