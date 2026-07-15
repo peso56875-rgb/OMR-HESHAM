@@ -12,6 +12,7 @@ import { jobs } from './jobs'
 import { newsletter } from './newsletter'
 import { profile } from './profile'
 import { users } from './users'
+import { upload } from './upload'
 
 const api = new Hono()
 
@@ -53,5 +54,6 @@ api.route('/jobs', jobs)
 api.route('/newsletter', newsletter)
 api.route('/profile', profile)
 api.route('/users', users)
+api.route('/upload', upload)
 
 export { api }

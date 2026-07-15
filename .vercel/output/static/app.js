@@ -248,4 +248,116 @@
       card.addEventListener('mouseleave', () => card.style.transform = '')
     })
   }
+
+  /* ─── Cloudinary Upload Widget ─── */
+  $$('.upload-widget').forEach(widget => {
+    const dropZone = widget.querySelector('.upload-drop-zone')
+    const fileInput = widget.querySelector('.upload-file-input')
+    const preview = widget.querySelector('.upload-preview')
+    const placeholder = widget.querySelector('.upload-placeholder')
+    const urlFallback = widget.querySelector('.upload-url-fallback')
+    const hiddenInput = widget.closest('form')?.querySelector('.cloudinary-url')
+
+    if (!dropZone || !fileInput || !hiddenInput) return
+
+    // Create progress bar and status elements
+    const progressWrap = document.createElement('div')
+    progressWrap.className = 'upload-progress'
+    progressWrap.innerHTML = '<div class="upload-progress-bar"></div>'
+    dropZone.parentElement.insertBefore(progressWrap, dropZone.nextSibling)
+    const progressBar = progressWrap.querySelector('.upload-progress-bar')
+
+    const statusEl = document.createElement('div')
+    statusEl.className = 'upload-status'
+    progressWrap.parentElement.insertBefore(statusEl, progressWrap.nextSibling)
+
+    // Drag and drop visual feedback
+    ;['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('dragover') }))
+    ;['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('dragover') }))
+
+    dropZone.addEventListener('drop', e => {
+      const files = e.dataTransfer?.files
+      if (files?.length) {
+        fileInput.files = files
+        handleFileUpload(files[0])
+      }
+    })
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files?.length) handleFileUpload(fileInput.files[0])
+    })
+
+    // URL fallback: when user types a URL directly
+    if (urlFallback) {
+      urlFallback.addEventListener('input', () => {
+        hiddenInput.value = urlFallback.value.trim()
+        if (urlFallback.value.trim()) {
+          preview.src = urlFallback.value.trim()
+          preview.style.display = 'block'
+          placeholder.style.display = 'none'
+        }
+      })
+    }
+
+    async function handleFileUpload(file) {
+      // Local preview
+      const reader = new FileReader()
+      reader.onload = e => {
+        if (file.type.startsWith('image/')) {
+          preview.src = e.target.result
+          preview.style.display = 'block'
+          placeholder.style.display = 'none'
+        }
+      }
+      reader.readAsDataURL(file)
+
+      // Show progress
+      progressWrap.style.display = 'block'
+      progressBar.style.width = '20%'
+      statusEl.textContent = 'جارٍ رفع الصورة...'
+      statusEl.className = 'upload-status'
+
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        // Simulate progress
+        progressBar.style.width = '60%'
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+
+        progressBar.style.width = '90%'
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}))
+          throw new Error(err.error || 'فشل رفع الملف')
+        }
+
+        const data = await response.json()
+        progressBar.style.width = '100%'
+
+        hiddenInput.value = data.url
+        if (urlFallback) urlFallback.value = data.url
+
+        statusEl.textContent = '✓ تم رفع الصورة بنجاح'
+        statusEl.className = 'upload-status success'
+
+        setTimeout(() => { progressWrap.style.display = 'none' }, 1500)
+      } catch (err) {
+        progressBar.style.width = '100%'
+        progressBar.style.background = 'var(--coral)'
+        statusEl.textContent = '✗ ' + (err.message || 'فشل رفع الملف')
+        statusEl.className = 'upload-status error'
+        setTimeout(() => {
+          progressWrap.style.display = 'none'
+          progressBar.style.width = '0'
+          progressBar.style.background = ''
+        }, 3000)
+      }
+    }
+  })
 })()
+
