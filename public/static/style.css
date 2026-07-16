@@ -579,3 +579,143 @@ body.dark .profile-card-modern {
 }
 body.dark .upload-url-fallback { background:var(--paper); border-color:rgba(255,255,255,.15); color:var(--text) }
 
+/* Donation page mobile layout */
+@media(max-width: 780px) {
+  .donate-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 42px;
+    width: 100%;
+    padding: 64px max(16px, env(safe-area-inset-left)) 84px max(16px, env(safe-area-inset-right));
+    overflow: clip;
+  }
+  .donation-journey,
+  .payment-panel,
+  .donation-form {
+    width: 100%;
+    min-width: 0;
+  }
+  .donation-journey h2,
+  .payment-panel h2 {
+    font-size: clamp(2.1rem, 10vw, 3.1rem);
+    line-height: 1.25;
+    margin-bottom: 26px;
+  }
+  .donation-form input {
+    min-width: 0;
+    min-height: 50px;
+    padding: 13px 14px;
+    font-size: 16px;
+  }
+  .donation-form label {
+    margin-bottom: 16px;
+  }
+  .amount-picks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .amount-picks button {
+    min-height: 50px;
+    padding: 10px 8px;
+    touch-action: manipulation;
+  }
+  .donation-form fieldset {
+    min-inline-size: 0;
+    margin: 22px 0;
+  }
+  .method-option > span {
+    grid-template-columns: 44px minmax(0, 1fr);
+    min-height: 68px;
+    padding: 10px 12px;
+    gap: 0 8px;
+  }
+  .method-option > span > i {
+    width: 40px;
+    height: 40px;
+  }
+  .method-option b,
+  .method-option small {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .submit-btn {
+    min-height: 54px;
+    padding-inline: 18px;
+  }
+  .privacy-note {
+    line-height: 1.7;
+    padding-inline: 8px;
+  }
+  .payment-panel {
+    position: relative;
+    top: auto;
+    padding: 28px 18px;
+    border-radius: 26px;
+    overflow: hidden;
+  }
+  .payment-panel .eyebrow {
+    margin-bottom: 16px;
+  }
+  .account-card {
+    min-width: 0;
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
+  .account-card > div {
+    min-width: 0;
+  }
+  .account-card > div > i {
+    flex: 0 0 42px;
+  }
+  .account-card span {
+    min-width: 0;
+  }
+  .account-card span small,
+  .account-card span b {
+    overflow-wrap: anywhere;
+  }
+  .account-card > strong {
+    max-width: 100%;
+    margin: 18px 0 12px;
+    font-size: clamp(.88rem, 4.5vw, 1.2rem);
+    letter-spacing: .025em;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .copy-btn {
+    min-height: 46px;
+    touch-action: manipulation;
+  }
+  .voucher-card {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 12px;
+    padding: 17px 14px;
+    margin-top: 22px;
+  }
+  .voucher-card > span {
+    font-size: 1.35rem;
+  }
+  .voucher-card p {
+    line-height: 1.8;
+  }
+}
+
+@media(max-width: 380px) {
+  .donate-layout {
+    padding-inline: 14px;
+  }
+  .payment-panel {
+    padding-inline: 14px;
+    border-radius: 22px;
+  }
+  .method-option > span {
+    grid-template-columns: 40px minmax(0, 1fr);
+    padding-inline: 9px;
+  }
+  .voucher-card p i {
+    display: none;
+  }
+}
+

@@ -662,9 +662,9 @@ function Login({ firebaseConfig }: { firebaseConfig: any }) {
 
         <div id="authError" role="alert" aria-live="assertive" style="display:none;background:rgba(231,76,60,.12);color:#c0392b;padding:.8rem 1.2rem;border-radius:.6rem;margin-bottom:1.2rem;font-weight:600;font-size:.9rem;text-align:center"></div>
 
-        <button id="googleLoginButton" type="button" aria-describedby="authError" class="primary-btn" style="display:flex;align-items:center;justify-content:center;gap:.8rem;background:#fff;color:#333;border:1px solid #ddd;width:100%;margin-bottom:1.5rem;cursor:pointer; font-weight:bold; height:50px; border-radius:12px">
+        <button id="googleLoginButton" type="button" aria-describedby="authError" aria-busy="true" disabled class="primary-btn" style="display:flex;align-items:center;justify-content:center;gap:.8rem;background:#fff;color:#333;border:1px solid #ddd;width:100%;margin-bottom:1.5rem;cursor:wait; font-weight:bold; height:50px; border-radius:12px;opacity:.75">
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="" style="width:24px;height:24px" />
-          <span>تسجيل الدخول بواسطة Google</span>
+          <span>جارٍ تهيئة تسجيل الدخول...</span>
         </button>
 
         <div style="display:flex;align-items:center;gap:1rem;margin:1.5rem 0;color:var(--muted)">
@@ -687,6 +687,9 @@ function Login({ firebaseConfig }: { firebaseConfig: any }) {
         const errorBox = document.getElementById('authError');
         const isConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId);
         const defaultButtonLabel = 'تسجيل الدخول بواسطة Google';
+        let firebaseAuthSdk = null;
+        let auth = null;
+        let provider = null;
 
         function showError(message) {
           if (!errorBox) return;
@@ -701,13 +704,18 @@ function Login({ firebaseConfig }: { firebaseConfig: any }) {
           errorBox.style.display = 'none';
         }
 
-        function setLoading(isLoading) {
+        function setButtonState(state) {
           if (!googleButton || !buttonLabel) return;
-          googleButton.disabled = isLoading;
-          googleButton.setAttribute('aria-busy', String(isLoading));
-          googleButton.style.cursor = isLoading ? 'wait' : 'pointer';
-          googleButton.style.opacity = isLoading ? '0.75' : '1';
-          buttonLabel.textContent = isLoading ? 'جارٍ فتح نافذة Google...' : defaultButtonLabel;
+          const isBusy = state !== 'ready';
+          googleButton.disabled = isBusy;
+          googleButton.setAttribute('aria-busy', String(isBusy));
+          googleButton.style.cursor = isBusy ? 'wait' : 'pointer';
+          googleButton.style.opacity = isBusy ? '0.75' : '1';
+          buttonLabel.textContent = state === 'preparing'
+            ? 'جارٍ تهيئة تسجيل الدخول...'
+            : state === 'signing-in'
+              ? 'جارٍ تسجيل الدخول...'
+              : defaultButtonLabel;
         }
 
         function getFriendlyError(error) {
@@ -729,42 +737,41 @@ function Login({ firebaseConfig }: { firebaseConfig: any }) {
             : 'تعذر تسجيل الدخول الآن. يرجى المحاولة مرة أخرى.';
         }
 
+        async function createSession(idToken) {
+          let lastError = null;
+          for (let attempt = 0; attempt < 2; attempt += 1) {
+            try {
+              const response = await fetch('/api/auth/session', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken })
+              });
+              const data = await response.json().catch(function () { return {}; });
+              if (response.ok && data.success) return data;
+              lastError = new Error(data.error || 'تعذر إنشاء جلسة تسجيل الدخول.');
+            } catch (error) {
+              lastError = error;
+            }
+            await new Promise(function (resolve) { window.setTimeout(resolve, 450); });
+          }
+          throw lastError || new Error('تعذر إنشاء جلسة تسجيل الدخول.');
+        }
+
         async function loginWithGoogle() {
           clearError();
-
-          if (!isConfigured) {
-            showError('إعدادات Firebase غير مكتملة. يرجى التواصل مع إدارة الموقع.');
+          if (!firebaseAuthSdk || !auth || !provider) {
+            showError('لم يكتمل تجهيز تسجيل الدخول بعد. انتظر لحظة ثم حاول مرة أخرى.');
             return;
           }
 
-          setLoading(true);
+          setButtonState('signing-in');
           try {
-            const modules = await Promise.all([
-              import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js'),
-              import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js')
-            ]);
-            const firebaseApp = modules[0];
-            const firebaseAuth = modules[1];
-            const app = firebaseApp.getApps().length
-              ? firebaseApp.getApp()
-              : firebaseApp.initializeApp(firebaseConfig);
-            const auth = firebaseAuth.getAuth(app);
-            const provider = new firebaseAuth.GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
-
-            const result = await firebaseAuth.signInWithPopup(auth, provider);
+            // The popup is opened immediately inside the click event. This keeps
+            // the browser's user activation valid on the very first attempt.
+            const result = await firebaseAuthSdk.signInWithPopup(auth, provider);
             const idToken = await result.user.getIdToken(true);
-            const response = await fetch('/api/auth/session', {
-              method: 'POST',
-              credentials: 'same-origin',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ idToken })
-            });
-            const data = await response.json().catch(function () { return {}; });
-
-            if (!response.ok || !data.success) {
-              throw new Error(data.error || 'تعذر إنشاء جلسة تسجيل الدخول.');
-            }
+            await createSession(idToken);
 
             const displayName = result.user.displayName || 'صديق المؤسسة';
             localStorage.setItem('just_logged_in', 'true');
@@ -782,17 +789,41 @@ function Login({ firebaseConfig }: { firebaseConfig: any }) {
             }
 
             window.setTimeout(function () {
-              window.location.assign('/profile');
-            }, 1400);
+              window.location.replace('/profile');
+            }, 1200);
           } catch (error) {
             console.error('[Google Login Error]', error);
             showError(getFriendlyError(error));
-            setLoading(false);
+            setButtonState('ready');
           }
         }
 
-        if (googleButton) {
-          googleButton.addEventListener('click', loginWithGoogle);
+        async function prepareGoogleLogin() {
+          if (!isConfigured) {
+            showError('إعدادات Firebase غير مكتملة. يرجى التواصل مع إدارة الموقع.');
+            return;
+          }
+
+          setButtonState('preparing');
+          try {
+            const modules = await Promise.all([
+              import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js'),
+              import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js')
+            ]);
+            const firebaseApp = modules[0];
+            firebaseAuthSdk = modules[1];
+            const app = firebaseApp.getApps().length
+              ? firebaseApp.getApp()
+              : firebaseApp.initializeApp(firebaseConfig);
+            auth = firebaseAuthSdk.getAuth(app);
+            provider = new firebaseAuthSdk.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            googleButton?.addEventListener('click', loginWithGoogle);
+            setButtonState('ready');
+          } catch (error) {
+            console.error('[Google Auth Initialization Error]', error);
+            showError('تعذر تجهيز تسجيل الدخول بواسطة Google. تحقق من اتصالك ثم أعد تحميل الصفحة.');
+          }
         }
 
         const params = new URLSearchParams(window.location.search);
@@ -806,6 +837,8 @@ function Login({ firebaseConfig }: { firebaseConfig: any }) {
           showError(messages[error] || 'حدث خطأ غير متوقع.');
           history.replaceState(null, '', '/login');
         }
+
+        prepareGoogleLogin();
       }());
     `}} />
   </Layout>
