@@ -660,10 +660,10 @@ function Login({ firebaseConfig }: { firebaseConfig: any }) {
         <h2>مرحبًا بك في منصّة الأثر</h2>
         <p style="color:var(--muted); margin-bottom:2rem">سجّل دخولك بواسطة Google للوصول إلى لوحة التحكم أو الحساب الشخصي.</p>
 
-        <div id="authError" style="display:none;background:rgba(231,76,60,.12);color:#c0392b;padding:.8rem 1.2rem;border-radius:.6rem;margin-bottom:1.2rem;font-weight:600;font-size:.9rem;text-align:center"></div>
+        <div id="authError" role="alert" aria-live="assertive" style="display:none;background:rgba(231,76,60,.12);color:#c0392b;padding:.8rem 1.2rem;border-radius:.6rem;margin-bottom:1.2rem;font-weight:600;font-size:.9rem;text-align:center"></div>
 
-        <button onclick="window.loginWithGoogle()" class="primary-btn" style="display:flex;align-items:center;justify-content:center;gap:.8rem;background:#fff;color:#333;border:1px solid #ddd;width:100%;margin-bottom:1.5rem;cursor:pointer; font-weight:bold; height:50px; border-radius:12px">
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style="width:24px;height:24px" />
+        <button id="googleLoginButton" type="button" aria-describedby="authError" class="primary-btn" style="display:flex;align-items:center;justify-content:center;gap:.8rem;background:#fff;color:#333;border:1px solid #ddd;width:100%;margin-bottom:1.5rem;cursor:pointer; font-weight:bold; height:50px; border-radius:12px">
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="" style="width:24px;height:24px" />
           <span>تسجيل الدخول بواسطة Google</span>
         </button>
 
@@ -678,85 +678,135 @@ function Login({ firebaseConfig }: { firebaseConfig: any }) {
       </div>
     </section>
 
-    <script type="module" dangerouslySetInnerHTML={{
+    <script dangerouslySetInnerHTML={{
       __html: `
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-      import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+      (function () {
+        const firebaseConfig = ${JSON.stringify(firebaseConfig)};
+        const googleButton = document.getElementById('googleLoginButton');
+        const buttonLabel = googleButton ? googleButton.querySelector('span') : null;
+        const errorBox = document.getElementById('authError');
+        const isConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId);
+        const defaultButtonLabel = 'تسجيل الدخول بواسطة Google';
 
-      const firebaseConfig = ${JSON.stringify(firebaseConfig)};
-
-      const isConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId);
-      const app = isConfigured ? initializeApp(firebaseConfig) : null;
-      const auth = app ? getAuth(app) : null;
-      const provider = app ? new GoogleAuthProvider() : null;
-      const errorBox = document.getElementById('authError');
-
-      window.loginWithGoogle = async () => {
-        errorBox.style.display = 'none';
-        if (!isConfigured || !auth || !provider) {
-          errorBox.textContent = 'تسجيل الدخول عبر Google غير متاح مؤقتًا. يمكنك المتابعة كزائر.';
+        function showError(message) {
+          if (!errorBox) return;
+          errorBox.textContent = message;
           errorBox.style.display = 'block';
-          return;
+          errorBox.focus?.();
         }
-        
-        try {
-          const result = await signInWithPopup(auth, provider);
-          const idToken = await result.user.getIdToken();
-          
-          const res = await fetch('/api/auth/session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken })
-          });
-          const data = await res.json();
-          if (data.success) {
+
+        function clearError() {
+          if (!errorBox) return;
+          errorBox.textContent = '';
+          errorBox.style.display = 'none';
+        }
+
+        function setLoading(isLoading) {
+          if (!googleButton || !buttonLabel) return;
+          googleButton.disabled = isLoading;
+          googleButton.setAttribute('aria-busy', String(isLoading));
+          googleButton.style.cursor = isLoading ? 'wait' : 'pointer';
+          googleButton.style.opacity = isLoading ? '0.75' : '1';
+          buttonLabel.textContent = isLoading ? 'جارٍ فتح نافذة Google...' : defaultButtonLabel;
+        }
+
+        function getFriendlyError(error) {
+          const code = error && error.code ? error.code : '';
+          if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+            return 'تم إلغاء تسجيل الدخول. اضغط على الزر للمحاولة مرة أخرى.';
+          }
+          if (code === 'auth/popup-blocked') {
+            return 'المتصفح منع نافذة Google. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.';
+          }
+          if (code === 'auth/unauthorized-domain') {
+            return 'هذا النطاق غير مصرح له في إعدادات Firebase. يرجى التواصل مع إدارة الموقع.';
+          }
+          if (code === 'auth/operation-not-allowed') {
+            return 'تسجيل الدخول بواسطة Google غير مفعّل في Firebase.';
+          }
+          return error && error.message
+            ? 'فشل تسجيل الدخول: ' + error.message
+            : 'تعذر تسجيل الدخول الآن. يرجى المحاولة مرة أخرى.';
+        }
+
+        async function loginWithGoogle() {
+          clearError();
+
+          if (!isConfigured) {
+            showError('إعدادات Firebase غير مكتملة. يرجى التواصل مع إدارة الموقع.');
+            return;
+          }
+
+          setLoading(true);
+          try {
+            const modules = await Promise.all([
+              import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js'),
+              import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js')
+            ]);
+            const firebaseApp = modules[0];
+            const firebaseAuth = modules[1];
+            const app = firebaseApp.getApps().length
+              ? firebaseApp.getApp()
+              : firebaseApp.initializeApp(firebaseConfig);
+            const auth = firebaseAuth.getAuth(app);
+            const provider = new firebaseAuth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+
+            const result = await firebaseAuth.signInWithPopup(auth, provider);
+            const idToken = await result.user.getIdToken(true);
+            const response = await fetch('/api/auth/session', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idToken })
+            });
+            const data = await response.json().catch(function () { return {}; });
+
+            if (!response.ok || !data.success) {
+              throw new Error(data.error || 'تعذر إنشاء جلسة تسجيل الدخول.');
+            }
+
+            const displayName = result.user.displayName || 'صديق المؤسسة';
             localStorage.setItem('just_logged_in', 'true');
-            localStorage.setItem('user_display_name', result.user.displayName || 'صديق المؤسسة');
-            
+            localStorage.setItem('user_display_name', displayName);
+
             const container = document.querySelector('.auth-form-container');
             if (container) {
-              container.innerHTML = "<div style=\"text-align:center; padding: 2.5rem 0; display:flex; flex-direction:column; align-items:center; gap:1.5rem; animation: fadeIn 0.6s var(--ease)\">" +
-                "<div style=\"width:70px; height:70px; border-radius:50%; background:var(--gold); color:var(--ink); display:grid; place-items:center; font-size:2rem; box-shadow:0 10px 25px rgba(214,166,75,0.3)\">" +
-                  "<i class=\"fa-solid fa-hands-praying\"></i>" +
-                "</div>" +
-                "<div>" +
-                  "<h2 style=\"margin:0 0 8px; font-size:1.8rem; font-weight:800; color:var(--text)\">أهلاً بك، " + (result.user.displayName || 'صديقنا') + "! ✦</h2>" +
-                  "<p style=\"color:var(--muted); margin:0; font-size:0.95rem\">تم تسجيل الدخول بنجاح.</p>" +
-                "</div>" +
-                "<div style=\"font-size:0.88rem; color:var(--emerald); font-weight:800; display:flex; align-items:center; gap:8px; margin-top:0.5rem\">" +
-                  "<i class=\"fa-solid fa-circle-notch fa-spin\"></i>" +
-                  "<span>جارٍ توجيهك إلى حسابك...</span>" +
-                "</div>" +
-              "</div>";
+              container.innerHTML = '<div style="text-align:center;padding:2.5rem 0;display:flex;flex-direction:column;align-items:center;gap:1.5rem">' +
+                '<div style="width:70px;height:70px;border-radius:50%;background:var(--gold);color:var(--ink);display:grid;place-items:center;font-size:2rem;box-shadow:0 10px 25px rgba(214,166,75,0.3)"><i class="fa-solid fa-hands-praying"></i></div>' +
+                '<div><h2 id="loginWelcome" style="margin:0 0 8px;font-size:1.8rem;font-weight:800;color:var(--text)"></h2><p style="color:var(--muted);margin:0;font-size:0.95rem">تم تسجيل الدخول بنجاح.</p></div>' +
+                '<div style="font-size:0.88rem;color:var(--emerald);font-weight:800;display:flex;align-items:center;gap:8px;margin-top:0.5rem"><i class="fa-solid fa-circle-notch fa-spin"></i><span>جارٍ توجيهك إلى حسابك...</span></div>' +
+              '</div>';
+              const welcome = document.getElementById('loginWelcome');
+              if (welcome) welcome.textContent = 'أهلًا بك، ' + displayName;
             }
-            
-            setTimeout(() => {
-              window.location.href = data.role === 'admin' ? '/' : '/profile';
-            }, 1800);
-          } else {
-            errorBox.textContent = 'حدث خطأ في النظام: ' + (data.error || 'فشل التوثيق');
-            errorBox.style.display = 'block';
+
+            window.setTimeout(function () {
+              window.location.assign('/profile');
+            }, 1400);
+          } catch (error) {
+            console.error('[Google Login Error]', error);
+            showError(getFriendlyError(error));
+            setLoading(false);
           }
-        } catch (error) {
-          console.error(error);
-          errorBox.textContent = 'فشل تسجيل الدخول: ' + error.message;
-          errorBox.style.display = 'block';
         }
-      };
-      
-      // Handle error params in URL
-      const params = new URLSearchParams(window.location.search);
-      const error = params.get('error');
-      if (error) {
-        const msgs = {
-          'unauthorized': '⚠️ يرجى تسجيل الدخول أولاً للوصول للوحة التحكم.',
-          'not_admin': '🚫 ليس لديك صلاحية الوصول للوحة التحكم. تواصل مع المدير.',
-          'cancelled': '↩️ تم إلغاء عملية تسجيل الدخول.'
-        };
-        errorBox.textContent = msgs[error] || 'حدث خطأ غير متوقع.';
-        errorBox.style.display = 'block';
-        history.replaceState(null, '', '/login');
-      }
+
+        if (googleButton) {
+          googleButton.addEventListener('click', loginWithGoogle);
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const error = params.get('error');
+        if (error) {
+          const messages = {
+            unauthorized: 'يرجى تسجيل الدخول أولًا للوصول إلى لوحة التحكم.',
+            not_admin: 'ليس لديك صلاحية الوصول إلى لوحة التحكم. تواصل مع المدير.',
+            cancelled: 'تم إلغاء عملية تسجيل الدخول.'
+          };
+          showError(messages[error] || 'حدث خطأ غير متوقع.');
+          history.replaceState(null, '', '/login');
+        }
+      }());
     `}} />
   </Layout>
 }
