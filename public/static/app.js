@@ -79,17 +79,21 @@
   if (savedTheme === 'dark') document.body.classList.add('dark')
   const updateThemeIcon = () => {
     const isDark = document.body.classList.contains('dark')
-    const i = $('#theme-toggle i')
+    $$('#theme-toggle i').forEach(i => {
+      i.className = `fa-solid ${isDark ? 'fa-sun' : 'fa-moon'}`
+    })
     const themeColor = $('meta[name="theme-color"]')
-    if (i) i.className = `fa-solid ${isDark ? 'fa-sun' : 'fa-moon'}`
     if (themeColor) themeColor.setAttribute('content', isDark ? '#071d1a' : '#f9f6ee')
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
   }
   updateThemeIcon()
-  $('#theme-toggle')?.addEventListener('click', () => {
-    document.body.classList.toggle('dark')
-    localStorage.setItem('omar-theme', document.body.classList.contains('dark') ? 'dark' : 'light')
-    updateThemeIcon()
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('#theme-toggle')) {
+      document.body.classList.toggle('dark')
+      localStorage.setItem('omar-theme', document.body.classList.contains('dark') ? 'dark' : 'light')
+      updateThemeIcon()
+    }
   })
 
   $$('.desktop-nav a, .mobile-drawer nav a, .mobile-bottom a').forEach(link => {
@@ -258,6 +262,9 @@
 
     // 6. Reveal elements
     $$('.reveal').forEach(el => revealObserver.observe(el))
+
+    // 7. Sync theme icon
+    updateThemeIcon()
   }
 
   async function loadDashboardView(url, pushState = true) {
