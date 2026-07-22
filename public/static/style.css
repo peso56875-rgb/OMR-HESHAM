@@ -1073,3 +1073,109 @@ body.dark .dash-modal-footer {
 .dash-modal-cancel-btn:hover {
   background: rgba(0, 0, 0, 0.05);
 }
+
+/* ─── Mobile Responsive Card Optimizations (6 Doors & Campaigns) ─── */
+@media (max-width: 780px) {
+  /* 6 Doors (المجالات / الأبواب الستة) Cards Compact Style */
+  .program-grid {
+    display: flex !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-padding: 0 16px !important;
+    padding: 10px 16px 25px !important;
+    gap: 12px !important;
+    margin-left: -20px !important;
+    margin-right: -20px !important;
+  }
+
+  .program-card {
+    min-width: 250px !important;
+    max-width: 280px !important;
+    min-height: 230px !important;
+    padding: 20px 18px !important;
+    scroll-snap-align: start !important;
+    border-radius: 20px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .program-card .program-icon {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 14px !important;
+    font-size: 1.2rem !important;
+    margin-bottom: 18px !important;
+  }
+
+  .program-card h3 {
+    font-size: 1.18rem !important;
+    margin-bottom: 6px !important;
+  }
+
+  .program-card p {
+    font-size: 0.84rem !important;
+    line-height: 1.5 !important;
+    max-width: 100% !important;
+  }
+
+  .program-card > a {
+    bottom: 18px !important;
+    left: 18px !important;
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  /* Campaign Cards Compact Style */
+  .campaign-grid {
+    display: flex !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-padding: 0 16px !important;
+    padding: 10px 16px 25px !important;
+    gap: 14px !important;
+    margin-left: -20px !important;
+    margin-right: -20px !important;
+  }
+
+  .campaign-grid > .campaign-card,
+  .campaign-card {
+    min-width: 265px !important;
+    max-width: 295px !important;
+    scroll-snap-align: start !important;
+    border-radius: 20px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .campaign-visual {
+    height: 155px !important;
+  }
+
+  .campaign-visual > i {
+    font-size: 3rem !important;
+  }
+
+  .campaign-body {
+    padding: 18px 16px !important;
+  }
+
+  .campaign-body h3 {
+    font-size: 1.18rem !important;
+  }
+
+  .campaign-body > p {
+    font-size: 0.85rem !important;
+    min-height: 42px !important;
+    line-height: 1.45 !important;
+    margin-top: 4px !important;
+  }
+
+  .progress-meta {
+    margin-top: 14px !important;
+    font-size: 0.7rem !important;
+  }
+
+  .progress-track {
+    margin: 6px 0 14px !important;
+  }
+}
