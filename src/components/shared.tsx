@@ -34,9 +34,10 @@ export function Header({ user }: { user?: UserSession }) {
         {Object.entries(routeNames).slice(0, 13).map(([href, label]) => <a href={href}>{label}<i class="fa-solid fa-arrow-left"></i></a>)}
         <div style="border-top:1px solid var(--border); margin:1rem 0; padding-top:1rem"></div>
         {user ? (
-          user.role === 'admin' ?
-            <a href="/dashboard" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a> :
+          <>
             <a href="/profile" style="color:var(--blue-600);font-weight:bold"><i class="fa-solid fa-user"></i> حسابي ({user.name})</a>
+            {user.role === 'admin' && <a href="/dashboard" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>}
+          </>
         ) : (
           <a href="/login"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</a>
         )}
