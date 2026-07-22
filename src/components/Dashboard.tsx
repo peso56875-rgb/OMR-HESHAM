@@ -1176,7 +1176,7 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
         <h3 style="font-size:1.2rem; font-weight:900; color:#8b5cf6; margin-bottom:1.2rem; display:flex; align-items:center; gap:10px">
           {icon('fa-shuffle')} استخراج عينة عشوائية — تحميل ملف Excel
         </h3>
-        <form id="random-sample-form" action="/api/export/cases_sample" method="get" style="display:flex; flex-direction:column; gap:1.2rem">
+        <div id="random-sample-form" style="display:flex; flex-direction:column; gap:1.2rem">
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem">
             <label style="display:flex; flex-direction:column; gap:6px; font-weight:700; font-size:.9rem">
               اختر مجموعة المستفيدين *
@@ -1225,14 +1225,19 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
           </div>
 
           <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap">
-            <button type="submit" class="primary-btn" style="background:linear-gradient(135deg,#8b5cf6,#06b6d4); border:none; font-size:1rem; padding:12px 28px">
+            <button
+              type="button"
+              id="extract-sample-btn"
+              class="primary-btn"
+              style="background:linear-gradient(135deg,#8b5cf6,#06b6d4); border:none; font-size:1rem; padding:12px 28px"
+            >
               {icon('fa-file-excel')} استخراج العينة وتحميل Excel
             </button>
             <small style="color:var(--muted); font-size:.82rem">
               {icon('fa-circle-info')} الأسماء ستُسحب عشوائيًا بالكامل في كل مرة تضغط فيها
             </small>
           </div>
-        </form>
+        </div>
       </section>
     )}
 
@@ -1387,8 +1392,8 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
 
     {/* JavaScript للواجهة التفاعلية */}
     <script dangerouslySetInnerHTML={{ __html: `
-      // عداد الأسماء في الـ textarea
       (function() {
+        // عداد الأسماء في الـ textarea
         var ta = document.getElementById('names-textarea');
         var counter = document.getElementById('name-counter');
         if (ta && counter) {
@@ -1435,7 +1440,13 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
             }
             var g = groupData[gid];
             var total = g.total;
-            if (rangeInput) { rangeInput.max = total; if (parseInt(rangeInput.value) > total) { rangeInput.value = total; if (numInput) numInput.value = total; } }
+            if (rangeInput) {
+              rangeInput.max = total;
+              if (parseInt(rangeInput.value) > total) {
+                rangeInput.value = total;
+                if (numInput) numInput.value = total;
+              }
+            }
             if (hintEl) hintEl.textContent = 'المجموعة تحتوي على ' + total.toLocaleString('ar-EG') + ' اسم — أدخل العدد المطلوب';
             if (previewBox && previewNames && g.preview && g.preview.length > 0) {
               previewBox.style.display = 'block';
@@ -1445,6 +1456,22 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
             } else {
               if (previewBox) previewBox.style.display = 'none';
             }
+          });
+        }
+
+        // زر الاستخراج العشوائي — يستخدم window.location.href مباشرةً
+        // لتفادي مشكلة الـ interceptor الذي يحاول إضافة body لـ GET request
+        var extractBtn = document.getElementById('extract-sample-btn');
+        if (extractBtn) {
+          extractBtn.addEventListener('click', function() {
+            var gid = groupSelect ? groupSelect.value : '';
+            var count = numInput ? (parseInt(numInput.value) || 50) : 50;
+            if (!gid) {
+              alert('يرجى اختيار مجموعة أولاً');
+              return;
+            }
+            var url = '/api/export/cases_sample?group_id=' + encodeURIComponent(gid) + '&count=' + encodeURIComponent(count);
+            window.location.href = url;
           });
         }
       })();
