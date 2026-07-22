@@ -146,6 +146,7 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
                     data-goal={c.goal}
                     data-raised={c.raised || 0}
                     data-urgent={c.is_urgent ? 'true' : 'false'}
+                    data-icon={c.icon || 'fa-heart'}
                     data-description={c.description || ''}
                     data-image={c.image_url || ''}
                     style="background:var(--blue-600); color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer"
@@ -167,6 +168,27 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
         <label>عنوان الحملة<input name="title" required /></label>
         <label>القسم<input name="category" placeholder="صحة، غذاء، تعليم" required /></label>
         <label>المبلغ المستهدف (ج.م)<input type="number" name="goal" required /></label>
+        <label>
+          أيقونة الحملة <span>(اختر أو اكتب اسم رمز FontAwesome)</span>
+          <div style="display:flex; gap:8px; align-items:center; margin-top:4px">
+            <span id="icon-preview-badge" style="width:40px; height:40px; border-radius:8px; background:var(--gold-600); color:#fff; display:grid; place-items:center; font-size:1.2rem">
+              <i class="fa-solid fa-heart"></i>
+            </span>
+            <input name="icon" id="campaign-icon-input" defaultValue="fa-heart" placeholder="fa-heart" style="flex:1" />
+          </div>
+          <div class="icon-presets" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px">
+            {['fa-heart', 'fa-capsules', 'fa-basket-shopping', 'fa-school', 'fa-stethoscope', 'fa-book-open', 'fa-gift', 'fa-hand-holding-heart', 'fa-house-medical', 'fa-seedling'].map(ic => (
+              <button
+                type="button"
+                class="icon-preset-btn"
+                data-icon={ic}
+                style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--ivory); cursor:pointer; font-size:1.1rem"
+              >
+                {icon(ic)}
+              </button>
+            ))}
+          </div>
+        </label>
         <input type="hidden" name="image_url" class="cloudinary-url" />
         <div class="upload-widget">
           <label>صورة الحملة</label>
@@ -192,6 +214,12 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
           form.querySelector('input[name="title"]').value = this.dataset.title || '';
           form.querySelector('input[name="category"]').value = this.dataset.category || '';
           form.querySelector('input[name="goal"]').value = this.dataset.goal || '';
+          var iconInput = form.querySelector('input[name="icon"]');
+          if (iconInput) {
+            iconInput.value = this.dataset.icon || 'fa-heart';
+            var badge = document.getElementById('icon-preview-badge');
+            if (badge) badge.innerHTML = '<i class="fa-solid ' + iconInput.value + '"></i>';
+          }
           var description = form.querySelector('textarea[name="description"]');
           if (description) description.value = this.dataset.description || '';
           var urgent = form.querySelector('input[name="is_urgent"]');
@@ -213,6 +241,20 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
           if (submitBtn) submitBtn.textContent = 'حفظ التعديلات';
           form.scrollIntoView({ behavior: 'smooth' });
         });
+      });
+
+      document.querySelectorAll('.icon-preset-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var input = document.getElementById('campaign-icon-input');
+          var badge = document.getElementById('icon-preview-badge');
+          if (input) input.value = this.dataset.icon;
+          if (badge) badge.innerHTML = '<i class="fa-solid ' + this.dataset.icon + '"></i>';
+        });
+      });
+
+      document.getElementById('campaign-icon-input')?.addEventListener('input', function() {
+        var badge = document.getElementById('icon-preview-badge');
+        if (badge) badge.innerHTML = '<i class="fa-solid ' + (this.value.trim() || 'fa-heart') + '"></i>';
       });
     `}} />
   </>

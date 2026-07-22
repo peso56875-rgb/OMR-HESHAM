@@ -175,9 +175,63 @@
     if (input) input.value = button.dataset.amount
   }))
 
+  /* ─── Real-time Form Validation & Enhancements ─── */
+  function validateField(field) {
+    if (!field || field.type === 'hidden' || field.disabled) return true
+    const value = field.value.trim()
+    const type = field.type
+    const name = field.name
+    let isValid = true
+
+    if (field.hasAttribute('required') && !value) {
+      isValid = false
+    } else if (value && (type === 'email' || name === 'email')) {
+      isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    } else if (value && (type === 'tel' || name === 'phone' || name === 'donor_phone')) {
+      isValid = /^[\d+\s\-]{8,15}$/.test(value)
+    } else if (value && type === 'number' && field.min) {
+      isValid = Number(value) >= Number(field.min)
+    }
+
+    if (!isValid && (value || field.dataset.touched === 'true')) {
+      field.classList.add('is-invalid')
+      field.classList.remove('is-valid')
+    } else if (isValid && value) {
+      field.classList.remove('is-invalid')
+      field.classList.add('is-valid')
+    } else {
+      field.classList.remove('is-invalid', 'is-valid')
+    }
+    return isValid
+  }
+
+  $$('form input, form select, form textarea').forEach(field => {
+    field.addEventListener('blur', () => {
+      field.dataset.touched = 'true'
+      validateField(field)
+    })
+    field.addEventListener('input', () => {
+      if (field.dataset.touched === 'true') validateField(field)
+    })
+  })
+
   $$('.ajax-form').forEach(form => form.addEventListener('submit', async e => {
     e.preventDefault()
-    if (!form.checkValidity()) return form.reportValidity()
+    let isAllValid = true
+    $$('input, select, textarea', form).forEach(field => {
+      field.dataset.touched = 'true'
+      if (!validateField(field)) isAllValid = false
+    })
+    if (!isAllValid) {
+      toast('يرجى التأكد من تصحيح الحقول المحددة بالأحمر', 'error')
+      const invalidField = $('.is-invalid', form)
+      if (invalidField) {
+        invalidField.focus()
+        invalidField.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      return
+    }
+
     const submit = $('button[type="submit"], button:not([type])', form)
     const original = submit?.innerHTML
     if (submit) {
@@ -190,16 +244,18 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
       })
       const result = await response.json()
-      if (!response.ok) throw new Error(result.message)
-      // Detect form context for smart toast type
+      if (!response.ok) throw new Error(result.message || result.error)
+      
       const endpoint = (form.dataset.endpoint || '').toLowerCase()
       let toastType = 'success'
-      if (endpoint.includes('donation'))    toastType = 'donate'
+      if (endpoint.includes('donation'))       toastType = 'donate'
       else if (endpoint.includes('volunteer')) toastType = 'volunteer'
       else if (endpoint.includes('newsletter')) toastType = 'subscribe'
       else if (endpoint.includes('contact'))   toastType = 'contact'
+      
       toast(result.message || 'تم استلام طلبك بنجاح', toastType)
       if (!form.classList.contains('donation-form')) form.reset()
+      $$('.is-valid', form).forEach(el => el.classList.remove('is-valid'))
     } catch (error) {
       toast(error.message || 'تعذر الإرسال الآن، حاول مرة أخرى', 'error')
     } finally {

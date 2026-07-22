@@ -718,4 +718,59 @@ body.dark .upload-url-fallback { background:var(--paper); border-color:rgba(255,
     display: none;
   }
 }
+/* ─── UX Enhancements (Phase 4) ─── */
 
+/* Form Validation Styles */
+input.is-invalid, select.is-invalid, textarea.is-invalid {
+  border-color: #ff6b6b !important;
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2) !important;
+  background-color: rgba(255, 107, 107, 0.04) !important;
+}
+
+input.is-valid, select.is-valid, textarea.is-valid {
+  border-color: var(--emerald-600) !important;
+  box-shadow: 0 0 0 3px rgba(22, 138, 112, 0.15) !important;
+}
+
+/* Icon Presets Buttons */
+.icon-preset-btn {
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.icon-preset-btn:hover {
+  transform: translateY(-2px);
+  background: var(--surface);
+  border-color: var(--gold-600) !important;
+}
+.icon-preset-btn:active {
+  transform: scale(0.95);
+}
+
+/* Responsive Dashboard Tables on Mobile */
+.dash-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.dash-table table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+}
+
+@media(max-width: 768px) {
+  .dash-table header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+  .dash-table header a {
+    align-self: flex-start;
+  }
+  .dash-table th, .dash-table td {
+    padding: 12px 10px;
+    font-size: 0.88rem;
+  }
+}
