@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { getFirestore } from './lib/firebase-admin'
+import { getFirestore, getAuth } from './lib/firebase-admin'
 
 import { Home } from './components/Home'
 import { About } from './components/About'
@@ -17,27 +17,30 @@ import { api } from './api'
 
 const app = new Hono()
 
-// Session Middleware to populate c.get('user')
+// Session Middleware — reads the Firebase session cookie and populates c.get('user')
 app.use('*', async (c, next) => {
-  const sessionDoc = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1]
-  if (sessionDoc) {
+  const sessionCookie = c.req.header('Cookie')?.match(/fb-session=([^;]+)/)?.[1]
+  if (sessionCookie) {
     try {
+      const firebaseAuth = getAuth(c)
+      const decodedClaims = await firebaseAuth.verifySessionCookie(sessionCookie, true)
+
+      // Fetch the user's profile from Firestore to get the role
       const db = getFirestore(c)
-      const snap = await db.collection('sessions').doc(sessionDoc).get()
-      if (snap.exists) {
-        const data = snap.data()
-        if (data && new Date(data.expires_at) > new Date()) {
-          (c as any).set('user', {
-            id: data.user_id,
-            email: data.email,
-            name: data.name,
-            avatar: data.avatar,
-            role: data.role || 'donor'
-          })
-        }
-      }
+      const profileDoc = await db.collection('profiles').doc(decodedClaims.uid).get()
+      const profile = profileDoc.exists ? profileDoc.data() : null
+
+      ;(c as any).set('user', {
+        id: decodedClaims.uid,
+        email: decodedClaims.email || '',
+        name: profile?.full_name || decodedClaims.name || decodedClaims.email?.split('@')[0] || 'فاعل خير',
+        avatar: profile?.avatar_url || decodedClaims.picture || '',
+        role: profile?.role || 'donor',
+        phone: profile?.phone || ''
+      })
     } catch (e: any) {
-      console.error('[Session Middleware Error]', e.message)
+      // Session cookie is invalid or expired — clear it silently
+      console.error('[Session Middleware]', e.code || e.message)
     }
   }
   await next()

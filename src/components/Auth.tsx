@@ -124,9 +124,12 @@ export function Login({ firebaseConfig }: { firebaseConfig: any }) {
           try {
             const result = await firebaseAuthSdk.signInWithPopup(auth, provider);
             const idToken = await result.user.getIdToken(true);
-            await createSession(idToken);
+            const sessionData = await createSession(idToken);
 
             const displayName = result.user.displayName || 'صديق المؤسسة';
+            const userRole = sessionData.role || 'donor';
+            const redirectTo = userRole === 'admin' ? '/dashboard' : '/profile';
+
             localStorage.setItem('just_logged_in', 'true');
             localStorage.setItem('user_display_name', displayName);
 
@@ -135,14 +138,14 @@ export function Login({ firebaseConfig }: { firebaseConfig: any }) {
               container.innerHTML = '<div style="text-align:center;padding:2.5rem 0;display:flex;flex-direction:column;align-items:center;gap:1.5rem">' +
                 '<div style="width:70px;height:70px;border-radius:50%;background:var(--gold);color:var(--ink);display:grid;place-items:center;font-size:2rem;box-shadow:0 10px 25px rgba(214,166,75,0.3)"><i class="fa-solid fa-hands-praying"></i></div>' +
                 '<div><h2 id="loginWelcome" style="margin:0 0 8px;font-size:1.8rem;font-weight:800;color:var(--text)"></h2><p style="color:var(--muted);margin:0;font-size:0.95rem">تم تسجيل الدخول بنجاح.</p></div>' +
-                '<div style="font-size:0.88rem;color:var(--emerald);font-weight:800;display:flex;align-items:center;gap:8px;margin-top:0.5rem"><i class="fa-solid fa-circle-notch fa-spin"></i><span>جارٍ توجيهك إلى حسابك...</span></div>' +
+                '<div style="font-size:0.88rem;color:var(--emerald);font-weight:800;display:flex;align-items:center;gap:8px;margin-top:0.5rem"><i class="fa-solid fa-circle-notch fa-spin"></i><span>جارٍ توجيهك إلى ' + (userRole === 'admin' ? 'لوحة التحكم' : 'حسابك') + '...</span></div>' +
               '</div>';
               const welcome = document.getElementById('loginWelcome');
               if (welcome) welcome.textContent = 'أهلًا بك، ' + displayName;
             }
 
             window.setTimeout(function () {
-              window.location.replace('/profile');
+              window.location.replace(redirectTo);
             }, 1200);
           } catch (error) {
             console.error('[Google Login Error]', error);
