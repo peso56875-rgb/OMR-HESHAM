@@ -56,17 +56,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
         {view === 'users' && <DashUsers list={data.list} currentUserId={user.id} />}
       </div>
     </section>
-    <script dangerouslySetInnerHTML={{
-      __html: `
-      document.getElementById('dash-search-input')?.addEventListener('input', function() {
-        var term = this.value.toLowerCase().trim();
-        var rows = document.querySelectorAll('.dash-table table tbody tr');
-        rows.forEach(function(row) {
-          var text = row.textContent.toLowerCase();
-          row.style.display = text.includes(term) ? '' : 'none';
-        });
-      });
-    `}} />
+
   </Layout>
 }
 
@@ -144,7 +134,7 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
                 <div style="display:flex; gap:6px; align-items:center">
                   <button
                     type="button"
-                    class="edit-campaign-btn"
+                    class="edit-campaign-btn dash-edit-btn"
                     data-id={c.id}
                     data-title={c.title}
                     data-category={c.category}
@@ -154,10 +144,9 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
                     data-icon={c.icon || 'fa-heart'}
                     data-description={c.description || ''}
                     data-image={c.image_url || ''}
-                    style="background:var(--blue-600); color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer"
-                  >تعديل</button>
+                  >{icon('fa-pen-to-square')} تعديل</button>
                   <form action={`/api/campaigns/delete/${c.id}`} method="post" class="dash-action-form" data-confirm="هل أنت متأكد من حذف هذه الحملة؟">
-                    <button type="submit" style="background:#ff6b6b; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer">حذف</button>
+                    <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')} حذف</button>
                   </form>
                 </div>
               </td>
@@ -209,59 +198,7 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
         <button class="primary-btn" type="submit" id="campaign-submit-btn">حفظ الحملة</button>
       </form>
     </section>
-    <script dangerouslySetInnerHTML={{
-      __html: `
-      document.querySelectorAll('.edit-campaign-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var form = document.querySelector('form[action^="/api/campaigns/"]');
-          if (!form) return;
-          form.action = '/api/campaigns/edit/' + this.dataset.id;
-          form.querySelector('input[name="title"]').value = this.dataset.title || '';
-          form.querySelector('input[name="category"]').value = this.dataset.category || '';
-          form.querySelector('input[name="goal"]').value = this.dataset.goal || '';
-          var iconInput = form.querySelector('input[name="icon"]');
-          if (iconInput) {
-            iconInput.value = this.dataset.icon || 'fa-heart';
-            var badge = document.getElementById('icon-preview-badge');
-            if (badge) badge.innerHTML = '<i class="fa-solid ' + iconInput.value + '"></i>';
-          }
-          var description = form.querySelector('textarea[name="description"]');
-          if (description) description.value = this.dataset.description || '';
-          var urgent = form.querySelector('input[name="is_urgent"]');
-          if (urgent) urgent.checked = this.dataset.urgent === 'true';
-          var imgInput = form.querySelector('.cloudinary-url');
-          if (imgInput) imgInput.value = this.dataset.image || '';
-          var fallbackInput = form.querySelector('.upload-url-fallback');
-          if (fallbackInput) fallbackInput.value = this.dataset.image || '';
-          var preview = form.querySelector('.upload-preview');
-          var placeholder = form.querySelector('.upload-placeholder');
-          if (this.dataset.image && preview && placeholder) {
-            preview.src = this.dataset.image;
-            preview.style.display = 'block';
-            placeholder.style.display = 'none';
-          }
-          var titleHeader = form.querySelector('h3');
-          if (titleHeader) titleHeader.textContent = 'تعديل الحملة';
-          var submitBtn = document.getElementById('campaign-submit-btn');
-          if (submitBtn) submitBtn.textContent = 'حفظ التعديلات';
-          form.scrollIntoView({ behavior: 'smooth' });
-        });
-      });
 
-      document.querySelectorAll('.icon-preset-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var input = document.getElementById('campaign-icon-input');
-          var badge = document.getElementById('icon-preview-badge');
-          if (input) input.value = this.dataset.icon;
-          if (badge) badge.innerHTML = '<i class="fa-solid ' + this.dataset.icon + '"></i>';
-        });
-      });
-
-      document.getElementById('campaign-icon-input')?.addEventListener('input', function() {
-        var badge = document.getElementById('icon-preview-badge');
-        if (badge) badge.innerHTML = '<i class="fa-solid ' + (this.value.trim() || 'fa-heart') + '"></i>';
-      });
-    `}} />
   </>
 }
 
@@ -441,17 +378,16 @@ export function DashNews({ list = [] }: { list: any[] }) {
                 <div style="display:flex; gap:6px; align-items:center">
                   <button
                     type="button"
-                    class="edit-news-btn"
+                    class="edit-news-btn dash-edit-btn"
                     data-id={n.id}
                     data-title={n.title}
                     data-category={n.category}
                     data-excerpt={n.excerpt}
                     data-content={n.content || ''}
                     data-image={n.image_url || ''}
-                    style="background:var(--blue-600); color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer"
-                  >تعديل</button>
-                  <form action={`/api/news/delete/${n.id}`} method="post" style="display:inline">
-                    <button type="submit" style="background:#ff6b6b; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer">حذف</button>
+                  >{icon('fa-pen-to-square')} تعديل</button>
+                  <form action={`/api/news/delete/${n.id}`} method="post" class="dash-action-form" data-confirm="هل أنت متأكد من حذف هذا الخبر؟">
+                    <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')} حذف</button>
                   </form>
                 </div>
               </td>
@@ -481,37 +417,6 @@ export function DashNews({ list = [] }: { list: any[] }) {
         <button class="primary-btn" type="submit" id="news-submit-btn">نشر الخبر</button>
       </form>
     </section>
-    <script dangerouslySetInnerHTML={{
-      __html: `
-      document.querySelectorAll('.edit-news-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var form = document.querySelector('form[action^="/api/news/"]');
-          if (!form) return;
-          form.action = '/api/news/edit/' + this.dataset.id;
-          form.querySelector('input[name="title"]').value = this.dataset.title || '';
-          form.querySelector('input[name="category"]').value = this.dataset.category || '';
-          form.querySelector('input[name="excerpt"]').value = this.dataset.excerpt || '';
-          var content = form.querySelector('textarea[name="content"]');
-          if (content) content.value = this.dataset.content || '';
-          var imgInput = form.querySelector('.cloudinary-url');
-          if (imgInput) imgInput.value = this.dataset.image || '';
-          var fallbackInput = form.querySelector('.upload-url-fallback');
-          if (fallbackInput) fallbackInput.value = this.dataset.image || '';
-          var preview = form.querySelector('.upload-preview');
-          var placeholder = form.querySelector('.upload-placeholder');
-          if (this.dataset.image && preview && placeholder) {
-            preview.src = this.dataset.image;
-            preview.style.display = 'block';
-            placeholder.style.display = 'none';
-          }
-          var titleHeader = form.querySelector('h3');
-          if (titleHeader) titleHeader.textContent = 'تعديل الخبر';
-          var submitBtn = document.getElementById('news-submit-btn');
-          if (submitBtn) submitBtn.textContent = 'حفظ التعديلات';
-          form.scrollIntoView({ behavior: 'smooth' });
-        });
-      });
-    `}} />
   </>
 }
 
@@ -546,7 +451,7 @@ export function DashEvents({ list = [] }: { list: any[] }) {
                 <div style="display:flex; gap:6px; align-items:center">
                   <button
                     type="button"
-                    class="edit-event-btn"
+                    class="edit-event-btn dash-edit-btn"
                     data-id={e.id}
                     data-title={e.title}
                     data-type={e.type}
@@ -554,10 +459,9 @@ export function DashEvents({ list = [] }: { list: any[] }) {
                     data-date={e.event_date ? new Date(e.event_date).toISOString().slice(0, 16) : ''}
                     data-description={e.description || ''}
                     data-image={e.image_url || ''}
-                    style="background:var(--blue-600); color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer"
-                  >تعديل</button>
-                  <form action={`/api/events/delete/${e.id}`} method="post" style="display:inline">
-                    <button type="submit" style="background:#ff6b6b; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer">حذف</button>
+                  >{icon('fa-pen-to-square')} تعديل</button>
+                  <form action={`/api/events/delete/${e.id}`} method="post" class="dash-action-form" data-confirm="هل أنت متأكد من حذف هذه الفعالية؟">
+                    <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')} حذف</button>
                   </form>
                 </div>
               </td>
@@ -588,38 +492,6 @@ export function DashEvents({ list = [] }: { list: any[] }) {
         <button class="primary-btn" type="submit" id="event-submit-btn">حفظ الفعالية</button>
       </form>
     </section>
-    <script dangerouslySetInnerHTML={{
-      __html: `
-      document.querySelectorAll('.edit-event-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var form = document.querySelector('form[action^="/api/events/"]');
-          if (!form) return;
-          form.action = '/api/events/edit/' + this.dataset.id;
-          form.querySelector('input[name="title"]').value = this.dataset.title || '';
-          form.querySelector('input[name="type"]').value = this.dataset.type || '';
-          form.querySelector('input[name="place"]').value = this.dataset.place || '';
-          if (this.dataset.date) form.querySelector('input[name="event_date"]').value = this.dataset.date;
-          var description = form.querySelector('textarea[name="description"]');
-          if (description) description.value = this.dataset.description || '';
-          var imgInput = form.querySelector('.cloudinary-url');
-          if (imgInput) imgInput.value = this.dataset.image || '';
-          var fallbackInput = form.querySelector('.upload-url-fallback');
-          if (fallbackInput) fallbackInput.value = this.dataset.image || '';
-          var preview = form.querySelector('.upload-preview');
-          var placeholder = form.querySelector('.upload-placeholder');
-          if (this.dataset.image && preview && placeholder) {
-            preview.src = this.dataset.image;
-            preview.style.display = 'block';
-            placeholder.style.display = 'none';
-          }
-          var titleHeader = form.querySelector('h3');
-          if (titleHeader) titleHeader.textContent = 'تعديل الفعالية';
-          var submitBtn = document.getElementById('event-submit-btn');
-          if (submitBtn) submitBtn.textContent = 'حفظ التعديلات';
-          form.scrollIntoView({ behavior: 'smooth' });
-        });
-      });
-    `}} />
   </>
 }
 
@@ -653,16 +525,15 @@ export function DashStories({ list = [] }: { list: any[] }) {
                 <div style="display:flex; gap:6px; align-items:center">
                   <button
                     type="button"
-                    class="edit-story-btn"
+                    class="edit-story-btn dash-edit-btn"
                     data-id={s.id}
                     data-name={s.name}
                     data-role={s.role}
                     data-rating={s.rating || 5}
                     data-content={s.content || ''}
-                    style="background:var(--blue-600); color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer"
-                  >تعديل</button>
-                  <form action={`/api/stories/delete/${s.id}`} method="post" style="display:inline">
-                    <button type="submit" style="background:#ff6b6b; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer">حذف</button>
+                  >{icon('fa-pen-to-square')} تعديل</button>
+                  <form action={`/api/stories/delete/${s.id}`} method="post" class="dash-action-form" data-confirm="هل أنت متأكد من حذف قصة النجاح هذه؟">
+                    <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')} حذف</button>
                   </form>
                 </div>
               </td>
@@ -682,26 +553,6 @@ export function DashStories({ list = [] }: { list: any[] }) {
         <button class="primary-btn" type="submit" id="story-submit-btn">نشر القصة</button>
       </form>
     </section>
-    <script dangerouslySetInnerHTML={{
-      __html: `
-      document.querySelectorAll('.edit-story-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var form = document.querySelector('form[action^="/api/stories/"]');
-          if (!form) return;
-          form.action = '/api/stories/edit/' + this.dataset.id;
-          form.querySelector('input[name="name"]').value = this.dataset.name || '';
-          form.querySelector('input[name="role"]').value = this.dataset.role || '';
-          form.querySelector('input[name="rating"]').value = this.dataset.rating || 5;
-          var content = form.querySelector('textarea[name="content"]');
-          if (content) content.value = this.dataset.content || '';
-          var titleHeader = form.querySelector('h3');
-          if (titleHeader) titleHeader.textContent = 'تعديل قصة النجاح';
-          var submitBtn = document.getElementById('story-submit-btn');
-          if (submitBtn) submitBtn.textContent = 'حفظ التعديلات';
-          form.scrollIntoView({ behavior: 'smooth' });
-        });
-      });
-    `}} />
   </>
 }
 
@@ -737,7 +588,7 @@ export function DashJobs({ list = [] }: { list: any[] }) {
                 <div style="display:flex; gap:6px; align-items:center">
                   <button
                     type="button"
-                    class="edit-job-btn"
+                    class="edit-job-btn dash-edit-btn"
                     data-id={j.id}
                     data-title={j.title}
                     data-department={j.department}
@@ -745,10 +596,9 @@ export function DashJobs({ list = [] }: { list: any[] }) {
                     data-location={j.location}
                     data-active={j.is_active ? 'true' : 'false'}
                     data-description={j.description || ''}
-                    style="background:var(--blue-600); color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer"
-                  >تعديل</button>
-                  <form action={`/api/jobs/delete/${j.id}`} method="post" style="display:inline">
-                    <button type="submit" style="background:#ff6b6b; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer">حذف</button>
+                  >{icon('fa-pen-to-square')} تعديل</button>
+                  <form action={`/api/jobs/delete/${j.id}`} method="post" class="dash-action-form" data-confirm="هل أنت متأكد من حذف فرصة العمل هذه؟">
+                    <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')} حذف</button>
                   </form>
                 </div>
               </td>
@@ -770,29 +620,6 @@ export function DashJobs({ list = [] }: { list: any[] }) {
         <button class="primary-btn" type="submit" id="job-submit-btn">حفظ الوظيفة</button>
       </form>
     </section>
-    <script dangerouslySetInnerHTML={{
-      __html: `
-      document.querySelectorAll('.edit-job-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var form = document.querySelector('form[action^="/api/jobs/"]');
-          if (!form) return;
-          form.action = '/api/jobs/edit/' + this.dataset.id;
-          form.querySelector('input[name="title"]').value = this.dataset.title || '';
-          form.querySelector('input[name="department"]').value = this.dataset.department || '';
-          form.querySelector('input[name="job_type"]').value = this.dataset.type || '';
-          form.querySelector('input[name="location"]').value = this.dataset.location || '';
-          var description = form.querySelector('textarea[name="description"]');
-          if (description) description.value = this.dataset.description || '';
-          var active = form.querySelector('input[name="is_active"]');
-          if (active) active.checked = this.dataset.active === 'true';
-          var titleHeader = form.querySelector('h3');
-          if (titleHeader) titleHeader.textContent = 'تعديل الوظيفة';
-          var submitBtn = document.getElementById('job-submit-btn');
-          if (submitBtn) submitBtn.textContent = 'حفظ التعديلات';
-          form.scrollIntoView({ behavior: 'smooth' });
-        });
-      });
-    `}} />
   </>
 }
 
