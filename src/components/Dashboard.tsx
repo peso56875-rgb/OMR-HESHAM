@@ -69,26 +69,78 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
 export function DashOverview({ stats, recentDonations = [] }: { stats: any, recentDonations?: any[] }) {
   const items = [
     ['رصيد الخزنة الصافي', `${(stats.balance || 0).toLocaleString('ar-EG')} ج.م`, 'fa-vault', stats.balance >= 0 ? 'var(--emerald-600)' : '#e53935'],
-    ['إجمالي الإيرادات (الوارد)', `${(stats.total_income || 0).toLocaleString('ar-EG')} ج.م`, 'fa-arrow-down-left-and-arrow-up-right-to-center', 'var(--emerald-600)'],
-    ['إجمالي المصروفات (المنصرف)', `${(stats.total_expenses || 0).toLocaleString('ar-EG')} ج.م`, 'fa-money-bill-transfer', '#e86f51'],
+    ['إجمالي الإيرادات (الوارد)', `${(stats.total_income || 0).toLocaleString('ar-EG')} ج.م`, 'fa-arrow-down', 'var(--emerald-600)'],
+    ['إجمالي المصروفات (المنصرف)', `${(stats.total_expenses || 0).toLocaleString('ar-EG')} ج.م`, 'fa-arrow-up', '#e86f51'],
     ['التبرعات أونلاين', `${(stats.total_donations || 0).toLocaleString('ar-EG')} ج.م`, 'fa-hand-holding-heart', 'var(--gold-600)'],
     ['الحملات النشطة', `${stats.total_campaigns || 0}`, 'fa-bullseye', 'var(--blue-600)'],
     ['المتبرعون المسجلون', `${stats.total_donors || 0}`, 'fa-users', 'var(--emerald-600)'],
     ['طلبات التطوع', `${stats.total_volunteers || 0}`, 'fa-people-group', 'var(--gold-600)']
   ]
+
+  // Calculate proportional bar heights for the visual chart
+  const maxVal = Math.max(stats.total_income || 1, stats.total_expenses || 1, stats.total_donations || 1, 1)
+  const incHeight = Math.min(100, Math.max(15, Math.round(((stats.total_income || 0) / maxVal) * 100)))
+  const expHeight = Math.min(100, Math.max(15, Math.round(((stats.total_expenses || 0) / maxVal) * 100)))
+  const donHeight = Math.min(100, Math.max(15, Math.round(((stats.total_donations || 0) / maxVal) * 100)))
+
   return <>
     <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem">
       {items.map(k => (
         <article style="background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between">
           <div style="display: flex; align-items: center; justify-content: space-between">
             <span style={`font-size: 1.4rem; color: ${k[3]}`}>{icon(k[2])}</span>
-            <small style="color: var(--muted); font-size: .75rem">{k[0]}</small>
+            <small style="color: var(--muted); font-size: .78rem; font-weight:700">{k[0]}</small>
           </div>
           <b style={`font-size: 1.5rem; margin-top: .8rem; color: ${k[3]}`}>{k[1]}</b>
         </article>
       ))}
     </div>
-    <section class="dash-table" style="margin-top:2rem">
+
+    {/* Financial Flow Chart */}
+    <section class="chart-panel" style="margin-top:2rem">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem">
+        <div>
+          <h3 style="font-size:1.2rem; font-weight:800; color:var(--text)">المخطط البياني للتدفقات المالية</h3>
+          <p style="font-size:.82rem; color:var(--muted)">مقارنة إجمالي الإيرادات الواردة بالمصروفات والتبرعات الإلكترونية</p>
+        </div>
+        <div style="display:flex; gap:1rem; font-size:.8rem; font-weight:700">
+          <span style="display:inline-flex; align-items:center; gap:6px; color:var(--emerald-600)">
+            <i style="width:12px; height:12px; border-radius:3px; background:var(--emerald-600); display:inline-block"></i> الإيرادات
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:6px; color:#e86f51">
+            <i style="width:12px; height:12px; border-radius:3px; background:#e86f51; display:inline-block"></i> المصروفات
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:6px; color:var(--gold-600)">
+            <i style="width:12px; height:12px; border-radius:3px; background:var(--gold-600); display:inline-block"></i> التبرعات أونلاين
+          </span>
+        </div>
+      </div>
+
+      <div class="fake-chart" style="margin-top:2rem">
+        <div class="bar-group">
+          <div class="bar-container">
+            <i class="inc-bar" style={`--h:${incHeight}%; height:${incHeight}%; background:linear-gradient(180deg, var(--emerald-600), #0d5c4b)`} title={`إجمالي الإيرادات: ${(stats.total_income || 0).toLocaleString('ar-EG')} ج.م`}></i>
+          </div>
+          <span>الإيرادات (الوارد)</span>
+        </div>
+
+        <div class="bar-group">
+          <div class="bar-container">
+            <i class="exp-bar" style={`--h:${expHeight}%; height:${expHeight}%; background:linear-gradient(180deg, #e86f51, #b8472d)`} title={`إجمالي المصروفات: ${(stats.total_expenses || 0).toLocaleString('ar-EG')} ج.م`}></i>
+          </div>
+          <span>المصروفات (المنصرف)</span>
+        </div>
+
+        <div class="bar-group">
+          <div class="bar-container">
+            <i class="don-bar" style={`--h:${donHeight}%; height:${donHeight}%; background:linear-gradient(180deg, var(--gold-600), #b8860b)`} title={`التبرعات أونلاين: ${(stats.total_donations || 0).toLocaleString('ar-EG')} ج.م`}></i>
+          </div>
+          <span>التبرعات أونلاين</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="dash-table">
       <header><h3>أحدث عمليات التبرع الواردة للموقع</h3></header>
       <table>
         <thead>
