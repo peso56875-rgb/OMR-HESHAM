@@ -1489,3 +1489,69 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
   font-size: 0.88rem;
 }
 
+/* ─── Excel Export & Cases Management High-Visibility Button System ─── */
+.export-excel-btn,
+.btn-export-excel {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: #059669 !important;
+  color: #ffffff !important;
+  border: 1px solid #047857 !important;
+  padding: 7px 14px !important;
+  border-radius: 8px !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.export-excel-btn:hover,
+.btn-export-excel:hover {
+  background: #047857 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.35) !important;
+}
+
+.btn-extract-main {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  background: linear-gradient(135deg, #7c3aed 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  padding: 12px 26px !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  font-size: 0.98rem !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-extract-main:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.45) !important;
+}
+
+.sample-preset-btn {
+  background: var(--paper) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line) !important;
+  padding: 6px 14px !important;
+  border-radius: 8px !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.sample-preset-btn:hover {
+  border-color: #8b5cf6 !important;
+  color: #8b5cf6 !important;
+  background: rgba(139, 92, 246, 0.1) !important;
+}
+

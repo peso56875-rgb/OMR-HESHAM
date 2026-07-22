@@ -410,11 +410,148 @@
       })
     }
 
-    // 6. Reveal elements
+    // 6. Init Cases & Beneficiaries Handlers
+    initDashCasesHandlers()
+
+    // 7. Reveal elements
     $$('.reveal').forEach(el => revealObserver.observe(el))
 
-    // 7. Sync theme icon
+    // 8. Sync theme icon
     updateThemeIcon()
+  }
+
+  function initDashCasesHandlers() {
+    const groupSelect = document.getElementById('sample-group-select')
+    const rangeInput = document.getElementById('sample-count-range')
+    const numInput = document.getElementById('sample-count-input')
+    const extractBtn = document.getElementById('extract-sample-btn')
+    const hintEl = document.getElementById('sample-max-hint')
+    const ta = document.getElementById('names-textarea')
+    const counter = document.getElementById('name-counter')
+    const previewBox = document.getElementById('preview-box')
+    const previewNames = document.getElementById('preview-names')
+
+    // Live name counter in form
+    if (ta && counter && !ta.dataset.bound) {
+      ta.dataset.bound = 'true'
+      const updateCount = () => {
+        const lines = ta.value.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0)
+        const unique = new Set(lines).size
+        counter.textContent = unique.toLocaleString('ar-EG') + ' اسم'
+      }
+      ta.addEventListener('input', updateCount)
+      updateCount()
+    }
+
+    // Range slider <-> number input sync
+    if (rangeInput && numInput && !rangeInput.dataset.bound) {
+      rangeInput.dataset.bound = 'true'
+      numInput.dataset.bound = 'true'
+      rangeInput.addEventListener('input', function() {
+        numInput.value = this.value
+      })
+      numInput.addEventListener('input', function() {
+        let v = parseInt(this.value, 10) || 1
+        const max = parseInt(rangeInput.max, 10) || 500
+        if (v < 1) v = 1
+        rangeInput.value = Math.min(v, max)
+      })
+    }
+
+    // Group Select change handler
+    if (groupSelect && !groupSelect.dataset.bound) {
+      groupSelect.dataset.bound = 'true'
+      groupSelect.addEventListener('change', function() {
+        const selectedOpt = this.options[this.selectedIndex]
+        const total = parseInt(selectedOpt?.dataset?.total || '0', 10) || 500
+        if (rangeInput) {
+          rangeInput.max = total
+          if (parseInt(rangeInput.value, 10) > total) {
+            rangeInput.value = total
+            if (numInput) numInput.value = total
+          }
+        }
+        if (hintEl) {
+          if (this.value) {
+            hintEl.textContent = 'المجموعة تحتوي على ' + total.toLocaleString('ar-EG') + ' اسم — اختر العدد المطلوب استخراجه'
+          } else {
+            hintEl.textContent = 'سيتم استخراج عينة عشوائية بخوارزمية Fisher-Yates'
+          }
+        }
+
+        // Preview names
+        const rawPreview = selectedOpt?.dataset?.preview
+        if (rawPreview && previewBox && previewNames) {
+          try {
+            const arr = JSON.parse(rawPreview)
+            if (arr && arr.length > 0) {
+              previewBox.style.display = 'block'
+              previewNames.innerHTML = arr.map(n => `<span style="background:var(--surface);border:1px solid var(--border);padding:3px 10px;border-radius:8px;font-size:.85rem;">${n}</span>`).join('')
+            } else {
+              previewBox.style.display = 'none'
+            }
+          } catch(e) {
+            previewBox.style.display = 'none'
+          }
+        } else if (previewBox) {
+          previewBox.style.display = 'none'
+        }
+      })
+    }
+
+    // Quick sample preset buttons (1, 10, 50, all)
+    $$('.sample-preset-btn').forEach(btn => {
+      if (btn.dataset.bound === 'true') return
+      btn.dataset.bound = 'true'
+      btn.addEventListener('click', function() {
+        const countType = this.dataset.count
+        if (!groupSelect || !groupSelect.value) {
+          toast('يرجى اختيار مجموعة المستفيدين أولاً', 'warning')
+          return
+        }
+        const selectedOpt = groupSelect.options[groupSelect.selectedIndex]
+        const total = parseInt(selectedOpt?.dataset?.total || '0', 10) || 500
+
+        let targetCount = 1
+        if (countType === 'all') {
+          targetCount = total
+        } else {
+          targetCount = Math.min(parseInt(countType, 10) || 1, total)
+        }
+
+        if (numInput) numInput.value = targetCount
+        if (rangeInput) rangeInput.value = targetCount
+
+        triggerSampleExport(groupSelect.value, targetCount)
+      })
+    })
+
+    // Main extract sample button click handler
+    if (extractBtn && !extractBtn.dataset.bound) {
+      extractBtn.dataset.bound = 'true'
+      extractBtn.addEventListener('click', function() {
+        const gid = groupSelect ? groupSelect.value : ''
+        const count = numInput ? (parseInt(numInput.value, 10) || 1) : 1
+        if (!gid) {
+          toast('يرجى اختيار مجموعة المستفيدين أولاً', 'warning')
+          return
+        }
+        triggerSampleExport(gid, count)
+      })
+    }
+  }
+
+  function triggerSampleExport(gid, count) {
+    const url = '/api/export/cases_sample?group_id=' + encodeURIComponent(gid) + '&count=' + encodeURIComponent(count)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = ''
+    a.target = '_blank'
+    a.rel = 'noopener'
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => { document.body.removeChild(a) }, 200)
+    toast('جارٍ استخراج العينة العشوائية وتحميل ملف Excel...', 'success')
   }
 
   async function loadDashboardView(url, pushState = true) {

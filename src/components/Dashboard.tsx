@@ -1184,7 +1184,11 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
                 style="padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--ivory); font-size:.95rem; color:var(--text)">
                 <option value="">— اختر مجموعة —</option>
                 {groups.map((g: any) => (
-                  <option value={g.id} data-total={g.total_count}>
+                  <option
+                    value={g.id}
+                    data-total={g.total_count}
+                    data-preview={JSON.stringify((g.preview_names || []).slice(0, 10))}
+                  >
                     {g.title} ({(g.total_count || 0).toLocaleString('ar-EG')} اسم) — {g.aid_type}
                   </option>
                 ))}
@@ -1192,7 +1196,7 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
             </label>
 
             <label style="display:flex; flex-direction:column; gap:6px; font-weight:700; font-size:.9rem">
-              عدد الأسماء المطلوبة *
+              عدد الأسماء المطلوبة عشوائيًا *
               <div style="display:flex; align-items:center; gap:12px">
                 <input
                   type="range"
@@ -1212,8 +1216,27 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
                   style="width:90px; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--ivory); text-align:center; font-size:1.1rem; font-weight:700; color:#8b5cf6"
                 />
               </div>
-              <small id="sample-max-hint" style="color:var(--muted); font-size:.8rem">سيتم استخراج عينة عشوائية بخوارزمية Fisher-Yates</small>
+              <small id="sample-max-hint" style="color:var(--muted); font-size:.8rem">اختر العدد أو استخدم الأزرار السريعة بالأسفل</small>
             </label>
+          </div>
+
+          {/* أزرار الاستخراج السريع */}
+          <div style="display:flex; flex-direction:column; gap:6px">
+            <span style="font-size:.82rem; font-weight:700; color:var(--muted)">اختصارات الاستخراج السريع:</span>
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <button type="button" class="sample-preset-btn" data-count="1">
+                🎲 1 شخص عشوائي
+              </button>
+              <button type="button" class="sample-preset-btn" data-count="10">
+                📊 10 أسماء
+              </button>
+              <button type="button" class="sample-preset-btn" data-count="50">
+                ⚡ 50 اسم
+              </button>
+              <button type="button" class="sample-preset-btn" data-count="all">
+                🌐 المجموعة بالكامل (الكل)
+              </button>
+            </div>
           </div>
 
           {/* معاينة الأسماء */}
@@ -1224,17 +1247,16 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
             <div id="preview-names" style="display:flex; flex-wrap:wrap; gap:6px"></div>
           </div>
 
-          <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap">
+          <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin-top:.5rem">
             <button
               type="button"
               id="extract-sample-btn"
-              class="primary-btn"
-              style="background:linear-gradient(135deg,#8b5cf6,#06b6d4); border:none; font-size:1rem; padding:12px 28px"
+              class="btn-extract-main"
             >
               {icon('fa-file-excel')} استخراج العينة وتحميل Excel
             </button>
             <small style="color:var(--muted); font-size:.82rem">
-              {icon('fa-circle-info')} الأسماء ستُسحب عشوائيًا بالكامل في كل مرة تضغط فيها
+              {icon('fa-circle-info')} الأسماء تُسحب عشوائيًا بخوارزمية Fisher-Yates المضمونة
             </small>
           </div>
         </div>
@@ -1305,7 +1327,10 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
                     <a
                       href={`/api/export/cases_full/${g.id}`}
                       download
-                      style="background:var(--emerald-600); color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:.82rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:4px"
+                      target="_blank"
+                      rel="noopener"
+                      class="btn-export-excel"
+                      style="background:#059669 !important; color:#ffffff !important; border:1px solid #047857; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:.84rem; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(5,150,105,0.25)"
                     >
                       {icon('fa-file-excel')} تصدير الكل
                     </a>
