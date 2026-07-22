@@ -18,6 +18,9 @@ const copyExternalsPlugin = (): Plugin => ({
 })
 
 export default defineConfig({
+  server: {
+    allowedHosts: true
+  },
   plugins: [
     build({
       entry: 'src/index.tsx'

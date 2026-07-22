@@ -24,9 +24,9 @@ export function Donate({ user, campaigns = [], selectedCampaignId }: { user?: Us
           {campaigns.length > 0 && <label>الحملة <span>اختياري</span><select name="campaign_id"><option value="">الصندوق العام</option>{campaigns.map((cp: any) => <option value={cp.id} selected={cp.id === selectedCampaignId}>{cp.title}</option>)}</select></label>}
           <fieldset>
             <legend>طريقة التحويل</legend>
-            <label class="method-option"><input type="radio" name="method" value="instapay" checked /><span>{icon('fa-building-columns')}<b>إنستاباي / تحويل بنكي</b><small>البنك الزراعي المصري</small></span></label>
-            <label class="method-option"><input type="radio" name="method" value="vodafone" /><span><i class="fa-solid fa-mobile-screen-button"></i><b>فودافون كاش</b><small>تحويل فوري من هاتفك</small></span></label>
-            <label class="method-option"><input type="radio" name="method" value="cash" /><span>{icon('fa-money-bill-wave')}<b>دفع نقدي مباشر</b><small>مع إيصال موثّق</small></span></label>
+            <label class="method-option method-instapay"><input type="radio" name="method" value="instapay" checked /><span><i class="method-logo"><img src="/static/img/instapay-logo.png" alt="InstaPay" loading="lazy" /></i><b>إنستاباي / تحويل بنكي</b><small>البنك الزراعي المصري</small></span></label>
+            <label class="method-option method-vodafone"><input type="radio" name="method" value="vodafone" /><span><i class="method-logo"><img src="/static/img/vodafone-cash-logo.png" alt="Vodafone Cash" loading="lazy" /></i><b>فودافون كاش</b><small>تحويل فوري من هاتفك</small></span></label>
+            <label class="method-option method-cash"><input type="radio" name="method" value="cash" /><span>{icon('fa-money-bill-wave')}<b>دفع نقدي مباشر</b><small>مع إيصال موثّق</small></span></label>
           </fieldset>
           <button class="primary-btn submit-btn" type="submit">تسجيل مساهمتي {icon('fa-arrow-left')}</button>
           <p class="privacy-note">{icon('fa-lock')} بياناتك محفوظة ولا نشاركها مع أي طرف.</p>
@@ -40,10 +40,21 @@ export function Donate({ user, campaigns = [], selectedCampaignId }: { user?: Us
           <strong dir="ltr">10010397596901014</strong>
           <button class="copy-btn" data-copy="10010397596901014">{icon('fa-copy')} نسخ رقم الحساب</button>
         </article>
-        <article class="account-card phone">
-          <div>{icon('fa-mobile-screen')}<span><small>إنستاباي أو فودافون كاش</small><b>تحويل عبر الهاتف</b></span></div>
+        <article class="account-card instapay-card">
+          <div><i class="brand-logo instapay-logo"><img src="/static/img/instapay-logo.png" alt="InstaPay" loading="lazy" /></i><span><small>تحويل فوري 24/7</small><b>إنستاباي — InstaPay</b></span></div>
           <strong dir="ltr">01060920249</strong>
-          <button class="copy-btn" data-copy="01060920249">{icon('fa-copy')} نسخ الرقم</button>
+          <div class="pay-actions">
+            <button class="copy-btn" data-copy="01060920249">{icon('fa-copy')} نسخ الرقم</button>
+            <button class="pay-app-btn instapay-btn" data-copy="01060920249" data-app="instapay" type="button">{icon('fa-arrow-up-right-from-square')} تبرّع عبر إنستاباي</button>
+          </div>
+        </article>
+        <article class="account-card vodafone-card">
+          <div><i class="brand-logo vodafone-logo"><img src="/static/img/vodafone-cash-logo.png" alt="Vodafone Cash" loading="lazy" /></i><span><small>محفظة إلكترونية</small><b>فودافون كاش</b></span></div>
+          <strong dir="ltr">01060920249</strong>
+          <div class="pay-actions">
+            <button class="copy-btn" data-copy="01060920249">{icon('fa-copy')} نسخ الرقم</button>
+            <button class="pay-app-btn vodafone-btn" data-copy="01060920249" data-app="vodafone" type="button">{icon('fa-arrow-up-right-from-square')} تبرّع عبر فودافون كاش</button>
+          </div>
         </article>
         <article class="voucher-card">
           <span>{icon('fa-cow')}</span>

@@ -532,6 +532,62 @@
     }
   }))
 
+  /* ─── فتح تطبيقات الدفع (إنستاباي / فودافون كاش) مع نسخ الرقم ─── */
+  const payAppsConfig = {
+    instapay: {
+      appName: 'إنستاباي',
+      scheme: 'instapay://',
+      android: 'intent://#Intent;package=com.egyptianbanks.instapay;scheme=instapay;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.egyptianbanks.instapay;end',
+      ios: 'https://apps.apple.com/eg/app/instapay-egypt/id1592108795',
+      web: 'https://instapay.eg/'
+    },
+    vodafone: {
+      appName: 'فودافون كاش',
+      scheme: 'anavodafone://',
+      android: 'intent://#Intent;package=com.emeint.android.myservices;scheme=anavodafone;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.emeint.android.myservices;end',
+      ios: 'https://apps.apple.com/eg/app/ana-vodafone/id437564823',
+      web: 'https://web.vodafone.com.eg/'
+    }
+  }
+
+  $$('.pay-app-btn').forEach(button => button.addEventListener('click', async () => {
+    const config = payAppsConfig[button.dataset.app]
+    if (!config) return
+
+    // 1) نسخ الرقم أولاً
+    const number = button.dataset.copy
+    if (number) {
+      try {
+        await navigator.clipboard.writeText(number)
+        toast(`تم نسخ الرقم — جارٍ فتح ${config.appName}`, 'copy')
+      } catch {
+        toast(`الرقم: ${number} — جارٍ فتح ${config.appName}`, 'info')
+      }
+    }
+
+    // 2) فتح التطبيق حسب نظام التشغيل
+    const ua = navigator.userAgent || ''
+    const isAndroid = /Android/i.test(ua)
+    const isIOS = /iPhone|iPad|iPod/i.test(ua)
+
+    setTimeout(() => {
+      if (isAndroid) {
+        // intent:// يفتح التطبيق مباشرة أو متجر Google Play إن لم يكن مثبتًا
+        window.location.href = config.android
+      } else if (isIOS) {
+        // محاولة فتح التطبيق عبر الـ scheme ثم الانتقال لمتجر التطبيقات
+        const start = Date.now()
+        window.location.href = config.scheme
+        setTimeout(() => {
+          if (Date.now() - start < 2200 && !document.hidden) window.location.href = config.ios
+        }, 1600)
+      } else {
+        // كمبيوتر مكتبي: فتح الموقع الرسمي في تبويب جديد
+        window.open(config.web, '_blank', 'noopener')
+      }
+    }, 450)
+  }))
+
   $$('.toast-trigger').forEach(button => button.addEventListener('click', () => {
     const type = button.dataset.toastType || 'prayer'
     toast(button.dataset.message, type)

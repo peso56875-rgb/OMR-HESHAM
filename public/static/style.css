@@ -1179,3 +1179,51 @@ body.dark .dash-modal-footer {
     margin: 6px 0 14px !important;
   }
 }
+
+/* ─── Donation Page: Payment Brand Logos & App Buttons ─── */
+.method-option>span>.method-logo{
+  grid-row:1/3;width:44px;height:44px;border-radius:12px;background:#fff;
+  border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;padding:5px;
+}
+.method-option>span>.method-logo img{width:100%;height:100%;object-fit:contain;display:block}
+.method-instapay input:checked+span{border-color:#642F8F;box-shadow:0 0 0 3px rgba(100,47,143,.14)}
+.method-instapay input:checked+span .method-logo{border-color:rgba(100,47,143,.4)}
+.method-instapay input:checked+span b{color:#642F8F}
+.method-vodafone input:checked+span{border-color:#E60000;box-shadow:0 0 0 3px rgba(230,0,0,.12)}
+.method-vodafone input:checked+span .method-logo{border-color:rgba(230,0,0,.35)}
+.method-vodafone input:checked+span b{color:#E60000}
+
+.account-card>div>.brand-logo{
+  flex:0 0 46px;width:46px;height:46px;border-radius:13px;background:#fff;
+  display:grid;place-items:center;overflow:hidden;padding:5px;
+}
+.account-card>div>.brand-logo img{width:100%;height:100%;object-fit:contain;display:block}
+.account-card.instapay-card{border-color:rgba(151,88,204,.45);background:linear-gradient(140deg,rgba(100,47,143,.28),rgba(255,255,255,.06))}
+.account-card.instapay-card span small{color:#cfaef0}
+.account-card.vodafone-card{border-color:rgba(255,90,90,.4);background:linear-gradient(140deg,rgba(230,0,0,.22),rgba(255,255,255,.06))}
+.account-card.vodafone-card span small{color:#ffb3b3}
+
+.pay-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+.pay-actions .copy-btn{width:100%}
+.pay-app-btn{
+  width:100%;border:0;border-radius:12px;padding:10px 12px;font-weight:800;color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+  transition:transform .2s,box-shadow .2s;touch-action:manipulation;
+}
+.pay-app-btn:active{transform:scale(.97)}
+button.pay-app-btn.instapay-btn,button.pay-app-btn.instapay-btn:hover{background:linear-gradient(120deg,#642F8F,#8b4bc4);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(100,47,143,.35)}
+button.pay-app-btn.instapay-btn:hover{box-shadow:0 8px 22px rgba(100,47,143,.5)}
+button.pay-app-btn.vodafone-btn,button.pay-app-btn.vodafone-btn:hover{background:linear-gradient(120deg,#C60000,#E60000);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(230,0,0,.3)}
+button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
+
+@media(max-width:780px){
+  .pay-actions{grid-template-columns:1fr}
+  .pay-app-btn{min-height:48px;font-size:.85rem}
+  .pay-actions .copy-btn{min-height:46px}
+  .account-card>div>.brand-logo{flex:0 0 42px;width:42px;height:42px}
+  .method-option>span>.method-logo{width:40px;height:40px;border-radius:11px;padding:4px}
+  .account-card>strong{user-select:all;-webkit-user-select:all}
+}
+@media(max-width:380px){
+  .pay-app-btn{font-size:.8rem;padding:10px 8px}
+}
