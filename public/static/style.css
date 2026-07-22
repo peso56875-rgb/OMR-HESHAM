@@ -917,3 +917,159 @@ body.dark .dash-delete-btn {
   color: #ffffff !important;
   border-color: #e57373 !important;
 }
+
+/* ─── Executive Edit Modal Dialog ─── */
+.dash-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.dash-modal-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.dash-modal {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  transform: scale(0.92) translateY(15px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-modal-backdrop.open .dash-modal {
+  transform: scale(1) translateY(0);
+}
+
+.dash-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--ivory);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+body.dark .dash-modal-header {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dash-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.dash-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.dash-modal-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text);
+}
+
+body.dark .dash-modal-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dash-modal-body {
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.dash-modal-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.dash-modal-body input[type="text"],
+.dash-modal-body input[type="number"],
+.dash-modal-body input[type="datetime-local"],
+.dash-modal-body select,
+.dash-modal-body textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dash-modal-body input:focus,
+.dash-modal-body select:focus,
+.dash-modal-body textarea:focus {
+  outline: none;
+  border-color: var(--emerald-600);
+  box-shadow: 0 0 0 3px rgba(22, 138, 112, 0.15);
+}
+
+.dash-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  padding: 1.25rem 1.75rem;
+  border-top: 1px solid var(--border);
+  background: var(--ivory);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+body.dark .dash-modal-footer {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dash-modal-cancel-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dash-modal-cancel-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}

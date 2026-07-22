@@ -116,6 +116,209 @@
     })
   }, { threshold: 0.12, rootMargin: '0px 0px -40px' })
 
+  /* ─── Executive Dashboard Edit Modal System ─── */
+  function openEditModal(type, data) {
+    let backdrop = document.getElementById('dash-edit-modal-backdrop')
+    if (!backdrop) {
+      backdrop = document.createElement('div')
+      backdrop.id = 'dash-edit-modal-backdrop'
+      backdrop.className = 'dash-modal-backdrop'
+      document.body.appendChild(backdrop)
+    }
+
+    const titlesMap = {
+      campaigns: 'تعديل بيانات الحملة',
+      news: 'تعديل بيانات الخبر',
+      events: 'تعديل بيانات الفعالية',
+      stories: 'تعديل قصة النجاح',
+      jobs: 'تعديل فرصة العمل'
+    }
+
+    const actionUrl = `/api/${type}/edit/${data.id}`
+    const modalTitle = titlesMap[type] || 'تعديل البيانات'
+
+    let formFieldsHtml = ''
+
+    if (type === 'campaigns') {
+      const presetIcons = ['fa-heart', 'fa-capsules', 'fa-basket-shopping', 'fa-school', 'fa-stethoscope', 'fa-book-open', 'fa-gift', 'fa-hand-holding-heart', 'fa-house-medical', 'fa-seedling']
+      const iconValue = data.icon || 'fa-heart'
+      formFieldsHtml = `
+        <label>عنوان الحملة<input type="text" name="title" value="${data.title || ''}" required /></label>
+        <label>القسم<input type="text" name="category" value="${data.category || ''}" placeholder="صحة، غذاء، تعليم" required /></label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
+          <label>المبلغ المستهدف (ج.م)<input type="number" name="goal" value="${data.goal || ''}" required /></label>
+          <label>المبلغ المجمع (ج.م)<input type="number" name="raised" value="${data.raised || 0}" /></label>
+        </div>
+        <label>
+          أيقونة الحملة
+          <div style="display:flex; gap:8px; align-items:center; margin-top:4px">
+            <span id="modal-icon-badge" style="width:40px; height:40px; border-radius:8px; background:var(--gold-600); color:#fff; display:grid; place-items:center; font-size:1.2rem">
+              <i class="fa-solid ${iconValue}"></i>
+            </span>
+            <input type="text" name="icon" id="modal-icon-input" value="${iconValue}" style="flex:1" />
+          </div>
+          <div class="icon-presets" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px">
+            ${presetIcons.map(ic => `<button type="button" class="modal-icon-preset-btn" data-icon="${ic}" style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--ivory); cursor:pointer; font-size:1.1rem"><i class="fa-solid ${ic}"></i></button>`).join('')}
+          </div>
+        </label>
+        <input type="hidden" name="image_url" class="cloudinary-url" value="${data.image || ''}" />
+        <div class="upload-widget">
+          <label>صورة الحملة</label>
+          <div class="upload-drop-zone">
+            <input type="file" accept="image/*,video/*" class="upload-file-input" />
+            <div class="upload-placeholder" style="${data.image ? 'display:none' : ''}"><i class="fa-solid fa-cloud-arrow-up"></i><span>اسحب الصورة هنا أو اضغط للاختيار</span></div>
+            <img class="upload-preview" src="${data.image || ''}" style="${data.image ? 'display:block' : 'display:none'}" alt="معاينة" />
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem"><span style="font-size:.8rem;color:var(--muted)">أو</span><input class="upload-url-fallback" value="${data.image || ''}" placeholder="أدخل رابط الصورة https://..." style="flex:1" /></div>
+        </div>
+        <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer"><input type="checkbox" name="is_urgent" value="true" ${data.urgent === 'true' ? 'checked' : ''} /> حملة عاجلة؟</label>
+        <label>الوصف<textarea name="description" rows="3">${data.description || ''}</textarea></label>
+      `
+    } else if (type === 'news') {
+      formFieldsHtml = `
+        <label>عنوان الخبر<input type="text" name="title" value="${data.title || ''}" required /></label>
+        <label>القسم<input type="text" name="category" value="${data.category || ''}" placeholder="صحة، مجتمع، تعليم" required /></label>
+        <input type="hidden" name="image_url" class="cloudinary-url" value="${data.image || ''}" />
+        <div class="upload-widget">
+          <label>صورة الخبر</label>
+          <div class="upload-drop-zone">
+            <input type="file" accept="image/*,video/*" class="upload-file-input" />
+            <div class="upload-placeholder" style="${data.image ? 'display:none' : ''}"><i class="fa-solid fa-cloud-arrow-up"></i><span>اسحب الصورة هنا أو اضغط للاختيار</span></div>
+            <img class="upload-preview" src="${data.image || ''}" style="${data.image ? 'display:block' : 'display:none'}" alt="معاينة" />
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem"><span style="font-size:.8rem;color:var(--muted)">أو</span><input class="upload-url-fallback" value="${data.image || ''}" placeholder="أدخل رابط الصورة https://..." style="flex:1" /></div>
+        </div>
+        <label>موجز الخبر (يظهر في القائمة)<input type="text" name="excerpt" value="${data.excerpt || ''}" required /></label>
+        <label>محتوى الخبر بالكامل<textarea name="content" rows="6" required>${data.content || ''}</textarea></label>
+      `
+    } else if (type === 'events') {
+      formFieldsHtml = `
+        <label>اسم الفعالية<input type="text" name="title" value="${data.title || ''}" required /></label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
+          <label>نوع الفعالية<input type="text" name="type" value="${data.type || ''}" placeholder="صحة، تعليم، مجتمع" required /></label>
+          <label>المكان<input type="text" name="place" value="${data.place || ''}" required /></label>
+        </div>
+        <label>التاريخ والوقت<input type="datetime-local" name="event_date" value="${data.date || ''}" required /></label>
+        <input type="hidden" name="image_url" class="cloudinary-url" value="${data.image || ''}" />
+        <div class="upload-widget">
+          <label>صورة الفعالية</label>
+          <div class="upload-drop-zone">
+            <input type="file" accept="image/*,video/*" class="upload-file-input" />
+            <div class="upload-placeholder" style="${data.image ? 'display:none' : ''}"><i class="fa-solid fa-cloud-arrow-up"></i><span>اسحب الصورة هنا أو اضغط للاختيار</span></div>
+            <img class="upload-preview" src="${data.image || ''}" style="${data.image ? 'display:block' : 'display:none'}" alt="معاينة" />
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem"><span style="font-size:.8rem;color:var(--muted)">أو</span><input class="upload-url-fallback" value="${data.image || ''}" placeholder="أدخل رابط الصورة https://..." style="flex:1" /></div>
+        </div>
+        <label>الوصف<textarea name="description" rows="3">${data.description || ''}</textarea></label>
+      `
+    } else if (type === 'stories') {
+      formFieldsHtml = `
+        <label>الاسم<input type="text" name="name" value="${data.name || ''}" required /></label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
+          <label>الدور / الصفة<input type="text" name="role" value="${data.role || ''}" placeholder="مستفيد، متطوع" required /></label>
+          <label>التقييم (1-5)<input type="number" name="rating" min="1" max="5" value="${data.rating || 5}" required /></label>
+        </div>
+        <label>القصة كاملة<textarea name="content" rows="4" required>${data.content || ''}</textarea></label>
+      `
+    } else if (type === 'jobs') {
+      formFieldsHtml = `
+        <label>المسمى الوظيفي<input type="text" name="title" value="${data.title || ''}" required /></label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
+          <label>القسم<input type="text" name="department" value="${data.department || ''}" placeholder="إدارة، ميداني، طبي" required /></label>
+          <label>نوع الوظيفة<input type="text" name="job_type" value="${data.type || ''}" placeholder="دوام كامل، دوام جزئي" required /></label>
+        </div>
+        <label>الموقع<input type="text" name="location" value="${data.location || 'كفر العنانية'}" required /></label>
+        <label>وصف الوظيفة والمتطلبات<textarea name="description" rows="4" required>${data.description || ''}</textarea></label>
+        <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer"><input type="checkbox" name="is_active" value="true" ${data.active === 'true' ? 'checked' : ''} /> وظيفة نشطة (تظهر في الموقع)؟</label>
+      `
+    }
+
+    backdrop.innerHTML = `
+      <div class="dash-modal" role="dialog" aria-modal="true">
+        <div class="dash-modal-header">
+          <h3><i class="fa-solid fa-pen-to-square" style="color:var(--gold-600)"></i> ${modalTitle}</h3>
+          <button type="button" class="dash-modal-close" id="dash-modal-close-btn">&times;</button>
+        </div>
+        <form id="dash-modal-form" action="${actionUrl}" method="post">
+          <div class="dash-modal-body">
+            ${formFieldsHtml}
+          </div>
+          <div class="dash-modal-footer">
+            <button type="button" class="dash-modal-cancel-btn" id="dash-modal-cancel-btn">إلغاء</button>
+            <button type="submit" class="primary-btn" id="dash-modal-submit-btn" style="height:44px; padding:0 24px">حفظ التعديلات</button>
+          </div>
+        </form>
+      </div>
+    `
+
+    backdrop.classList.add('open')
+
+    const closeModal = () => {
+      backdrop.classList.remove('open')
+      setTimeout(() => { backdrop.innerHTML = '' }, 300)
+    }
+
+    document.getElementById('dash-modal-close-btn')?.addEventListener('click', closeModal)
+    document.getElementById('dash-modal-cancel-btn')?.addEventListener('click', closeModal)
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) closeModal() })
+
+    // Icon preset click listeners in modal
+    $$('.modal-icon-preset-btn', backdrop).forEach(btn => {
+      btn.addEventListener('click', function() {
+        const input = document.getElementById('modal-icon-input')
+        const badge = document.getElementById('modal-icon-badge')
+        if (input) input.value = this.dataset.icon
+        if (badge) badge.innerHTML = `<i class="fa-solid ${this.dataset.icon}"></i>`
+      })
+    })
+
+    const modalIconInput = document.getElementById('modal-icon-input')
+    if (modalIconInput) {
+      modalIconInput.addEventListener('input', function() {
+        const badge = document.getElementById('modal-icon-badge')
+        if (badge) badge.innerHTML = `<i class="fa-solid ${this.value.trim() || 'fa-heart'}"></i>`
+      })
+    }
+
+    // Modal Form Submission
+    const form = document.getElementById('dash-modal-form')
+    form?.addEventListener('submit', async e => {
+      e.preventDefault()
+      const submitBtn = document.getElementById('dash-modal-submit-btn')
+      const originalText = submitBtn ? submitBtn.innerHTML : 'حفظ التعديلات'
+      if (submitBtn) {
+        submitBtn.disabled = true
+        submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جارٍ الحفظ...'
+      }
+
+      try {
+        const response = await fetch(actionUrl, {
+          method: 'POST',
+          body: new FormData(form)
+        })
+
+        if (!response.ok) throw new Error('تعذر حفظ التعديلات')
+
+        toast('تم حفظ التغييرات والتحديث بنجاح', 'success')
+        closeModal()
+
+        setTimeout(() => {
+          if (location.pathname.startsWith('/dashboard')) {
+            loadDashboardView(location.href, false)
+          } else {
+            location.reload()
+          }
+        }, 500)
+      } catch (err) {
+        toast(err.message || 'خطأ أثناء التعديل', 'error')
+        if (submitBtn) {
+          submitBtn.disabled = false
+          submitBtn.innerHTML = originalText
+        }
+      }
+    })
+  }
+
   /* ─── Dashboard SPA Seamless Navigation ─── */
   function rebindDashboardHandlers() {
     // 1. Empty table placeholders
@@ -164,7 +367,7 @@
       })
     }
 
-    // 4. Edit buttons
+    // 4. Edit buttons — Open Executive Modal Dialog
     $$('.edit-campaign-btn, .edit-news-btn, .edit-event-btn, .edit-story-btn, .edit-job-btn').forEach(btn => {
       if (btn.dataset.bound === 'true') return
       btn.dataset.bound = 'true'
@@ -174,69 +377,7 @@
           : this.classList.contains('edit-event-btn') ? 'events'
           : this.classList.contains('edit-story-btn') ? 'stories' : 'jobs'
 
-        const form = document.querySelector(`form[action^="/api/${type}/"]`)
-        if (!form) return
-        form.action = `/api/${type}/edit/${this.dataset.id}`
-
-        if (type === 'campaigns') {
-          form.querySelector('input[name="title"]').value = this.dataset.title || ''
-          form.querySelector('input[name="category"]').value = this.dataset.category || ''
-          form.querySelector('input[name="goal"]').value = this.dataset.goal || ''
-          const iconInput = form.querySelector('input[name="icon"]')
-          if (iconInput) {
-            iconInput.value = this.dataset.icon || 'fa-heart'
-            const badge = document.getElementById('icon-preview-badge')
-            if (badge) badge.innerHTML = `<i class="fa-solid ${iconInput.value}"></i>`
-          }
-          const description = form.querySelector('textarea[name="description"]')
-          if (description) description.value = this.dataset.description || ''
-          const urgent = form.querySelector('input[name="is_urgent"]')
-          if (urgent) urgent.checked = this.dataset.urgent === 'true'
-        } else if (type === 'news') {
-          form.querySelector('input[name="title"]').value = this.dataset.title || ''
-          form.querySelector('input[name="category"]').value = this.dataset.category || ''
-          form.querySelector('input[name="excerpt"]').value = this.dataset.excerpt || ''
-          const content = form.querySelector('textarea[name="content"]')
-          if (content) content.value = this.dataset.content || ''
-        } else if (type === 'events') {
-          form.querySelector('input[name="title"]').value = this.dataset.title || ''
-          form.querySelector('input[name="type"]').value = this.dataset.type || ''
-          form.querySelector('input[name="place"]').value = this.dataset.place || ''
-          if (this.dataset.date) form.querySelector('input[name="event_date"]').value = this.dataset.date
-          const description = form.querySelector('textarea[name="description"]')
-          if (description) description.value = this.dataset.description || ''
-        } else if (type === 'stories') {
-          form.querySelector('input[name="name"]').value = this.dataset.name || ''
-          form.querySelector('input[name="role"]').value = this.dataset.role || ''
-          form.querySelector('input[name="rating"]').value = this.dataset.rating || 5
-          const content = form.querySelector('textarea[name="content"]')
-          if (content) content.value = this.dataset.content || ''
-        } else if (type === 'jobs') {
-          form.querySelector('input[name="title"]').value = this.dataset.title || ''
-          form.querySelector('input[name="department"]').value = this.dataset.department || ''
-          form.querySelector('input[name="job_type"]').value = this.dataset.type || ''
-          form.querySelector('input[name="location"]').value = this.dataset.location || ''
-          const description = form.querySelector('textarea[name="description"]')
-          if (description) description.value = this.dataset.description || ''
-          const active = form.querySelector('input[name="is_active"]')
-          if (active) active.checked = this.dataset.active === 'true'
-        }
-
-        const imgInput = form.querySelector('.cloudinary-url')
-        if (imgInput) imgInput.value = this.dataset.image || ''
-        const fallbackInput = form.querySelector('.upload-url-fallback')
-        if (fallbackInput) fallbackInput.value = this.dataset.image || ''
-        const preview = form.querySelector('.upload-preview')
-        const placeholder = form.querySelector('.upload-placeholder')
-        if (this.dataset.image && preview && placeholder) {
-          preview.src = this.dataset.image
-          preview.style.display = 'block'
-          placeholder.style.display = 'none'
-        }
-
-        const titleHeader = form.querySelector('h3')
-        if (titleHeader) titleHeader.textContent = 'حفظ التعديلات'
-        form.scrollIntoView({ behavior: 'smooth' })
+        openEditModal(type, this.dataset)
       })
     })
 
