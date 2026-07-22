@@ -117,7 +117,7 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
     <section class="dash-table">
       <header style="display:flex; justify-content:space-between; align-items:center">
         <h3>الحملات الحالية</h3>
-        <a href="/api/export/campaigns" download style="background:var(--emerald-600); color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:6px">
+        <a href="/api/export/campaigns" download class="export-excel-btn">
           {icon('fa-file-excel')} تصدير Excel
         </a>
       </header>
@@ -269,8 +269,8 @@ export function DashDonations({ list = [] }: { list: any[] }) {
   return <section class="dash-table">
     <header style="display:flex; justify-content:space-between; align-items:center">
       <h3>إدارة عمليات التبرع</h3>
-      <a href="/api/export/donations" download style="background:var(--emerald-600); color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:6px">
-        {icon('fa-file-excel')} تصدير CSV
+      <a href="/api/export/donations" download class="export-excel-btn">
+        {icon('fa-file-excel')} تصدير Excel
       </a>
     </header>
     <table>
@@ -321,8 +321,8 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
   return <section class="dash-table">
     <header style="display:flex; justify-content:space-between; align-items:center">
       <h3>طلبات التطوع الواردة</h3>
-      <a href="/api/export/volunteers" download style="background:var(--emerald-600); color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:6px">
-        {icon('fa-file-excel')} تصدير CSV
+      <a href="/api/export/volunteers" download class="export-excel-btn">
+        {icon('fa-file-excel')} تصدير Excel
       </a>
     </header>
     <table>
@@ -374,8 +374,8 @@ export function DashContacts({ list = [] }: { list: any[] }) {
   return <section class="dash-table">
     <header style="display:flex; justify-content:space-between; align-items:center">
       <h3>الرسائل الواردة</h3>
-      <a href="/api/export/contacts" download style="background:var(--emerald-600); color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:6px">
-        {icon('fa-file-excel')} تصدير CSV
+      <a href="/api/export/contacts" download class="export-excel-btn">
+        {icon('fa-file-excel')} تصدير Excel
       </a>
     </header>
     <table>
@@ -418,7 +418,7 @@ export function DashNews({ list = [] }: { list: any[] }) {
     <section class="dash-table">
       <header style="display:flex; justify-content:space-between; align-items:center">
         <h3>الأخبار المنشورة</h3>
-        <a href="/api/export/news" download style="background:var(--emerald-600); color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:6px">
+        <a href="/api/export/news" download class="export-excel-btn">
           {icon('fa-file-excel')} تصدير Excel
         </a>
       </header>
@@ -520,7 +520,7 @@ export function DashEvents({ list = [] }: { list: any[] }) {
     <section class="dash-table">
       <header style="display:flex; justify-content:space-between; align-items:center">
         <h3>الفعاليات الحالية</h3>
-        <a href="/api/export/events" download style="background:var(--emerald-600); color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:6px">
+        <a href="/api/export/events" download class="export-excel-btn">
           {icon('fa-file-excel')} تصدير Excel
         </a>
       </header>
@@ -628,7 +628,7 @@ export function DashStories({ list = [] }: { list: any[] }) {
     <section class="dash-table">
       <header style="display:flex; justify-content:space-between; align-items:center">
         <h3>قصص النجاح المنشورة</h3>
-        <a href="/api/export/stories" download style="background:var(--emerald-600); color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:6px">
+        <a href="/api/export/stories" download class="export-excel-btn">
           {icon('fa-file-excel')} تصدير Excel
         </a>
       </header>
@@ -710,7 +710,7 @@ export function DashJobs({ list = [] }: { list: any[] }) {
     <section class="dash-table">
       <header style="display:flex; justify-content:space-between; align-items:center">
         <h3>فرص العمل الحالية</h3>
-        <a href="/api/export/jobs" download style="background:var(--emerald-600); color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:6px">
+        <a href="/api/export/jobs" download class="export-excel-btn">
           {icon('fa-file-excel')} تصدير Excel
         </a>
       </header>
@@ -800,8 +800,8 @@ export function DashJobApplications({ list = [] }: { list: any[] }) {
   return <section class="dash-table">
     <header style="display:flex; justify-content:space-between; align-items:center">
       <h3>طلبات التوظيف الواردة</h3>
-      <a href="/api/export/job_applications" download style="background:var(--emerald-600); color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:6px">
-        {icon('fa-file-excel')} تصدير CSV
+      <a href="/api/export/job_applications" download class="export-excel-btn">
+        {icon('fa-file-excel')} تصدير Excel
       </a>
     </header>
     <table>
@@ -836,8 +836,8 @@ export function DashNewsletter({ list = [] }: { list: any[] }) {
   return <section class="dash-table">
     <header style="display:flex; justify-content:space-between; align-items:center">
       <h3>مشتركو النشرة البريدية</h3>
-      <a href="/api/export/newsletter_subscribers" download style="background:var(--emerald-600); color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:6px">
-        {icon('fa-file-excel')} تصدير CSV
+      <a href="/api/export/newsletter_subscribers" download class="export-excel-btn">
+        {icon('fa-file-excel')} تصدير Excel
       </a>
     </header>
     <table>
@@ -872,7 +872,7 @@ export function DashUsers({ list = [], currentUserId }: { list: any[], currentUs
   return <section class="dash-table">
     <header style="display:flex; justify-content:space-between; align-items:center">
       <h3>المستخدمون والأدوار</h3>
-      <a href="/api/export/users" download style="background:var(--emerald-600); color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:6px">
+      <a href="/api/export/users" download class="export-excel-btn">
         {icon('fa-file-excel')} تصدير Excel
       </a>
     </header>

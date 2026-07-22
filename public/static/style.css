@@ -774,3 +774,43 @@ input.is-valid, select.is-valid, textarea.is-valid {
     font-size: 0.88rem;
   }
 }
+
+/* High Contrast Export Excel Button (Light & Dark Modes) */
+.export-excel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0c4a3f !important;
+  color: #ffffff !important;
+  border: 1.5px solid #d6a64b !important;
+  padding: 8px 16px !important;
+  border-radius: 10px !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  box-shadow: 0 3px 10px rgba(12, 74, 63, 0.25) !important;
+  transition: all 0.2s ease !important;
+  line-height: 1.4 !important;
+}
+.export-excel-btn i {
+  color: #d6a64b !important;
+  font-size: 1.1rem !important;
+}
+.export-excel-btn:hover {
+  background: #146354 !important;
+  color: #ffffff !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 15px rgba(12, 74, 63, 0.35) !important;
+  border-color: #f2c94c !important;
+}
+
+body.dark .export-excel-btn {
+  background: #145246 !important;
+  color: #ffffff !important;
+  border-color: #d6a64b !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5) !important;
+}
+body.dark .export-excel-btn:hover {
+  background: #1b6657 !important;
+  border-color: #f2c94c !important;
+}
