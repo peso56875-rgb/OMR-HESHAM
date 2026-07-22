@@ -370,6 +370,29 @@ app.get('/dashboard', async (c) => {
       viewData = {
         list: snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
       }
+    } else if (view === 'cases') {
+      const snap = await db.collection('beneficiary_groups').orderBy('created_at', 'desc').get()
+      const groups = snap.docs.map((doc: any) => {
+        const d = doc.data()
+        return {
+          id: doc.id,
+          title: d.title,
+          aid_type: d.aid_type,
+          total_count: d.total_count || (d.names ? d.names.length : 0),
+          // أول 10 أسماء للمعاينة فقط، بدون إرسال كل الأسماء للـ frontend
+          preview_names: (d.names || []).slice(0, 10),
+          created_by: d.created_by,
+          created_at: d.created_at
+        }
+      })
+      const totalBeneficiaries = groups.reduce((sum: number, g: any) => sum + (g.total_count || 0), 0)
+      viewData = {
+        groups,
+        stats: {
+          total_groups: groups.length,
+          total_beneficiaries: totalBeneficiaries
+        }
+      }
     }
   } catch (error: any) {
     console.error(`Error loading dashboard view ${view}:`, error.message)
