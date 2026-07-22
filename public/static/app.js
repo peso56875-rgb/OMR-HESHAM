@@ -103,26 +103,6 @@
   $('#dash-menu-close')?.addEventListener('click', () => setDashMenu(false))
   $('.dash-backdrop')?.addEventListener('click', () => setDashMenu(false))
 
-  $$('.dash-table tbody').forEach(body => {
-    if (body.children.length) return
-    const columns = body.closest('table')?.querySelectorAll('th').length || 1
-    body.innerHTML = `<tr class="dash-empty-row"><td colspan="${columns}"><i class="fa-regular fa-folder-open"></i><strong>لا توجد بيانات حتى الآن</strong><small>ستظهر العناصر الجديدة هنا تلقائيًا.</small></td></tr>`
-  })
-
-  $$('.page-dashboard form[action^="/api/"]').forEach(form => form.addEventListener('submit', async event => {
-    event.preventDefault()
-    const message = form.dataset.confirm || (form.action.includes('/delete/') ? 'هل أنت متأكد من حذف هذا العنصر؟' : '')
-    if (message && !(await window.confirmAction(message))) return
-    const submit = $('button[type="submit"]', form), original = submit?.innerHTML
-    if (submit) { submit.disabled = true; submit.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جارٍ التنفيذ' }
-    try {
-      const response = await fetch(form.action,{ method:(form.method || 'POST').toUpperCase(), body:new FormData(form) })
-      if (!response.ok) throw new Error('تعذر تنفيذ الطلب')
-      toast('تم حفظ التغييرات بنجاح', 'success')
-      setTimeout(() => location.reload(),650)
-    } catch (error) { toast(error.message || 'تعذر تنفيذ الطلب','error'); if (submit) { submit.disabled=false; submit.innerHTML=original } }
-  }))
-
   const revealObserver = new IntersectionObserver(entries => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -131,7 +111,248 @@
       }
     })
   }, { threshold: 0.12, rootMargin: '0px 0px -40px' })
-  $$('.reveal').forEach(el => revealObserver.observe(el))
+
+  /* ─── Dashboard SPA Seamless Navigation ─── */
+  function rebindDashboardHandlers() {
+    // 1. Empty table placeholders
+    $$('.dash-table tbody').forEach(body => {
+      if (body.children.length) return
+      const columns = body.closest('table')?.querySelectorAll('th').length || 1
+      body.innerHTML = `<tr class="dash-empty-row"><td colspan="${columns}"><i class="fa-regular fa-folder-open"></i><strong>لا توجد بيانات حتى الآن</strong><small>ستظهر العناصر الجديدة هنا تلقائيًا.</small></td></tr>`
+    })
+
+    // 2. Forms handling
+    $$('.page-dashboard form[action^="/api/"]').forEach(form => {
+      if (form.dataset.bound === 'true') return
+      form.dataset.bound = 'true'
+      form.addEventListener('submit', async event => {
+        event.preventDefault()
+        const message = form.dataset.confirm || (form.action.includes('/delete/') ? 'هل أنت متأكد من حذف هذا العنصر؟' : '')
+        if (message && !(await window.confirmAction(message))) return
+        const submit = $('button[type="submit"]', form), original = submit?.innerHTML
+        if (submit) { submit.disabled = true; submit.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جارٍ التنفيذ' }
+        try {
+          const response = await fetch(form.action,{ method:(form.method || 'POST').toUpperCase(), body:new FormData(form) })
+          if (!response.ok) throw new Error('تعذر تنفيذ الطلب')
+          toast('تم حفظ التغييرات بنجاح', 'success')
+          setTimeout(() => {
+            if (location.pathname.startsWith('/dashboard')) {
+              loadDashboardView(location.href, false)
+            } else {
+              location.reload()
+            }
+          }, 600)
+        } catch (error) { toast(error.message || 'تعذر تنفيذ الطلب','error'); if (submit) { submit.disabled=false; submit.innerHTML=original } }
+      })
+    })
+
+    // 3. Search input
+    const searchInput = $('#dash-search-input')
+    if (searchInput && !searchInput.dataset.bound) {
+      searchInput.dataset.bound = 'true'
+      searchInput.addEventListener('input', function() {
+        var term = this.value.toLowerCase().trim()
+        var rows = document.querySelectorAll('.dash-table table tbody tr')
+        rows.forEach(function(row) {
+          var text = row.textContent.toLowerCase()
+          row.style.display = text.includes(term) ? '' : 'none'
+        })
+      })
+    }
+
+    // 4. Edit buttons
+    $$('.edit-campaign-btn, .edit-news-btn, .edit-event-btn, .edit-story-btn, .edit-job-btn').forEach(btn => {
+      if (btn.dataset.bound === 'true') return
+      btn.dataset.bound = 'true'
+      btn.addEventListener('click', function() {
+        const type = this.classList.contains('edit-campaign-btn') ? 'campaigns'
+          : this.classList.contains('edit-news-btn') ? 'news'
+          : this.classList.contains('edit-event-btn') ? 'events'
+          : this.classList.contains('edit-story-btn') ? 'stories' : 'jobs'
+
+        const form = document.querySelector(`form[action^="/api/${type}/"]`)
+        if (!form) return
+        form.action = `/api/${type}/edit/${this.dataset.id}`
+
+        if (type === 'campaigns') {
+          form.querySelector('input[name="title"]').value = this.dataset.title || ''
+          form.querySelector('input[name="category"]').value = this.dataset.category || ''
+          form.querySelector('input[name="goal"]').value = this.dataset.goal || ''
+          const iconInput = form.querySelector('input[name="icon"]')
+          if (iconInput) {
+            iconInput.value = this.dataset.icon || 'fa-heart'
+            const badge = document.getElementById('icon-preview-badge')
+            if (badge) badge.innerHTML = `<i class="fa-solid ${iconInput.value}"></i>`
+          }
+          const description = form.querySelector('textarea[name="description"]')
+          if (description) description.value = this.dataset.description || ''
+          const urgent = form.querySelector('input[name="is_urgent"]')
+          if (urgent) urgent.checked = this.dataset.urgent === 'true'
+        } else if (type === 'news') {
+          form.querySelector('input[name="title"]').value = this.dataset.title || ''
+          form.querySelector('input[name="category"]').value = this.dataset.category || ''
+          form.querySelector('input[name="excerpt"]').value = this.dataset.excerpt || ''
+          const content = form.querySelector('textarea[name="content"]')
+          if (content) content.value = this.dataset.content || ''
+        } else if (type === 'events') {
+          form.querySelector('input[name="title"]').value = this.dataset.title || ''
+          form.querySelector('input[name="type"]').value = this.dataset.type || ''
+          form.querySelector('input[name="place"]').value = this.dataset.place || ''
+          if (this.dataset.date) form.querySelector('input[name="event_date"]').value = this.dataset.date
+          const description = form.querySelector('textarea[name="description"]')
+          if (description) description.value = this.dataset.description || ''
+        } else if (type === 'stories') {
+          form.querySelector('input[name="name"]').value = this.dataset.name || ''
+          form.querySelector('input[name="role"]').value = this.dataset.role || ''
+          form.querySelector('input[name="rating"]').value = this.dataset.rating || 5
+          const content = form.querySelector('textarea[name="content"]')
+          if (content) content.value = this.dataset.content || ''
+        } else if (type === 'jobs') {
+          form.querySelector('input[name="title"]').value = this.dataset.title || ''
+          form.querySelector('input[name="department"]').value = this.dataset.department || ''
+          form.querySelector('input[name="job_type"]').value = this.dataset.type || ''
+          form.querySelector('input[name="location"]').value = this.dataset.location || ''
+          const description = form.querySelector('textarea[name="description"]')
+          if (description) description.value = this.dataset.description || ''
+          const active = form.querySelector('input[name="is_active"]')
+          if (active) active.checked = this.dataset.active === 'true'
+        }
+
+        const imgInput = form.querySelector('.cloudinary-url')
+        if (imgInput) imgInput.value = this.dataset.image || ''
+        const fallbackInput = form.querySelector('.upload-url-fallback')
+        if (fallbackInput) fallbackInput.value = this.dataset.image || ''
+        const preview = form.querySelector('.upload-preview')
+        const placeholder = form.querySelector('.upload-placeholder')
+        if (this.dataset.image && preview && placeholder) {
+          preview.src = this.dataset.image
+          preview.style.display = 'block'
+          placeholder.style.display = 'none'
+        }
+
+        const titleHeader = form.querySelector('h3')
+        if (titleHeader) titleHeader.textContent = 'حفظ التعديلات'
+        form.scrollIntoView({ behavior: 'smooth' })
+      })
+    })
+
+    // 5. Icon presets & Input
+    $$('.icon-preset-btn').forEach(btn => {
+      if (btn.dataset.bound === 'true') return
+      btn.dataset.bound = 'true'
+      btn.addEventListener('click', function() {
+        const input = document.getElementById('campaign-icon-input')
+        const badge = document.getElementById('icon-preview-badge')
+        if (input) input.value = this.dataset.icon
+        if (badge) badge.innerHTML = `<i class="fa-solid ${this.dataset.icon}"></i>`
+      })
+    })
+    const iconInput = document.getElementById('campaign-icon-input')
+    if (iconInput && !iconInput.dataset.bound) {
+      iconInput.dataset.bound = 'true'
+      iconInput.addEventListener('input', function() {
+        const badge = document.getElementById('icon-preview-badge')
+        if (badge) badge.innerHTML = `<i class="fa-solid ${this.value.trim() || 'fa-heart'}"></i>`
+      })
+    }
+
+    // 6. Reveal elements
+    $$('.reveal').forEach(el => revealObserver.observe(el))
+  }
+
+  async function loadDashboardView(url, pushState = true) {
+    const dashMain = $('.dash-main')
+    if (!dashMain) return
+
+    setDashMenu(false)
+
+    dashMain.classList.add('view-transitioning')
+
+    let progressBar = $('.dash-top-loader', dashMain)
+    if (!progressBar) {
+      progressBar = document.createElement('div')
+      progressBar.className = 'dash-top-loader'
+      progressBar.innerHTML = '<div class="dash-top-loader-bar"></div>'
+      dashMain.prepend(progressBar)
+    }
+    progressBar.classList.add('loading')
+
+    try {
+      const response = await fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          location.href = url
+          return
+        }
+        throw new Error('تعذر تحميل القسم')
+      }
+
+      const html = await response.text()
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(html, 'text/html')
+      const newDashMain = doc.querySelector('.dash-main')
+
+      if (newDashMain) {
+        if (pushState) {
+          history.pushState({ url }, '', url)
+        }
+
+        const targetViewParam = new URL(url, location.origin).searchParams.get('view') || 'overview'
+
+        $$('.dash-sidebar nav a').forEach(link => {
+          const linkViewParam = new URL(link.href, location.origin).searchParams.get('view') || 'overview'
+          const isTarget = linkViewParam === targetViewParam
+          link.classList.toggle('active', isTarget)
+          if (isTarget) link.setAttribute('aria-current', 'page')
+          else link.removeAttribute('aria-current')
+        })
+
+        dashMain.innerHTML = newDashMain.innerHTML
+        rebindDashboardHandlers()
+      } else {
+        location.href = url
+      }
+    } catch (err) {
+      console.error('[Dashboard SPA Error]', err)
+      location.href = url
+    } finally {
+      setTimeout(() => {
+        dashMain.classList.remove('view-transitioning')
+        const loader = $('.dash-top-loader', dashMain)
+        if (loader) loader.classList.remove('loading')
+      }, 150)
+    }
+  }
+
+  // Intercept sidebar navigation clicks
+  document.addEventListener('click', e => {
+    const link = e.target.closest('.dash-sidebar nav a[href]')
+    if (!link) return
+    const href = link.getAttribute('href')
+    if (!href || href === '#' || href.startsWith('javascript:')) return
+
+    const targetUrl = new URL(href, location.origin).href
+    if (targetUrl === location.href) {
+      e.preventDefault()
+      return
+    }
+
+    e.preventDefault()
+    loadDashboardView(targetUrl, true)
+  })
+
+  // Handle browser Back / Forward buttons
+  window.addEventListener('popstate', () => {
+    if (location.pathname.startsWith('/dashboard')) {
+      loadDashboardView(location.href, false)
+    }
+  })
+
+  // Initial handlers binding
+  rebindDashboardHandlers()
 
   const counterObserver = new IntersectionObserver(entries => {
     entries.forEach(({ isIntersecting, target }) => {
