@@ -506,18 +506,14 @@
       })
     }
 
-    // Quick sample preset buttons (1, 10, 50, all)
+    // Quick sample preset buttons (1, 10, 50, all) — only set count, don't auto-export
     $$('.sample-preset-btn').forEach(btn => {
       if (btn.dataset.bound === 'true') return
       btn.dataset.bound = 'true'
       btn.addEventListener('click', function() {
         const countType = this.dataset.count
-        if (!groupSelect || !groupSelect.value) {
-          toast('يرجى اختيار مجموعة المستفيدين أولاً', 'warning')
-          return
-        }
-        const selectedOpt = groupSelect.options[groupSelect.selectedIndex]
-        const total = parseInt(selectedOpt?.dataset?.total || '0', 10) || 500
+        const selectedOpt = groupSelect ? groupSelect.options[groupSelect.selectedIndex] : null
+        const total = parseInt(selectedOpt?.dataset?.total || '0', 10) || 9999
 
         let targetCount = 1
         if (countType === 'all') {
@@ -527,9 +523,7 @@
         }
 
         if (numInput) numInput.value = targetCount
-        if (rangeInput) rangeInput.value = targetCount
-
-        triggerSampleExport(groupSelect.value, targetCount)
+        if (rangeInput) rangeInput.value = Math.min(targetCount, parseInt(rangeInput.max || '9999', 10))
       })
     })
 
@@ -537,28 +531,48 @@
     if (extractBtn && !extractBtn.dataset.bound) {
       extractBtn.dataset.bound = 'true'
       extractBtn.addEventListener('click', function() {
-        const gid = groupSelect ? groupSelect.value : ''
-        const count = numInput ? (parseInt(numInput.value, 10) || 1) : 1
-        if (!gid) {
-          toast('يرجى اختيار مجموعة المستفيدين أولاً', 'warning')
-          return
-        }
-        triggerSampleExport(gid, count)
+        const gid = groupSelect ? groupSelect.value : 'all'
+        const count = numInput ? (parseInt(numInput.value, 10) || 50) : 50
+        const titleInput = document.getElementById('custom-group-title')
+        const customTitle = titleInput ? titleInput.value.trim() : ''
+        triggerSampleExport(gid, count, customTitle)
       })
     }
   }
 
-  function triggerSampleExport(gid, count) {
-    const url = '/api/export/cases_sample?group_id=' + encodeURIComponent(gid) + '&count=' + encodeURIComponent(count)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = ''
-    a.target = '_blank'
-    a.rel = 'noopener'
-    document.body.appendChild(a)
-    a.click()
-    setTimeout(() => { document.body.removeChild(a) }, 200)
+  function triggerSampleExport(gid, count, customTitle) {
+    const title = customTitle || 'مجموعة مستفيدين — عينة عشوائية'
+    const url = '/api/export/cases_sample?group_id=' + encodeURIComponent(gid) +
+                '&count=' + encodeURIComponent(count) +
+                '&custom_title=' + encodeURIComponent(title)
+
     toast('جارٍ استخراج العينة العشوائية وتحميل ملف Excel...', 'success')
+
+    fetch(url, { credentials: 'same-origin' })
+      .then(res => {
+        if (!res.ok) throw new Error('فشل التصدير: ' + res.status)
+        const disposition = res.headers.get('Content-Disposition') || ''
+        const filenameMatch = disposition.match(/filename="?([^"\n;]+)/)
+        const filename = filenameMatch ? filenameMatch[1] : (title.replace(/[^\u0600-\u06FFa-zA-Z0-9]/g, '_') + '.xls')
+        return res.blob().then(blob => ({ blob, filename }))
+      })
+      .then(({ blob, filename }) => {
+        const blobUrl = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = blobUrl
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        setTimeout(() => {
+          document.body.removeChild(a)
+          URL.revokeObjectURL(blobUrl)
+        }, 300)
+        toast('تم تحميل ملف Excel بنجاح', 'success')
+      })
+      .catch(err => {
+        console.error('Export error:', err)
+        toast('حدث خطأ أثناء التصدير — تأكد من وجود أسماء في الأرشيف', 'error')
+      })
   }
 
   async function loadDashboardView(url, pushState = true) {

@@ -314,10 +314,19 @@ exportApi.get('/cases_sample', async (c) => {
 
     const safeTitleSlug = groupTitleFinal.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_').slice(0, 40)
     const timestamp = Date.now()
+    const fileName = `${safeTitleSlug}_${sampleCount}_${timestamp}.xls`
 
-    return c.body('\uFEFF' + excelHtml, 200, {
-      'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${safeTitleSlug}_${sampleCount}_${timestamp}.xls"; filename*=UTF-8''${encodeURIComponent(safeTitleSlug)}_${sampleCount}_${timestamp}.xls`
+    const encoder = new TextEncoder()
+    const bodyBytes = encoder.encode('\uFEFF' + excelHtml)
+
+    return new Response(bodyBytes, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+        'Content-Length': String(bodyBytes.byteLength),
+        'Cache-Control': 'no-cache, no-store'
+      }
     })
   } catch (e: any) {
     console.error('[Cases Sample Export Error]', e)
@@ -442,10 +451,19 @@ exportApi.get('/cases_full/:id', async (c) => {
 
     const safeTitleSlug = groupTitleFinal.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_').slice(0, 40)
     const timestamp = Date.now()
+    const fileName = `${safeTitleSlug}_full_${timestamp}.xls`
 
-    return c.body('\uFEFF' + excelHtml, 200, {
-      'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${safeTitleSlug}_full_${timestamp}.xls"; filename*=UTF-8''${encodeURIComponent(safeTitleSlug)}_full_${timestamp}.xls`
+    const encoder = new TextEncoder()
+    const bodyBytes = encoder.encode('\uFEFF' + excelHtml)
+
+    return new Response(bodyBytes, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+        'Content-Length': String(bodyBytes.byteLength),
+        'Cache-Control': 'no-cache, no-store'
+      }
     })
   } catch (e: any) {
     console.error('[Cases Full Export Error]', e)
@@ -534,9 +552,19 @@ exportApi.get('/:collection', async (c) => {
 </body>
 </html>`
 
-    return c.body('\uFEFF' + excelHtml, 200, {
-      'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${collectionName}_export_${Date.now()}.xls"`
+    const fileName = `${collectionName}_export_${Date.now()}.xls`
+
+    const encoder = new TextEncoder()
+    const bodyBytes = encoder.encode('\uFEFF' + excelHtml)
+
+    return new Response(bodyBytes, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+        'Content-Length': String(bodyBytes.byteLength),
+        'Cache-Control': 'no-cache, no-store'
+      }
     })
   } catch (e: any) {
     console.error('[Export Error]', e)
