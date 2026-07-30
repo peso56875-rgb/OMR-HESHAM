@@ -1,4 +1,4 @@
-import { icon, Layout, PageHero } from './shared'
+import { icon, Layout, PageHero, cssBackground } from './shared'
 import { defaultNews } from '../defaults'
 import type { UserSession } from '../types'
 
@@ -16,10 +16,10 @@ export function News({ news = [], user }: { news?: any[], user?: UserSession }) 
           const excerpt = isDoc ? n.excerpt : n[2]
           const ic = isDoc ? (n.icon || 'fa-newspaper') : n[3]
           const date = isDoc ? new Date(n.publish_date).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '١٢ يوليو ٢٠٢٦'
-          const img = isDoc ? n.image_url : null
+          const img = isDoc ? String(n.image_url || '').trim() : ''
 
           return <article class={`news-card reveal ${i === 0 ? 'featured' : ''}`}>
-            <div class="news-art" style={img ? `background-image:url(${img});background-size:cover;background-position:center;color:transparent;` : ''}>
+            <div class="news-art" style={img ? `${cssBackground(img)}color:transparent;` : ''}>
               {!img && icon(ic)}
               <span style={img ? 'background:rgba(12,74,63,0.8);color:white' : ''}>{cat}</span>
             </div>

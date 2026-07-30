@@ -3,6 +3,19 @@ import type { UserSession } from '../types'
 
 export const icon = (name: string) => <i class={`fa-solid ${name}`} aria-hidden="true"></i>
 
+/**
+ * Builds a safe CSS background-image declaration.
+ * Unquoted url(...) breaks on URLs containing parentheses, spaces or commas —
+ * which is exactly what Firebase Storage / Cloudinary links can contain, so the
+ * image silently never rendered even though the URL was stored correctly.
+ */
+export const cssBackground = (url?: string): string => {
+  const value = String(url || '').trim()
+  if (!value) return ''
+  const safe = value.replace(/["\\]/g, '\\$&').replace(/\r?\n/g, '')
+  return `background-image:url("${safe}");background-size:cover;background-position:center;`
+}
+
 export function Header({ user }: { user?: UserSession }) {
   return <>
     <header class="site-header" id="site-header">
@@ -105,7 +118,7 @@ export function CampaignCard({ c }: { c: any }) {
   const hasImage = c.image_url && c.image_url.trim()
 
   return <article class="campaign-card reveal tilt-card">
-    <div class="campaign-visual" style={hasImage ? `background-image:url(${c.image_url});background-size:cover;background-position:center;` : ''}>
+    <div class="campaign-visual" style={hasImage ? cssBackground(c.image_url) : ''}>
       <span class="visual-orb"></span>
       {!hasImage && icon(c.icon || 'fa-heart')}
       <b style={hasImage ? 'background:rgba(12,74,63,0.85);color:#fff;padding:4px 10px;border-radius:8px' : ''}>{c.category || c.cat || 'عام'}</b>

@@ -72,5 +72,11 @@ service cloud.firestore {
     match /treasury_expenses/{document} {
       allow read, write: if isAdmin();
     }
+
+    // Media fallback store — written and read only by the server (Admin SDK,
+    // which bypasses these rules). Clients must never touch it directly.
+    match /media/{document=**} {
+      allow read, write: if false;
+    }
   }
 }
