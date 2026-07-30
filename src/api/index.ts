@@ -13,6 +13,7 @@ import { newsletter } from './newsletter'
 import { profile } from './profile'
 import { users } from './users'
 import { upload } from './upload'
+import { media } from './media'
 import { exportApi } from './export'
 import { treasury } from './treasury'
 import { cases } from './cases'
@@ -58,6 +59,7 @@ api.route('/newsletter', newsletter)
 api.route('/profile', profile)
 api.route('/users', users)
 api.route('/upload', upload)
+api.route('/media', media)
 api.route('/export', exportApi)
 api.route('/treasury', treasury)
 api.route('/cases', cases)

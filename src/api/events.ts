@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
+import { normalizeMediaUrl } from '../lib/storage'
 
 export const events = new Hono()
 
@@ -47,7 +48,7 @@ events.post('/add', adminMiddleware, async (c) => {
       place: body.place || '',
       event_date: body.event_date ? new Date(body.event_date as string).toISOString() : new Date().toISOString(),
       description: body.description || '',
-      image_url: body.image_url || '',
+      image_url: normalizeMediaUrl(body.image_url),
       is_published: true,
       created_at: new Date().toISOString()
     })
@@ -93,7 +94,7 @@ events.post('/edit/:id', adminMiddleware, async (c) => {
       place: body.place || '',
       event_date: body.event_date ? new Date(body.event_date as string).toISOString() : new Date().toISOString(),
       description: body.description || '',
-      image_url: body.image_url || ''
+      image_url: normalizeMediaUrl(body.image_url)
     })
 
     if (contentType.includes('application/json')) {

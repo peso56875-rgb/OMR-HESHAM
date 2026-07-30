@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
+import { normalizeMediaUrl } from '../lib/storage'
 
 export const news = new Hono()
 
@@ -66,7 +67,7 @@ news.post('/add', adminMiddleware, async (c) => {
       category: body.category || 'عام',
       excerpt,
       content,
-      image_url: body.image_url || '',
+      image_url: normalizeMediaUrl(body.image_url),
       is_published: true,
       publish_date: new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString()
@@ -115,7 +116,7 @@ news.post('/edit/:id', adminMiddleware, async (c) => {
       category: body.category || 'عام',
       excerpt,
       content,
-      image_url: body.image_url || ''
+      image_url: normalizeMediaUrl(body.image_url)
     })
 
     if (contentType.includes('application/json')) {
