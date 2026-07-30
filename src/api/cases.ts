@@ -61,3 +61,20 @@ cases.post('/groups/delete/:id', async (c) => {
     return c.redirect('/dashboard?view=cases&error=server')
   }
 })
+
+// تصفير جميع الأسماء بالأرشيف
+cases.post('/clear-all', async (c) => {
+  try {
+    const db = getFirestore(c)
+    const snap = await db.collection('beneficiary_groups').get()
+    const batch = db.batch()
+    snap.docs.forEach((doc: any) => {
+      batch.delete(doc.ref)
+    })
+    await batch.commit()
+    return c.redirect('/dashboard?view=cases&success=cleared')
+  } catch (e: any) {
+    console.error('[Cases Clear All Error]', e)
+    return c.redirect('/dashboard?view=cases&error=server')
+  }
+})

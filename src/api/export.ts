@@ -278,15 +278,15 @@ exportApi.get('/cases_sample', async (c) => {
     </tr>
     <tr>
       <td colspan="${colCount}" style="background-color:#c89738; color:#072d27; text-align:center; font-size:14pt; font-weight:bold; padding:10px 12px; letter-spacing:0.5px;">
-        📋 ${String(groupTitleFinal).replace(/</g, '&lt;')} — قائمة العينة العشوائية
+        ${String(groupTitleFinal).replace(/</g, '&lt;')} — قائمة العينة العشوائية
       </td>
     </tr>
     <tr>
       <td colspan="${colCount}" style="background-color:#f4efe6; color:#333333; text-align:right; font-size:10.5pt; padding:10px 16px; border-bottom:3px solid #c89738; font-weight:600;">
-        📌 <b>اسم المجموعة / البيان:</b> ${String(groupTitleFinal).replace(/</g, '&lt;')} &nbsp;&nbsp;|&nbsp;&nbsp;
-        📊 <b>إجمالي أسماء الأرشيف:</b> ${allNames.length} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
-        🎲 <b>العينة المستخرجة:</b> ${sampleCount} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
-        📅 <b>تاريخ الاستخراج:</b> ${dateStr}
+        <b>اسم المجموعة / البيان:</b> ${String(groupTitleFinal).replace(/</g, '&lt;')} &nbsp;&nbsp;|&nbsp;&nbsp;
+        <b>إجمالي أسماء الأرشيف:</b> ${allNames.length} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
+        <b>العينة المستخرجة:</b> ${sampleCount} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
+        <b>تاريخ الاستخراج:</b> ${dateStr}
       </td>
     </tr>
     <tr><td colspan="${colCount}" style="height:12px;"></td></tr>
@@ -408,14 +408,14 @@ exportApi.get('/cases_full/:id', async (c) => {
     </tr>
     <tr>
       <td colspan="${colCount}" style="background-color:#c89738; color:#072d27; text-align:center; font-size:14pt; font-weight:bold; padding:10px 12px;">
-        📋 ${String(groupTitleFinal).replace(/</g, '&lt;')} — القائمة الكاملة
+        ${String(groupTitleFinal).replace(/</g, '&lt;')} — القائمة الكاملة
       </td>
     </tr>
     <tr>
       <td colspan="${colCount}" style="background-color:#f4efe6; color:#333333; text-align:right; font-size:10.5pt; padding:10px 16px; border-bottom:3px solid #c89738; font-weight:600;">
-        📌 <b>المجموعة / البيان:</b> ${String(groupTitleFinal).replace(/</g, '&lt;')} &nbsp;&nbsp;|&nbsp;&nbsp;
-        📊 <b>إجمالي السجلات:</b> ${allNames.length} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
-        📅 <b>تاريخ الاستخراج:</b> ${dateStr}
+        <b>المجموعة / البيان:</b> ${String(groupTitleFinal).replace(/</g, '&lt;')} &nbsp;&nbsp;|&nbsp;&nbsp;
+        <b>إجمالي السجلات:</b> ${allNames.length} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
+        <b>تاريخ الاستخراج:</b> ${dateStr}
       </td>
     </tr>
     <tr><td colspan="${colCount}" style="height:12px;"></td></tr>

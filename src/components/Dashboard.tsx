@@ -1155,7 +1155,7 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
       <article style="background: var(--paper); border: 2px solid #8b5cf6; border-radius: 20px; padding: 1.4rem">
         <div style="display:flex; justify-content:space-between; align-items:center">
           <span style="font-size:1.6rem; color:#8b5cf6">{icon('fa-people-group')}</span>
-          <small style="color:var(--muted); font-weight:700">إجمالي الأسماء بالأرشيف (Data Pool)</small>
+          <small style="color:var(--muted); font-weight:700">إجمالي الأسماء بالأرشيف العام</small>
         </div>
         <b style="font-size:2rem; display:block; margin-top:.8rem; color:#8b5cf6">
           {totalBeneficiaries.toLocaleString('ar-EG')} مستفيد
@@ -1176,7 +1176,7 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
           <small style="color:var(--muted); font-weight:700">نظام استخراج ملفات Excel</small>
         </div>
         <b style="font-size:1.1rem; display:block; margin-top:.8rem; color:var(--gold-600)">
-          مع اللوجو والأسماء المخصصة ✨
+          مع شعار المؤسسة والأسماء المخصصة
         </b>
       </article>
     </div>
@@ -1208,13 +1208,13 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
             مصدر الأسماء المراد السحب منها
             <select name="group_id" id="sample-group-select"
               style="padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--ivory); font-size:.95rem; color:var(--text)">
-              <option value="all">🌐 جميع أسماء الأرشيف (كل المستفيدين — {totalBeneficiaries.toLocaleString('ar-EG')} اسم)</option>
+              <option value="all">جميع أسماء الأرشيف (كل المستفيدين — {totalBeneficiaries.toLocaleString('ar-EG')} اسم)</option>
               {groups.map((g: any) => (
                 <option
                   value={g.id}
                   data-total={g.total_count}
                 >
-                  📁 دفعة: {g.title} ({(g.total_count || 0).toLocaleString('ar-EG')} اسم)
+                  دفعة: {g.title} ({(g.total_count || 0).toLocaleString('ar-EG')} اسم)
                 </option>
               ))}
             </select>
@@ -1251,11 +1251,11 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
           <div style="display:flex; flex-direction:column; gap:6px">
             <span style="font-size:.82rem; font-weight:700; color:var(--muted)">اختصارات الاستخراج السريع:</span>
             <div style="display:flex; gap:8px; flex-wrap:wrap">
-              <button type="button" class="sample-preset-btn" data-count="1">🎲 1 اسم</button>
-              <button type="button" class="sample-preset-btn" data-count="10">📊 10 أسماء</button>
-              <button type="button" class="sample-preset-btn" data-count="50">⚡ 50 اسم</button>
-              <button type="button" class="sample-preset-btn" data-count="100">💯 100 اسم</button>
-              <button type="button" class="sample-preset-btn" data-count="all">🌐 الكل</button>
+              <button type="button" class="sample-preset-btn" data-count="1">{icon('fa-dice')} 1 اسم</button>
+              <button type="button" class="sample-preset-btn" data-count="10">{icon('fa-chart-column')} 10 أسماء</button>
+              <button type="button" class="sample-preset-btn" data-count="50">{icon('fa-bolt')} 50 اسم</button>
+              <button type="button" class="sample-preset-btn" data-count="100">{icon('fa-list-ol')} 100 اسم</button>
+              <button type="button" class="sample-preset-btn" data-count="all">{icon('fa-globe')} الكل</button>
             </div>
           </div>
         </div>
@@ -1285,7 +1285,7 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
       >
         <div>
           <h3 style="color:#8b5cf6; display:flex; align-items:center; gap:8px; font-size:1.3rem">
-            {icon('fa-circle-plus')} إضافة أسماء جديدة لأرشيف المستفيدين (Data Pool)
+            {icon('fa-circle-plus')} إضافة أسماء جديدة لأرشيف المستفيدين العام
           </h3>
           <p style="font-size:.88rem; color:var(--muted); margin-top:4px">
             أدخل أو الصق الأسماء مباشرة — لا يُشترط تحديد اسم مجموعة الآن، يمكنك تسمية المجموعة وقت التصدير
@@ -1351,9 +1351,18 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
         <h3 style="display:flex; align-items:center; gap:8px">
           {icon('fa-list-check')} سجل دفعات الأسماء بالأرشيف
         </h3>
-        <span style="font-size:.85rem; color:var(--muted); background:rgba(139,92,246,.1); padding:4px 12px; border-radius:8px; font-weight:600">
-          {totalBeneficiaries.toLocaleString('ar-EG')} مستفيد في {totalGroups} دفعة
-        </span>
+        <div style="display:flex; align-items:center; gap:10px">
+          <span style="font-size:.85rem; color:var(--muted); background:rgba(139,92,246,.1); padding:4px 12px; border-radius:8px; font-weight:600">
+            {totalBeneficiaries.toLocaleString('ar-EG')} مستفيد في {totalGroups} دفعة
+          </span>
+          {totalBeneficiaries > 0 && (
+            <form action="/api/cases/clear-all" method="post" class="dash-action-form" data-confirm="هل أنت متأكد تماماً من تصفير ومسح جميع بيانات الأسماء من الأرشيف؟ هذا الإجراء لا يمكن التراجع عنه.">
+              <button type="submit" style="background:rgba(216,74,74,.1); color:var(--danger); border:1px solid rgba(216,74,74,.3); padding:4px 12px; border-radius:8px; font-size:.82rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px">
+                {icon('fa-rotate-left')} تصفير الأرشيف بالكامل
+              </button>
+            </form>
+          )}
+        </div>
       </header>
       {groups.length === 0 ? (
         <div style="text-align:center; padding:4rem 2rem; color:var(--muted)">
