@@ -36,8 +36,8 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
           <button class="dash-menu-button" id="dash-menu-toggle" type="button" aria-label="فتح القائمة" aria-expanded="false">{icon('fa-bars-staggered')}</button>
           <div><p>{dateStr}</p><h1>مرحبًا، {user.name}</h1></div>
           <div class="dash-top-actions">
-            <div style="display:flex; align-items:center; background:var(--ivory); border:1px solid var(--border); padding:6px 14px; border-radius:12px; gap:8px; margin-inline-end:10px">
-              {icon('fa-magnifying-glass')}
+            <div style="display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--border); padding:6px 14px; border-radius:12px; gap:8px; margin-inline-end:10px">
+              <span style="color:var(--muted)">{icon('fa-magnifying-glass')}</span>
               <input type="text" id="dash-search-input" placeholder="بحث في الجدول..." style="border:none; background:transparent; outline:none; font-size:.88rem; width:140px; color:var(--text)" />
             </div>
             <button id="theme-toggle" type="button" aria-label="تغيير المظهر">{icon('fa-moon')}</button>
@@ -561,7 +561,7 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
                 type="button"
                 class="icon-preset-btn"
                 data-icon={ic}
-                style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--ivory); cursor:pointer; font-size:1.1rem"
+                style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-2); color:var(--text); cursor:pointer; font-size:1.1rem"
               >
                 {icon(ic)}
               </button>
