@@ -1155,7 +1155,7 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
       <article style="background: var(--paper); border: 2px solid #8b5cf6; border-radius: 20px; padding: 1.4rem">
         <div style="display:flex; justify-content:space-between; align-items:center">
           <span style="font-size:1.6rem; color:#8b5cf6">{icon('fa-people-group')}</span>
-          <small style="color:var(--muted); font-weight:700">إجمالي المستفيدين المسجلين</small>
+          <small style="color:var(--muted); font-weight:700">إجمالي الأسماء بالأرشيف (Data Pool)</small>
         </div>
         <b style="font-size:2rem; display:block; margin-top:.8rem; color:#8b5cf6">
           {totalBeneficiaries.toLocaleString('ar-EG')} مستفيد
@@ -1163,143 +1163,214 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
       </article>
       <article style="background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 1.4rem">
         <div style="display:flex; justify-content:space-between; align-items:center">
-          <span style="font-size:1.6rem; color:#06b6d4">{icon('fa-clipboard-list')}</span>
-          <small style="color:var(--muted); font-weight:700">مجموعات المساعدات</small>
+          <span style="font-size:1.6rem; color:#06b6d4">{icon('fa-boxes-stacked')}</span>
+          <small style="color:var(--muted); font-weight:700">عدد دفعات الإدخال</small>
         </div>
         <b style="font-size:2rem; display:block; margin-top:.8rem; color:#06b6d4">
-          {totalGroups} مجموعة
+          {totalGroups} دفعة
         </b>
       </article>
       <article style="background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 1.4rem">
         <div style="display:flex; justify-content:space-between; align-items:center">
           <span style="font-size:1.6rem; color:var(--gold-600)">{icon('fa-file-excel')}</span>
-          <small style="color:var(--muted); font-weight:700">نظام الاستخراج العشوائي</small>
+          <small style="color:var(--muted); font-weight:700">نظام استخراج ملفات Excel</small>
         </div>
         <b style="font-size:1.1rem; display:block; margin-top:.8rem; color:var(--gold-600)">
-          جاهز للتصدير الآن
+          مع اللوجو والأسماء المخصصة ✨
         </b>
       </article>
     </div>
 
-    {/* واجهة الاستخراج العشوائي */}
-    {groups.length > 0 && (
-      <section style="background: linear-gradient(135deg, rgba(139,92,246,.08) 0%, rgba(6,182,212,.06) 100%); border: 2px solid #8b5cf6; border-radius: 20px; padding: 2rem; margin-bottom: 2rem">
-        <h3 style="font-size:1.2rem; font-weight:900; color:#8b5cf6; margin-bottom:1.2rem; display:flex; align-items:center; gap:10px">
-          {icon('fa-shuffle')} استخراج عينة عشوائية — تحميل ملف Excel
-        </h3>
-        <div id="random-sample-form" style="display:flex; flex-direction:column; gap:1.2rem">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem">
-            <label style="display:flex; flex-direction:column; gap:6px; font-weight:700; font-size:.9rem">
-              اختر مجموعة المستفيدين *
-              <select name="group_id" id="sample-group-select" required
-                style="padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--ivory); font-size:.95rem; color:var(--text)">
-                <option value="">— اختر مجموعة —</option>
-                {groups.map((g: any) => (
-                  <option
-                    value={g.id}
-                    data-total={g.total_count}
-                    data-preview={JSON.stringify((g.preview_names || []).slice(0, 10))}
-                  >
-                    {g.title} ({(g.total_count || 0).toLocaleString('ar-EG')} اسم) — {g.aid_type}
-                  </option>
-                ))}
-              </select>
-            </label>
+    {/* واجهة الاستخراج العشوائي والتصدير */}
+    <section style="background: linear-gradient(135deg, rgba(139,92,246,.08) 0%, rgba(6,182,212,.06) 100%); border: 2px solid #8b5cf6; border-radius: 20px; padding: 2rem; margin-bottom: 2rem">
+      <h3 style="font-size:1.25rem; font-weight:900; color:#8b5cf6; margin-bottom:.5rem; display:flex; align-items:center; gap:10px">
+        {icon('fa-shuffle')} استخراج عينة عشوائية أو كاملة — تحميل ملف Excel المنسق
+      </h3>
+      <p style="font-size:.88rem; color:var(--muted); margin-bottom:1.5rem">
+        يمكنك كتابة أي اسم مجموعة تريد ظهوره على ملف الـ Excel واستخراج العينة فوراً من الأرشيف المفتوح
+      </p>
 
-            <label style="display:flex; flex-direction:column; gap:6px; font-weight:700; font-size:.9rem">
-              عدد الأسماء المطلوبة عشوائيًا *
-              <div style="display:flex; align-items:center; gap:12px">
-                <input
-                  type="range"
-                  id="sample-count-range"
-                  name="count"
-                  min="1"
-                  max="500"
-                  defaultValue="50"
-                  style="flex:1; accent-color:#8b5cf6"
-                />
-                <input
-                  type="number"
-                  id="sample-count-input"
-                  min="1"
-                  max="9999"
-                  defaultValue="50"
-                  style="width:90px; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--ivory); text-align:center; font-size:1.1rem; font-weight:700; color:#8b5cf6"
-                />
-              </div>
-              <small id="sample-max-hint" style="color:var(--muted); font-size:.8rem">اختر العدد أو استخدم الأزرار السريعة بالأسفل</small>
-            </label>
-          </div>
+      <div id="random-sample-form" style="display:flex; flex-direction:column; gap:1.2rem">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem">
+          <label style="display:flex; flex-direction:column; gap:6px; font-weight:700; font-size:.9rem">
+            اسم المجموعة المراد ظهوره في ملف الـ Excel *
+            <input
+              type="text"
+              id="custom-group-title"
+              placeholder="مثال: كشف توزيع كراتين رمضان - دفعة ١"
+              defaultValue="مجموعة مستفيدين — عينة عشوائية"
+              style="padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--ivory); font-size:.95rem; color:var(--text); font-weight:600"
+            />
+            <small style="color:var(--muted); font-size:.78rem">هذا الاسم سيظهر في ترويسة ملف Excel واسم الملف المُحمل</small>
+          </label>
 
-          {/* أزرار الاستخراج السريع */}
+          <label style="display:flex; flex-direction:column; gap:6px; font-weight:700; font-size:.9rem">
+            مصدر الأسماء المراد السحب منها
+            <select name="group_id" id="sample-group-select"
+              style="padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--ivory); font-size:.95rem; color:var(--text)">
+              <option value="all">🌐 جميع أسماء الأرشيف (كل المستفيدين — {totalBeneficiaries.toLocaleString('ar-EG')} اسم)</option>
+              {groups.map((g: any) => (
+                <option
+                  value={g.id}
+                  data-total={g.total_count}
+                >
+                  📁 دفعة: {g.title} ({(g.total_count || 0).toLocaleString('ar-EG')} اسم)
+                </option>
+              ))}
+            </select>
+            <small style="color:var(--muted); font-size:.78rem">يمكنك السحب من الأرشيف بالكامل أو اختيار دفعة معينة</small>
+          </label>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; align-items:end">
+          <label style="display:flex; flex-direction:column; gap:6px; font-weight:700; font-size:.9rem">
+            عدد الأسماء المطلوبة عشوائيًا *
+            <div style="display:flex; align-items:center; gap:12px">
+              <input
+                type="range"
+                id="sample-count-range"
+                name="count"
+                min="1"
+                max={Math.max(totalBeneficiaries, 100)}
+                defaultValue="50"
+                style="flex:1; accent-color:#8b5cf6"
+              />
+              <input
+                type="number"
+                id="sample-count-input"
+                min="1"
+                max="9999"
+                defaultValue="50"
+                style="width:90px; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--ivory); text-align:center; font-size:1.1rem; font-weight:700; color:#8b5cf6"
+              />
+            </div>
+            <small id="sample-max-hint" style="color:var(--muted); font-size:.8rem">إجمالي الأرشيف: {totalBeneficiaries.toLocaleString('ar-EG')} اسم</small>
+          </label>
+
+          {/* اختصارات الأعداد */}
           <div style="display:flex; flex-direction:column; gap:6px">
             <span style="font-size:.82rem; font-weight:700; color:var(--muted)">اختصارات الاستخراج السريع:</span>
             <div style="display:flex; gap:8px; flex-wrap:wrap">
-              <button type="button" class="sample-preset-btn" data-count="1">
-                🎲 1 شخص عشوائي
-              </button>
-              <button type="button" class="sample-preset-btn" data-count="10">
-                📊 10 أسماء
-              </button>
-              <button type="button" class="sample-preset-btn" data-count="50">
-                ⚡ 50 اسم
-              </button>
-              <button type="button" class="sample-preset-btn" data-count="all">
-                🌐 المجموعة بالكامل (الكل)
-              </button>
+              <button type="button" class="sample-preset-btn" data-count="1">🎲 1 اسم</button>
+              <button type="button" class="sample-preset-btn" data-count="10">📊 10 أسماء</button>
+              <button type="button" class="sample-preset-btn" data-count="50">⚡ 50 اسم</button>
+              <button type="button" class="sample-preset-btn" data-count="100">💯 100 اسم</button>
+              <button type="button" class="sample-preset-btn" data-count="all">🌐 الكل</button>
             </div>
           </div>
-
-          {/* معاينة الأسماء */}
-          <div id="preview-box" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1rem">
-            <p style="font-size:.85rem; font-weight:700; color:var(--muted); margin-bottom:.6rem">
-              {icon('fa-eye')} معاينة أول ١٠ أسماء من المجموعة:
-            </p>
-            <div id="preview-names" style="display:flex; flex-wrap:wrap; gap:6px"></div>
-          </div>
-
-          <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin-top:.5rem">
-            <button
-              type="button"
-              id="extract-sample-btn"
-              class="btn-extract-main"
-            >
-              {icon('fa-file-excel')} استخراج العينة وتحميل Excel
-            </button>
-            <small style="color:var(--muted); font-size:.82rem">
-              {icon('fa-circle-info')} الأسماء تُسحب عشوائيًا بخوارزمية Fisher-Yates المضمونة
-            </small>
-          </div>
         </div>
-      </section>
-    )}
 
-    {/* جدول المجموعات */}
+        <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin-top:.8rem; padding-top:1rem; border-top:1px dashed rgba(139,92,246,.2)">
+          <button
+            type="button"
+            id="extract-sample-btn"
+            class="btn-extract-main"
+            style="font-size:1rem; padding:12px 24px; border-radius:12px;"
+          >
+            {icon('fa-file-excel')} استخراج العينة وتحميل ملف Excel المنسق
+          </button>
+          <small style="color:var(--muted); font-size:.84rem; display:flex; align-items:center; gap:6px">
+            {icon('fa-shield-halved')} خوارزمية Fisher-Yates المعتمدة لضمان عشوائية ونزاهة الاختيار ١٠٠٪
+          </small>
+        </div>
+      </div>
+    </section>
+
+    {/* نموذج إضافة أسماء للأرشيف */}
+    <section class="section-pad" style="padding-top:0; margin-bottom:2.5rem">
+      <form
+        action="/api/cases/groups/add"
+        method="post"
+        style="background:var(--surface); border:1px solid var(--border); padding:2rem; border-radius:20px; max-width:850px; display:flex; flex-direction:column; gap:1.4rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03)"
+      >
+        <div>
+          <h3 style="color:#8b5cf6; display:flex; align-items:center; gap:8px; font-size:1.3rem">
+            {icon('fa-circle-plus')} إضافة أسماء جديدة لأرشيف المستفيدين (Data Pool)
+          </h3>
+          <p style="font-size:.88rem; color:var(--muted); margin-top:4px">
+            أدخل أو الصق الأسماء مباشرة — لا يُشترط تحديد اسم مجموعة الآن، يمكنك تسمية المجموعة وقت التصدير
+          </p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem">
+          <label style="font-weight:700">
+            تسمية مرجعية للدفعة <small style="font-weight:400; color:var(--muted)">(اختياري للتمييز)</small>
+            <input
+              name="title"
+              placeholder="مثال: كشف أسماء كفر الشيخ — دفعة أغسطس"
+              style="margin-top:6px"
+            />
+          </label>
+          <label style="font-weight:700">
+            تصنيف المساعدة <small style="font-weight:400; color:var(--muted)">(اختياري)</small>
+            <select name="aid_type" style="padding:12px; border-radius:12px; border:1px solid var(--line); background:var(--ivory); margin-top:6px; width:100%">
+              <option value="عام">عام / غير محدد</option>
+              <option value="مساعدة غذائية">مساعدة غذائية (أغذية وكراتين)</option>
+              <option value="مساعدة طبية">مساعدة طبية (أدوية وعلاج)</option>
+              <option value="مساعدة تعليمية">مساعدة تعليمية (مصاريف ومستلزمات)</option>
+              <option value="مساعدة نقدية">مساعدة نقدية مباشرة</option>
+              <option value="كسوة وملابس">كسوة وملابس</option>
+              <option value="مساعدة مواسم وأعياد">مساعدة مواسم وأعياد</option>
+            </select>
+          </label>
+        </div>
+
+        <label style="font-weight:700">
+          قائمة الأسماء المطلوبة *
+          <small style="font-weight:400; color:var(--muted); margin-right:8px">— اكتب أو الصق الأسماء، كل اسم في سطر مستقل</small>
+          <textarea
+            name="names"
+            required
+            rows={10}
+            placeholder={"أحمد محمد علي\nفاطمة سيد حسن\nمحمود عبدالله إبراهيم\nنور الهدى محمود\n..."}
+            id="names-textarea"
+            style="margin-top:8px; font-family:inherit; font-size:1rem; line-height:1.8; direction:rtl; padding:1rem"
+          ></textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px">
+            <small style="color:var(--muted)">
+              {icon('fa-circle-info')} الأسماء المكررة والفارغة ستُنظف تلقائيًا
+            </small>
+            <small id="name-counter" style="font-weight:700; color:#8b5cf6; font-size:.95rem">٠ اسم جاهز للإضافة</small>
+          </div>
+        </label>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem">
+          <div style="background:rgba(139,92,246,.08); padding:8px 14px; border-radius:10px; font-size:.85rem; color:#8b5cf6">
+            {icon('fa-user-check')} الأدمن المسجل: <b>{user.name}</b>
+          </div>
+          <button class="primary-btn" type="submit" style="background:linear-gradient(135deg,#8b5cf6,#06b6d4); font-size:1rem; padding:12px 28px">
+            {icon('fa-floppy-disk')} حفظ الأسماء في الأرشيف
+          </button>
+        </div>
+      </form>
+    </section>
+
+    {/* جدول دفعات الأرشيف */}
     <section class="dash-table">
       <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.8rem">
         <h3 style="display:flex; align-items:center; gap:8px">
-          {icon('fa-list-check')} مجموعات المستفيدين المسجلة
+          {icon('fa-list-check')} سجل دفعات الأسماء بالأرشيف
         </h3>
         <span style="font-size:.85rem; color:var(--muted); background:rgba(139,92,246,.1); padding:4px 12px; border-radius:8px; font-weight:600">
-          {totalBeneficiaries.toLocaleString('ar-EG')} مستفيد في {totalGroups} مجموعة
+          {totalBeneficiaries.toLocaleString('ar-EG')} مستفيد في {totalGroups} دفعة
         </span>
       </header>
       {groups.length === 0 ? (
         <div style="text-align:center; padding:4rem 2rem; color:var(--muted)">
           <p style="font-size:3rem; margin-bottom:1rem">{icon('fa-inbox')}</p>
-          <p style="font-size:1.1rem; font-weight:700">لا توجد مجموعات مسجلة بعد</p>
-          <p style="font-size:.9rem">أضف أول مجموعة مستفيدين من النموذج أدناه</p>
+          <p style="font-size:1.1rem; font-weight:700">لا توجد دفعات أسماء في الأرشيف حتى الآن</p>
+          <p style="font-size:.9rem">أضف أول دفعة أسماء من النموذج أعلاه</p>
         </div>
       ) : (
         <table>
           <thead>
             <tr>
-              <th>اسم المجموعة</th>
-              <th>نوع المساعدة</th>
-              <th>عدد المستفيدين</th>
-              <th>معاينة الأسماء</th>
-              <th>تم الإضافة بواسطة</th>
-              <th>التاريخ</th>
+              <th>تسمية الدفعة</th>
+              <th>التصنيف</th>
+              <th>عدد الأسماء</th>
+              <th>معاينة عينة أسماء</th>
+              <th>أضيفت بواسطة</th>
+              <th>تاريخ الإضافة</th>
               <th>الإجراءات</th>
             </tr>
           </thead>
@@ -1307,10 +1378,10 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
             {groups.map((g: any) => {
               const date = g.created_at ? new Date(g.created_at).toLocaleDateString('ar-EG') : '-'
               return <tr>
-                <td><b>{g.title}</b></td>
+                <td><b>{g.title || 'دفعة عامة'}</b></td>
                 <td>
                   <span style="background:rgba(139,92,246,.12); color:#8b5cf6; padding:3px 10px; border-radius:8px; font-weight:600; font-size:.85rem">
-                    {g.aid_type}
+                    {g.aid_type || 'عام'}
                   </span>
                 </td>
                 <td>
@@ -1318,15 +1389,15 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
                   <small style="color:var(--muted)"> اسم</small>
                 </td>
                 <td>
-                  <div style="display:flex; flex-wrap:wrap; gap:4px; max-width:200px">
-                    {(g.preview_names || []).slice(0, 5).map((n: string) => (
+                  <div style="display:flex; flex-wrap:wrap; gap:4px; max-width:220px">
+                    {(g.preview_names || []).slice(0, 4).map((n: string) => (
                       <span style="background:var(--surface); border:1px solid var(--border); padding:2px 8px; border-radius:6px; font-size:.78rem">
                         {n}
                       </span>
                     ))}
-                    {(g.total_count || 0) > 5 && (
+                    {(g.total_count || 0) > 4 && (
                       <span style="color:var(--muted); font-size:.78rem; padding:2px 4px">
-                        +{((g.total_count || 0) - 5).toLocaleString('ar-EG')} آخرين
+                        +{((g.total_count || 0) - 4).toLocaleString('ar-EG')} آخرين
                       </span>
                     )}
                   </div>
@@ -1336,16 +1407,16 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
                 <td>
                   <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center">
                     <a
-                      href={`/api/export/cases_full/${g.id}`}
+                      href={`/api/export/cases_full/${g.id}?custom_title=${encodeURIComponent(g.title || 'قائمة_المستفيدين')}`}
                       download
                       target="_blank"
                       rel="noopener"
                       class="btn-export-excel"
                       style="background:#059669 !important; color:#ffffff !important; border:1px solid #047857; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:.84rem; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(5,150,105,0.25)"
                     >
-                      {icon('fa-file-excel')} تصدير الكل
+                      {icon('fa-file-excel')} تصدير Excel
                     </a>
-                    <form action={`/api/cases/groups/delete/${g.id}`} method="post" class="dash-action-form" data-confirm={`هل أنت متأكد من حذف مجموعة "${g.title}"؟ سيتم حذف جميع الأسماء المرتبطة بها.`}>
+                    <form action={`/api/cases/groups/delete/${g.id}`} method="post" class="dash-action-form" data-confirm={`هل أنت متأكد من حذف دفعة "${g.title}"؟`}>
                       <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')} حذف</button>
                     </form>
                   </div>
@@ -1357,76 +1428,7 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
       )}
     </section>
 
-    {/* نموذج إضافة مجموعة جديدة */}
-    <section class="section-pad" style="padding-top:2rem">
-      <form
-        action="/api/cases/groups/add"
-        method="post"
-        style="background:var(--surface); border:1px solid var(--border); padding:2rem; border-radius:20px; max-width:750px; display:flex; flex-direction:column; gap:1.4rem"
-      >
-        <div>
-          <h3 style="color:#8b5cf6; display:flex; align-items:center; gap:8px">
-            {icon('fa-circle-plus')} إضافة مجموعة مستفيدين جديدة
-          </h3>
-          <p style="font-size:.85rem; color:var(--muted); margin-top:4px">
-            سجل قائمة بأسماء المستفيدين من مساعدة معينة — كل اسم في سطر منفصل
-          </p>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem">
-          <label style="font-weight:700">
-            اسم المجموعة / المناسبة *
-            <input
-              name="title"
-              required
-              placeholder="مثال: توزيع بطاطس — يوليو ٢٠٢٦"
-              style="margin-top:6px"
-            />
-          </label>
-          <label style="font-weight:700">
-            نوع المساعدة المقدمة
-            <select name="aid_type" style="padding:12px; border-radius:12px; border:1px solid var(--line); background:var(--ivory); margin-top:6px; width:100%">
-              <option value="مساعدة غذائية">مساعدة غذائية (أغذية وكراتين)</option>
-              <option value="مساعدة طبية">مساعدة طبية (أدوية وعلاج)</option>
-              <option value="مساعدة تعليمية">مساعدة تعليمية (مصاريف ومستلزمات)</option>
-              <option value="مساعدة نقدية">مساعدة نقدية مباشرة</option>
-              <option value="كسوة وملابس">كسوة وملابس</option>
-              <option value="مساعدة مواسم وأعياد">مساعدة مواسم وأعياد</option>
-              <option value="أخرى">أخرى</option>
-            </select>
-          </label>
-        </div>
-
-        <label style="font-weight:700">
-          قائمة الأسماء *
-          <small style="font-weight:400; color:var(--muted); margin-right:8px">— اكتب أو الصق الأسماء، كل اسم في سطر مستقل</small>
-          <textarea
-            name="names"
-            required
-            rows={12}
-            placeholder={"أحمد محمد علي\nفاطمة سيد حسن\nمحمود عبدالله إبراهيم\nنور الهدى محمود\n..."}
-            id="names-textarea"
-            style="margin-top:8px; font-family:inherit; font-size:.95rem; line-height:1.8; direction:rtl"
-          ></textarea>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px">
-            <small style="color:var(--muted)">
-              {icon('fa-circle-info')} الأسماء المكررة ستُحذف تلقائيًا
-            </small>
-            <small id="name-counter" style="font-weight:700; color:#8b5cf6">٠ اسم</small>
-          </div>
-        </label>
-
-        <div style="background:rgba(139,92,246,.08); padding:10px 14px; border-radius:10px; font-size:.85rem; color:#8b5cf6">
-          {icon('fa-user-check')} سيتم تسجيل هذه المجموعة باسم الأدمن الحالي: <b>{user.name}</b>
-        </div>
-
-        <button class="primary-btn" type="submit" style="background:linear-gradient(135deg,#8b5cf6,#06b6d4); font-size:1rem">
-          {icon('fa-floppy-disk')} حفظ المجموعة
-        </button>
-      </form>
-    </section>
-
-    {/* JavaScript للواجهة التفاعلية */}
+    {/* JavaScript للواجهة التفاعلية والتصدير المخصص */}
     <script dangerouslySetInnerHTML={{ __html: `
       (function() {
         // عداد الأسماء في الـ textarea
@@ -1436,23 +1438,20 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
           function updateCount() {
             var lines = ta.value.split('\\n').map(function(l){return l.trim();}).filter(function(l){return l.length > 0;});
             var unique = new Set(lines).size;
-            counter.textContent = unique.toLocaleString('ar-EG') + ' اسم';
+            counter.textContent = unique.toLocaleString('ar-EG') + ' اسم جاهز للإضافة';
           }
           ta.addEventListener('input', updateCount);
           updateCount();
         }
 
-        // ربط الـ range slider بالـ number input
+        // ربط الـ range slider بالـ number input والحد الأقصى
         var rangeInput = document.getElementById('sample-count-range');
         var numInput = document.getElementById('sample-count-input');
         var hintEl = document.getElementById('sample-max-hint');
         var groupSelect = document.getElementById('sample-group-select');
-        var previewBox = document.getElementById('preview-box');
-        var previewNames = document.getElementById('preview-names');
+        var titleInput = document.getElementById('custom-group-title');
 
-        // بيانات المجموعات للمعاينة
-        var groupData = {};
-        ${groups.map((g: any) => `groupData["${g.id}"] = { total: ${g.total_count || 0}, preview: ${JSON.stringify((g.preview_names || []).slice(0, 10))} };`).join('\n        ')}
+        var totalArchivedNames = ${totalBeneficiaries};
 
         if (rangeInput && numInput) {
           rangeInput.addEventListener('input', function() {
@@ -1460,52 +1459,44 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
           });
           numInput.addEventListener('input', function() {
             var v = parseInt(this.value) || 1;
-            var max = parseInt(rangeInput.max) || 500;
+            var max = parseInt(rangeInput.max) || totalArchivedNames;
             rangeInput.value = Math.min(v, max);
           });
         }
 
-        if (groupSelect) {
-          groupSelect.addEventListener('change', function() {
-            var gid = this.value;
-            if (!gid || !groupData[gid]) {
-              if (previewBox) previewBox.style.display = 'none';
-              if (hintEl) hintEl.textContent = 'سيتم استخراج عينة عشوائية بخوارزمية Fisher-Yates';
-              if (rangeInput) rangeInput.max = 500;
-              return;
-            }
-            var g = groupData[gid];
-            var total = g.total;
-            if (rangeInput) {
-              rangeInput.max = total;
-              if (parseInt(rangeInput.value) > total) {
-                rangeInput.value = total;
-                if (numInput) numInput.value = total;
-              }
-            }
-            if (hintEl) hintEl.textContent = 'المجموعة تحتوي على ' + total.toLocaleString('ar-EG') + ' اسم — أدخل العدد المطلوب';
-            if (previewBox && previewNames && g.preview && g.preview.length > 0) {
-              previewBox.style.display = 'block';
-              previewNames.innerHTML = g.preview.map(function(n) {
-                return '<span style="background:var(--surface);border:1px solid var(--border);padding:3px 10px;border-radius:8px;font-size:.85rem;">' + n + '</span>';
-              }).join('');
+        // أزرار الاختصارات السريعة
+        var presetBtns = document.querySelectorAll('.sample-preset-btn');
+        presetBtns.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var c = this.getAttribute('data-count');
+            if (c === 'all') {
+              var maxVal = parseInt(rangeInput.max) || totalArchivedNames;
+              if (rangeInput) rangeInput.value = maxVal;
+              if (numInput) numInput.value = maxVal;
             } else {
-              if (previewBox) previewBox.style.display = 'none';
+              var val = parseInt(c) || 50;
+              if (rangeInput) rangeInput.value = Math.min(val, parseInt(rangeInput.max) || 9999);
+              if (numInput) numInput.value = val;
             }
           });
-        }
+        });
 
-        // زر الاستخراج العشوائي — ينشئ رابط تحميل مباشر لتفادي أي اعتراض
+        // زر التصدير واستخراج العينة مع اسم المجموعة المخصص
         var extractBtn = document.getElementById('extract-sample-btn');
         if (extractBtn) {
           extractBtn.addEventListener('click', function() {
-            var gid = groupSelect ? groupSelect.value : '';
+            var gid = groupSelect ? groupSelect.value : 'all';
+            var customTitle = titleInput ? titleInput.value.trim() : '';
             var count = numInput ? (parseInt(numInput.value) || 50) : 50;
-            if (!gid) {
-              alert('يرجى اختيار مجموعة أولاً');
-              return;
+
+            if (!customTitle) {
+              customTitle = 'مجموعة مستفيدين — عينة عشوائية';
             }
-            var url = '/api/export/cases_sample?group_id=' + encodeURIComponent(gid) + '&count=' + encodeURIComponent(count);
+
+            var url = '/api/export/cases_sample?group_id=' + encodeURIComponent(gid) +
+                      '&count=' + encodeURIComponent(count) +
+                      '&custom_title=' + encodeURIComponent(customTitle);
+
             var a = document.createElement('a');
             a.href = url;
             a.download = '';

@@ -6,7 +6,7 @@ export const cases = new Hono()
 
 cases.use('*', adminMiddleware)
 
-// إضافة مجموعة مستفيدين جديدة
+// إضافة دفعة أسماء مستفيدين جديدة
 cases.post('/groups/add', async (c) => {
   try {
     const body = await c.req.parseBody()
@@ -15,7 +15,7 @@ cases.post('/groups/add', async (c) => {
     const namesRaw = String(body.names || '').trim()
     const user = (c as any).get('user')
 
-    if (!title || !namesRaw) {
+    if (!namesRaw) {
       return c.redirect('/dashboard?view=cases&error=missing_fields')
     }
 
@@ -34,8 +34,8 @@ cases.post('/groups/add', async (c) => {
 
     const db = getFirestore(c)
     await db.collection('beneficiary_groups').add({
-      title,
-      aid_type: aid_type || 'غير محدد',
+      title: title || 'دفعة أسماء عامة',
+      aid_type: aid_type || 'عام',
       names: uniqueNames,
       total_count: uniqueNames.length,
       created_by: user?.name || 'مشرف',
