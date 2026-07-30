@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
+import { normalizeMediaUrl } from '../lib/storage'
 
 export const stories = new Hono()
 
@@ -48,7 +49,7 @@ stories.post('/add', adminMiddleware, async (c) => {
       role: body.role || 'مستفيد',
       rating: body.rating ? Number(body.rating) : 5,
       content,
-      image_url: body.image_url || '',
+      image_url: normalizeMediaUrl(body.image_url),
       is_published: true,
       created_at: new Date().toISOString()
     })
@@ -95,7 +96,7 @@ stories.post('/edit/:id', adminMiddleware, async (c) => {
       role: body.role || 'مستفيد',
       rating: body.rating ? Number(body.rating) : 5,
       content,
-      image_url: body.image_url || ''
+      image_url: normalizeMediaUrl(body.image_url)
     })
 
     if (contentType.includes('application/json')) {

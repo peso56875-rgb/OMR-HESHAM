@@ -137,17 +137,41 @@
     const actionUrl = `/api/${type}/edit/${data.id}`
     const modalTitle = titlesMap[type] || 'تعديل البيانات'
 
+    // Values come from data-* attributes. An unescaped quote in a title used to
+    // break the rest of the form markup — including the image field.
+    const escAttr = value => String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const escHtml = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+    /** Shared markup for every image field. The hidden input lives INSIDE the
+        widget so forms with more than one image cannot cross-wire values. */
+    const uploadFieldHtml = (labelText, imageValue) => {
+      const value = escAttr(imageValue || '')
+      const hasImage = Boolean(imageValue)
+      return `
+        <div class="upload-widget">
+          <label>${labelText}</label>
+          <input type="hidden" name="image_url" class="cloudinary-url" value="${value}" />
+          <div class="upload-drop-zone">
+            <input type="file" accept="image/*,video/*" class="upload-file-input" />
+            <div class="upload-placeholder" style="${hasImage ? 'display:none' : ''}"><i class="fa-solid fa-cloud-arrow-up"></i><span>اسحب الصورة هنا أو اضغط للاختيار</span><small>JPG, PNG, WEBP — حد أقصى 10 ميجا</small></div>
+            <img class="upload-preview" src="${value}" style="${hasImage ? 'display:block' : 'display:none'}" alt="معاينة" />
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem"><span style="font-size:.8rem;color:var(--muted)">أو</span><input class="upload-url-fallback" value="${value}" placeholder="أدخل رابط الصورة https://..." style="flex:1" /></div>
+        </div>
+      `
+    }
+
     let formFieldsHtml = ''
 
     if (type === 'campaigns') {
       const presetIcons = ['fa-heart', 'fa-capsules', 'fa-basket-shopping', 'fa-school', 'fa-stethoscope', 'fa-book-open', 'fa-gift', 'fa-hand-holding-heart', 'fa-house-medical', 'fa-seedling']
-      const iconValue = data.icon || 'fa-heart'
+      const iconValue = escAttr(data.icon || 'fa-heart')
       formFieldsHtml = `
-        <label>عنوان الحملة<input type="text" name="title" value="${data.title || ''}" required /></label>
-        <label>القسم<input type="text" name="category" value="${data.category || ''}" placeholder="صحة، غذاء، تعليم" required /></label>
+        <label>عنوان الحملة<input type="text" name="title" value="${escAttr(data.title)}" required /></label>
+        <label>القسم<input type="text" name="category" value="${escAttr(data.category)}" placeholder="صحة، غذاء، تعليم" required /></label>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
-          <label>المبلغ المستهدف (ج.م)<input type="number" name="goal" value="${data.goal || ''}" required /></label>
-          <label>المبلغ المجمع (ج.م)<input type="number" name="raised" value="${data.raised || 0}" /></label>
+          <label>المبلغ المستهدف (ج.م)<input type="number" name="goal" value="${escAttr(data.goal)}" required /></label>
+          <label>المبلغ المجمع (ج.م)<input type="number" name="raised" value="${escAttr(data.raised || 0)}" /></label>
         </div>
         <label>
           أيقونة الحملة
@@ -161,74 +185,48 @@
             ${presetIcons.map(ic => `<button type="button" class="modal-icon-preset-btn" data-icon="${ic}" style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--ivory); cursor:pointer; font-size:1.1rem"><i class="fa-solid ${ic}"></i></button>`).join('')}
           </div>
         </label>
-        <input type="hidden" name="image_url" class="cloudinary-url" value="${data.image || ''}" />
-        <div class="upload-widget">
-          <label>صورة الحملة</label>
-          <div class="upload-drop-zone">
-            <input type="file" accept="image/*,video/*" class="upload-file-input" />
-            <div class="upload-placeholder" style="${data.image ? 'display:none' : ''}"><i class="fa-solid fa-cloud-arrow-up"></i><span>اسحب الصورة هنا أو اضغط للاختيار</span></div>
-            <img class="upload-preview" src="${data.image || ''}" style="${data.image ? 'display:block' : 'display:none'}" alt="معاينة" />
-          </div>
-          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem"><span style="font-size:.8rem;color:var(--muted)">أو</span><input class="upload-url-fallback" value="${data.image || ''}" placeholder="أدخل رابط الصورة https://..." style="flex:1" /></div>
-        </div>
+        ${uploadFieldHtml('صورة الحملة', data.image)}
         <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer"><input type="checkbox" name="is_urgent" value="true" ${data.urgent === 'true' ? 'checked' : ''} /> حملة عاجلة؟</label>
-        <label>الوصف<textarea name="description" rows="3">${data.description || ''}</textarea></label>
+        <label>الوصف<textarea name="description" rows="3">${escHtml(data.description)}</textarea></label>
       `
     } else if (type === 'news') {
       formFieldsHtml = `
-        <label>عنوان الخبر<input type="text" name="title" value="${data.title || ''}" required /></label>
-        <label>القسم<input type="text" name="category" value="${data.category || ''}" placeholder="صحة، مجتمع، تعليم" required /></label>
-        <input type="hidden" name="image_url" class="cloudinary-url" value="${data.image || ''}" />
-        <div class="upload-widget">
-          <label>صورة الخبر</label>
-          <div class="upload-drop-zone">
-            <input type="file" accept="image/*,video/*" class="upload-file-input" />
-            <div class="upload-placeholder" style="${data.image ? 'display:none' : ''}"><i class="fa-solid fa-cloud-arrow-up"></i><span>اسحب الصورة هنا أو اضغط للاختيار</span></div>
-            <img class="upload-preview" src="${data.image || ''}" style="${data.image ? 'display:block' : 'display:none'}" alt="معاينة" />
-          </div>
-          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem"><span style="font-size:.8rem;color:var(--muted)">أو</span><input class="upload-url-fallback" value="${data.image || ''}" placeholder="أدخل رابط الصورة https://..." style="flex:1" /></div>
-        </div>
-        <label>موجز الخبر (يظهر في القائمة)<input type="text" name="excerpt" value="${data.excerpt || ''}" required /></label>
-        <label>محتوى الخبر بالكامل<textarea name="content" rows="6" required>${data.content || ''}</textarea></label>
+        <label>عنوان الخبر<input type="text" name="title" value="${escAttr(data.title)}" required /></label>
+        <label>القسم<input type="text" name="category" value="${escAttr(data.category)}" placeholder="صحة، مجتمع، تعليم" required /></label>
+        ${uploadFieldHtml('صورة الخبر', data.image)}
+        <label>موجز الخبر (يظهر في القائمة)<input type="text" name="excerpt" value="${escAttr(data.excerpt)}" required /></label>
+        <label>محتوى الخبر بالكامل<textarea name="content" rows="6" required>${escHtml(data.content)}</textarea></label>
       `
     } else if (type === 'events') {
       formFieldsHtml = `
-        <label>اسم الفعالية<input type="text" name="title" value="${data.title || ''}" required /></label>
+        <label>اسم الفعالية<input type="text" name="title" value="${escAttr(data.title)}" required /></label>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
-          <label>نوع الفعالية<input type="text" name="type" value="${data.type || ''}" placeholder="صحة، تعليم، مجتمع" required /></label>
-          <label>المكان<input type="text" name="place" value="${data.place || ''}" required /></label>
+          <label>نوع الفعالية<input type="text" name="type" value="${escAttr(data.type)}" placeholder="صحة، تعليم، مجتمع" required /></label>
+          <label>المكان<input type="text" name="place" value="${escAttr(data.place)}" required /></label>
         </div>
-        <label>التاريخ والوقت<input type="datetime-local" name="event_date" value="${data.date || ''}" required /></label>
-        <input type="hidden" name="image_url" class="cloudinary-url" value="${data.image || ''}" />
-        <div class="upload-widget">
-          <label>صورة الفعالية</label>
-          <div class="upload-drop-zone">
-            <input type="file" accept="image/*,video/*" class="upload-file-input" />
-            <div class="upload-placeholder" style="${data.image ? 'display:none' : ''}"><i class="fa-solid fa-cloud-arrow-up"></i><span>اسحب الصورة هنا أو اضغط للاختيار</span></div>
-            <img class="upload-preview" src="${data.image || ''}" style="${data.image ? 'display:block' : 'display:none'}" alt="معاينة" />
-          </div>
-          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem"><span style="font-size:.8rem;color:var(--muted)">أو</span><input class="upload-url-fallback" value="${data.image || ''}" placeholder="أدخل رابط الصورة https://..." style="flex:1" /></div>
-        </div>
-        <label>الوصف<textarea name="description" rows="3">${data.description || ''}</textarea></label>
+        <label>التاريخ والوقت<input type="datetime-local" name="event_date" value="${escAttr(data.date)}" required /></label>
+        ${uploadFieldHtml('صورة الفعالية', data.image)}
+        <label>الوصف<textarea name="description" rows="3">${escHtml(data.description)}</textarea></label>
       `
     } else if (type === 'stories') {
       formFieldsHtml = `
-        <label>الاسم<input type="text" name="name" value="${data.name || ''}" required /></label>
+        <label>الاسم<input type="text" name="name" value="${escAttr(data.name)}" required /></label>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
-          <label>الدور / الصفة<input type="text" name="role" value="${data.role || ''}" placeholder="مستفيد، متطوع" required /></label>
-          <label>التقييم (1-5)<input type="number" name="rating" min="1" max="5" value="${data.rating || 5}" required /></label>
+          <label>الدور / الصفة<input type="text" name="role" value="${escAttr(data.role)}" placeholder="مستفيد، متطوع" required /></label>
+          <label>التقييم (1-5)<input type="number" name="rating" min="1" max="5" value="${escAttr(data.rating || 5)}" required /></label>
         </div>
-        <label>القصة كاملة<textarea name="content" rows="4" required>${data.content || ''}</textarea></label>
+        ${uploadFieldHtml('صورة صاحب القصة (اختياري)', data.image)}
+        <label>القصة كاملة<textarea name="content" rows="4" required>${escHtml(data.content)}</textarea></label>
       `
     } else if (type === 'jobs') {
       formFieldsHtml = `
-        <label>المسمى الوظيفي<input type="text" name="title" value="${data.title || ''}" required /></label>
+        <label>المسمى الوظيفي<input type="text" name="title" value="${escAttr(data.title)}" required /></label>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
-          <label>القسم<input type="text" name="department" value="${data.department || ''}" placeholder="إدارة، ميداني، طبي" required /></label>
-          <label>نوع الوظيفة<input type="text" name="job_type" value="${data.type || ''}" placeholder="دوام كامل، دوام جزئي" required /></label>
+          <label>القسم<input type="text" name="department" value="${escAttr(data.department)}" placeholder="إدارة، ميداني، طبي" required /></label>
+          <label>نوع الوظيفة<input type="text" name="job_type" value="${escAttr(data.type)}" placeholder="دوام كامل، دوام جزئي" required /></label>
         </div>
-        <label>الموقع<input type="text" name="location" value="${data.location || 'كفر العنانية'}" required /></label>
-        <label>وصف الوظيفة والمتطلبات<textarea name="description" rows="4" required>${data.description || ''}</textarea></label>
+        <label>الموقع<input type="text" name="location" value="${escAttr(data.location || 'كفر العنانية')}" required /></label>
+        <label>وصف الوظيفة والمتطلبات<textarea name="description" rows="4" required>${escHtml(data.description)}</textarea></label>
         <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer"><input type="checkbox" name="is_active" value="true" ${data.active === 'true' ? 'checked' : ''} /> وظيفة نشطة (تظهر في الموقع)؟</label>
       `
     }
@@ -252,6 +250,9 @@
     `
 
     backdrop.classList.add('open')
+
+    // The modal markup was just injected, so its upload widget needs wiring.
+    window.initUploadWidgets?.(backdrop)
 
     const closeModal = () => {
       backdrop.classList.remove('open')
@@ -292,9 +293,11 @@
       }
 
       try {
+        window.syncUploadWidgets?.(form)
         const response = await fetch(actionUrl, {
           method: 'POST',
-          body: new FormData(form)
+          body: new FormData(form),
+          credentials: 'same-origin'
         })
 
         if (!response.ok) throw new Error('تعذر حفظ التعديلات')
@@ -321,6 +324,9 @@
 
   /* ─── Dashboard SPA Seamless Navigation ─── */
   function rebindDashboardHandlers() {
+    // 0. Upload widgets (dashboard views are injected dynamically)
+    window.initUploadWidgets?.()
+
     // 1. Empty table placeholders
     $$('.dash-table tbody').forEach(body => {
       if (body.children.length) return
@@ -344,8 +350,9 @@
         const submit = $('button[type="submit"]', form), original = submit?.innerHTML
         if (submit) { submit.disabled = true; submit.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جارٍ التنفيذ' }
         try {
-          const fetchOptions = { method }
+          const fetchOptions = { method, credentials: 'same-origin' }
           if (method !== 'GET' && method !== 'HEAD') {
+            window.syncUploadWidgets?.(form)
             fetchOptions.body = new FormData(form)
           }
           const response = await fetch(form.action, fetchOptions)
@@ -1032,18 +1039,95 @@
     })
   }
 
-  /* ─── Cloudinary Upload Widget ─── */
-  $$('.upload-widget').forEach(widget => {
+  /* ─── Media Upload Widget ───────────────────────────────────────────────
+     Must be re-runnable: dashboard views and the edit modal inject their
+     markup after load, so widgets created later were never wired up before
+     (that is why "upload image" silently did nothing in the edit modal). */
+
+  const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+  const COMPRESSIBLE = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/bmp']
+
+  /** Finds the hidden input that belongs to THIS widget (forms may hold several). */
+  function resolveHiddenInput(widget) {
+    const targetSel = widget.dataset.target
+    if (targetSel) {
+      const byTarget = document.querySelector(targetSel)
+      if (byTarget) return byTarget
+    }
+    // Preferred: the hidden input lives inside the widget.
+    const inner = widget.querySelector('.cloudinary-url, input[name="image_url"][type="hidden"]')
+    if (inner) return inner
+
+    // Otherwise the nearest previous sibling hidden input.
+    let sibling = widget.previousElementSibling
+    while (sibling) {
+      if (sibling.matches?.('.cloudinary-url, input[name="image_url"][type="hidden"]')) return sibling
+      const nested = sibling.querySelector?.('.cloudinary-url, input[name="image_url"][type="hidden"]')
+      if (nested) return nested
+      sibling = sibling.previousElementSibling
+    }
+
+    // Last resort: pair widgets and hidden inputs by their order in the form.
+    const form = widget.closest('form')
+    if (!form) return null
+    const widgets = Array.from(form.querySelectorAll('.upload-widget'))
+    const hidden = Array.from(form.querySelectorAll('.cloudinary-url, input[name="image_url"][type="hidden"]'))
+    return hidden[widgets.indexOf(widget)] || hidden[0] || null
+  }
+
+  /** Mirrors normalizeMediaUrl() on the server so preview and stored value agree. */
+  function normalizeMediaUrlClient(raw) {
+    let value = String(raw ?? '').trim().replace(/^['"]+|['"]+$/g, '').trim()
+    if (!value) return ''
+    if (value.startsWith('/') || value.startsWith('data:image/')) return value
+    if (/^https?:\/\//i.test(value)) return value
+    if (/^\/\//.test(value)) return 'https:' + value
+    if (/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(value)) return 'https://' + value
+    return value
+  }
+
+  /** Downscales large photos in the browser so uploads stay under the limit. */
+  function compressImage(file) {
+    return new Promise(resolve => {
+      if (!COMPRESSIBLE.includes((file.type || '').toLowerCase()) || file.size <= 900 * 1024) {
+        resolve(file)
+        return
+      }
+      const url = URL.createObjectURL(file)
+      const img = new Image()
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        const maxSide = 1800
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        const ctx = canvas.getContext('2d')
+        if (!ctx) { resolve(file); return }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        canvas.toBlob(blob => {
+          if (!blob || blob.size >= file.size) { resolve(file); return }
+          const name = (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg'
+          resolve(new File([blob], name, { type: 'image/jpeg' }))
+        }, 'image/jpeg', 0.85)
+      }
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
+      img.src = url
+    })
+  }
+
+  function initUploadWidget(widget) {
+    if (widget.dataset.uploadBound === '1') return
     const dropZone = widget.querySelector('.upload-drop-zone')
     const fileInput = widget.querySelector('.upload-file-input')
     const preview = widget.querySelector('.upload-preview')
     const placeholder = widget.querySelector('.upload-placeholder')
     const urlFallback = widget.querySelector('.upload-url-fallback')
-    const hiddenInput = widget.closest('form')?.querySelector('.cloudinary-url')
+    const hiddenInput = resolveHiddenInput(widget)
 
     if (!dropZone || !fileInput || !hiddenInput) return
+    widget.dataset.uploadBound = '1'
 
-    // Create progress bar and status elements
     const progressWrap = document.createElement('div')
     progressWrap.className = 'upload-progress'
     progressWrap.innerHTML = '<div class="upload-progress-bar"></div>'
@@ -1054,93 +1138,161 @@
     statusEl.className = 'upload-status'
     progressWrap.parentElement.insertBefore(statusEl, progressWrap.nextSibling)
 
-    // Drag and drop visual feedback
+    const setStatus = (text, kind) => {
+      statusEl.textContent = text || ''
+      statusEl.className = 'upload-status' + (kind ? ' ' + kind : '')
+    }
+
+    const showPreview = src => {
+      if (!preview) return
+      if (src) {
+        preview.src = src
+        preview.style.display = 'block'
+        if (placeholder) placeholder.style.display = 'none'
+      } else {
+        preview.removeAttribute('src')
+        preview.style.display = 'none'
+        if (placeholder) placeholder.style.display = ''
+      }
+    }
+
+    // Tell the admin when a pasted URL cannot actually be loaded, instead of
+    // silently saving a broken link.
+    if (preview) {
+      preview.addEventListener('error', () => {
+        if (preview.getAttribute('src')) {
+          setStatus('⚠ لا يمكن تحميل الصورة من هذا الرابط. تأكد أنه رابط صورة مباشر.', 'error')
+        }
+      })
+      preview.addEventListener('load', () => {
+        if (statusEl.classList.contains('error')) setStatus('')
+      })
+    }
+
+    // Sync the initial value (edit modal opens with an existing image).
+    const initial = normalizeMediaUrlClient(hiddenInput.value || urlFallback?.value || '')
+    if (initial) {
+      hiddenInput.value = initial
+      if (urlFallback) urlFallback.value = initial
+      showPreview(initial)
+    }
+
     ;['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('dragover') }))
     ;['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('dragover') }))
 
     dropZone.addEventListener('drop', e => {
       const files = e.dataTransfer?.files
-      if (files?.length) {
-        fileInput.files = files
-        handleFileUpload(files[0])
-      }
+      if (files?.length) handleFileUpload(files[0])
+    })
+
+    dropZone.addEventListener('click', e => {
+      if (e.target === fileInput) return
+      fileInput.click()
     })
 
     fileInput.addEventListener('change', () => {
       if (fileInput.files?.length) handleFileUpload(fileInput.files[0])
     })
 
-    // URL fallback: when user types a URL directly
+    // URL fallback: react to every way a value can arrive (typing, paste, autofill).
     if (urlFallback) {
-      urlFallback.addEventListener('input', () => {
-        hiddenInput.value = urlFallback.value.trim()
-        if (urlFallback.value.trim()) {
-          preview.src = urlFallback.value.trim()
-          preview.style.display = 'block'
-          placeholder.style.display = 'none'
-        }
-      })
+      const applyUrl = () => {
+        const value = normalizeMediaUrlClient(urlFallback.value)
+        hiddenInput.value = value
+        showPreview(value)
+        if (value) setStatus('سيتم حفظ الرابط عند الضغط على حفظ', 'success')
+        else setStatus('')
+      }
+      ;['input', 'change', 'blur'].forEach(ev => urlFallback.addEventListener(ev, applyUrl))
+      urlFallback.addEventListener('paste', () => setTimeout(applyUrl, 0))
     }
 
-    async function handleFileUpload(file) {
-      // Local preview
-      const reader = new FileReader()
-      reader.onload = e => {
-        if (file.type.startsWith('image/')) {
-          preview.src = e.target.result
-          preview.style.display = 'block'
-          placeholder.style.display = 'none'
-        }
-      }
-      reader.readAsDataURL(file)
+    async function handleFileUpload(rawFile) {
+      if (!rawFile) return
 
-      // Show progress
+      if (rawFile.size > MAX_UPLOAD_BYTES * 4) {
+        setStatus('✗ حجم الملف كبير جداً. الحد الأقصى 10 ميجابايت', 'error')
+        return
+      }
+
+      const file = await compressImage(rawFile)
+      if (file.size > MAX_UPLOAD_BYTES) {
+        setStatus('✗ حجم الملف كبير جداً بعد الضغط. الحد الأقصى 10 ميجابايت', 'error')
+        return
+      }
+
+      if ((file.type || '').startsWith('image/')) {
+        const reader = new FileReader()
+        reader.onload = e => showPreview(e.target.result)
+        reader.readAsDataURL(file)
+      }
+
       progressWrap.style.display = 'block'
-      progressBar.style.width = '20%'
-      statusEl.textContent = 'جارٍ رفع الصورة...'
-      statusEl.className = 'upload-status'
+      progressBar.style.width = '25%'
+      progressBar.style.background = ''
+      setStatus('جارٍ رفع الصورة...')
 
       try {
         const formData = new FormData()
-        formData.append('file', file)
-
-        // Simulate progress
-        progressBar.style.width = '60%'
+        formData.append('file', file, file.name || 'upload.jpg')
+        progressBar.style.width = '65%'
 
         const response = await fetch('/api/upload', {
           method: 'POST',
-          body: formData
+          body: formData,
+          credentials: 'same-origin'
         })
 
         progressBar.style.width = '90%'
 
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({}))
-          throw new Error(err.error || 'فشل رفع الملف')
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('انتهت صلاحية الجلسة. فضلاً أعد تسجيل الدخول ثم حاول مرة أخرى.')
         }
 
-        const data = await response.json()
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || !data.url) {
+          throw new Error(data.error || 'فشل رفع الملف')
+        }
+
         progressBar.style.width = '100%'
+        const url = normalizeMediaUrlClient(data.url)
+        hiddenInput.value = url
+        if (urlFallback) urlFallback.value = url
+        showPreview(url)
 
-        hiddenInput.value = data.url
-        if (urlFallback) urlFallback.value = data.url
-
-        statusEl.textContent = '✓ تم رفع الصورة بنجاح'
-        statusEl.className = 'upload-status success'
-
+        setStatus('✓ تم رفع الصورة بنجاح', 'success')
         setTimeout(() => { progressWrap.style.display = 'none' }, 1500)
       } catch (err) {
         progressBar.style.width = '100%'
         progressBar.style.background = 'var(--coral)'
-        statusEl.textContent = '✗ ' + (err.message || 'فشل رفع الملف')
-        statusEl.className = 'upload-status error'
+        setStatus('✗ ' + (err.message || 'فشل رفع الملف'), 'error')
         setTimeout(() => {
           progressWrap.style.display = 'none'
           progressBar.style.width = '0'
           progressBar.style.background = ''
-        }, 3000)
+        }, 4000)
       }
     }
-  })
-})()
+  }
 
+  function initUploadWidgets(root = document) {
+    $$('.upload-widget', root).forEach(initUploadWidget)
+  }
+
+  /** Copies any typed URL into the hidden input right before a form submits. */
+  function syncUploadWidgets(root = document) {
+    $$('.upload-widget', root).forEach(widget => {
+      const hiddenInput = resolveHiddenInput(widget)
+      const urlFallback = widget.querySelector('.upload-url-fallback')
+      if (!hiddenInput) return
+      const typed = normalizeMediaUrlClient(urlFallback?.value || '')
+      if (typed) hiddenInput.value = typed
+      else hiddenInput.value = normalizeMediaUrlClient(hiddenInput.value)
+    })
+  }
+
+  window.initUploadWidgets = initUploadWidgets
+  window.syncUploadWidgets = syncUploadWidgets
+
+  initUploadWidgets()
+})()

@@ -568,8 +568,8 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
             ))}
           </div>
         </label>
-        <input type="hidden" name="image_url" class="cloudinary-url" />
         <div class="upload-widget">
+          <input type="hidden" name="image_url" class="cloudinary-url" />
           <label>صورة الحملة</label>
           <div class="upload-drop-zone">
             <input type="file" accept="image/*,video/*" class="upload-file-input" />
@@ -787,8 +787,8 @@ export function DashNews({ list = [] }: { list: any[] }) {
         <h3>إضافة خبر جديد</h3>
         <label>عنوان الخبر<input name="title" required /></label>
         <label>القسم<input name="category" placeholder="صحة، مجتمع، تعليم" required /></label>
-        <input type="hidden" name="image_url" class="cloudinary-url" />
         <div class="upload-widget">
+          <input type="hidden" name="image_url" class="cloudinary-url" />
           <label>صورة الخبر</label>
           <div class="upload-drop-zone">
             <input type="file" accept="image/*,video/*" class="upload-file-input" />
@@ -863,8 +863,8 @@ export function DashEvents({ list = [] }: { list: any[] }) {
         <label>نوع الفعالية<input name="type" placeholder="صحة، تعليم، مجتمع" required /></label>
         <label>المكان<input name="place" required /></label>
         <label>التاريخ والوقت<input type="datetime-local" name="event_date" required /></label>
-        <input type="hidden" name="image_url" class="cloudinary-url" />
         <div class="upload-widget">
+          <input type="hidden" name="image_url" class="cloudinary-url" />
           <label>صورة الفعالية</label>
           <div class="upload-drop-zone">
             <input type="file" accept="image/*,video/*" class="upload-file-input" />
@@ -916,6 +916,7 @@ export function DashStories({ list = [] }: { list: any[] }) {
                     data-role={s.role}
                     data-rating={s.rating || 5}
                     data-content={s.content || ''}
+                    data-image={s.image_url || ''}
                   >{icon('fa-pen-to-square')} تعديل</button>
                   <form action={`/api/stories/delete/${s.id}`} method="post" class="dash-action-form" data-confirm="هل أنت متأكد من حذف قصة النجاح هذه؟">
                     <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')} حذف</button>
@@ -934,6 +935,16 @@ export function DashStories({ list = [] }: { list: any[] }) {
         <label>الاسم<input name="name" placeholder="أحمد م." required /></label>
         <label>الدور / الصفة<input name="role" placeholder="مستفيد، متطوع" required /></label>
         <label>التقييم (1-5)<input type="number" name="rating" min="1" max="5" defaultValue="5" required /></label>
+        <div class="upload-widget">
+          <input type="hidden" name="image_url" class="cloudinary-url" />
+          <label>صورة صاحب القصة (اختياري)</label>
+          <div class="upload-drop-zone">
+            <input type="file" accept="image/*" class="upload-file-input" />
+            <div class="upload-placeholder"><i class="fa-solid fa-cloud-arrow-up"></i><span>اسحب الصورة هنا أو اضغط للاختيار</span><small>JPG, PNG, WEBP — حد أقصى 10 ميجا</small></div>
+            <img class="upload-preview" style="display:none" alt="معاينة" />
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem"><span style="font-size:.8rem;color:var(--muted)">أو</span><input class="upload-url-fallback" placeholder="أدخل رابط الصورة https://..." style="flex:1" /></div>
+        </div>
         <label>القصة كاملة<textarea name="content" rows={4} required></textarea></label>
         <button class="primary-btn" type="submit" id="story-submit-btn">نشر القصة</button>
       </form>

@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
+import { normalizeMediaUrl } from '../lib/storage'
 
 export const campaigns = new Hono()
 
@@ -67,7 +68,7 @@ campaigns.post('/add', adminMiddleware, async (c) => {
       category: category || 'عام',
       goal,
       raised: 0,
-      image_url: body.image_url || '',
+      image_url: normalizeMediaUrl(body.image_url),
       is_urgent,
       is_published: true,
       description: body.description || '',
@@ -117,7 +118,7 @@ campaigns.post('/edit/:id', adminMiddleware, async (c) => {
       title,
       category: category || 'عام',
       goal,
-      image_url: body.image_url || '',
+      image_url: normalizeMediaUrl(body.image_url),
       is_urgent,
       description: body.description || ''
     }
