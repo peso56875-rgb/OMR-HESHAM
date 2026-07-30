@@ -10,14 +10,19 @@ export function Stories({ stories = [], user }: { stories?: any[], user?: UserSe
   return <Layout user={user} title="قصص النجاح | مؤسسة الدكتور عمر هشام">
     <PageHero kicker="قصص النجاح" title={'أثرٌ يُحكى،<br/><em>وأملٌ ينتقل.</em>'} text="نحفظ خصوصية المستفيدين، ونشارك كلماتهم التي تذكّرنا جميعًا بأن الخير يصل." />
     <section class="stories-grid section-pad">
-      {renderStories.map((s: any) => <article class="story-card reveal">
-        <div class="stars">{'★'.repeat(s.rating || 5)}</div>
-        <blockquote>“{s.content}”</blockquote>
-        <div>
-          <span>{s.name.slice(0, 2)}</span>
-          <p><b>{s.name}</b><small>{s.role}</small></p>
-        </div>
-      </article>)}
+      {renderStories.map((s: any) => {
+        const img = String(s.image_url || '').trim()
+        return <article class="story-card reveal">
+          <div class="stars">{'★'.repeat(s.rating || 5)}</div>
+          <blockquote>“{s.content}”</blockquote>
+          <div>
+            {img
+              ? <span style="padding:0;overflow:hidden"><img src={img} alt={s.name} loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block" /></span>
+              : <span>{s.name.slice(0, 2)}</span>}
+            <p><b>{s.name}</b><small>{s.role}</small></p>
+          </div>
+        </article>
+      })}
     </section>
   </Layout>
 }
