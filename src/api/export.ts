@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import { Hono, Context } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 import fs from 'fs'
@@ -9,18 +9,23 @@ export const exportApi = new Hono()
 exportApi.use('*', adminMiddleware)
 
 let cachedLogoBase64 = ''
-function getLogoBase64(): string {
+function getLogoImgSrc(c: Context): string {
   if (cachedLogoBase64) return cachedLogoBase64
   try {
     const logoPath = path.join(process.cwd(), 'public', 'static', 'foundation-logo.png')
     if (fs.existsSync(logoPath)) {
       const buf = fs.readFileSync(logoPath)
       cachedLogoBase64 = `data:image/png;base64,${buf.toString('base64')}`
+      return cachedLogoBase64
     }
-  } catch (e) {
-    console.error('Failed to load logo base64:', e)
-  }
-  return cachedLogoBase64 || 'https://omarhesham.org/static/foundation-logo.png'
+  } catch (e) {}
+
+  try {
+    const reqUrl = new URL(c.req.url)
+    return `${reqUrl.protocol}//${reqUrl.host}/static/foundation-logo.png`
+  } catch (e) {}
+
+  return 'https://omarhesham.org/static/foundation-logo.png'
 }
 
 type ColumnDef = {
@@ -231,17 +236,17 @@ exportApi.get('/cases_sample', async (c) => {
     })
 
     const groupTitleFinal = customTitle || sourceBatchTitle || 'عينة عشوائية للمستفيدين'
-    const logoSrc = getLogoBase64()
+    const logoSrc = getLogoImgSrc(c)
 
     const tableBodyRows = sample.map((name, idx) => {
-      const bg = idx % 2 === 0 ? '#ffffff' : '#fcfaf5'
+      const bg = idx % 2 === 0 ? '#ffffff' : '#f8faf9'
       const safeName = String(name).replace(/</g, '&lt;').replace(/>/g, '&gt;')
       return `<tr>
-        <td style="border:1px solid #d4c8b5; padding:10px 14px; font-size:11pt; text-align:center; color:#555; background-color:${bg}; font-weight:bold;">${idx + 1}</td>
-        <td style="border:1px solid #d4c8b5; padding:10px 14px; font-size:11.5pt; text-align:right; color:#111; background-color:${bg}; font-weight:700;">${safeName}</td>
-        <td style="border:1px solid #d4c8b5; padding:10px 14px; font-size:10.5pt; text-align:right; color:#0c4a3f; background-color:${bg}; font-weight:600;">${String(groupTitleFinal).replace(/</g, '&lt;')}</td>
-        <td style="border:1px solid #d4c8b5; padding:10px 14px; font-size:10pt; text-align:center; color:#666; background-color:${bg};">${dateStr}</td>
-        <td style="border:1px solid #d4c8b5; padding:10px 14px; font-size:10pt; text-align:center; color:#888; background-color:${bg}; min-width:140px;">_____________________</td>
+        <td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10.5pt; text-align:center; color:#047857; background-color:${bg}; font-weight:700;">${idx + 1}</td>
+        <td style="border:1px solid #cbd5e1; padding:9px 14px; font-size:11.5pt; text-align:right; color:#0f172a; background-color:${bg}; font-weight:700;">${safeName}</td>
+        <td style="border:1px solid #cbd5e1; padding:9px 14px; font-size:10.5pt; text-align:right; color:#047857; background-color:${bg}; font-weight:600;">${String(groupTitleFinal).replace(/</g, '&lt;')}</td>
+        <td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10pt; text-align:center; color:#475569; background-color:${bg};">${dateStr}</td>
+        <td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10pt; text-align:center; color:#94a3b8; background-color:${bg}; min-width:150px;">.........................................</td>
       </tr>`
     }).join('\n')
 
@@ -264,47 +269,55 @@ exportApi.get('/cases_sample', async (c) => {
 </xml>
 <![endif]-->
 <style>
-  body { font-family: 'Segoe UI', Tahoma, 'Arabic Typesetting', Arial, sans-serif; direction: rtl; }
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; }
   table { border-collapse: collapse; width: 100%; margin-top: 10px; }
 </style>
 </head>
 <body>
   <table>
     <tr>
-      <td colspan="${colCount}" style="background-color:#072d27; color:#ffffff; text-align:center; font-size:20pt; font-weight:bold; padding:20px 12px; vertical-align:middle;">
-        <img src="${logoSrc}" height="55" style="vertical-align:middle; margin-left:15px; border-radius:8px;" alt="Logo" />
-        <span style="vertical-align:middle;">مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية</span>
+      <td colspan="${colCount}" style="background-color:#064e3b; color:#ffffff; padding:18px 24px; vertical-align:middle; border-bottom:4px solid #d97706;">
+        <table style="width:100%; border:none; border-collapse:collapse;">
+          <tr>
+            <td style="width:70px; vertical-align:middle; border:none;">
+              <img src="${logoSrc}" width="56" height="56" alt="Logo" style="display:block; border-radius:8px;" />
+            </td>
+            <td style="vertical-align:middle; border:none; padding-right:15px; text-align:right;">
+              <div style="font-size:18pt; font-weight:800; color:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية</div>
+              <div style="font-size:11pt; color:#fef3c7; font-weight:600; margin-top:3px;">لوحة التحكم والإدارة المركزية — وثيقة رسمية معتمدة</div>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
     <tr>
-      <td colspan="${colCount}" style="background-color:#c89738; color:#072d27; text-align:center; font-size:14pt; font-weight:bold; padding:10px 12px; letter-spacing:0.5px;">
+      <td colspan="${colCount}" style="background-color:#047857; color:#ffffff; text-align:center; font-size:14pt; font-weight:700; padding:10px; border-bottom:2px solid #059669;">
         ${String(groupTitleFinal).replace(/</g, '&lt;')} — قائمة العينة العشوائية
       </td>
     </tr>
     <tr>
-      <td colspan="${colCount}" style="background-color:#f4efe6; color:#333333; text-align:right; font-size:10.5pt; padding:10px 16px; border-bottom:3px solid #c89738; font-weight:600;">
-        <b>اسم المجموعة / البيان:</b> ${String(groupTitleFinal).replace(/</g, '&lt;')} &nbsp;&nbsp;|&nbsp;&nbsp;
-        <b>إجمالي أسماء الأرشيف:</b> ${allNames.length} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
-        <b>العينة المستخرجة:</b> ${sampleCount} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
+      <td colspan="${colCount}" style="background-color:#f0fdf4; color:#064e3b; text-align:right; font-size:10.5pt; padding:10px 16px; border-bottom:2px solid #a7f3d0; font-weight:600;">
+        <b>بيان الكشف:</b> ${String(groupTitleFinal).replace(/</g, '&lt;')} &nbsp;&nbsp;|&nbsp;&nbsp;
+        <b>إجمالي السجلات:</b> ${sampleCount} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
         <b>تاريخ الاستخراج:</b> ${dateStr}
       </td>
     </tr>
-    <tr><td colspan="${colCount}" style="height:12px;"></td></tr>
+    <tr><td colspan="${colCount}" style="height:10px; background-color:#ffffff;"></td></tr>
     <thead>
       <tr>
-        <th style="background-color:#0c4a3f; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #072d27; padding:13px 10px; text-align:center; width:65px;">م</th>
-        <th style="background-color:#0c4a3f; color:#ffffff; font-weight:bold; font-size:11.5pt; border:1px solid #072d27; padding:13px 12px; text-align:right;">اسم المستفيد</th>
-        <th style="background-color:#0c4a3f; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #072d27; padding:13px 12px; text-align:right;">المجموعة / البيان</th>
-        <th style="background-color:#0c4a3f; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #072d27; padding:13px 10px; text-align:center;">تاريخ الاستخراج</th>
-        <th style="background-color:#0c4a3f; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #072d27; padding:13px 10px; text-align:center;">ملاحظات / توقيع الاستلام</th>
+        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:center; width:60px;">م</th>
+        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11.5pt; border:1px solid #047857; padding:12px 14px; text-align:right;">اسم المستفيد</th>
+        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 14px; text-align:right;">المجموعة / البيان</th>
+        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:center;">تاريخ الاستخراج</th>
+        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:center;">ملاحظات / توقيع الاستلام</th>
       </tr>
     </thead>
     <tbody>
       ${tableBodyRows}
     </tbody>
-    <tr><td colspan="${colCount}" style="height:15px;"></td></tr>
+    <tr><td colspan="${colCount}" style="height:14px; background-color:#ffffff;"></td></tr>
     <tr>
-      <td colspan="${colCount}" style="background-color:#072d27; color:#c89738; text-align:center; font-size:10.5pt; padding:14px; border-top:3px solid #c89738; font-weight:bold;">
+      <td colspan="${colCount}" style="background-color:#064e3b; color:#fbbf24; text-align:center; font-size:10pt; padding:12px; border-top:3px solid #d97706; font-weight:bold;">
         ✦ وثيقة رسمية معتمدة — صُدرت من لوحة تحكم مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية ✦
       </td>
     </tr>
@@ -371,16 +384,16 @@ exportApi.get('/cases_full/:id', async (c) => {
     })
 
     const groupTitleFinal = customTitle || defaultTitle || 'قائمة المستفيدين'
-    const logoSrc = getLogoBase64()
+    const logoSrc = getLogoImgSrc(c)
 
     const tableBodyRows = allNames.map((name, idx) => {
-      const bg = idx % 2 === 0 ? '#ffffff' : '#fcfaf5'
+      const bg = idx % 2 === 0 ? '#ffffff' : '#f8faf9'
       const safeName = String(name).replace(/</g, '&lt;').replace(/>/g, '&gt;')
       return `<tr>
-        <td style="border:1px solid #d4c8b5; padding:10px 14px; font-size:11pt; text-align:center; color:#555; background-color:${bg}; font-weight:bold;">${idx + 1}</td>
-        <td style="border:1px solid #d4c8b5; padding:10px 14px; font-size:11.5pt; text-align:right; color:#111; background-color:${bg}; font-weight:700;">${safeName}</td>
-        <td style="border:1px solid #d4c8b5; padding:10px 14px; font-size:10.5pt; text-align:right; color:#0c4a3f; background-color:${bg}; font-weight:600;">${String(groupTitleFinal).replace(/</g, '&lt;')}</td>
-        <td style="border:1px solid #d4c8b5; padding:10px 14px; font-size:10pt; text-align:center; color:#888; background-color:${bg}; min-width:140px;">_____________________</td>
+        <td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10.5pt; text-align:center; color:#047857; background-color:${bg}; font-weight:700;">${idx + 1}</td>
+        <td style="border:1px solid #cbd5e1; padding:9px 14px; font-size:11.5pt; text-align:right; color:#0f172a; background-color:${bg}; font-weight:700;">${safeName}</td>
+        <td style="border:1px solid #cbd5e1; padding:9px 14px; font-size:10.5pt; text-align:right; color:#047857; background-color:${bg}; font-weight:600;">${String(groupTitleFinal).replace(/</g, '&lt;')}</td>
+        <td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10pt; text-align:center; color:#94a3b8; background-color:${bg}; min-width:150px;">.........................................</td>
       </tr>`
     }).join('\n')
 
@@ -403,45 +416,54 @@ exportApi.get('/cases_full/:id', async (c) => {
 </xml>
 <![endif]-->
 <style>
-  body { font-family: 'Segoe UI', Tahoma, 'Arabic Typesetting', Arial, sans-serif; direction: rtl; }
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; }
   table { border-collapse: collapse; width: 100%; margin-top: 10px; }
 </style>
 </head>
 <body>
   <table>
     <tr>
-      <td colspan="${colCount}" style="background-color:#072d27; color:#ffffff; text-align:center; font-size:20pt; font-weight:bold; padding:20px 12px; vertical-align:middle;">
-        <img src="${logoSrc}" height="55" style="vertical-align:middle; margin-left:15px; border-radius:8px;" alt="Logo" />
-        <span style="vertical-align:middle;">مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية</span>
+      <td colspan="${colCount}" style="background-color:#064e3b; color:#ffffff; padding:18px 24px; vertical-align:middle; border-bottom:4px solid #d97706;">
+        <table style="width:100%; border:none; border-collapse:collapse;">
+          <tr>
+            <td style="width:70px; vertical-align:middle; border:none;">
+              <img src="${logoSrc}" width="56" height="56" alt="Logo" style="display:block; border-radius:8px;" />
+            </td>
+            <td style="vertical-align:middle; border:none; padding-right:15px; text-align:right;">
+              <div style="font-size:18pt; font-weight:800; color:#ffffff;">مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية</div>
+              <div style="font-size:11pt; color:#fef3c7; font-weight:600; margin-top:3px;">لوحة التحكم والإدارة المركزية — وثيقة رسمية معتمدة</div>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
     <tr>
-      <td colspan="${colCount}" style="background-color:#c89738; color:#072d27; text-align:center; font-size:14pt; font-weight:bold; padding:10px 12px;">
+      <td colspan="${colCount}" style="background-color:#047857; color:#ffffff; text-align:center; font-size:14pt; font-weight:700; padding:10px; border-bottom:2px solid #059669;">
         ${String(groupTitleFinal).replace(/</g, '&lt;')} — القائمة الكاملة
       </td>
     </tr>
     <tr>
-      <td colspan="${colCount}" style="background-color:#f4efe6; color:#333333; text-align:right; font-size:10.5pt; padding:10px 16px; border-bottom:3px solid #c89738; font-weight:600;">
+      <td colspan="${colCount}" style="background-color:#f0fdf4; color:#064e3b; text-align:right; font-size:10.5pt; padding:10px 16px; border-bottom:2px solid #a7f3d0; font-weight:600;">
         <b>المجموعة / البيان:</b> ${String(groupTitleFinal).replace(/</g, '&lt;')} &nbsp;&nbsp;|&nbsp;&nbsp;
         <b>إجمالي السجلات:</b> ${allNames.length} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
         <b>تاريخ الاستخراج:</b> ${dateStr}
       </td>
     </tr>
-    <tr><td colspan="${colCount}" style="height:12px;"></td></tr>
+    <tr><td colspan="${colCount}" style="height:10px; background-color:#ffffff;"></td></tr>
     <thead>
       <tr>
-        <th style="background-color:#0c4a3f; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #072d27; padding:13px 10px; text-align:center; width:65px;">م</th>
-        <th style="background-color:#0c4a3f; color:#ffffff; font-weight:bold; font-size:11.5pt; border:1px solid #072d27; padding:13px 12px; text-align:right;">اسم المستفيد</th>
-        <th style="background-color:#0c4a3f; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #072d27; padding:13px 12px; text-align:right;">المجموعة / البيان</th>
-        <th style="background-color:#0c4a3f; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #072d27; padding:13px 10px; text-align:center;">ملاحظات / توقيع الاستلام</th>
+        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:center; width:60px;">م</th>
+        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11.5pt; border:1px solid #047857; padding:12px 14px; text-align:right;">اسم المستفيد</th>
+        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 14px; text-align:right;">المجموعة / البيان</th>
+        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:center;">ملاحظات / توقيع الاستلام</th>
       </tr>
     </thead>
     <tbody>
       ${tableBodyRows}
     </tbody>
-    <tr><td colspan="${colCount}" style="height:15px;"></td></tr>
+    <tr><td colspan="${colCount}" style="height:14px; background-color:#ffffff;"></td></tr>
     <tr>
-      <td colspan="${colCount}" style="background-color:#072d27; color:#c89738; text-align:center; font-size:10.5pt; padding:14px; border-top:3px solid #c89738; font-weight:bold;">
+      <td colspan="${colCount}" style="background-color:#064e3b; color:#fbbf24; text-align:center; font-size:10pt; padding:12px; border-top:3px solid #d97706; font-weight:bold;">
         ✦ وثيقة رسمية معتمدة — صُدرت من لوحة تحكم مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية ✦
       </td>
     </tr>
@@ -486,22 +508,24 @@ exportApi.get('/:collection', async (c) => {
 
     const dateStr = new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
-    // Generate Styled Excel HTML Spreadsheet
-    const tableHeaderRows = config.columns.map(col => `<th style="background-color:#0c4a3f; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #072d27; padding:12px 10px; text-align:right;">${col.label}</th>`).join('')
+    const logoSrc = getLogoImgSrc(c)
+
+    const tableHeaderRows = config.columns.map(col => `<th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:right;">${col.label}</th>`).join('')
 
     const tableBodyRows = docs.length === 0
       ? `<tr><td colspan="${config.columns.length}" style="text-align:center; padding:20px; color:#888;">لا توجد بيانات مسجلة في هذا القسم حتى الآن.</td></tr>`
       : docs.map((doc, idx) => {
-        const bg = idx % 2 === 0 ? '#ffffff' : '#fcfaf5'
+        const bg = idx % 2 === 0 ? '#ffffff' : '#f8faf9'
         const cells = config.columns.map(col => {
           const rawVal = doc[col.key]
           const formattedVal = col.format ? col.format(rawVal, doc) : (rawVal ?? '-')
           const safeText = String(formattedVal).replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          return `<td style="border:1px solid #e2d9c8; padding:10px; font-size:10pt; text-align:right; color:#222; background-color:${bg};">${safeText}</td>`
+          return `<td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10pt; text-align:right; color:#0f172a; background-color:${bg};">${safeText}</td>`
         }).join('')
         return `<tr>${cells}</tr>`
       }).join('\n')
 
+    const colCount = config.columns.length
     const excelHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -527,27 +551,43 @@ exportApi.get('/:collection', async (c) => {
 <body>
   <table>
     <tr>
-      <td colspan="${config.columns.length}" style="background-color:#0c4a3f; color:#ffffff; text-align:center; font-size:18pt; font-weight:bold; padding:16px 10px;">
-        مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية
+      <td colspan="${colCount}" style="background-color:#064e3b; color:#ffffff; padding:18px 24px; vertical-align:middle; border-bottom:4px solid #d97706;">
+        <table style="width:100%; border:none; border-collapse:collapse;">
+          <tr>
+            <td style="width:70px; vertical-align:middle; border:none;">
+              <img src="${logoSrc}" width="56" height="56" alt="Logo" style="display:block; border-radius:8px;" />
+            </td>
+            <td style="vertical-align:middle; border:none; padding-right:15px; text-align:right;">
+              <div style="font-size:18pt; font-weight:800; color:#ffffff;">مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية</div>
+              <div style="font-size:11pt; color:#fef3c7; font-weight:600; margin-top:3px;">لوحة التحكم والإدارة المركزية — وثيقة رسمية معتمدة</div>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
     <tr>
-      <td colspan="${config.columns.length}" style="background-color:#d6a64b; color:#0c4a3f; text-align:center; font-size:13pt; font-weight:bold; padding:8px 10px;">
+      <td colspan="${colCount}" style="background-color:#047857; color:#ffffff; text-align:center; font-size:13pt; font-weight:bold; padding:9px 10px;">
         ${config.title}
       </td>
     </tr>
     <tr>
-      <td colspan="${config.columns.length}" style="background-color:#f4efe6; color:#555555; text-align:right; font-size:10pt; padding:8px 12px; border-bottom:2px solid #d6a64b;">
+      <td colspan="${colCount}" style="background-color:#f0fdf4; color:#064e3b; text-align:right; font-size:10pt; padding:8px 12px; border-bottom:2px solid #a7f3d0; font-weight:600;">
         <b>تاريخ الاستخراج:</b> ${dateStr} &nbsp; | &nbsp; <b>إجمالي السجلات:</b> ${docs.length} سجل
       </td>
     </tr>
-    <tr><td colspan="${config.columns.length}" style="height:10px;"></td></tr>
+    <tr><td colspan="${colCount}" style="height:10px; background-color:#ffffff;"></td></tr>
     <thead>
       <tr>${tableHeaderRows}</tr>
     </thead>
     <tbody>
       ${tableBodyRows}
     </tbody>
+    <tr><td colspan="${colCount}" style="height:14px; background-color:#ffffff;"></td></tr>
+    <tr>
+      <td colspan="${colCount}" style="background-color:#064e3b; color:#fbbf24; text-align:center; font-size:10pt; padding:12px; border-top:3px solid #d97706; font-weight:bold;">
+        ✦ وثيقة رسمية معتمدة — صُدرت من لوحة تحكم مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية ✦
+      </td>
+    </tr>
   </table>
 </body>
 </html>`
