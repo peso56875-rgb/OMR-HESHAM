@@ -70,9 +70,11 @@ npx wrangler pages dev dist --ip 0.0.0.0 --port 3000
 
 يستخدم `/api/upload` طبقات تخزين متتالية، فلو فشلت واحدة ينتقل تلقائيًا للتالية:
 
-1. **Firebase Storage** (الأفضل) — يعتمد على مفاتيح Firebase الموجودة أصلًا. يمكن تحديد اسم الحزمة عبر `FIREBASE_STORAGE_BUCKET`، وإن لم يُحدَّد يجرّب `<projectId>.firebasestorage.app` ثم `<projectId>.appspot.com`. تُنشأ روابط تحميل عامة بـ token فتعمل حتى مع تفعيل uniform bucket-level access.
-2. **Cloudinary** — يُستخدم فقط عند وجود `CLOUDINARY_CLOUD_NAME` و`CLOUDINARY_API_KEY` و`CLOUDINARY_API_SECRET`.
+1. **Cloudinary** (الطبقة الأساسية) — تُستخدم عند وجود `CLOUDINARY_CLOUD_NAME` و`CLOUDINARY_API_KEY` و`CLOUDINARY_API_SECRET`. تُرفع الملفات في مجلد `CLOUDINARY_FOLDER` (افتراضيًا `omar-hesham`) مع توقيع موقّع بالكامل.
+2. **Firebase Storage** — تُستخدم عندما لا يتوفّر Cloudinary. تحتاج **تفعيل Storage** من Firebase Console؛ وإن لم تكن الحزمة موجودة يتم تخطيها تلقائيًا (ويُحفظ ذلك في الذاكرة حتى لا يتكرر الانتظار مع كل رفع). تُنشأ روابط تحميل عامة بـ token فتعمل حتى مع تفعيل uniform bucket-level access. الحزمة تُقرأ من `FIREBASE_STORAGE_BUCKET`، وإلا يُجرَّب `<projectId>.firebasestorage.app` ثم `<projectId>.appspot.com`.
 3. **Firestore** (احتياطي دائم) — يخزّن الملف كقطع base64 في مجموعة `media` ويقدّمه عبر `GET /api/media/:id`. لا يحتاج أي إعداد إضافي، والحد الأقصى ~5 ميجابايت.
+
+> عند النشر على Vercel أضِف نفس متغيرات `CLOUDINARY_*` في إعدادات المشروع (Environment Variables)، وإلا سينزل الرفع تلقائيًا إلى طبقة Firestore.
 
 الحد الأقصى للرفع 10 ميجابايت، ويتم ضغط الصور الكبيرة في المتصفح قبل الإرسال. يمكن للمشرف فحص المتاح عبر `GET /api/upload/status`.
 

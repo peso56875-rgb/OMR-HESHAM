@@ -18,9 +18,13 @@ export async function uploadToCloudinary(file: File, c?: any): Promise<string> {
   }
 
   const timestamp = Math.round(Date.now() / 1000)
+  const folder = env.CLOUDINARY_FOLDER || procEnv.CLOUDINARY_FOLDER || 'omar-hesham'
 
-  // Parameters to sign
+  // Every parameter sent with the request (except file, api_key and
+  // resource_type) must be part of the signature, otherwise Cloudinary
+  // answers 401 "Invalid Signature".
   const params: Record<string, string> = {
+    folder,
     timestamp: timestamp.toString(),
   }
 
@@ -34,6 +38,7 @@ export async function uploadToCloudinary(file: File, c?: any): Promise<string> {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('api_key', apiKey)
+  formData.append('folder', folder)
   formData.append('timestamp', timestamp.toString())
   formData.append('signature', signature)
 
@@ -46,7 +51,14 @@ export async function uploadToCloudinary(file: File, c?: any): Promise<string> {
 
   if (!response.ok) {
     const errorText = await response.text()
-    throw new Error(`Cloudinary upload failed: ${response.status} - ${errorText}`)
+    // Surface Cloudinary's own message so misconfiguration is obvious.
+    let detail = errorText
+    try {
+      detail = JSON.parse(errorText)?.error?.message || errorText
+    } catch (_e) {
+      // keep raw text
+    }
+    throw new Error(`Cloudinary upload failed (${response.status}): ${detail}`)
   }
 
   const result = await response.json()

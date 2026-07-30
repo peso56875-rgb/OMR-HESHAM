@@ -4,15 +4,17 @@ import { uploadToCloudinary } from './cloudinary'
 
 /**
  * Media storage with layered fallbacks so that uploading an image from the
- * dashboard always works, even when no extra service is configured:
+ * dashboard always works:
  *
- *   1. Firebase Storage  — preferred (uses the Firebase credentials we already have)
- *   2. Cloudinary        — only when CLOUDINARY_* env vars are present
- *   3. Firestore chunks  — last-resort fallback, needs zero extra configuration
+ *   1. Cloudinary        — preferred when CLOUDINARY_* env vars are present.
+ *                          It is a purpose-built CDN and it is what this
+ *                          project actually has configured.
+ *   2. Firebase Storage  — used when Cloudinary is not configured (or fails)
+ *                          and the Storage bucket really exists.
+ *   3. Firestore chunks  — last-resort fallback, needs zero configuration.
  *
- * Previously the only backend was Cloudinary, so a project without Cloudinary
- * keys silently failed on every upload: the dashboard showed an error and the
- * image never reached the site.
+ * Originally Cloudinary was the *only* backend, so a project without
+ * Cloudinary keys failed on every single upload. Now every layer is optional.
  */
 
 export type MediaProvider = 'firebase-storage' | 'cloudinary' | 'firestore'
@@ -58,6 +60,13 @@ const safeFileName = (name: string): string => {
 const randomId = (): string =>
   `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`
 
+/**
+ * Buckets that answered "does not exist" — Firebase Storage may simply never
+ * have been enabled for the project. Remembering them avoids paying a failed
+ * round trip on every single upload.
+ */
+const missingBuckets = new Set<string>()
+
 export const cloudinaryConfigured = (c?: any): boolean =>
   Boolean(readEnv(c, 'CLOUDINARY_CLOUD_NAME') && readEnv(c, 'CLOUDINARY_API_KEY') && readEnv(c, 'CLOUDINARY_API_SECRET'))
 
@@ -75,8 +84,12 @@ async function uploadToFirebaseStorage(
   const app = getFirebaseAdminApp(c)
   if (!app) throw new Error('Firebase Admin SDK is not initialised')
 
-  const buckets = storageBucketCandidates(c)
-  if (!buckets.length) throw new Error('No storage bucket could be resolved')
+  const buckets = storageBucketCandidates(c).filter(name => !missingBuckets.has(name))
+  if (!buckets.length) {
+    throw new Error(
+      'No usable storage bucket. Enable Firebase Storage for the project or set FIREBASE_STORAGE_BUCKET.'
+    )
+  }
 
   const objectPath = `uploads/${new Date().toISOString().slice(0, 10)}/${randomId()}-${safeFileName(fileName)}`
   const downloadToken = randomId() + randomId()
@@ -99,7 +112,11 @@ async function uploadToFirebaseStorage(
 
       return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(objectPath)}?alt=media&token=${downloadToken}`
     } catch (error: any) {
-      errors.push(`${bucketName}: ${error?.message || error}`)
+      const message = String(error?.message || error)
+      if (/does not exist|notFound|404/i.test(message)) {
+        missingBuckets.add(bucketName)
+      }
+      errors.push(`${bucketName}: ${message}`)
     }
   }
 
@@ -186,13 +203,7 @@ export async function storeMediaFile(file: File, c?: any): Promise<StoredMedia> 
   const fileName = (file as any).name || 'upload'
   const warnings: string[] = []
 
-  try {
-    const url = await uploadToFirebaseStorage(buffer, contentType, fileName, c)
-    return { url, provider: 'firebase-storage', warnings }
-  } catch (error: any) {
-    warnings.push(`Firebase Storage: ${error?.message || error}`)
-  }
-
+  // 1) Cloudinary — the configured, purpose-built media CDN.
   if (cloudinaryConfigured(c)) {
     try {
       const url = await uploadToCloudinary(file, c)
@@ -203,6 +214,15 @@ export async function storeMediaFile(file: File, c?: any): Promise<StoredMedia> 
     }
   }
 
+  // 2) Firebase Storage — only if the bucket actually exists.
+  try {
+    const url = await uploadToFirebaseStorage(buffer, contentType, fileName, c)
+    return { url, provider: 'firebase-storage', warnings }
+  } catch (error: any) {
+    warnings.push(`Firebase Storage: ${error?.message || error}`)
+  }
+
+  // 3) Firestore — always available, so an upload never hard-fails.
   const url = await uploadToFirestore(buffer, contentType, fileName, c)
   return { url, provider: 'firestore', warnings }
 }

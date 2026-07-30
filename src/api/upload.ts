@@ -69,9 +69,12 @@ upload.post('/', adminMiddleware, async (c) => {
 /** Diagnostics so an admin can see which storage backends are usable. */
 upload.get('/status', adminMiddleware, (c) => {
   const buckets = storageBucketCandidates(c)
+  const cloudinary = cloudinaryConfigured(c)
   return c.json({
+    // Order reflects the real fallback order used by storeMediaFile().
+    order: ['cloudinary', 'firebase-storage', 'firestore'],
+    cloudinary: { configured: cloudinary, primary: cloudinary },
     firebaseStorage: { configured: buckets.length > 0, buckets },
-    cloudinary: { configured: cloudinaryConfigured(c) },
     firestoreFallback: { configured: true, maxSizeMb: 5 },
     maxUploadMb: MAX_BYTES / (1024 * 1024),
   })
