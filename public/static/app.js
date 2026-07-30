@@ -552,8 +552,14 @@
       .then(res => {
         if (!res.ok) throw new Error('فشل التصدير: ' + res.status)
         const disposition = res.headers.get('Content-Disposition') || ''
-        const filenameMatch = disposition.match(/filename="?([^"\n;]+)/)
-        const filename = filenameMatch ? filenameMatch[1] : (title.replace(/[^\u0600-\u06FFa-zA-Z0-9]/g, '_') + '.xls')
+        const unicodeMatch = disposition.match(/filename\*=UTF-8''([^;\n]+)/i)
+        const asciiMatch = disposition.match(/filename="?([^"\n;]+)"?/i)
+        let filename = `${title.replace(/[^\u0600-\u06FFa-zA-Z0-9]/g, '_')}.xls`
+        if (unicodeMatch && unicodeMatch[1]) {
+          try { filename = decodeURIComponent(unicodeMatch[1]) } catch(e) {}
+        } else if (asciiMatch && asciiMatch[1]) {
+          filename = asciiMatch[1]
+        }
         return res.blob().then(blob => ({ blob, filename }))
       })
       .then(({ blob, filename }) => {

@@ -312,9 +312,9 @@ exportApi.get('/cases_sample', async (c) => {
 </body>
 </html>`
 
-    const safeTitleSlug = groupTitleFinal.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_').slice(0, 40)
     const timestamp = Date.now()
-    const fileName = `${safeTitleSlug}_${sampleCount}_${timestamp}.xls`
+    const asciiFilename = `cases_sample_${sampleCount}_${timestamp}.xls`
+    const encodedUnicodeFilename = encodeURIComponent(`${groupTitleFinal}_${sampleCount}_${timestamp}.xls`)
 
     const encoder = new TextEncoder()
     const bodyBytes = encoder.encode('\uFEFF' + excelHtml)
@@ -323,7 +323,7 @@ exportApi.get('/cases_sample', async (c) => {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+        'Content-Disposition': `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodedUnicodeFilename}`,
         'Content-Length': String(bodyBytes.byteLength),
         'Cache-Control': 'no-cache, no-store'
       }
@@ -449,9 +449,9 @@ exportApi.get('/cases_full/:id', async (c) => {
 </body>
 </html>`
 
-    const safeTitleSlug = groupTitleFinal.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_').slice(0, 40)
     const timestamp = Date.now()
-    const fileName = `${safeTitleSlug}_full_${timestamp}.xls`
+    const asciiFilename = `cases_full_${timestamp}.xls`
+    const encodedUnicodeFilename = encodeURIComponent(`${groupTitleFinal}_full_${timestamp}.xls`)
 
     const encoder = new TextEncoder()
     const bodyBytes = encoder.encode('\uFEFF' + excelHtml)
@@ -460,7 +460,7 @@ exportApi.get('/cases_full/:id', async (c) => {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+        'Content-Disposition': `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodedUnicodeFilename}`,
         'Content-Length': String(bodyBytes.byteLength),
         'Cache-Control': 'no-cache, no-store'
       }
