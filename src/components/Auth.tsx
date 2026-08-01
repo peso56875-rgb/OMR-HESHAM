@@ -315,66 +315,89 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
             {volunteer ? (
               volunteer.status === 'approved' && volunteer.volunteer_code ? (
                 // ===== Digital Volunteer ID Card =====
-                <div class="vol-id-card" id="volunteerIdCard">
-                  <div class="vol-id-card-header">
-                    <img src="/static/foundation-logo.png" alt="شعار المؤسسة" class="vol-id-logo" />
-                    <div class="vol-id-org">
-                      <span>مؤسسة الدكتور عمر هشام الخيرية</span>
-                      <small>بطاقة متطوع رسمية معتمدة</small>
-                    </div>
-                    <div class="vol-id-status-dot"></div>
-                  </div>
-
-                  <div class="vol-id-body">
-                    <div class="vol-id-avatar-wrap">
-                      {volunteer.avatar_url
-                        ? <img src={volunteer.avatar_url} alt={volunteer.full_name} class="vol-id-avatar" />
-                        : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0,2).map((n: string) => n[0]).join('')}</div>
-                      }
-                      <div class="vol-id-rank-badge">{icon('fa-star')} {volunteer.rank || 'متطوع مبادر'}</div>
+                // ===== Ultra-Stunning Digital Volunteer ID Card =====
+                <div class="vol-id-card-wrapper">
+                  <div class="vol-id-card" id="volunteerIdCard">
+                    <div class="vol-id-card-bg-watermark">
+                      <img src="/static/foundation-logo.png" alt="" />
                     </div>
 
-                    <div class="vol-id-info">
-                      <h4 class="vol-id-name">{volunteer.full_name}</h4>
-                      <p class="vol-id-role">{volunteer.preferred_role || volunteer.team}</p>
-
-                      <div class="vol-id-code-box">
-                        <span class="vol-id-code-label">كود المتطوع</span>
-                        <strong class="vol-id-code">{volunteer.volunteer_code}</strong>
+                    <div class="vol-id-card-header">
+                      <img src="/static/foundation-logo.png" alt="شعار المؤسسة" class="vol-id-logo" />
+                      <div class="vol-id-org">
+                        <span>مؤسسة الدكتور عمر هشام الخيرية</span>
+                        <small>بطاقة متطوع رسمية معتمدة ✦ VOLUNTEER PASS</small>
                       </div>
-
-                      <div class="vol-id-meta-row">
-                        <div class="vol-id-meta-item">
-                          <span>{icon('fa-clock')} ساعات الخدمة</span>
-                          <b>{volunteer.hours_count || 0} ساعة</b>
-                        </div>
-                        <div class="vol-id-meta-item">
-                          <span>{icon('fa-calendar')} الاعتماد</span>
-                          <b>{volunteer.approved_at ? new Date(volunteer.approved_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'}</b>
-                        </div>
-                        <div class="vol-id-meta-item">
-                          <span>{icon('fa-calendar-xmark')} الانتهاء</span>
-                          <b style={`color:${volunteer.expires_at && new Date(volunteer.expires_at) < new Date() ? 'var(--coral)' : 'var(--emerald)'}`}>
-                            {volunteer.expires_at ? new Date(volunteer.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'}
-                          </b>
-                        </div>
+                      <div class="vol-id-chip">
+                        {icon('fa-sim-card')}
                       </div>
                     </div>
+
+                    <div class="vol-id-body">
+                      <div class="vol-id-avatar-wrap">
+                        {volunteer.avatar_url
+                          ? <img src={volunteer.avatar_url} alt={volunteer.full_name} class="vol-id-avatar" />
+                          : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0,2).map((n: string) => n[0]).join('')}</div>
+                        }
+                        <div class="vol-id-rank-badge">{icon('fa-star')} {volunteer.rank || 'متطوع مبادر'}</div>
+                      </div>
+
+                      <div class="vol-id-info">
+                        <h4 class="vol-id-name">{volunteer.full_name}</h4>
+                        <p class="vol-id-role">{icon('fa-people-carry-box')} {volunteer.preferred_role || volunteer.team}</p>
+
+                        <div class="vol-id-code-box">
+                          <span class="vol-id-code-label">كود الهوية الرقمي</span>
+                          <strong class="vol-id-code">{volunteer.volunteer_code}</strong>
+                        </div>
+
+                        <div class="vol-id-meta-row">
+                          <div class="vol-id-meta-item">
+                            <span>{icon('fa-clock')} ساعات الخدمة</span>
+                            <b>{volunteer.hours_count || 0} ساعة</b>
+                          </div>
+                          <div class="vol-id-meta-item">
+                            <span>{icon('fa-calendar')} الاعتماد</span>
+                            <b>{volunteer.approved_at ? new Date(volunteer.approved_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'}</b>
+                          </div>
+                          <div class="vol-id-meta-item">
+                            <span>{icon('fa-calendar-xmark')} الانتهاء</span>
+                            <b style={`color:${volunteer.expires_at && new Date(volunteer.expires_at) < new Date() ? '#ff7675' : '#55efc4'}`}>
+                              {volunteer.expires_at ? new Date(volunteer.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'}
+                            </b>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="vol-id-footer">
+                      <div class="vol-id-seal">
+                        <div class="vol-id-seal-badge">{icon('fa-shield-halved')}</div>
+                        <div>
+                          <span>هوية موثوقة</span>
+                          <small style="display:block;opacity:.7;font-size:.65rem">omarhesham.org</small>
+                        </div>
+                      </div>
+
+                      <div class="vol-id-validity">
+                        {volunteer.expires_at && new Date(volunteer.expires_at) < new Date()
+                          ? <span style="color:#ff7675">{icon('fa-triangle-exclamation')} منتهية الصلاحية</span>
+                          : <span style="color:#55efc4">{icon('fa-circle-check')} سارية المفعول</span>
+                        }
+                      </div>
+                    </div>
                   </div>
 
-                  <div class="vol-id-footer">
-                    <div class="vol-id-seal">
-                      {icon('fa-shield-halved')}
-                      <span>معتمد رسمياً</span>
-                    </div>
-                    <div class="vol-id-validity">
-                      {volunteer.expires_at && new Date(volunteer.expires_at) < new Date()
-                        ? <span style="color:var(--coral)">{icon('fa-triangle-exclamation')} البطاقة منتهية الصلاحية</span>
-                        : <span style="color:var(--emerald)">{icon('fa-circle-check')} البطاقة سارية المفعول</span>
-                      }
-                    </div>
-                    <button class="vol-id-print-btn outline-btn" id="printVolCard" type="button">
-                      {icon('fa-print')} طباعة البطاقة
+                  {/* ID Action Buttons Bar */}
+                  <div class="vol-id-actions-bar">
+                    <button class="primary-btn" id="downloadVolCardPng" type="button" style="padding:10px 18px;font-size:.85rem;background:var(--forest)">
+                      {icon('fa-download')} تحميل كصورة PNG
+                    </button>
+                    <button class="light-btn" id="downloadVolCardJpg" type="button" style="padding:10px 18px;font-size:.85rem">
+                      {icon('fa-file-image')} تحميل كصورة JPG
+                    </button>
+                    <button class="outline-btn" id="printVolCard" type="button" style="padding:10px 18px;font-size:.85rem">
+                      {icon('fa-print')} طباعة
                     </button>
                   </div>
                 </div>

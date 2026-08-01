@@ -1493,10 +1493,83 @@
 
   initVolAvatarUpload()
 
-  // ===== Print Volunteer Card =====
-  const printBtn = $('#printVolCard')
-  if (printBtn) {
-    printBtn.addEventListener('click', () => window.print())
+  // ===== Download & Print Volunteer ID Card =====
+  function initVolCardDownload() {
+    const cardEl = $('#volunteerIdCard')
+    const pngBtn = $('#downloadVolCardPng')
+    const jpgBtn = $('#downloadVolCardJpg')
+    const printBtn = $('#printVolCard')
+
+    if (printBtn) {
+      printBtn.addEventListener('click', () => window.print())
+    }
+
+    if (!cardEl || (!pngBtn && !jpgBtn)) return
+
+    // Dynamically load html2canvas if needed
+    function loadHtml2Canvas() {
+      return new Promise((resolve, reject) => {
+        if (window.html2canvas) return resolve(window.html2canvas)
+        const script = document.createElement('script')
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
+        script.onload = () => resolve(window.html2canvas)
+        script.onerror = () => reject(new Error('Failed to load html2canvas library'))
+        document.head.appendChild(script)
+      })
+    }
+
+    async function downloadImage(format = 'png') {
+      const btn = format === 'png' ? pngBtn : jpgBtn
+      const originalText = btn ? btn.innerHTML : ''
+      if (btn) {
+        btn.disabled = true
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري تجهيز الصورة...'
+      }
+
+      try {
+        const html2canvasLib = await loadHtml2Canvas()
+        const canvas = await html2canvasLib(cardEl, {
+          scale: 3, // High DPI export
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#072d25',
+          logging: false
+        })
+
+        const codeEl = cardEl.querySelector('.vol-id-code')
+        const codeText = codeEl ? codeEl.textContent.trim() : 'VOL-PASS'
+        const filename = `Volunteer_ID_${codeText}.${format}`
+
+        const mimeType = format === 'png' ? 'image/png' : 'image/jpeg'
+        const imageUri = canvas.toDataURL(mimeType, 0.95)
+
+        const link = document.createElement('a')
+        link.download = filename
+        link.href = imageUri
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        if (window.showToast) {
+          window.showToast(`تم تحميل بطاقة الهوية كـ ${format.toUpperCase()} بنجاح! 📸`, 'success')
+        }
+      } catch (err) {
+        console.error('Export error:', err)
+        if (window.showToast) {
+          window.showToast('تعذر تحميل الصورة الآن، يمكنك استخدام زر الطباعة.', 'error')
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false
+          btn.innerHTML = originalText
+        }
+      }
+    }
+
+    if (pngBtn) pngBtn.addEventListener('click', () => downloadImage('png'))
+    if (jpgBtn) jpgBtn.addEventListener('click', () => downloadImage('jpg'))
   }
+
+  initVolCardDownload()
 
 })()

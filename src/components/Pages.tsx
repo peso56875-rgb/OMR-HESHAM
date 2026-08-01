@@ -97,34 +97,89 @@ export function Volunteers({ user, stats }: { user?: UserSession, stats?: any })
       </div>
     </section>
 
-    {/* Application Form */}
+    {/* Enhanced Luxury Application Form */}
     <section class="roles section-pad">
       <form class="vol-application-form ajax-form reveal" data-endpoint="/api/volunteers" method="post" id="volForm">
         <div class="vol-form-header">
-          <p class="eyebrow">طلب انضمام</p>
-          <h2>أخبرنا كيف تحب أن تساعد.</h2>
-          <p style="color:var(--muted)">بعد تقديم طلبك، سيقوم فريق الإدارة بمراجعته وعند الموافقة ستحصل على بطاقة هوية رقمية رسمية وكود متطوع فريد.</p>
+          <span class="vol-form-badge">{icon('fa-hand-holding-heart')} بوابتك للعطاء</span>
+          <h2>انضم إلى عائلة المتطوعين</h2>
+          <p>قدّم طلبك الآن وسيقوم فريق الإدارة بمراجعته. بعد الاعتماد، ستتحول عضويتك تلقائياً إلى <strong>"متطوع رسمي"</strong> وستحصل على **بطاقة هويّة رقمية معتمدة** بكود خاص بك.</p>
         </div>
+
+        {/* Photo Upload Box */}
         <div class="vol-form-avatar-section">
-          <div class="vol-avatar-preview" id="volAvatarPreview">{icon('fa-camera')}</div>
-          <div>
-            <label class="vol-avatar-label outline-btn" id="volAvatarLabel">
-              {icon('fa-cloud-arrow-up')} رفع صورة شخصية
+          <div class="vol-avatar-preview" id="volAvatarPreview">
+            {icon('fa-camera')}
+          </div>
+          <div class="vol-avatar-text">
+            <label class="vol-avatar-label primary-btn" id="volAvatarLabel" style="padding:10px 20px;font-size:.85rem">
+              {icon('fa-cloud-arrow-up')} اختر صورة شخصية للبطاقة
               <input type="file" name="avatar_file" accept="image/*" id="volAvatarInput" style="display:none" />
             </label>
-            <small style="color:var(--muted);display:block;margin-top:8px">الصورة ستظهر في بطاقة الهوية الرقمية</small>
+            <small style="color:var(--muted);display:block;margin-top:8px">الصورة ستظهر بشكل رسمي على بطاقة الهوية الرقمية (اختياري)</small>
           </div>
           <input type="hidden" name="avatar_url" id="volAvatarUrl" />
         </div>
-        <div class="form-grid">
-          <label>الاسم الكامل<input name="name" required placeholder="أدخل اسمك الرباعي" /></label>
-          <label>العمر<input name="age" type="number" min="16" placeholder="مثلاً 22" /></label>
-          <label>رقم الهاتف<input name="phone" required placeholder="01xxxxxxxxx" /></label>
-          <label>المدينة<input name="city" placeholder="مثلاً المنصورة" /></label>
-          <label>المجال المفضل<select name="role">{roles.map(r => <option>{r[1]}</option>)}</select></label>
-          <label>مهاراتك<input name="skills" placeholder="مثلاً قيادة، تصوير، برمجة..." /></label>
+
+        {/* Form Inputs Grid */}
+        <div class="vol-input-grid">
+          <div class="vol-input-group">
+            <label>{icon('fa-user')} الاسم الكامل <span class="req">*</span></label>
+            <div class="vol-input-wrapper">
+              <i class="fa-solid fa-user input-icon"></i>
+              <input name="name" required placeholder="أدخل اسمك الرباعي هنا..." />
+            </div>
+          </div>
+
+          <div class="vol-input-group">
+            <label>{icon('fa-phone')} رقم الهاتف <span class="req">*</span></label>
+            <div class="vol-input-wrapper">
+              <i class="fa-solid fa-phone input-icon"></i>
+              <input name="phone" required placeholder="01xxxxxxxxx" dir="ltr" style="text-align:right" />
+            </div>
+          </div>
+
+          <div class="vol-input-group">
+            <label>{icon('fa-cake-candles')} العمر</label>
+            <div class="vol-input-wrapper">
+              <i class="fa-solid fa-cake-candles input-icon"></i>
+              <input name="age" type="number" min="16" max="90" placeholder="مثلاً 22" />
+            </div>
+          </div>
+
+          <div class="vol-input-group">
+            <label>{icon('fa-location-dot')} المدينة / المحافظة</label>
+            <div class="vol-input-wrapper">
+              <i class="fa-solid fa-location-dot input-icon"></i>
+              <input name="city" placeholder="مثلاً المنصورة، كفر العنانية..." />
+            </div>
+          </div>
+
+          <div class="vol-input-group vol-full-width">
+            <label>{icon('fa-briefcase')} مجال التطوع المفضل <span class="req">*</span></label>
+            <div class="vol-input-wrapper">
+              <i class="fa-solid fa-layer-group input-icon"></i>
+              <select name="role" required>
+                {roles.map(r => <option value={r[1]}>{r[1]} — {r[2]}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div class="vol-input-group vol-full-width">
+            <label>{icon('fa-wand-magic-sparkles')} الخبرات والمهارات الحالية</label>
+            <div class="vol-input-wrapper">
+              <i class="fa-solid fa-star input-icon"></i>
+              <input name="skills" placeholder="مثلاً: قيادة سيارة، تصوير، برمجة، تنظيم، تدريس..." />
+            </div>
+          </div>
         </div>
-        <button class="primary-btn submit-btn" type="submit" style="width:100%;justify-content:center;margin-top:20px">أرسل طلبي {icon('fa-paper-plane')}</button>
+
+        <div class="vol-form-footer">
+          <button class="primary-btn submit-btn" type="submit" style="width:100%;justify-content:center;padding:18px;font-size:1.05rem">
+            تقديم طلب التطوع الآن {icon('fa-paper-plane')}
+          </button>
+          <p class="vol-privacy-note">{icon('fa-lock')} بياناتك محفوظة ومحميّة بالكامل وفق أعلى معايير الخصوصية في المؤسسة.</p>
+        </div>
       </form>
     </section>
   </Layout>

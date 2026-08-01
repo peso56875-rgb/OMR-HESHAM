@@ -1902,46 +1902,76 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
 .vol-benefit-card h4{color:white;font-size:1.05rem;margin:0 0 8px}
 .vol-benefit-card p{color:rgba(255,255,255,.6);font-size:.84rem;margin:0;line-height:1.6}
 
-/* Application Form */
-.vol-application-form{max-width:900px;margin:0 auto;padding:50px;background:var(--ivory);border-radius:32px;border:1px solid var(--line);box-shadow:0 10px 40px rgba(0,0,0,.05)}
-.vol-form-header{margin-bottom:30px}
-.vol-form-header h2{font-size:2.2rem;margin:8px 0 12px}
-.vol-form-avatar-section{display:flex;align-items:center;gap:20px;padding:20px;background:var(--paper);border-radius:20px;border:1px solid var(--line);margin-bottom:24px}
-.vol-avatar-preview{width:80px;height:80px;min-width:80px;border-radius:50%;background:rgba(22,138,112,.1);color:var(--emerald);display:grid;place-items:center;font-size:1.5rem;overflow:hidden}
-.vol-avatar-preview img{width:100%;height:100%;object-fit:cover}
-.vol-avatar-label{cursor:pointer;gap:8px}
+/* Application Form Styling */
+.vol-application-form{max-width:920px;margin:0 auto;padding:55px 48px;background:var(--paper);border-radius:32px;border:1px solid var(--line);box-shadow:0 24px 70px rgba(10,56,48,.08);position:relative;overflow:hidden}
+.vol-application-form:before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,var(--emerald),var(--gold),var(--mint))}
+.vol-form-header{margin-bottom:35px;text-align:center}
+.vol-form-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(22,138,112,.1);color:var(--emerald);padding:6px 16px;border-radius:999px;font-size:.78rem;font-weight:800;margin-bottom:12px}
+.vol-form-header h2{font-size:clamp(2rem,4vw,2.8rem);margin:0 0 12px;font-weight:900;letter-spacing:-.02em}
+.vol-form-header p{color:var(--muted);max-width:640px;margin:0 auto;font-size:1rem;line-height:1.7}
 
-/* ===== DIGITAL VOLUNTEER ID CARD ===== */
-.vol-id-card{border-radius:24px;overflow:hidden;border:1px solid rgba(22,138,112,.2);box-shadow:0 16px 50px rgba(0,0,0,.12);background:linear-gradient(145deg,#0c5044 0%,#083828 60%,#072d25 100%);color:white;position:relative}
-.vol-id-card:before{content:'';position:absolute;inset:0;background-image:linear-gradient(30deg,transparent 48%,rgba(255,255,255,.04) 49%,rgba(255,255,255,.04) 51%,transparent 52%),linear-gradient(-30deg,transparent 48%,rgba(255,255,255,.025) 49%,rgba(255,255,255,.025) 51%,transparent 52%);background-size:50px 87px;pointer-events:none}
-.vol-id-card-header{position:relative;display:flex;align-items:center;gap:14px;padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
-.vol-id-logo{width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+.vol-form-avatar-section{display:flex;align-items:center;gap:24px;padding:22px 28px;background:var(--ivory);border-radius:24px;border:1px dashed var(--gold);margin-bottom:32px}
+.vol-avatar-preview{width:88px;height:88px;min-width:88px;border-radius:50%;background:rgba(22,138,112,.12);color:var(--emerald);display:grid;place-items:center;font-size:1.8rem;overflow:hidden;border:2px solid var(--gold);box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.vol-avatar-preview img{width:100%;height:100%;object-fit:cover}
+.vol-avatar-text{flex:1}
+.vol-avatar-label{cursor:pointer;gap:9px;display:inline-flex;align-items:center}
+
+/* Inputs Grid */
+.vol-input-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:32px}
+.vol-input-group{display:flex;flex-direction:column;gap:8px}
+.vol-input-group.vol-full-width{grid-column:1/-1}
+.vol-input-group label{font-weight:800;font-size:.85rem;color:var(--text);display:flex;align-items:center;gap:8px}
+.vol-input-group label i{color:var(--emerald);font-size:.9rem}
+.vol-input-group label .req{color:var(--coral);font-weight:900}
+.vol-input-wrapper{position:relative;display:flex;align-items:center}
+.vol-input-wrapper .input-icon{position:absolute;right:16px;color:var(--muted);font-size:.95rem;pointer-events:none;transition:.3s}
+.vol-input-wrapper input,.vol-input-wrapper select{width:100%;border:1px solid var(--line);background:var(--ivory);color:var(--text);border-radius:16px;padding:15px 46px 15px 16px;outline:none;font-size:.95rem;font-weight:600;transition:.3s var(--ease)}
+.vol-input-wrapper input:hover,.vol-input-wrapper select:hover{border-color:var(--emerald)}
+.vol-input-wrapper input:focus,.vol-input-wrapper select:focus{border-color:var(--emerald);background:var(--paper);box-shadow:0 0 0 4px rgba(22,138,112,.15)}
+.vol-input-wrapper input:focus + .input-icon,.vol-input-wrapper select:focus + .input-icon{color:var(--emerald)}
+
+.vol-form-footer{display:flex;flex-direction:column;align-items:center;gap:14px}
+.vol-privacy-note{font-size:.78rem;color:var(--muted);margin:0;display:flex;align-items:center;gap:8px}
+
+/* ===== ULTRA-STUNNING DIGITAL VOLUNTEER ID CARD ===== */
+.vol-id-card-wrapper{display:flex;flex-direction:column;gap:18px}
+.vol-id-card{position:relative;border-radius:28px;overflow:hidden;border:2px solid var(--gold);box-shadow:0 24px 70px rgba(0,0,0,.35);background:linear-gradient(135deg,#062b27 0%,#0c4a3f 50%,#06221e 100%);color:white;padding:0}
+.vol-id-card-bg-watermark{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;opacity:.06;overflow:hidden}
+.vol-id-card-bg-watermark img{width:320px;height:320px;object-fit:contain;transform:rotate(-15deg)}
+
+.vol-id-card-header{position:relative;z-index:2;display:flex;align-items:center;gap:14px;padding:22px 26px 18px;border-bottom:1px solid rgba(240,207,130,.2);background:linear-gradient(90deg,rgba(0,0,0,.2),transparent)}
+.vol-id-logo{width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
 .vol-id-org{flex:1}
-.vol-id-org span{display:block;font-weight:800;font-size:.9rem}
-.vol-id-org small{color:var(--gold-2);font-size:.72rem}
-.vol-id-status-dot{width:12px;height:12px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px var(--mint);animation:pulse 2s infinite}
-.vol-id-body{position:relative;display:flex;gap:24px;padding:24px;align-items:flex-start}
-.vol-id-avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:110px}
-.vol-id-avatar{width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid rgba(240,207,130,.5);box-shadow:0 8px 24px rgba(0,0,0,.3)}
-.vol-id-avatar-initials{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--emerald),var(--forest));display:grid;place-items:center;font-size:2rem;font-weight:900;border:3px solid rgba(240,207,130,.5);box-shadow:0 8px 24px rgba(0,0,0,.3)}
-.vol-id-rank-badge{background:rgba(240,207,130,.18);color:var(--gold-2);border:1px solid rgba(240,207,130,.3);border-radius:999px;padding:4px 12px;font-size:.72rem;font-weight:800;text-align:center;white-space:nowrap}
-.vol-id-rank-badge i{font-size:.6rem}
+.vol-id-org span{display:block;font-weight:900;font-size:1.02rem;color:white;letter-spacing:-.01em}
+.vol-id-org small{color:var(--gold-2);font-size:.72rem;font-weight:700;display:block;margin-top:2px}
+.vol-id-chip{color:var(--gold-2);font-size:1.4rem;opacity:.8}
+
+.vol-id-body{position:relative;z-index:2;display:flex;gap:24px;padding:26px;align-items:center}
+.vol-id-avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:115px}
+.vol-id-avatar{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.vol-id-avatar-initials{width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,var(--emerald),var(--forest));display:grid;place-items:center;font-size:2.2rem;font-weight:900;color:white;border:3px solid var(--gold);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.vol-id-rank-badge{background:rgba(240,207,130,.2);color:var(--gold-2);border:1px solid rgba(240,207,130,.4);border-radius:999px;padding:4px 14px;font-size:.74rem;font-weight:800;text-align:center;white-space:nowrap;backdrop-filter:blur(4px)}
+.vol-id-rank-badge i{font-size:.65rem}
+
 .vol-id-info{flex:1}
-.vol-id-name{font-size:1.4rem;font-weight:900;margin:0 0 4px;letter-spacing:-.02em}
-.vol-id-role{color:rgba(255,255,255,.65);font-size:.88rem;margin:0 0 18px}
-.vol-id-code-box{background:rgba(240,207,130,.08);border:1px solid rgba(240,207,130,.2);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
-.vol-id-code-label{font-size:.72rem;color:rgba(255,255,255,.55);font-weight:700}
-.vol-id-code{font-family:'Courier New',monospace;font-size:1.6rem;font-weight:900;color:var(--gold-2);letter-spacing:.12em}
+.vol-id-name{font-size:1.55rem;font-weight:900;margin:0 0 4px;color:white;letter-spacing:-.02em}
+.vol-id-role{color:var(--mint);font-size:.9rem;font-weight:700;margin:0 0 16px;display:flex;align-items:center;gap:6px}
+.vol-id-code-box{background:linear-gradient(90deg,rgba(240,207,130,.15),rgba(240,207,130,.05));border:1px solid rgba(240,207,130,.35);border-radius:14px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.vol-id-code-label{font-size:.72rem;color:rgba(255,255,255,.6);font-weight:700}
+.vol-id-code{font-family:'Manrope','Courier New',monospace;font-size:1.75rem;font-weight:900;color:var(--gold-2);letter-spacing:.14em;text-shadow:0 0 15px rgba(240,207,130,.3)}
+
 .vol-id-meta-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.vol-id-meta-item{background:rgba(255,255,255,.06);border-radius:10px;padding:10px 12px}
-.vol-id-meta-item span{display:block;font-size:.68rem;color:rgba(255,255,255,.5);margin-bottom:4px}
-.vol-id-meta-item b{font-size:.88rem;font-weight:800}
-.vol-id-footer{position:relative;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-top:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.15);flex-wrap:wrap;gap:10px}
-.vol-id-seal{display:flex;align-items:center;gap:8px;color:var(--gold-2);font-size:.78rem;font-weight:800}
-.vol-id-seal i{font-size:1.1rem}
-.vol-id-validity{font-size:.78rem;font-weight:700}
-.vol-id-print-btn{font-size:.78rem;padding:8px 16px;border-color:rgba(255,255,255,.2);color:white}
-.vol-id-print-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.4)}
+.vol-id-meta-item{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:9px 12px}
+.vol-id-meta-item span{display:block;font-size:.68rem;color:rgba(255,255,255,.55);margin-bottom:3px}
+.vol-id-meta-item b{font-size:.88rem;font-weight:800;color:white}
+
+.vol-id-footer{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:16px 26px;border-top:1px solid rgba(240,207,130,.2);background:rgba(0,0,0,.25);flex-wrap:wrap;gap:12px}
+.vol-id-seal{display:flex;align-items:center;gap:10px;color:var(--gold-2);font-size:.82rem;font-weight:800}
+.vol-id-seal-badge{width:34px;height:34px;border-radius:50%;background:rgba(240,207,130,.2);border:1px solid var(--gold);display:grid;place-items:center;font-size:.9rem}
+.vol-id-validity{font-size:.82rem;font-weight:800}
+
+/* Actions bar */
+.vol-id-actions-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 
 /* Responsive volunteer */
 @media(max-width:780px){
@@ -1950,11 +1980,15 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
   .vol-role-grid::-webkit-scrollbar,.vol-benefits-grid::-webkit-scrollbar{display:none}
   .vol-role-card,.vol-benefit-card{min-width:80vw;scroll-snap-align:center}
   .vol-verify-input-row{flex-direction:column}
-  .vol-application-form{padding:28px 20px}
+  .vol-application-form{padding:35px 22px}
+  .vol-input-grid{grid-template-columns:1fr}
   .vol-id-body{flex-direction:column;align-items:center;text-align:center}
+  .vol-id-role{justify-content:center}
   .vol-id-meta-row{grid-template-columns:1fr 1fr}
   .vol-id-code-box{flex-direction:column;gap:6px;text-align:center}
   .vol-id-footer{flex-direction:column;text-align:center}
+  .vol-id-actions-bar{flex-direction:column;width:100%}
+  .vol-id-actions-bar button{width:100%;justify-content:center}
 }
 
 /* Print volunteer card */
@@ -1962,3 +1996,4 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
   body *:not(#volunteerIdCard):not(#volunteerIdCard *){display:none!important}
   #volunteerIdCard{display:block!important;position:fixed;inset:0;margin:auto;max-width:420px;print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }
+
