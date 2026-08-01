@@ -1387,4 +1387,116 @@
   }
 
   initGallery()
+
+  // ===== Volunteer ID Verify Tool =====
+  function initVolVerify() {
+    const btn = $('#volVerifyBtn')
+    const input = $('#volVerifyInput')
+    const result = $('#volVerifyResult')
+    if (!btn || !input || !result) return
+
+    async function verify() {
+      const code = input.value.trim()
+      if (!code) {
+        input.focus()
+        return
+      }
+      btn.disabled = true
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحقق...'
+
+      try {
+        const res = await fetch(`/api/volunteers/verify/${encodeURIComponent(code)}`)
+        const data = await res.json()
+
+        result.style.display = 'block'
+        result.className = 'vol-verify-result ' + (data.found ? 'found' : 'not-found')
+
+        if (data.found) {
+          const v = data.volunteer
+          const isExpired = data.expired
+          result.innerHTML = `
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <div style="width:52px;height:52px;border-radius:50%;background:rgba(22,138,112,.3);display:grid;place-items:center;font-size:1.3rem;color:#7ee2bd;overflow:hidden;flex-shrink:0">
+                ${v.avatar_url ? `<img src="${v.avatar_url}" style="width:100%;height:100%;object-fit:cover" />` : '<i class="fa-solid fa-user"></i>'}
+              </div>
+              <div style="flex:1">
+                <strong style="font-size:1.05rem;display:block">${v.full_name}</strong>
+                <span style="font-size:.82rem;color:rgba(255,255,255,.65)">${v.preferred_role || v.team || ''}</span>
+              </div>
+              <div style="text-align:center">
+                <span style="font-family:monospace;font-size:1.1rem;font-weight:900;color:#f0cf82;display:block">${v.volunteer_code}</span>
+                <small style="font-size:.68rem;color:rgba(255,255,255,.5)">${v.rank || 'متطوع مبادر'}</small>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:.8rem;font-weight:700;${isExpired ? 'color:#e86f51' : 'color:#7ee2bd'}">
+              <i class="fa-solid ${isExpired ? 'fa-triangle-exclamation' : 'fa-shield-halved'}"></i>
+              ${isExpired ? 'هذه البطاقة منتهية الصلاحية' : 'متطوع معتمد رسمياً من مؤسسة الدكتور عمر هشام ✦'}
+              ${v.expires_at ? `&nbsp;·&nbsp; تنتهي: ${new Date(v.expires_at).toLocaleDateString('ar-EG', {year:'numeric',month:'long'})}` : ''}
+            </div>
+          `
+        } else {
+          result.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.8)">
+              <i class="fa-solid fa-circle-xmark" style="font-size:1.3rem;color:#e86f51"></i>
+              <span>${data.message || 'لا يوجد متطوع بهذا الكود أو أن الكود غير مفعّل.'}</span>
+            </div>
+          `
+        }
+      } catch (e) {
+        result.style.display = 'block'
+        result.className = 'vol-verify-result not-found'
+        result.innerHTML = '<i class="fa-solid fa-wifi"></i> تعذر التحقق الآن، يرجى المحاولة لاحقاً.'
+      } finally {
+        btn.disabled = false
+        btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> تحقق الآن'
+      }
+    }
+
+    btn.addEventListener('click', verify)
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') verify() })
+  }
+
+  initVolVerify()
+
+  // ===== Volunteer Avatar Preview =====
+  function initVolAvatarUpload() {
+    const fileInput = $('#volAvatarInput')
+    const preview = $('#volAvatarPreview')
+    const hiddenUrl = $('#volAvatarUrl')
+    if (!fileInput || !preview) return
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+
+      // Show local preview immediately
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        preview.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`
+      }
+      reader.readAsDataURL(file)
+
+      // Upload to server
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await fetch('/api/upload', { method: 'POST', body: formData })
+        const data = await res.json()
+        if (data.url && hiddenUrl) {
+          hiddenUrl.value = data.url
+        }
+      } catch (err) {
+        console.error('Avatar upload failed:', err)
+      }
+    })
+  }
+
+  initVolAvatarUpload()
+
+  // ===== Print Volunteer Card =====
+  const printBtn = $('#printVolCard')
+  if (printBtn) {
+    printBtn.addEventListener('click', () => window.print())
+  }
+
 })()

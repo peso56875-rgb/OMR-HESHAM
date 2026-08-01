@@ -9,24 +9,122 @@ export function Achievements({ user }: { user?: UserSession }) {
   </Layout>
 }
 
-export function Volunteers({ user }: { user?: UserSession }) {
-  const roles = [['fa-people-carry-box', 'تطوع ميداني'], ['fa-user-doctor', 'تطوع طبي'], ['fa-laptop-code', 'تطوع رقمي'], ['fa-chalkboard-user', 'تطوع تعليمي'], ['fa-bullhorn', 'توعية وحملات'], ['fa-people-roof', 'رعاية أسر']]
+export function Volunteers({ user, stats }: { user?: UserSession, stats?: any }) {
+  const roles = [
+    ['fa-people-carry-box', 'تطوع ميداني', 'المشاركة في القوافل الإنسانية وتوزيع المساعدات على الأسر الأولى بالرعاية.', 'tone-emerald'],
+    ['fa-user-doctor', 'تطوع طبي', 'دعم العيادات والقوافل الطبية وتقديم الاستشارات الصحية المجانية.', 'tone-blue'],
+    ['fa-laptop-code', 'تطوع رقمي', 'المساهمة في تطوير المنصات الرقمية والتصميم والتوثيق الإعلامي.', 'tone-violet'],
+    ['fa-chalkboard-user', 'تطوع تعليمي', 'تعليم الأطفال ومحو الأمية ودعم حلقات تحفيظ القرآن الكريم.', 'tone-gold'],
+    ['fa-bullhorn', 'توعية وحملات', 'تنظيم حملات التوعية المجتمعية والمشاركة في الفعاليات.', 'tone-coral'],
+    ['fa-people-roof', 'رعاية أسر', 'كفالة ومتابعة الأسر المحتاجة وتوصيل الدعم بانتظام.', 'tone-cyan']
+  ]
+  const totalVols = stats?.total || 0
+  const totalHours = stats?.totalHours || 0
+
   return <Layout user={user} title="تطوع معنا | مؤسسة الدكتور عمر هشام">
     <PageHero kicker="كن جزءًا من الحكاية" title={'قد لا تتبرع بالمال،<br/><em>لكن وقتك ثروة.</em>'} text="موهبتك، خبرتك، أو حتى ساعتان من يومك قد تصنع فرقًا حقيقيًا في حياة إنسان." />
-    <section class="roles section-pad">
-      <div class="role-grid">{roles.map(r => <article class="role-card reveal">{icon(r[0])}<h3>{r[1]}</h3><p>شارك بمهارتك ضمن فريق يؤمن أن العمل المنظم والرحيم يصنع أثرًا أكبر.</p></article>)}</div>
-      <form class="application-form ajax-form reveal" data-endpoint="/api/volunteers" method="post" id="volForm">
-        <p class="eyebrow">طلب انضمام</p>
-        <h2>أخبرنا كيف تحب أن تساعد.</h2>
-        <div class="form-grid">
-          <label>الاسم<input name="name" required /></label>
-          <label>العمر<input name="age" type="number" min="16" /></label>
-          <label>الهاتف<input name="phone" required /></label>
-          <label>المدينة<input name="city" /></label>
-          <label>المجال المفضل<select name="role">{roles.map(r => <option>{r[1]}</option>)}</select></label>
-          <label>مهاراتك<input name="skills" /></label>
+
+    {/* Volunteer Impact Stats */}
+    <section class="vol-impact section-pad" style="padding-bottom:0">
+      <div class="vol-impact-grid">
+        <article class="vol-impact-card reveal">
+          <div class="vol-impact-icon">{icon('fa-users')}</div>
+          <b>{totalVols > 0 ? totalVols : '٢٥'}+</b>
+          <span>متطوع نشط</span>
+        </article>
+        <article class="vol-impact-card reveal" style="--delay:100ms">
+          <div class="vol-impact-icon">{icon('fa-clock')}</div>
+          <b>{totalHours > 0 ? totalHours : '٥٠٠'}+</b>
+          <span>ساعة خدمة تطوعية</span>
+        </article>
+        <article class="vol-impact-card reveal" style="--delay:200ms">
+          <div class="vol-impact-icon">{icon('fa-id-badge')}</div>
+          <b>VOL</b>
+          <span>بطاقة هوية رقمية</span>
+        </article>
+        <article class="vol-impact-card reveal" style="--delay:300ms">
+          <div class="vol-impact-icon">{icon('fa-award')}</div>
+          <b>٤</b>
+          <span>رتب تطوعية</span>
+        </article>
+      </div>
+    </section>
+
+    {/* ID Verification Tool */}
+    <section class="vol-verify-section section-pad reveal">
+      <div class="vol-verify-box">
+        <div class="vol-verify-header">
+          <div class="vol-verify-icon-wrap">{icon('fa-shield-halved')}</div>
+          <div>
+            <h3>التحقق من هوية المتطوع</h3>
+            <p>أدخل كود المتطوع للتأكد من صلاحية بطاقة الهوية واعتماده رسمياً من المؤسسة.</p>
+          </div>
         </div>
-        <button class="primary-btn">أرسل طلبي {icon('fa-arrow-left')}</button>
+        <div class="vol-verify-input-row">
+          <input type="text" id="volVerifyInput" placeholder="أدخل الكود مثلاً VOL-1" autocomplete="off" />
+          <button type="button" id="volVerifyBtn" class="primary-btn">{icon('fa-magnifying-glass')} تحقق الآن</button>
+        </div>
+        <div id="volVerifyResult" class="vol-verify-result" style="display:none"></div>
+      </div>
+    </section>
+
+    {/* Volunteer Roles */}
+    <section class="vol-roles section-pad">
+      <div class="section-head"><p class="eyebrow">مسارات التطوع</p><h2>اختر مسارك<br/><em>واصنع أثرك.</em></h2></div>
+      <div class="vol-role-grid">
+        {roles.map((r, i) => <article class={`vol-role-card ${r[3]} reveal`} style={`--delay:${i * 80}ms`}>
+          <div class="vol-role-icon">{icon(r[0])}</div>
+          <h3>{r[1]}</h3>
+          <p>{r[2]}</p>
+        </article>)}
+      </div>
+    </section>
+
+    {/* Volunteer ID Benefits */}
+    <section class="vol-id-benefits section-pad" style="background:var(--ink);color:white">
+      <div class="section-head"><p class="eyebrow" style="color:var(--gold-2)">بطاقة هوية المتطوع الرقمية</p><h2 style="color:white">كل متطوعٍ معتمد<br/><em style="color:var(--gold-2)">يحمل هويّته الرسمية.</em></h2></div>
+      <div class="vol-benefits-grid">
+        {[
+          ['fa-fingerprint', 'كود فريد', 'كل متطوع يحصل على كود خاص (VOL-1, VOL-2...) يُعرّفه رسمياً.'],
+          ['fa-calendar-check', 'صلاحية سنتين', 'البطاقة صالحة لمدة عامين كاملين من تاريخ الاعتماد.'],
+          ['fa-star', 'رتب تطوعية', 'متطوع مبادر ← فعّال ← قائد ميداني ← سفير العطاء.'],
+          ['fa-download', 'قابلة للتحميل', 'بطاقة احترافية يمكن تحميلها ومشاركتها بفخر.']
+        ].map((b, i) => <article class="vol-benefit-card reveal" style={`--delay:${i * 100}ms`}>
+          <div>{icon(b[0])}</div>
+          <h4>{b[1]}</h4>
+          <p>{b[2]}</p>
+        </article>)}
+      </div>
+    </section>
+
+    {/* Application Form */}
+    <section class="roles section-pad">
+      <form class="vol-application-form ajax-form reveal" data-endpoint="/api/volunteers" method="post" id="volForm">
+        <div class="vol-form-header">
+          <p class="eyebrow">طلب انضمام</p>
+          <h2>أخبرنا كيف تحب أن تساعد.</h2>
+          <p style="color:var(--muted)">بعد تقديم طلبك، سيقوم فريق الإدارة بمراجعته وعند الموافقة ستحصل على بطاقة هوية رقمية رسمية وكود متطوع فريد.</p>
+        </div>
+        <div class="vol-form-avatar-section">
+          <div class="vol-avatar-preview" id="volAvatarPreview">{icon('fa-camera')}</div>
+          <div>
+            <label class="vol-avatar-label outline-btn" id="volAvatarLabel">
+              {icon('fa-cloud-arrow-up')} رفع صورة شخصية
+              <input type="file" name="avatar_file" accept="image/*" id="volAvatarInput" style="display:none" />
+            </label>
+            <small style="color:var(--muted);display:block;margin-top:8px">الصورة ستظهر في بطاقة الهوية الرقمية</small>
+          </div>
+          <input type="hidden" name="avatar_url" id="volAvatarUrl" />
+        </div>
+        <div class="form-grid">
+          <label>الاسم الكامل<input name="name" required placeholder="أدخل اسمك الرباعي" /></label>
+          <label>العمر<input name="age" type="number" min="16" placeholder="مثلاً 22" /></label>
+          <label>رقم الهاتف<input name="phone" required placeholder="01xxxxxxxxx" /></label>
+          <label>المدينة<input name="city" placeholder="مثلاً المنصورة" /></label>
+          <label>المجال المفضل<select name="role">{roles.map(r => <option>{r[1]}</option>)}</select></label>
+          <label>مهاراتك<input name="skills" placeholder="مثلاً قيادة، تصوير، برمجة..." /></label>
+        </div>
+        <button class="primary-btn submit-btn" type="submit" style="width:100%;justify-content:center;margin-top:20px">أرسل طلبي {icon('fa-paper-plane')}</button>
       </form>
     </section>
   </Layout>

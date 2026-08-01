@@ -3,7 +3,7 @@ export interface UserSession {
   email: string
   name: string
   avatar: string
-  role: 'admin' | 'donor' | 'user'
+  role: 'admin' | 'donor' | 'user' | 'volunteer'
   phone?: string
 }
 
@@ -51,6 +51,13 @@ export interface Volunteer {
   preferred_role?: string
   skills?: string
   status: 'pending' | 'approved' | 'rejected'
+  volunteer_code?: string
+  rank?: string
+  hours_count?: number
+  team?: string
+  avatar_url?: string
+  approved_at?: string
+  expires_at?: string
   created_at?: string
 }
 
@@ -138,7 +145,7 @@ export interface UserProfile {
   full_name: string
   email: string
   phone?: string
-  role: 'admin' | 'donor'
+  role: 'admin' | 'donor' | 'volunteer'
   avatar_url?: string
   created_at?: string
 }

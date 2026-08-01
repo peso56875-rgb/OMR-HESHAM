@@ -642,9 +642,17 @@ export function DashDonations({ list = [] }: { list: any[] }) {
 }
 
 export function DashVolunteers({ list = [] }: { list: any[] }) {
+  const totalApproved = list.filter((v: any) => v.status === 'approved').length
+  const totalHours = list.reduce((sum: number, v: any) => sum + (v.hours_count || 0), 0)
+
   return <section class="dash-table">
-    <header style="display:flex; justify-content:space-between; align-items:center">
-      <h3>طلبات التطوع الواردة</h3>
+    <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px">
+      <div>
+        <h3>المتطوعون</h3>
+        <p style="color:var(--muted);font-size:.82rem;margin:4px 0 0">
+          {icon('fa-circle-check')} {totalApproved} معتمد &nbsp;|&nbsp; {icon('fa-clock')} إجمالي {totalHours} ساعة خدمة
+        </p>
+      </div>
       <a href="/api/export/volunteers" download class="export-excel-btn">
         {icon('fa-file-excel')} تصدير Excel
       </a>
@@ -653,10 +661,12 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
       <thead>
         <tr>
           <th>الاسم</th>
+          <th>كود المتطوع</th>
           <th>الهاتف</th>
-          <th>المدينة</th>
-          <th>المجال المفضل</th>
-          <th>المهارات</th>
+          <th>المجال</th>
+          <th>الرتبة</th>
+          <th>الساعات</th>
+          <th>الانتهاء</th>
           <th>الحالة</th>
           <th>الإجراءات</th>
         </tr>
@@ -664,28 +674,60 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
       <tbody>
         {list.map((v: any) => {
           const isApproved = v.status === 'approved'
+          const isExpired = v.expires_at && new Date(v.expires_at) < new Date()
+          const expiryDate = v.expires_at ? new Date(v.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'
           return <tr>
-            <td>{v.full_name}</td>
-            <td>{v.phone}</td>
-            <td>{v.city}</td>
-            <td>{v.preferred_role}</td>
-            <td>{v.skills}</td>
-            <td>
-              <span style={`padding:2px 8px; border-radius:4px; font-weight:600; background:${isApproved ? 'rgba(67,160,71,.15)' : v.status === 'rejected' ? 'rgba(231,76,60,.15)' : 'rgba(245,124,0,.15)'}; color:${isApproved ? 'var(--emerald-600)' : v.status === 'rejected' ? '#e53935' : 'var(--gold-600)'}`}>
-                {v.status === 'approved' ? 'مقبول' : v.status === 'rejected' ? 'مرفوض' : 'معلق'}
-              </span>
+            <td style="font-weight:700">
+              {v.avatar_url && <img src={v.avatar_url} alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-left:8px;vertical-align:middle;display:inline-block" />}
+              {v.full_name}
             </td>
             <td>
+              {v.volunteer_code
+                ? <span style="font-family:monospace;font-weight:900;font-size:.9rem;color:var(--emerald);background:rgba(22,138,112,.1);padding:4px 10px;border-radius:8px;border:1px solid rgba(22,138,112,.2)">{v.volunteer_code}</span>
+                : <span style="color:var(--muted);font-size:.8rem">—</span>
+              }
+            </td>
+            <td>{v.phone}</td>
+            <td style="font-size:.82rem">{v.preferred_role}</td>
+            <td style="font-size:.8rem">{v.rank || (isApproved ? 'متطوع مبادر' : '—')}</td>
+            <td style="font-weight:700;color:var(--emerald)">{v.hours_count || 0} س</td>
+            <td style={`font-size:.78rem;color:${isExpired ? 'var(--coral)' : 'var(--muted)'}`}>
+              {isExpired ? icon('fa-triangle-exclamation') : ''} {expiryDate}
+            </td>
+            <td>
+              <span style={`padding:3px 9px; border-radius:6px; font-weight:700; font-size:.75rem; background:${isApproved ? 'rgba(67,160,71,.15)' : v.status === 'rejected' ? 'rgba(231,76,60,.15)' : 'rgba(245,124,0,.15)'}; color:${isApproved ? 'var(--emerald-600)' : v.status === 'rejected' ? '#e53935' : 'var(--gold-600)'}`}>
+                {v.status === 'approved' ? 'معتمد' : v.status === 'rejected' ? 'مرفوض' : 'معلق'}
+              </span>
+            </td>
+            <td style="white-space:nowrap">
               {v.status === 'pending' && <>
                 <form action={`/api/volunteers/status/${v.id}`} method="post" style="display:inline; margin-inline-end:.3rem">
                   <input type="hidden" name="status" value="approved" />
-                  <button type="submit" style="background:var(--emerald-600); color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer">قبول</button>
+                  <button type="submit" style="background:var(--emerald-600);color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:700">{icon('fa-circle-check')} قبول</button>
                 </form>
-                <form action={`/api/volunteers/status/${v.id}`} method="post" style="display:inline">
+                <form action={`/api/volunteers/status/${v.id}`} method="post" style="display:inline;margin-inline-end:.3rem">
                   <input type="hidden" name="status" value="rejected" />
-                  <button type="submit" style="background:#ff6b6b; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer">رفض</button>
+                  <button type="submit" style="background:#ff6b6b;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:700">{icon('fa-circle-xmark')} رفض</button>
                 </form>
               </>}
+              {isApproved && (
+                <details style="display:inline-block;position:relative">
+                  <summary style="cursor:pointer;list-style:none;background:var(--line);border:1px solid var(--border);padding:5px 10px;border-radius:6px;font-size:.78rem;font-weight:700">
+                    {icon('fa-pen')} تعديل
+                  </summary>
+                  <form action={`/api/volunteers/update-hours/${v.id}`} method="post" style="position:absolute;left:0;top:110%;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;z-index:10;min-width:220px;box-shadow:0 10px 30px rgba(0,0,0,.12)">
+                    <label style="display:flex;flex-direction:column;gap:5px;font-size:.8rem;font-weight:700;margin-bottom:10px">
+                      الساعات<input type="number" name="hours" value={String(v.hours_count || 0)} min="0" style="border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--ivory);color:var(--text)" />
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:5px;font-size:.8rem;font-weight:700;margin-bottom:12px">
+                      الرتبة<select name="rank" style="border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--ivory);color:var(--text)">
+                        {['متطوع مبادر', 'متطوع فعّال', 'قائد ميداني', 'سفير العطاء'].map(r => <option selected={v.rank === r}>{r}</option>)}
+                      </select>
+                    </label>
+                    <button type="submit" style="width:100%;background:var(--forest);color:white;border:none;border-radius:8px;padding:8px;font-weight:700;font-size:.8rem;cursor:pointer">حفظ</button>
+                  </form>
+                </details>
+              )}
             </td>
           </tr>
         })}

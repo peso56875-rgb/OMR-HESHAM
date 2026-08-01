@@ -236,7 +236,8 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
             <h1>{user.name}</h1>
             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
               <span class="role-pill">
-                {icon(user.role === 'admin' ? 'fa-user-shield' : 'fa-user')} {user.role === 'admin' ? 'مشرف الموقع' : 'عضو المؤسسة'}
+                {icon(user.role === 'admin' ? 'fa-user-shield' : user.role === 'volunteer' ? 'fa-people-carry-box' : 'fa-user')}
+                {user.role === 'admin' ? 'مشرف الموقع' : user.role === 'volunteer' ? 'متطوع رسمي' : 'عضو المؤسسة'}
               </span>
               {totalDonated > 0 && (
                 <span class={`profile-badge-tier ${tierClass}`}>
@@ -312,25 +313,91 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
             <h3>{icon('fa-people-group')} مسيرتك التطوعية</h3>
 
             {volunteer ? (
-              <div style="background:var(--ivory); border:1px solid var(--line); padding:25px; border-radius:20px; display:flex; flex-direction:column; gap:15px">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px">
-                  <div>
-                    <h4 style="margin:0 0 5px; font-weight:800; font-size:1.15rem">{volunteer.preferred_role}</h4>
-                    <span style="font-size:0.85rem; color:var(--muted)">رقم الهاتف: {volunteer.phone}</span>
+              volunteer.status === 'approved' && volunteer.volunteer_code ? (
+                // ===== Digital Volunteer ID Card =====
+                <div class="vol-id-card" id="volunteerIdCard">
+                  <div class="vol-id-card-header">
+                    <img src="/static/foundation-logo.png" alt="شعار المؤسسة" class="vol-id-logo" />
+                    <div class="vol-id-org">
+                      <span>مؤسسة الدكتور عمر هشام الخيرية</span>
+                      <small>بطاقة متطوع رسمية معتمدة</small>
+                    </div>
+                    <div class="vol-id-status-dot"></div>
                   </div>
-                  <span class={`profile-vol-badge ${volunteer.status === 'approved' ? 'approved' : volunteer.status === 'rejected' ? 'rejected' : 'pending'}`}>
-                    {volunteer.status === 'approved' ? icon('fa-circle-check') : volunteer.status === 'rejected' ? icon('fa-circle-xmark') : icon('fa-clock')}
-                    {volunteer.status === 'approved' ? 'عضو متطوع نشط' : volunteer.status === 'rejected' ? 'مرفوض حاليًا' : 'طلب قيد المراجعة'}
-                  </span>
+
+                  <div class="vol-id-body">
+                    <div class="vol-id-avatar-wrap">
+                      {volunteer.avatar_url
+                        ? <img src={volunteer.avatar_url} alt={volunteer.full_name} class="vol-id-avatar" />
+                        : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0,2).map((n: string) => n[0]).join('')}</div>
+                      }
+                      <div class="vol-id-rank-badge">{icon('fa-star')} {volunteer.rank || 'متطوع مبادر'}</div>
+                    </div>
+
+                    <div class="vol-id-info">
+                      <h4 class="vol-id-name">{volunteer.full_name}</h4>
+                      <p class="vol-id-role">{volunteer.preferred_role || volunteer.team}</p>
+
+                      <div class="vol-id-code-box">
+                        <span class="vol-id-code-label">كود المتطوع</span>
+                        <strong class="vol-id-code">{volunteer.volunteer_code}</strong>
+                      </div>
+
+                      <div class="vol-id-meta-row">
+                        <div class="vol-id-meta-item">
+                          <span>{icon('fa-clock')} ساعات الخدمة</span>
+                          <b>{volunteer.hours_count || 0} ساعة</b>
+                        </div>
+                        <div class="vol-id-meta-item">
+                          <span>{icon('fa-calendar')} الاعتماد</span>
+                          <b>{volunteer.approved_at ? new Date(volunteer.approved_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'}</b>
+                        </div>
+                        <div class="vol-id-meta-item">
+                          <span>{icon('fa-calendar-xmark')} الانتهاء</span>
+                          <b style={`color:${volunteer.expires_at && new Date(volunteer.expires_at) < new Date() ? 'var(--coral)' : 'var(--emerald)'}`}>
+                            {volunteer.expires_at ? new Date(volunteer.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'}
+                          </b>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="vol-id-footer">
+                    <div class="vol-id-seal">
+                      {icon('fa-shield-halved')}
+                      <span>معتمد رسمياً</span>
+                    </div>
+                    <div class="vol-id-validity">
+                      {volunteer.expires_at && new Date(volunteer.expires_at) < new Date()
+                        ? <span style="color:var(--coral)">{icon('fa-triangle-exclamation')} البطاقة منتهية الصلاحية</span>
+                        : <span style="color:var(--emerald)">{icon('fa-circle-check')} البطاقة سارية المفعول</span>
+                      }
+                    </div>
+                    <button class="vol-id-print-btn outline-btn" id="printVolCard" type="button">
+                      {icon('fa-print')} طباعة البطاقة
+                    </button>
+                  </div>
                 </div>
-                <p style="margin: 0; font-size:0.92rem; color:var(--muted); line-height:1.6">
-                  {volunteer.status === 'approved'
-                    ? 'أهلاً بك في عائلة متطوعي مؤسسة الدكتور عمر هشام. سنقوم بالتواصل معك قريباً للمشاركة في مبادراتنا الميدانية والمجتمعية القادمة.'
-                    : volunteer.status === 'rejected'
+              ) : (
+                // Pending or rejected state
+                <div style="background:var(--ivory); border:1px solid var(--line); padding:25px; border-radius:20px; display:flex; flex-direction:column; gap:15px">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px">
+                    <div>
+                      <h4 style="margin:0 0 5px; font-weight:800; font-size:1.15rem">{volunteer.preferred_role}</h4>
+                      <span style="font-size:0.85rem; color:var(--muted)">رقم الهاتف: {volunteer.phone}</span>
+                    </div>
+                    <span class={`profile-vol-badge ${volunteer.status === 'rejected' ? 'rejected' : 'pending'}`}>
+                      {volunteer.status === 'rejected' ? icon('fa-circle-xmark') : icon('fa-clock')}
+                      {volunteer.status === 'rejected' ? 'مرفوض حاليًا' : 'طلب قيد المراجعة'}
+                    </span>
+                  </div>
+                  <p style="margin: 0; font-size:0.92rem; color:var(--muted); line-height:1.6">
+                    {volunteer.status === 'rejected'
                       ? 'نشكرك على اهتمامك ورغبتك بالتطوع. تعذر قبول طلبك حالياً، ونرحب بتقديمك مجدداً في المبادرات المستقبلية.'
                       : 'نقوم بمراجعة طلبك وخبراتك للتأكد من ملاءمتها للمشاريع الحالية. سيقوم فريق العمل بالتواصل معك فور اعتماد الطلب.'}
-                </p>
-              </div>
+                  </p>
+                </div>
+              )
             ) : (
               <div class="profile-vol-incentive">
                 <div class="profile-vol-incentive-text">
@@ -380,6 +447,7 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
     <script dangerouslySetInnerHTML={{
       __html: `
       (function() {
+        // ── Welcome back message on first login ──
         if (localStorage.getItem('just_logged_in') === 'true') {
           const userName = localStorage.getItem('user_display_name') || 'صديقنا العزيز';
           localStorage.removeItem('just_logged_in');
@@ -404,6 +472,101 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
               window.showToast("أهلاً بك معنا يا " + userName + " في عائلة المؤسسة! ✦", "subscribe");
             }
           }, 800);
+        }
+
+        // ── Volunteer approval welcome ──
+        const userRole = ${JSON.stringify(volunteer?.status === 'approved' && volunteer?.volunteer_code ? 'volunteer' : '')};
+        const volCode = ${JSON.stringify(volunteer?.volunteer_code || '')};
+        const volName = ${JSON.stringify(volunteer?.full_name || '')};
+        const seenKey = 'vol_welcome_' + volCode;
+
+        if (userRole === 'volunteer' && volCode && !localStorage.getItem(seenKey)) {
+          localStorage.setItem(seenKey, '1');
+
+          // Load confetti
+          const cs = document.createElement('script');
+          cs.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js';
+          cs.onload = function() {
+            // Gold and green confetti burst for volunteers
+            confetti({
+              particleCount: 120,
+              spread: 80,
+              origin: { y: 0.5 },
+              colors: ['#d6a64b', '#f0cf82', '#168a70', '#7ee2bd', '#ffffff']
+            });
+            setTimeout(() => confetti({
+              particleCount: 60,
+              spread: 100,
+              origin: { y: 0.4 },
+              colors: ['#d6a64b', '#f0cf82', '#168a70']
+            }), 500);
+          };
+          document.head.appendChild(cs);
+
+          // Show a beautiful multi-line welcome toast
+          setTimeout(() => {
+            // Create a special volunteer welcome banner
+            const banner = document.createElement('div');
+            banner.style.cssText = \`
+              position:fixed; inset:0; z-index:3000; display:grid; place-items:center;
+              background:rgba(6,43,38,.85); backdrop-filter:blur(10px);
+              animation:fadeIn .4s ease;
+            \`;
+            banner.innerHTML = \`
+              <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}} @keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}</style>
+              <div style="
+                background:linear-gradient(145deg,#0c5044,#083828);
+                border:1px solid rgba(240,207,130,.3);
+                border-radius:28px;
+                padding:40px 48px;
+                max-width:520px;
+                width:90vw;
+                color:white;
+                text-align:center;
+                box-shadow:0 30px 80px rgba(0,0,0,.4);
+                position:relative;
+                overflow:hidden;
+                animation:slideUp .5s cubic-bezier(.2,.8,.2,1);
+              ">
+                <div style="position:absolute;inset:0;background-image:linear-gradient(30deg,transparent 48%,rgba(255,255,255,.03) 49%,rgba(255,255,255,.03) 51%,transparent 52%),linear-gradient(-30deg,transparent 48%,rgba(255,255,255,.02) 49%,rgba(255,255,255,.02) 51%,transparent 52%);background-size:50px 87px;pointer-events:none"></div>
+                <div style="position:relative">
+                  <img src="/static/foundation-logo.png" style="width:72px;margin:0 auto 20px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.4))" />
+                  <div style="background:rgba(240,207,130,.15);border:1px solid rgba(240,207,130,.3);border-radius:999px;display:inline-flex;align-items:center;gap:8px;padding:6px 16px;font-size:.75rem;color:#f0cf82;font-weight:800;margin-bottom:20px">
+                    <i class="fa-solid fa-star"></i> متطوع رسمي معتمد
+                  </div>
+                  <h2 style="font-size:1.9rem;font-weight:900;margin:0 0 12px;line-height:1.2">
+                    مبروك يا <span style="color:#f0cf82">\${volName || 'صديقنا'}</span>! 🎉
+                  </h2>
+                  <p style="color:rgba(255,255,255,.75);font-size:.95rem;line-height:1.7;margin:0 0 20px">
+                    تم اعتمادك رسمياً كمتطوع في مؤسسة الدكتور عمر هشام. يسعدنا انضمامك لعائلتنا المتطوعة الرائعة! 🤲
+                  </p>
+                  <div style="background:rgba(240,207,130,.08);border:1px solid rgba(240,207,130,.2);border-radius:14px;padding:14px 20px;margin-bottom:24px;display:inline-block">
+                    <small style="color:rgba(255,255,255,.5);font-size:.7rem;display:block;margin-bottom:4px">كود المتطوع الخاص بك</small>
+                    <span style="font-family:monospace;font-size:1.8rem;font-weight:900;color:#f0cf82;letter-spacing:.15em">\${volCode}</span>
+                  </div>
+                  <p style="color:rgba(255,255,255,.6);font-size:.82rem;margin:0 0 28px">
+                    بطاقتك الرقمية جاهزة أسفل الصفحة ويمكنك طباعتها ومشاركتها.
+                  </p>
+                  <button id="volWelcomeClose" style="background:#d6a64b;color:#072d28;border:none;border-radius:14px;padding:13px 30px;font-weight:900;font-size:.95rem;cursor:pointer;width:100%;transition:.3s">
+                    <i class="fa-solid fa-heart"></i> شكراً، متحمس للبداية!
+                  </button>
+                </div>
+              </div>
+            \`;
+            document.body.appendChild(banner);
+            document.getElementById('volWelcomeClose')?.addEventListener('click', () => {
+              banner.style.opacity = '0';
+              banner.style.transition = '.4s';
+              setTimeout(() => banner.remove(), 400);
+            });
+            banner.addEventListener('click', (e) => {
+              if (e.target === banner) {
+                banner.style.opacity = '0';
+                banner.style.transition = '.4s';
+                setTimeout(() => banner.remove(), 400);
+              }
+            });
+          }, 900);
         }
       })();
       `

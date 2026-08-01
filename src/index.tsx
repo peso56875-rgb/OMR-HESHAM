@@ -107,7 +107,19 @@ app.get('/donate', async (c) => {
 })
 
 app.get('/achievements', (c) => c.html(<Achievements user={(c as any).get('user')} />))
-app.get('/volunteers', (c) => c.html(<Volunteers user={(c as any).get('user')} />))
+app.get('/volunteers', async (c) => {
+  let stats: any = { total: 0, totalHours: 0 }
+  try {
+    const db = getFirestore(c)
+    const snap = await db.collection('volunteers').where('status', '==', 'approved').get()
+    const approved = snap.docs.map((d: any) => d.data())
+    stats = {
+      total: approved.length,
+      totalHours: approved.reduce((sum: number, v: any) => sum + (v.hours_count || 0), 0)
+    }
+  } catch (e) {}
+  return c.html(<Volunteers user={(c as any).get('user')} stats={stats} />)
+})
 
 app.get('/news', async (c) => {
   let news: any[] = []
