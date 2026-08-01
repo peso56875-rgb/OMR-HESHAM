@@ -102,18 +102,64 @@ export function Gallery({ user, items }: { user?: UserSession, items?: any[] }) 
       }))
     : defaultItems
 
+  // Extract unique categories for filter tabs
+  const rawCategories = Array.from(new Set(displayItems.map((i: any) => i.tag))).filter(Boolean)
+  const categories = ['الكل', ...rawCategories]
+
   return <Layout user={user} title="معرض الصور | مؤسسة الدكتور عمر هشام">
     <PageHero kicker="معرض الصور" title={'وجوهٌ ومواقف،<br/><em>تقول ما لا تقوله الأرقام.</em>'} text="لقطات من الميدان، صُنعت فيها الفرحة بأيدي المتطوعين وقلوب المتبرعين." />
-    <section class="gallery-grid section-pad">
-      {displayItems.map((item, i) => (
-        <article class={`gallery-tile tile-${(i % 8) + 1} reveal`}>
-          <div class="gallery-art" style={`background-image:url(${item.img});background-size:cover;background-position:center;`}>
-            <span style="background:rgba(12,74,63,0.85);color:#fff">{item.tag}</span>
-          </div>
-          <p>{item.title}<small>{icon('fa-location-dot')} {item.location}</small></p>
-        </article>
-      ))}
+    
+    <section class="gallery-section section-pad">
+      {/* Category Filter Tabs */}
+      <div class="gallery-filters">
+        {categories.map((cat, idx) => (
+          <button
+            type="button"
+            class={`gallery-filter-btn ${idx === 0 ? 'active' : ''}`}
+            data-filter={cat === 'الكل' ? 'all' : cat}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Professional Photo Cards Grid */}
+      <div class="gallery-cards-grid">
+        {displayItems.map((item, i) => (
+          <article class="gallery-card reveal" data-category={item.tag} data-img={item.img} data-title={item.title} data-location={item.location}>
+            <div class="gallery-card-image-wrap">
+              <img src={item.img} alt={item.title} class="gallery-card-img" loading="lazy" />
+              <span class="gallery-card-tag">{item.tag}</span>
+              <div class="gallery-card-overlay">
+                <span class="gallery-zoom-icon">{icon('fa-magnifying-glass-plus')} تكبير الصورة</span>
+              </div>
+            </div>
+            <div class="gallery-card-body">
+              <h3 class="gallery-card-title">{item.title}</h3>
+              <p class="gallery-card-location">{icon('fa-location-dot')} <span>{item.location}</span></p>
+            </div>
+          </article>
+        ))}
+      </div>
     </section>
+
+    {/* Lightbox Preview Modal */}
+    <div id="gallery-lightbox" class="gallery-lightbox" aria-hidden="true">
+      <div class="gallery-lightbox-backdrop"></div>
+      <div class="gallery-lightbox-content">
+        <button id="gallery-lightbox-close" type="button" class="gallery-lightbox-close" aria-label="إغلاق المعاينة">
+          {icon('fa-xmark')}
+        </button>
+        <div class="gallery-lightbox-img-box">
+          <img id="gallery-lightbox-img" src="" alt="" />
+        </div>
+        <div class="gallery-lightbox-caption">
+          <span id="gallery-lightbox-tag" class="gallery-card-tag"></span>
+          <h3 id="gallery-lightbox-title"></h3>
+          <p id="gallery-lightbox-location">{icon('fa-location-dot')} <span></span></p>
+        </div>
+      </div>
+    </div>
   </Layout>
 }
 

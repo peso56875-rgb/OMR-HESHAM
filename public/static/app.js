@@ -1315,4 +1315,76 @@
   window.syncUploadWidgets = syncUploadWidgets
 
   initUploadWidgets()
+
+  // Photo Gallery Filter and Lightbox initialization
+  function initGallery() {
+    const filterBtns = $$('.gallery-filter-btn')
+    const cards = $$('.gallery-card')
+    const lightbox = $('#gallery-lightbox')
+    const lbImg = $('#gallery-lightbox-img')
+    const lbTitle = $('#gallery-lightbox-title')
+    const lbLocation = $('#gallery-lightbox-location span')
+    const lbTag = $('#gallery-lightbox-tag')
+    const lbClose = $('#gallery-lightbox-close')
+    const lbBackdrop = $('.gallery-lightbox-backdrop')
+
+    if (filterBtns.length > 0) {
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterBtns.forEach(b => b.classList.remove('active'))
+          btn.classList.add('active')
+          const cat = btn.getAttribute('data-filter')
+
+          cards.forEach(card => {
+            const cardCat = card.getAttribute('data-category')
+            if (cat === 'all' || cardCat === cat) {
+              card.style.display = 'flex'
+            } else {
+              card.style.display = 'none'
+            }
+          })
+        })
+      })
+    }
+
+    if (lightbox && cards.length > 0) {
+      const openLightbox = (card) => {
+        const img = card.getAttribute('data-img')
+        const title = card.getAttribute('data-title')
+        const location = card.getAttribute('data-location')
+        const tag = card.getAttribute('data-category')
+
+        if (lbImg) lbImg.src = img
+        if (lbTitle) lbTitle.textContent = title
+        if (lbLocation) lbLocation.textContent = location || 'المؤسسة'
+        if (lbTag) lbTag.textContent = tag || 'عام'
+
+        lightbox.classList.add('active')
+        lightbox.setAttribute('aria-hidden', 'false')
+      }
+
+      const closeLightbox = () => {
+        lightbox.classList.remove('active')
+        lightbox.setAttribute('aria-hidden', 'true')
+      }
+
+      cards.forEach(card => {
+        card.addEventListener('click', () => openLightbox(card))
+      })
+
+      lbClose?.addEventListener('click', (e) => {
+        e.stopPropagation()
+        closeLightbox()
+      })
+      lbBackdrop?.addEventListener('click', closeLightbox)
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+          closeLightbox()
+        }
+      })
+    }
+  }
+
+  initGallery()
 })()
