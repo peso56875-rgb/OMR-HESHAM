@@ -137,7 +137,15 @@ app.get('/news/:id', async (c) => {
 app.get('/faq', (c) => c.html(<FAQ user={(c as any).get('user')} />))
 app.get('/contact', (c) => c.html(<Contact user={(c as any).get('user')} />))
 app.get('/transparency', (c) => c.html(<Transparency user={(c as any).get('user')} />))
-app.get('/gallery', (c) => c.html(<Gallery user={(c as any).get('user')} />))
+app.get('/gallery', async (c) => {
+  let items: any[] = []
+  try {
+    const db = getFirestore(c)
+    const snap = await db.collection('gallery').where('is_published', '==', true).orderBy('created_at', 'desc').get()
+    items = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+  } catch (e) { }
+  return c.html(<Gallery items={items} user={(c as any).get('user')} />)
+})
 
 app.get('/events', async (c) => {
   let events: any[] = []
@@ -347,6 +355,11 @@ app.get('/dashboard', async (c) => {
       }
     } else if (view === 'stories') {
       const snap = await db.collection('stories').orderBy('created_at', 'desc').get()
+      viewData = {
+        list: snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      }
+    } else if (view === 'gallery') {
+      const snap = await db.collection('gallery').orderBy('created_at', 'desc').get()
       viewData = {
         list: snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
       }

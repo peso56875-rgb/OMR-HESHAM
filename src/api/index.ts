@@ -17,6 +17,7 @@ import { media } from './media'
 import { exportApi } from './export'
 import { treasury } from './treasury'
 import { cases } from './cases'
+import { gallery } from './gallery'
 
 const api = new Hono()
 
@@ -63,5 +64,6 @@ api.route('/media', media)
 api.route('/export', exportApi)
 api.route('/treasury', treasury)
 api.route('/cases', cases)
+api.route('/gallery', gallery)
 
 export { api }

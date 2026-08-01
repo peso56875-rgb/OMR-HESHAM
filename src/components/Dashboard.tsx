@@ -15,6 +15,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
     ['fa-newspaper', 'الأخبار', 'news'],
     ['fa-calendar', 'الفعاليات', 'events'],
     ['fa-heart', 'قصص النجاح', 'stories'],
+    ['fa-images', 'معرض الصور', 'gallery'],
     ['fa-briefcase', 'الوظائف', 'jobs'],
     ['fa-file-signature', 'طلبات التوظيف', 'job_applications'],
     ['fa-envelope-open-text', 'النشرة البريدية', 'newsletter'],
@@ -57,6 +58,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
         {view === 'news' && <DashNews list={data.list} />}
         {view === 'events' && <DashEvents list={data.list} />}
         {view === 'stories' && <DashStories list={data.list} />}
+        {view === 'gallery' && <DashGallery list={data.list} />}
         {view === 'jobs' && <DashJobs list={data.list} />}
         {view === 'job_applications' && <DashJobApplications list={data.list} />}
         {view === 'newsletter' && <DashNewsletter list={data.list} />}
@@ -947,6 +949,90 @@ export function DashStories({ list = [] }: { list: any[] }) {
         </div>
         <label>القصة كاملة<textarea name="content" rows={4} required></textarea></label>
         <button class="primary-btn" type="submit" id="story-submit-btn">نشر القصة</button>
+      </form>
+    </section>
+  </>
+}
+
+export function DashGallery({ list = [] }: { list: any[] }) {
+  return <>
+    <section class="dash-table">
+      <header style="display:flex; justify-content:space-between; align-items:center">
+        <h3>معرض الصور المنشورة ({list.length})</h3>
+        <a href="/api/export/gallery" download class="export-excel-btn">
+          {icon('fa-file-excel')} تصدير Excel
+        </a>
+      </header>
+      <table>
+        <thead>
+          <tr>
+            <th>الصورة</th>
+            <th>العنوان</th>
+            <th>التصنيف</th>
+            <th>المكان / الموقع</th>
+            <th>تاريخ الإضافة</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((g: any) => {
+            const date = g.created_at ? new Date(g.created_at).toLocaleDateString('ar-EG') : '-'
+            return <tr>
+              <td>
+                <div style="width:60px; height:45px; border-radius:8px; overflow:hidden; background:var(--surface-2); border:1px solid var(--border)">
+                  <img src={g.image_url} alt={g.title} style="width:100%; height:100%; object-fit:cover" />
+                </div>
+              </td>
+              <td><b>{g.title}</b></td>
+              <td><span class="category-chip">{g.tag || 'عام'}</span></td>
+              <td>{g.location || 'المؤسسة'}</td>
+              <td>{date}</td>
+              <td>
+                <div style="display:flex; gap:6px; align-items:center">
+                  <form action={`/api/gallery/delete/${g.id}`} method="post" class="dash-action-form" data-confirm="هل أنت متأكد من حذف هذه الصورة من المعرض؟">
+                    <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')} حذف</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          })}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section-pad" style="padding-top:2rem">
+      <form action="/api/gallery/add" method="post" style="background:var(--surface); border:1px solid var(--border); padding:2rem; border-radius:16px; max-width:600px; display:flex; flex-direction:column; gap:1.2rem">
+        <h3>إضافة صورة جديدة لمعرض الصور</h3>
+        <label>عنوان الصورة *<input name="title" placeholder="مثل: قافلة الإطعام والدعم الغذائي" required /></label>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem">
+          <label>التصنيف
+            <select name="tag" style="padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--surface); margin-top:4px">
+              <option value="عام">عام</option>
+              <option value="غذاء">غذاء وإطعام</option>
+              <option value="تعليم">تعليم ومستلزمات</option>
+              <option value="صحة">صحة ورعاية طبية</option>
+              <option value="قرآن">قرآن ودعوة</option>
+              <option value="مجتمع">مجتمع وتكافل</option>
+              <option value="تطوع">تطوع وبناء</option>
+              <option value="موسمي">موسمي وأعياد</option>
+            </select>
+          </label>
+          <label>الموقع / المكان<input name="location" placeholder="مثل: كفر العنانية، الدقهلية" defaultValue="كفر العنانية" /></label>
+        </div>
+
+        <div class="upload-widget">
+          <input type="hidden" name="image_url" class="cloudinary-url" required />
+          <label>صورة الفعالية / المعرض *</label>
+          <div class="upload-drop-zone">
+            <input type="file" accept="image/*" class="upload-file-input" />
+            <div class="upload-placeholder"><i class="fa-solid fa-cloud-arrow-up"></i><span>اسحب الصورة هنا أو اضغط للاختيار</span><small>JPG, PNG, WEBP — حد أقصى 10 ميجا</small></div>
+            <img class="upload-preview" style="display:none" alt="معاينة الصورة" />
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem"><span style="font-size:.8rem;color:var(--muted)">أو</span><input class="upload-url-fallback" placeholder="أدخل رابط الصورة https://..." style="flex:1" /></div>
+        </div>
+
+        <button class="primary-btn" type="submit" id="gallery-submit-btn">حفظ وإضافة للمعرض {icon('fa-plus')}</button>
       </form>
     </section>
   </>

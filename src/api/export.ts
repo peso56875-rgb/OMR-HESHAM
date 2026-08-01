@@ -173,6 +173,16 @@ const collectionConfigs: Record<string, ConfigDef> = {
       { key: 'place', label: 'المكان' },
       { key: 'event_date', label: 'تاريخ الفعالية', format: (v) => v ? new Date(v).toLocaleString('ar-EG') : '-' }
     ]
+  },
+  gallery: {
+    title: 'سجل معرض الصور المنشورة',
+    columns: [
+      { key: 'title', label: 'عنوان الصورة' },
+      { key: 'tag', label: 'التصنيف' },
+      { key: 'location', label: 'المكان / الموقع' },
+      { key: 'image_url', label: 'رابط الصورة' },
+      { key: 'created_at', label: 'تاريخ الإضافة', format: (v) => v ? new Date(v).toLocaleDateString('ar-EG') : '-' }
+    ]
   }
 }
 

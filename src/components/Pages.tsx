@@ -81,8 +81,8 @@ export function Transparency({ user }: { user?: UserSession }) {
   </Layout>
 }
 
-export function Gallery({ user }: { user?: UserSession }) {
-  const galleryItems = [
+export function Gallery({ user, items }: { user?: UserSession, items?: any[] }) {
+  const defaultItems = [
     { title: 'قافلة الدفء والإطعام', location: 'كفر العنانية', img: '/static/img/gallery-1.jpg', tag: 'غذاء' },
     { title: 'مستلزمات مدرسية للأطفال', location: 'الدقهلية', img: '/static/img/gallery-2.jpg', tag: 'تعليم' },
     { title: 'الرعاية الطبية والدواء', location: 'مستشفى كفر العنانية', img: '/static/img/gallery-3.jpg', tag: 'صحة' },
@@ -92,11 +92,21 @@ export function Gallery({ user }: { user?: UserSession }) {
     { title: 'مشروع الأضاحي السنوي', location: 'كفر العنانية', img: '/static/img/gallery-7.jpg', tag: 'موسمي' },
     { title: 'زيارات ودية وتكريم الأوائل', location: 'منازل الطلاب', img: '/static/img/gallery-8.jpg', tag: 'تعليم' }
   ]
+
+  const displayItems = (items && items.length > 0)
+    ? items.map((it: any) => ({
+        title: it.title,
+        location: it.location || 'المؤسسة',
+        img: it.image_url || it.img || '/static/img/gallery-1.jpg',
+        tag: it.tag || 'عام'
+      }))
+    : defaultItems
+
   return <Layout user={user} title="معرض الصور | مؤسسة الدكتور عمر هشام">
     <PageHero kicker="معرض الصور" title={'وجوهٌ ومواقف،<br/><em>تقول ما لا تقوله الأرقام.</em>'} text="لقطات من الميدان، صُنعت فيها الفرحة بأيدي المتطوعين وقلوب المتبرعين." />
     <section class="gallery-grid section-pad">
-      {galleryItems.map((item, i) => (
-        <article class={`gallery-tile tile-${i + 1} reveal`}>
+      {displayItems.map((item, i) => (
+        <article class={`gallery-tile tile-${(i % 8) + 1} reveal`}>
           <div class="gallery-art" style={`background-image:url(${item.img});background-size:cover;background-position:center;`}>
             <span style="background:rgba(12,74,63,0.85);color:#fff">{item.tag}</span>
           </div>
