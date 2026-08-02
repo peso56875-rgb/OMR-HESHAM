@@ -2259,9 +2259,9 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
 
 .vol-id-body{position:relative;z-index:2;display:flex;gap:26px;padding:20px 28px 24px;align-items:center}
 .vol-id-avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:126px}
-.vol-id-avatar-ring{position:relative;width:124px;height:124px;border-radius:50%;padding:5px;background:conic-gradient(from 20deg,#d6a64b,#f6e0a0,#d6a64b,#8a6a1f,#d6a64b);box-shadow:0 14px 34px rgba(0,0,0,.4),0 0 0 6px rgba(240,207,130,.08)}
-.vol-id-avatar{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
-.vol-id-avatar-initials{width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,var(--emerald),var(--forest));display:grid;place-items:center;font-size:2.3rem;font-weight:900;color:white}
+.vol-id-avatar-ring{position:relative;width:128px;height:128px;border-radius:26px;padding:5px;background:linear-gradient(145deg,#d6a64b,#f6e0a0 45%,#8a6a1f);box-shadow:0 14px 34px rgba(0,0,0,.4),0 0 0 6px rgba(240,207,130,.08)}
+.vol-id-avatar{width:100%;height:100%;border-radius:21px;object-fit:cover;display:block}
+.vol-id-avatar-initials{width:100%;height:100%;border-radius:21px;background:linear-gradient(135deg,var(--emerald),var(--forest));display:grid;place-items:center;font-size:2.3rem;font-weight:900;color:white}
 
 .vol-id-info{flex:1;min-width:0}
 .vol-id-name{font-size:1.6rem;font-weight:900;margin:0 0 16px;color:white;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.3)}
