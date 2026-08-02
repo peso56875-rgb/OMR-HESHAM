@@ -85,7 +85,7 @@ export function Donate({ user, campaigns = [], selectedCampaignId }: { user?: Us
           <i class="fa-solid fa-shield-halved"></i>
           <div>
             <b>جهة رسمية موثّقة</b>
-            <small>مؤسسة الدكتور عمر هشام خاضعة لإشراف وزارة التضامن الاجتماعي بكفر العنانية.</small>
+            <small>مؤسسة الدكتور عمر هشام مشهرة برقم <b>3115 لسنة 2026</b> وخاضعة لإشراف وزارة التضامن الاجتماعي والجهات الرقابية المختصة.</small>
           </div>
         </div>
 
