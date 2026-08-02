@@ -225,49 +225,101 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
 
   const initials = user.name ? user.name.split(' ').slice(0, 2).map((n: string) => n[0]).join('') : 'ف خ'
 
+  // Next donor tier progress
+  const nextTierTarget = totalDonated >= 5000 ? 0 : totalDonated >= 1000 ? 5000 : 1000
+  const nextTierName = totalDonated >= 5000 ? '' : totalDonated >= 1000 ? 'الذهبية ✦' : 'الفضية ✦'
+  const tierProgress = nextTierTarget > 0 ? Math.min(100, Math.round((totalDonated / nextTierTarget) * 100)) : 100
+  const remainingToNextTier = nextTierTarget > 0 ? Math.max(0, nextTierTarget - totalDonated) : 0
+  const lastDonation = donations.length > 0
+    ? donations.map((d: any) => new Date(d.created_at || 0).getTime()).sort((a: number, b: number) => b - a)[0]
+    : 0
+
   return <Layout user={user} title="حسابي | مؤسسة الدكتور عمر هشام">
     <PageHero kicker="ملفي الشخصي" title={'لوحة التحكم الشخصية<br/><em>شركاء الخير والعطاء.</em>'} text="مرحبًا بك في مساحتك الخاصة بالمؤسسة. يمكنك متابعة مساهماتك، حالة تطوعك، وإدارة ملفك الشخصي." />
 
     <section class="section-pad" style="padding-top: 0">
-      <div class="profile-header reveal">
-        <div class="profile-user-info">
-          <div class="profile-user-avatar">{initials}</div>
-          <div class="profile-user-details">
-            <h1>{user.name}</h1>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-              <span class="role-pill">
-                {icon(user.role === 'admin' ? 'fa-user-shield' : user.role === 'volunteer' ? 'fa-people-carry-box' : 'fa-user')}
-                {user.role === 'admin' ? 'مشرف الموقع' : user.role === 'volunteer' ? 'متطوع رسمي' : 'عضو المؤسسة'}
-              </span>
-              {totalDonated > 0 && (
-                <span class={`profile-badge-tier ${tierClass}`}>
-                  {icon(tierIcon)} {tierName}
+      <div class="profile-hero-modern reveal">
+        <div class="profile-hero-glow profile-hero-glow-1"></div>
+        <div class="profile-hero-glow profile-hero-glow-2"></div>
+
+        <div class="profile-hero-main">
+          <div class="profile-user-info">
+            <div class="profile-user-avatar">
+              {initials}
+              <span class="profile-avatar-ring"></span>
+            </div>
+            <div class="profile-user-details">
+              <span class="profile-hero-kicker">{icon('fa-sparkles')} مساحتك الخاصة في المؤسسة</span>
+              <h1>{user.name}</h1>
+              <div class="profile-pills-row">
+                <span class="role-pill">
+                  {icon(user.role === 'admin' ? 'fa-user-shield' : user.role === 'volunteer' ? 'fa-people-carry-box' : 'fa-user')}
+                  {user.role === 'admin' ? 'مشرف الموقع' : user.role === 'volunteer' ? 'متطوع رسمي' : 'عضو المؤسسة'}
                 </span>
-              )}
+                {totalDonated > 0 && (
+                  <span class={`profile-badge-tier ${tierClass}`}>
+                    {icon(tierIcon)} {tierName}
+                  </span>
+                )}
+                <span class="profile-status-pill">{icon('fa-circle')} حساب نشط</span>
+              </div>
+              <div class="profile-contact-row">
+                <span>{icon('fa-envelope')} <bdi>{user.email}</bdi></span>
+                {user.phone && <span>{icon('fa-phone')} <bdi>{user.phone}</bdi></span>}
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-quick-stats">
+            <div class="profile-stat-box">
+              <div class="profile-stat-icon">{icon('fa-sack-dollar')}</div>
+              <span>إجمالي العطاء</span>
+              <strong>{(totalDonated).toLocaleString('ar-EG')} <small>ج.م</small></strong>
+            </div>
+            <div class="profile-stat-box">
+              <div class="profile-stat-icon">{icon('fa-hand-holding-heart')}</div>
+              <span>عدد المساهمات</span>
+              <strong>{donationsCount.toLocaleString('ar-EG')} <small>مساهمة</small></strong>
+            </div>
+            <div class="profile-stat-box">
+              <div class="profile-stat-icon">{icon('fa-clock-rotate-left')}</div>
+              <span>آخر مساهمة</span>
+              <strong class="profile-stat-date">{lastDonation ? new Date(lastDonation).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }) : '—'}</strong>
             </div>
           </div>
         </div>
 
-        <div class="profile-quick-stats">
-          <div class="profile-stat-box">
-            <span>إجمالي العطاء</span>
-            <strong>{(totalDonated).toLocaleString('ar-EG')} <small style="font-size:0.75rem">ج.م</small></strong>
+        <div class="profile-tier-progress">
+          <div class="profile-tier-progress-info">
+            {nextTierTarget > 0 ? (
+              <>
+                <span>{icon('fa-arrow-trend-up')} تبقّى <b>{remainingToNextTier.toLocaleString('ar-EG')} ج.م</b> للوصول إلى العضوية {nextTierName}</span>
+                <span class="profile-tier-progress-value">{tierProgress}%</span>
+              </>
+            ) : (
+              <>
+                <span>{icon('fa-crown')} وصلت إلى أعلى مرتبة في شركاء العطاء — جزاك الله خيرًا</span>
+                <span class="profile-tier-progress-value">100%</span>
+              </>
+            )}
           </div>
-          <div class="profile-stat-box">
-            <span>عدد المساهمات</span>
-            <strong>{donationsCount.toLocaleString('ar-EG')} <small style="font-size:0.75rem">مساهمة</small></strong>
-          </div>
-          <div class="profile-stat-box">
-            <span>حالة العضوية</span>
-            <strong>نشط</strong>
-          </div>
+          <div class="profile-tier-track"><i style={`width:${tierProgress}%`}></i></div>
         </div>
       </div>
 
       <div class="profile-layout">
         <div style="display: flex; flex-direction: column; gap: 25px">
           <div class="profile-card-modern reveal">
-            <h3>{icon('fa-hand-holding-dollar')} سجل التبرعات والمساهمات</h3>
+            <div class="profile-card-head">
+              <div class="profile-card-title-wrap">
+                <span class="profile-card-icon">{icon('fa-hand-holding-dollar')}</span>
+                <div>
+                  <h3>سجل التبرعات والمساهمات</h3>
+                  <p>رحلة عطائك الكاملة موثقة لحظة بلحظة</p>
+                </div>
+              </div>
+              {donationsCount > 0 && <span class="profile-card-count">{donationsCount.toLocaleString('ar-EG')} مساهمة</span>}
+            </div>
 
             {donations.length === 0 ? (
               <div class="profile-empty-donations">
@@ -277,68 +329,84 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                 <a class="primary-btn" href="/donate">ابدأ أول مساهمة الآن {icon('fa-heart')}</a>
               </div>
             ) : (
-              <div class="dash-table" style="box-shadow:none; padding:0; background:transparent">
-                <table class="profile-donations-table" style="width:100%; border-collapse:collapse">
-                  <thead>
-                    <tr style="border-bottom: 2px solid var(--line)">
-                      <th style="text-align:right; padding:15px; font-weight:800; color:var(--text)">الحملة والمجال</th>
-                      <th style="text-align:right; padding:15px; font-weight:800; color:var(--text)">المبلغ</th>
-                      <th style="text-align:right; padding:15px; font-weight:800; color:var(--text)">التاريخ</th>
-                      <th style="text-align:right; padding:15px; font-weight:800; color:var(--text)">الحالة</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {donations.map((d: any) => {
-                      const date = new Date(d.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })
-                      const isCompleted = d.status === 'completed'
-
-                      return <tr style="border-bottom:1px solid var(--line)">
-                        <td data-label="الحملة والمجال" style="padding:15px; font-weight: 600; color: var(--text)">{d.campaign_title || 'الصندوق العام'}</td>
-                        <td data-label="المبلغ" style="padding:15px; font-weight:bold; color:var(--emerald)">{Number(d.amount).toLocaleString('ar-EG')} ج.م</td>
-                        <td data-label="التاريخ" style="padding:15px; color:var(--muted); font-size: 0.9rem">{date}</td>
-                        <td data-label="الحالة" style="padding:15px">
-                          <span style={`font-size:.78rem; padding:6px 12px; border-radius:8px; font-weight:800; background:${isCompleted ? 'rgba(22,138,112,.09)' : 'rgba(245,124,0,.09)'}; color:${isCompleted ? 'var(--emerald)' : 'var(--gold)'}; border: 1px solid ${isCompleted ? 'rgba(22,138,112,.15)' : 'rgba(245,124,0,.15)'}`}>
-                            {isCompleted ? 'مكتمل' : 'قيد المراجعة'}
-                          </span>
-                        </td>
-                      </tr>
-                    })}
-                  </tbody>
-                </table>
+              <div class="profile-donations-list">
+                {donations.map((d: any) => {
+                  const date = new Date(d.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })
+                  const isCompleted = d.status === 'completed'
+                  return (
+                    <div class="profile-donation-row">
+                      <div class="profile-donation-icon">{icon(isCompleted ? 'fa-circle-check' : 'fa-hourglass-half')}</div>
+                      <div class="profile-donation-info">
+                        <b>{d.campaign_title || 'الصندوق العام'}</b>
+                        <span>{icon('fa-calendar-day')} {date}</span>
+                      </div>
+                      <div class="profile-donation-amount">
+                        <b>{Number(d.amount).toLocaleString('ar-EG')}</b>
+                        <small>ج.م</small>
+                      </div>
+                      <span class={`profile-donation-status ${isCompleted ? 'done' : 'pending'}`}>
+                        {isCompleted ? 'مكتمل' : 'قيد المراجعة'}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
 
           <div class="profile-card-modern reveal">
-            <h3>{icon('fa-people-group')} مسيرتك التطوعية</h3>
+            <div class="profile-card-head">
+              <div class="profile-card-title-wrap">
+                <span class="profile-card-icon profile-card-icon-gold">{icon('fa-people-group')}</span>
+                <div>
+                  <h3>مسيرتك التطوعية</h3>
+                  <p>هويتك الرقمية وحالة انضمامك لأسرة المتطوعين</p>
+                </div>
+              </div>
+              {volunteer?.status === 'approved' && <span class="profile-card-count profile-card-count-green">{icon('fa-shield-halved')} متطوع معتمد</span>}
+            </div>
 
             {volunteer ? (
               volunteer.status === 'approved' && volunteer.volunteer_code ? (
-                // ===== Digital Volunteer ID Card =====
-                // ===== Ultra-Stunning Digital Volunteer ID Card =====
+                // ===== Premium Digital Volunteer ID Card (Redesigned) =====
                 <div class="vol-id-card-wrapper">
                   <div class="vol-id-card" id="volunteerIdCard">
-                    <div class="vol-id-card-bg-watermark">
-                      <img src="/static/foundation-logo.png" alt="" />
+                    <div class="vol-id-card-ornaments">
+                      <span class="vol-id-orb vol-id-orb-1"></span>
+                      <span class="vol-id-orb vol-id-orb-2"></span>
+                      <span class="vol-id-star vol-id-star-1">✦</span>
+                      <span class="vol-id-star vol-id-star-2">✦</span>
+                    </div>
+
+                    {/* Gold top ribbon */}
+                    <div class="vol-id-ribbon">
+                      <span>بطاقة هوية متطوع رسمية</span>
+                      <span class="vol-id-ribbon-latin">VOLUNTEER&nbsp;PASS</span>
                     </div>
 
                     <div class="vol-id-card-header">
-                      <img src="/static/foundation-logo.png" alt="شعار المؤسسة" class="vol-id-logo" />
+                      <div class="vol-id-logo-frame">
+                        <img src="/static/foundation-logo.png" alt="شعار المؤسسة" class="vol-id-logo" />
+                      </div>
                       <div class="vol-id-org">
                         <span>مؤسسة الدكتور عمر هشام الخيرية</span>
-                        <small>بطاقة متطوع رسمية معتمدة ✦ VOLUNTEER PASS</small>
+                        <small>هوية رقمية معتمدة موثقة من الإدارة المركزية ✦</small>
                       </div>
                       <div class="vol-id-chip">
                         {icon('fa-sim-card')}
                       </div>
                     </div>
 
+                    <div class="vol-id-divider"><i></i><span>✦</span><i></i></div>
+
                     <div class="vol-id-body">
                       <div class="vol-id-avatar-wrap">
-                        {volunteer.avatar_url
-                          ? <img src={volunteer.avatar_url} alt={volunteer.full_name} class="vol-id-avatar" />
-                          : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0,2).map((n: string) => n[0]).join('')}</div>
-                        }
+                        <div class="vol-id-avatar-ring">
+                          {volunteer.avatar_url
+                            ? <img src={volunteer.avatar_url} alt={volunteer.full_name} class="vol-id-avatar" />
+                            : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0,2).map((n: string) => n[0]).join('')}</div>
+                          }
+                        </div>
                         <div class="vol-id-rank-badge">{icon('fa-star')} {volunteer.rank || 'متطوع مبادر'}</div>
                       </div>
 
@@ -347,7 +415,7 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                         <p class="vol-id-role">{icon('fa-people-carry-box')} {volunteer.preferred_role || volunteer.team}</p>
 
                         <div class="vol-id-code-box">
-                          <span class="vol-id-code-label">كود الهوية الرقمي</span>
+                          <span class="vol-id-code-label">{icon('fa-fingerprint')} كود الهوية الرقمي</span>
                           <strong class="vol-id-code">{volunteer.volunteer_code}</strong>
                         </div>
 
@@ -357,12 +425,12 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                             <b>{volunteer.hours_count || 0} ساعة</b>
                           </div>
                           <div class="vol-id-meta-item">
-                            <span>{icon('fa-calendar')} الاعتماد</span>
+                            <span>{icon('fa-calendar-check')} الاعتماد</span>
                             <b>{volunteer.approved_at ? new Date(volunteer.approved_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'}</b>
                           </div>
                           <div class="vol-id-meta-item">
                             <span>{icon('fa-calendar-xmark')} الانتهاء</span>
-                            <b style={`color:${volunteer.expires_at && new Date(volunteer.expires_at) < new Date() ? '#ff7675' : '#55efc4'}`}>
+                            <b style={`color:${volunteer.expires_at && new Date(volunteer.expires_at) < new Date() ? '#ff8a75' : '#7ee2bd'}`}>
                               {volunteer.expires_at ? new Date(volunteer.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'}
                             </b>
                           </div>
@@ -373,16 +441,20 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                     <div class="vol-id-footer">
                       <div class="vol-id-seal">
                         <div class="vol-id-seal-badge">{icon('fa-shield-halved')}</div>
-                        <div>
-                          <span>هوية موثوقة</span>
-                          <small style="display:block;opacity:.7;font-size:.65rem">omarhesham.org</small>
+                        <div class="vol-id-seal-text">
+                          <span>هوية موثوقة ومعتمدة</span>
+                          <small>omarhesham.org</small>
                         </div>
+                      </div>
+
+                      <div class="vol-id-barcode" aria-hidden="true">
+                        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
                       </div>
 
                       <div class="vol-id-validity">
                         {volunteer.expires_at && new Date(volunteer.expires_at) < new Date()
-                          ? <span style="color:#ff7675">{icon('fa-triangle-exclamation')} منتهية الصلاحية</span>
-                          : <span style="color:#55efc4">{icon('fa-circle-check')} سارية المفعول</span>
+                          ? <span class="vol-id-status is-expired">{icon('fa-triangle-exclamation')} منتهية الصلاحية</span>
+                          : <span class="vol-id-status is-active">{icon('fa-circle-check')} سارية المفعول</span>
                         }
                       </div>
                     </div>
@@ -390,13 +462,13 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
 
                   {/* ID Action Buttons Bar */}
                   <div class="vol-id-actions-bar">
-                    <button class="primary-btn" id="downloadVolCardPng" type="button" style="padding:10px 18px;font-size:.85rem;background:var(--forest)">
-                      {icon('fa-download')} تحميل كصورة PNG
+                    <button class="primary-btn" id="downloadVolCardPng" type="button" style="padding:12px 22px;font-size:.88rem;background:linear-gradient(135deg,#0c4a3f,#168a70);border-radius:16px">
+                      {icon('fa-download')} تحميل البطاقة PNG
                     </button>
-                    <button class="light-btn" id="downloadVolCardJpg" type="button" style="padding:10px 18px;font-size:.85rem">
-                      {icon('fa-file-image')} تحميل كصورة JPG
+                    <button class="light-btn" id="downloadVolCardJpg" type="button" style="padding:12px 22px;font-size:.88rem;border-radius:16px;border:1px solid var(--line)">
+                      {icon('fa-file-image')} نسخة JPG
                     </button>
-                    <button class="outline-btn" id="printVolCard" type="button" style="padding:10px 18px;font-size:.85rem">
+                    <button class="outline-btn" id="printVolCard" type="button" style="padding:12px 22px;font-size:.88rem;border-radius:16px">
                       {icon('fa-print')} طباعة
                     </button>
                   </div>
@@ -435,31 +507,67 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
 
         <div style="display: flex; flex-direction: column; gap: 25px">
           <div class="profile-card-modern reveal">
-            <h3>{icon('fa-id-card')} تعديل بيانات الحساب</h3>
-            <form class="ajax-form" data-endpoint="/api/profile/update" method="post" style="display:flex; flex-direction:column; gap:1.2rem">
-              <label>الاسم الكامل
-                <input name="full_name" value={user.name} required style="background:var(--ivory); font-weight:600" />
-              </label>
-              <label>البريد الإلكتروني
-                <input name="email" value={user.email} disabled style="background:var(--line); color:var(--muted); cursor:not-allowed" />
-              </label>
-              <label>رقم الهاتف
-                <input name="phone" value={user.phone || ''} placeholder="01xxxxxxxxx" style="background:var(--ivory); font-weight:600" />
-              </label>
-              <button class="primary-btn submit-btn" type="submit" style="width:100%; justify-content:center">حفظ التغييرات</button>
+            <div class="profile-card-head">
+              <div class="profile-card-title-wrap">
+                <span class="profile-card-icon">{icon('fa-id-card')}</span>
+                <div>
+                  <h3>بيانات الحساب</h3>
+                  <p>حدّث معلوماتك الشخصية في أي وقت</p>
+                </div>
+              </div>
+            </div>
+            <form class="ajax-form profile-edit-form" data-endpoint="/api/profile/update" method="post">
+              <div class="profile-field">
+                <label for="pf_full_name">{icon('fa-user-pen')} الاسم الكامل</label>
+                <input id="pf_full_name" name="full_name" value={user.name} required placeholder="اكتب اسمك بالكامل" />
+              </div>
+              <div class="profile-field">
+                <label for="pf_email">{icon('fa-envelope')} البريد الإلكتروني</label>
+                <input id="pf_email" name="email" value={user.email} disabled />
+                <small>{icon('fa-lock')} البريد الإلكتروني مرتبط بحساب Google ولا يمكن تغييره</small>
+              </div>
+              <div class="profile-field">
+                <label for="pf_phone">{icon('fa-phone')} رقم الهاتف</label>
+                <input id="pf_phone" name="phone" value={user.phone || ''} placeholder="01xxxxxxxxx" inputMode="tel" />
+              </div>
+              <button class="primary-btn submit-btn" type="submit" style="width:100%; justify-content:center; border-radius:16px; padding:14px">
+                {icon('fa-floppy-disk')} حفظ التغييرات
+              </button>
             </form>
           </div>
 
-          <div class="profile-card-modern reveal" style="padding: 25px">
-            <h3>{icon('fa-gears')} إجراءات سريعة</h3>
-            <div style="display:flex; flex-direction:column; gap:12px">
+          <div class="profile-card-modern reveal" style="padding: 28px">
+            <div class="profile-card-head" style="margin-bottom:18px">
+              <div class="profile-card-title-wrap">
+                <span class="profile-card-icon profile-card-icon-coral">{icon('fa-bolt')}</span>
+                <div>
+                  <h3 style="margin-bottom:2px">إجراءات سريعة</h3>
+                  <p>وصول سريع لأهم الصفحات</p>
+                </div>
+              </div>
+            </div>
+            <div class="profile-quick-actions">
+              <a href="/donate" class="profile-action-link">
+                <span class="profile-action-icon">{icon('fa-hand-holding-heart')}</span>
+                <span>تبرع الآن</span>
+                <i class="fa-solid fa-arrow-left"></i>
+              </a>
+              <a href="/volunteers" class="profile-action-link">
+                <span class="profile-action-icon">{icon('fa-people-carry-box')}</span>
+                <span>فرص التطوع</span>
+                <i class="fa-solid fa-arrow-left"></i>
+              </a>
               {user.role === 'admin' && (
-                <a href="/dashboard" class="outline-btn" style="width:100%; border-color:var(--gold); color:var(--text); text-align:center; display:flex; justify-content:center">
-                  {icon('fa-gauge-high')} لوحة تحكم المشرفين
+                <a href="/dashboard" class="profile-action-link profile-action-gold">
+                  <span class="profile-action-icon">{icon('fa-gauge-high')}</span>
+                  <span>لوحة تحكم المشرفين</span>
+                  <i class="fa-solid fa-arrow-left"></i>
                 </a>
               )}
-              <a href="/api/auth/logout" class="primary-btn" style="background:#e86f51; color:#fff; border:none; width:100%; text-align:center; display:flex; justify-content:center">
-                تسجيل الخروج {icon('fa-right-from-bracket')}
+              <a href="/api/auth/logout" class="profile-action-link profile-action-danger">
+                <span class="profile-action-icon">{icon('fa-right-from-bracket')}</span>
+                <span>تسجيل الخروج</span>
+                <i class="fa-solid fa-arrow-left"></i>
               </a>
             </div>
           </div>
