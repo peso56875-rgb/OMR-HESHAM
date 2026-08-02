@@ -368,16 +368,9 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
 
             {volunteer ? (
               volunteer.status === 'approved' && volunteer.volunteer_code ? (
-                // ===== Premium Digital Volunteer ID Card (Redesigned) =====
+                // ===== Elegant Minimal Volunteer ID Card =====
                 <div class="vol-id-card-wrapper">
                   <div class="vol-id-card" id="volunteerIdCard">
-                    <div class="vol-id-card-ornaments">
-                      <span class="vol-id-orb vol-id-orb-1"></span>
-                      <span class="vol-id-orb vol-id-orb-2"></span>
-                      <span class="vol-id-star vol-id-star-1">✦</span>
-                      <span class="vol-id-star vol-id-star-2">✦</span>
-                    </div>
-
                     {/* Gold top ribbon */}
                     <div class="vol-id-ribbon">
                       <span>بطاقة هوية متطوع رسمية</span>
@@ -390,10 +383,7 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                       </div>
                       <div class="vol-id-org">
                         <span>مؤسسة الدكتور عمر هشام الخيرية</span>
-                        <small>هوية رقمية معتمدة موثقة من الإدارة المركزية ✦</small>
-                      </div>
-                      <div class="vol-id-chip">
-                        {icon('fa-sim-card')}
+                        <small>بطاقة معتمدة من الإدارة المركزية ✦</small>
                       </div>
                     </div>
 
@@ -407,33 +397,21 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                             : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0,2).map((n: string) => n[0]).join('')}</div>
                           }
                         </div>
-                        <div class="vol-id-rank-badge">{icon('fa-star')} {volunteer.rank || 'متطوع مبادر'}</div>
                       </div>
 
                       <div class="vol-id-info">
                         <h4 class="vol-id-name">{volunteer.full_name}</h4>
-                        <p class="vol-id-role">{icon('fa-people-carry-box')} {volunteer.preferred_role || volunteer.team}</p>
 
                         <div class="vol-id-code-box">
                           <span class="vol-id-code-label">{icon('fa-fingerprint')} كود الهوية الرقمي</span>
                           <strong class="vol-id-code">{volunteer.volunteer_code}</strong>
                         </div>
 
-                        <div class="vol-id-meta-row">
-                          <div class="vol-id-meta-item">
-                            <span>{icon('fa-clock')} ساعات الخدمة</span>
-                            <b>{volunteer.hours_count || 0} ساعة</b>
-                          </div>
-                          <div class="vol-id-meta-item">
-                            <span>{icon('fa-calendar-check')} الاعتماد</span>
-                            <b>{volunteer.approved_at ? new Date(volunteer.approved_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'}</b>
-                          </div>
-                          <div class="vol-id-meta-item">
-                            <span>{icon('fa-calendar-xmark')} الانتهاء</span>
-                            <b style={`color:${volunteer.expires_at && new Date(volunteer.expires_at) < new Date() ? '#ff8a75' : '#7ee2bd'}`}>
-                              {volunteer.expires_at ? new Date(volunteer.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'}
-                            </b>
-                          </div>
+                        <div class="vol-id-expiry-row">
+                          <span class="vol-id-expiry-label">{icon('fa-calendar-xmark')} صالحة حتى</span>
+                          <b class="vol-id-expiry-date">
+                            {volunteer.expires_at ? new Date(volunteer.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }) : 'غير محدد'}
+                          </b>
                         </div>
                       </div>
                     </div>
@@ -446,11 +424,6 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                           <small>omarhesham.org</small>
                         </div>
                       </div>
-
-                      <div class="vol-id-barcode" aria-hidden="true">
-                        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-                      </div>
-
                       <div class="vol-id-validity">
                         {volunteer.expires_at && new Date(volunteer.expires_at) < new Date()
                           ? <span class="vol-id-status is-expired">{icon('fa-triangle-exclamation')} منتهية الصلاحية</span>
@@ -462,13 +435,10 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
 
                   {/* ID Action Buttons Bar */}
                   <div class="vol-id-actions-bar">
-                    <button class="primary-btn" id="downloadVolCardPng" type="button" style="padding:12px 22px;font-size:.88rem;background:linear-gradient(135deg,#0c4a3f,#168a70);border-radius:16px">
-                      {icon('fa-download')} تحميل البطاقة PNG
+                    <button class="primary-btn" id="downloadVolCard" type="button" style="padding:13px 26px;font-size:.9rem;background:linear-gradient(135deg,#0c4a3f,#168a70);border-radius:16px">
+                      {icon('fa-download')} تحميل البطاقة
                     </button>
-                    <button class="light-btn" id="downloadVolCardJpg" type="button" style="padding:12px 22px;font-size:.88rem;border-radius:16px;border:1px solid var(--line)">
-                      {icon('fa-file-image')} نسخة JPG
-                    </button>
-                    <button class="outline-btn" id="printVolCard" type="button" style="padding:12px 22px;font-size:.88rem;border-radius:16px">
+                    <button class="outline-btn" id="printVolCard" type="button" style="padding:13px 26px;font-size:.9rem;border-radius:16px">
                       {icon('fa-print')} طباعة
                     </button>
                   </div>

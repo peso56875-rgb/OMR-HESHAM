@@ -25,6 +25,39 @@ export function Home({ campaigns = [], news = [], stories = [], user }: { campai
       <article class="story-copy reveal"><p class="eyebrow"><span></span>الحكاية التي بدأت منها الرحلة</p><h2>حلمُ طبيبٍ شاب،<br />صار <em>مؤسسةً للرحمة.</em></h2><blockquote>«عمر لم يكن مجرد ابن، كان طالب طب نابغًا يحلم بعلاج الناس… فأردتُ أن يستمر حلمه وألا ينقطع عمله الصالح.»</blockquote><p>أسّس المهندس هشام صبري هذه المؤسسة كصدقة جارية على روح ابنه، لتبقى يده ممتدة إلى كل مريض ومحتاج.</p><a class="text-arrow" href="/about">اقرأ الحكاية كاملة <i class="fa-solid fa-arrow-left-long"></i></a></article>
     </section>
 
+    {/* ===== News — first, directly under Dr. Omar's story ===== */}
+    <section class="news-section section-pad">
+      <div class="head-row">
+        <SectionHead kicker="يوميات الرحمة" title={'أخبارٌ لا تُقرأ فقط،<br/><em>بل تُشعرك أن الخير قريب.</em>'} />
+        <a class="text-arrow" href="/news">كل الأخبار {icon('fa-arrow-left-long')}</a>
+      </div>
+      <div class="news-pro-grid">
+        {renderNews.slice(0, 3).map((n) => {
+          const isDoc = typeof n.id !== 'undefined'
+          const title = isDoc ? n.title : n[0]
+          const cat = isDoc ? (n.category || 'أخبار') : n[1]
+          const excerpt = isDoc ? n.excerpt : n[2]
+          const ic = isDoc ? (n.icon || 'fa-newspaper') : n[3]
+          const date = isDoc ? new Date(n.publish_date).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '١٢ يوليو ٢٠٢٦'
+          const img = isDoc ? String(n.image_url || '').trim() : ''
+          const href = isDoc ? `/news/${n.id}` : '/news'
+
+          return <article class="news-pro-card reveal">
+            <a href={href} class="news-pro-art" style={img ? `${cssBackground(img)}color:transparent;` : ''}>
+              {!img && icon(ic)}
+              <span class="news-chip on-art">{cat}</span>
+            </a>
+            <div class="news-pro-body">
+              <time>{icon('fa-calendar-day')} {date}</time>
+              <h4>{title}</h4>
+              <p>{excerpt}</p>
+              <a href={href} class="news-pro-link">اقرأ المزيد {icon('fa-arrow-left')}</a>
+            </div>
+          </article>
+        })}
+      </div>
+    </section>
+
     <section class="programs section-pad">
       <SectionHead kicker="مساحات العطاء" title={'ستةُ أبواب،<br/><em>ووجهةٌ واحدة: الإنسان.</em>'} text="نصل إلى الإنسان في صحته وتعليمه وغذائه وروحه؛ لأن التنمية الحقيقية لا تترك جانبًا من الحياة خلفها." />
       <div class="program-grid">{defaultPrograms.map((p, i) => <article class={`program-card reveal tone-${p[3]}`} style={`--delay:${i * 70}ms`}><span class="program-index">0{i + 1}</span><div class="program-icon">{icon(p[0])}</div><h3>{p[1]}</h3><p>{p[2]}</p><a href="/achievements" aria-label={`اعرف المزيد عن ${p[1]}`}><i class="fa-solid fa-arrow-left"></i></a></article>)}</div>
@@ -40,37 +73,6 @@ export function Home({ campaigns = [], news = [], stories = [], user }: { campai
     <section class="process section-pad"><div class="process-bg-word">أثر</div><SectionHead kicker="من يدك إلى مستحقه" title={'طريقٌ واضح،<br/><em>وأمانةٌ محفوظة.</em>'} /><div class="steps">{[['fa-hand-holding-heart', 'تتبرّع', 'اختر المسار والمبلغ الذي يناسبك.'], ['fa-magnifying-glass-chart', 'نبحث', 'ندرس الحالات ميدانيًا بعناية.'], ['fa-box-open', 'نُوصل', 'نقدم الدعم بكرامة وخصوصية.'], ['fa-chart-line', 'نُوثّق', 'نشاركك أين وكيف صُنع الأثر.']].map((s, i) => <article class="step reveal"><span>0{i + 1}</span><div>{icon(s[0])}</div><h3>{s[1]}</h3><p>{s[2]}</p>{i < 3 && <i class="step-line"></i>}</article>)}</div></section>
 
     <section class="quote-section section-pad"><div class="quote-mark">“</div><blockquote class="reveal">لسنا نمنحُ الناس مساعدةً عابرة،<br />بل نقول لهم: <em>أنتم لستم وحدكم.</em></blockquote><div class="quote-person"><span>هـ ص</span><p><b>المهندس هشام صبري</b><small>المؤسس ورئيس مجلس الإدارة</small></p></div></section>
-
-    <section class="news-section section-pad">
-      <div class="head-row">
-        <SectionHead kicker="يوميات الرحمة" title={'أخبارٌ لا تُقرأ فقط،<br/><em>بل تُشعرك أن الخير قريب.</em>'} />
-        <a class="text-arrow" href="/news">كل الأخبار {icon('fa-arrow-left-long')}</a>
-      </div>
-      <div class="news-grid">
-        {renderNews.slice(0, 3).map((n, i) => {
-          const isDoc = typeof n.id !== 'undefined'
-          const title = isDoc ? n.title : n[0]
-          const cat = isDoc ? n.category : n[1]
-          const excerpt = isDoc ? n.excerpt : n[2]
-          const ic = isDoc ? (n.icon || 'fa-newspaper') : n[3]
-          const date = isDoc ? new Date(n.publish_date).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '١٢ يوليو ٢٠٢٦'
-          const img = isDoc ? String(n.image_url || '').trim() : ''
-
-          return <article class={`news-card reveal ${i === 0 ? 'featured' : ''}`}>
-            <div class="news-art" style={img ? `${cssBackground(img)}color:transparent;` : ''}>
-              {!img && icon(ic)}
-              <span style={img ? 'background:rgba(12,74,63,0.8);color:white' : ''}>{cat}</span>
-            </div>
-            <div>
-              <time>{date}</time>
-              <h3>{title}</h3>
-              <p>{excerpt}</p>
-              <a href={isDoc ? `/news/${n.id}` : '/news'}>اقرأ القصة {icon('fa-arrow-left')}</a>
-            </div>
-          </article>
-        })}
-      </div>
-    </section>
 
     <section class="final-cta"><div class="cta-rays"></div><img src="/static/foundation-logo.png" alt="" /><p class="eyebrow">قد تكون أنت الإجابة عن دعاء شخصٍ ما</p><h2>ازرع خيرًا اليوم،<br /><em>ودعه يُزهر إلى الأبد.</em></h2><div><a class="light-btn magnetic" href="/donate">تبرّع الآن {icon('fa-heart')}</a><a href="/volunteers">أو شارك بوقتك <i class="fa-solid fa-arrow-left"></i></a></div></section>
   </Layout>
