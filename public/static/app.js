@@ -1493,18 +1493,17 @@
 
   initVolAvatarUpload()
 
-  // ===== Download & Print Volunteer ID Card =====
+  // ===== Download & Print Volunteer ID Card (single button, PNG, with success verification) =====
   function initVolCardDownload() {
     const cardEl = $('#volunteerIdCard')
-    const pngBtn = $('#downloadVolCardPng')
-    const jpgBtn = $('#downloadVolCardJpg')
+    const downloadBtn = $('#downloadVolCard')
     const printBtn = $('#printVolCard')
 
     if (printBtn) {
       printBtn.addEventListener('click', () => window.print())
     }
 
-    if (!cardEl || (!pngBtn && !jpgBtn)) return
+    if (!cardEl || !downloadBtn) return
 
     // Dynamically load html2canvas if needed
     function loadHtml2Canvas() {
@@ -1518,56 +1517,76 @@
       })
     }
 
-    async function downloadImage(format = 'png') {
-      const btn = format === 'png' ? pngBtn : jpgBtn
-      const originalText = btn ? btn.innerHTML : ''
-      if (btn) {
-        btn.disabled = true
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري تجهيز الصورة...'
-      }
+    // Render canvas to a Blob (null-safe) so we can verify real image data exists
+    function canvasToBlob(canvas) {
+      return new Promise((resolve, reject) => {
+        try {
+          canvas.toBlob((blob) => {
+            if (blob && blob.size > 0) resolve(blob)
+            else reject(new Error('Empty image data'))
+          }, 'image/png')
+        } catch (e) { reject(e) }
+      })
+    }
 
+    downloadBtn.addEventListener('click', async () => {
+      const originalText = downloadBtn.innerHTML
+      downloadBtn.disabled = true
+      downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري تجهيز البطاقة...'
+
+      let blobUrl = null
       try {
+        // 1) Render the card at high DPI
         const html2canvasLib = await loadHtml2Canvas()
         const canvas = await html2canvasLib(cardEl, {
-          scale: 3, // High DPI export
+          scale: 3,
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#072d25',
           logging: false
         })
 
+        // 2) Verify the canvas actually produced pixels
+        if (!canvas || !canvas.width || !canvas.height) {
+          throw new Error('Canvas render failed')
+        }
+
+        // 3) Convert to Blob and verify it has real content
+        const blob = await canvasToBlob(canvas)
+
+        // 4) Trigger the download through a Blob URL
         const codeEl = cardEl.querySelector('.vol-id-code')
-        const codeText = codeEl ? codeEl.textContent.trim() : 'VOL-PASS'
-        const filename = `Volunteer_ID_${codeText}.${format}`
+        const codeText = codeEl ? codeEl.textContent.trim().replace(/\s+/g, '') : 'VOL-PASS'
+        const filename = `Volunteer_ID_${codeText}.png`
 
-        const mimeType = format === 'png' ? 'image/png' : 'image/jpeg'
-        const imageUri = canvas.toDataURL(mimeType, 0.95)
-
+        blobUrl = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.download = filename
-        link.href = imageUri
+        link.href = blobUrl
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
 
+        // 5) Confirm success to the user
+        downloadBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> تم التحميل بنجاح'
         if (window.showToast) {
-          window.showToast(`تم تحميل بطاقة الهوية كـ ${format.toUpperCase()} بنجاح! 📸`, 'success')
+          window.showToast('تم تحميل بطاقة الهوية بنجاح! تحقق من مجلد التنزيلات 📥', 'success')
         }
+        setTimeout(() => {
+          downloadBtn.disabled = false
+          downloadBtn.innerHTML = originalText
+        }, 2600)
       } catch (err) {
         console.error('Export error:', err)
         if (window.showToast) {
-          window.showToast('تعذر تحميل الصورة الآن، يمكنك استخدام زر الطباعة.', 'error')
+          window.showToast('تعذر تحميل البطاقة الآن، حاول مرة أخرى أو استخدم زر الطباعة.', 'error')
         }
+        downloadBtn.disabled = false
+        downloadBtn.innerHTML = originalText
       } finally {
-        if (btn) {
-          btn.disabled = false
-          btn.innerHTML = originalText
-        }
+        if (blobUrl) setTimeout(() => URL.revokeObjectURL(blobUrl), 5000)
       }
-    }
-
-    if (pngBtn) pngBtn.addEventListener('click', () => downloadImage('png'))
-    if (jpgBtn) jpgBtn.addEventListener('click', () => downloadImage('jpg'))
+    })
   }
 
   initVolCardDownload()

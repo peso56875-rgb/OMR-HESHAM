@@ -643,14 +643,13 @@ export function DashDonations({ list = [] }: { list: any[] }) {
 
 export function DashVolunteers({ list = [] }: { list: any[] }) {
   const totalApproved = list.filter((v: any) => v.status === 'approved').length
-  const totalHours = list.reduce((sum: number, v: any) => sum + (v.hours_count || 0), 0)
 
   return <section class="dash-table">
     <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px">
       <div>
         <h3>المتطوعون</h3>
         <p style="color:var(--muted);font-size:.82rem;margin:4px 0 0">
-          {icon('fa-circle-check')} {totalApproved} معتمد &nbsp;|&nbsp; {icon('fa-clock')} إجمالي {totalHours} ساعة خدمة
+          {icon('fa-circle-check')} {totalApproved} معتمد من إجمالي {list.length} متطوع
         </p>
       </div>
       <a href="/api/export/volunteers" download class="export-excel-btn">
@@ -664,8 +663,6 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
           <th>كود المتطوع</th>
           <th>الهاتف</th>
           <th>المجال</th>
-          <th>الرتبة</th>
-          <th>الساعات</th>
           <th>الانتهاء</th>
           <th>الحالة</th>
           <th>الإجراءات</th>
@@ -689,8 +686,6 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
             </td>
             <td>{v.phone}</td>
             <td style="font-size:.82rem">{v.preferred_role}</td>
-            <td style="font-size:.8rem">{v.rank || (isApproved ? 'متطوع مبادر' : '—')}</td>
-            <td style="font-weight:700;color:var(--emerald)">{v.hours_count || 0} س</td>
             <td style={`font-size:.78rem;color:${isExpired ? 'var(--coral)' : 'var(--muted)'}`}>
               {isExpired ? icon('fa-triangle-exclamation') : ''} {expiryDate}
             </td>
@@ -711,22 +706,9 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                 </form>
               </>}
               {isApproved && (
-                <details style="display:inline-block;position:relative">
-                  <summary style="cursor:pointer;list-style:none;background:var(--line);border:1px solid var(--border);padding:5px 10px;border-radius:6px;font-size:.78rem;font-weight:700">
-                    {icon('fa-pen')} تعديل
-                  </summary>
-                  <form action={`/api/volunteers/update-hours/${v.id}`} method="post" style="position:absolute;left:0;top:110%;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;z-index:10;min-width:220px;box-shadow:0 10px 30px rgba(0,0,0,.12)">
-                    <label style="display:flex;flex-direction:column;gap:5px;font-size:.8rem;font-weight:700;margin-bottom:10px">
-                      الساعات<input type="number" name="hours" value={String(v.hours_count || 0)} min="0" style="border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--ivory);color:var(--text)" />
-                    </label>
-                    <label style="display:flex;flex-direction:column;gap:5px;font-size:.8rem;font-weight:700;margin-bottom:12px">
-                      الرتبة<select name="rank" style="border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--ivory);color:var(--text)">
-                        {['متطوع مبادر', 'متطوع فعّال', 'قائد ميداني', 'سفير العطاء'].map(r => <option selected={v.rank === r}>{r}</option>)}
-                      </select>
-                    </label>
-                    <button type="submit" style="width:100%;background:var(--forest);color:white;border:none;border-radius:8px;padding:8px;font-weight:700;font-size:.8rem;cursor:pointer">حفظ</button>
-                  </form>
-                </details>
+                <span style="display:inline-flex;align-items:center;gap:6px;color:var(--emerald-600);font-size:.78rem;font-weight:700">
+                  {icon('fa-id-badge')} بطاقة نشطة
+                </span>
               )}
             </td>
           </tr>
