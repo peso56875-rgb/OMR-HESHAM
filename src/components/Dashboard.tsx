@@ -643,6 +643,7 @@ export function DashDonations({ list = [] }: { list: any[] }) {
 
 export function DashVolunteers({ list = [] }: { list: any[] }) {
   const totalApproved = list.filter((v: any) => v.status === 'approved').length
+<<<<<<< HEAD
   const totalPending = list.filter((v: any) => v.status === 'pending').length
   const totalRevoked = list.filter((v: any) => v.status === 'revoked' || v.is_active === false).length
   const totalHours = list.reduce((sum: number, v: any) => sum + (v.hours_count || 0), 0)
@@ -726,6 +727,76 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
             <th>تاريخ الانتهاء</th>
             <th>الحالة</th>
             <th>الإجراءات والتحكم</th>
+=======
+
+  return <section class="dash-table">
+    <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px">
+      <div>
+        <h3>المتطوعون</h3>
+        <p style="color:var(--muted);font-size:.82rem;margin:4px 0 0">
+          {icon('fa-circle-check')} {totalApproved} معتمد من إجمالي {list.length} متطوع
+        </p>
+      </div>
+      <a href="/api/export/volunteers" download class="export-excel-btn">
+        {icon('fa-file-excel')} تصدير Excel
+      </a>
+    </header>
+    <table>
+      <thead>
+        <tr>
+          <th>الاسم</th>
+          <th>كود المتطوع</th>
+          <th>الهاتف</th>
+          <th>المجال</th>
+          <th>الانتهاء</th>
+          <th>الحالة</th>
+          <th>الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {list.map((v: any) => {
+          const isApproved = v.status === 'approved'
+          const isExpired = v.expires_at && new Date(v.expires_at) < new Date()
+          const expiryDate = v.expires_at ? new Date(v.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'
+          return <tr>
+            <td style="font-weight:700">
+              {v.avatar_url && <img src={v.avatar_url} alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-left:8px;vertical-align:middle;display:inline-block" />}
+              {v.full_name}
+            </td>
+            <td>
+              {v.volunteer_code
+                ? <span style="font-family:monospace;font-weight:900;font-size:.9rem;color:var(--emerald);background:rgba(22,138,112,.1);padding:4px 10px;border-radius:8px;border:1px solid rgba(22,138,112,.2)">{v.volunteer_code}</span>
+                : <span style="color:var(--muted);font-size:.8rem">—</span>
+              }
+            </td>
+            <td>{v.phone}</td>
+            <td style="font-size:.82rem">{v.preferred_role}</td>
+            <td style={`font-size:.78rem;color:${isExpired ? 'var(--coral)' : 'var(--muted)'}`}>
+              {isExpired ? icon('fa-triangle-exclamation') : ''} {expiryDate}
+            </td>
+            <td>
+              <span style={`padding:3px 9px; border-radius:6px; font-weight:700; font-size:.75rem; background:${isApproved ? 'rgba(67,160,71,.15)' : v.status === 'rejected' ? 'rgba(231,76,60,.15)' : 'rgba(245,124,0,.15)'}; color:${isApproved ? 'var(--emerald-600)' : v.status === 'rejected' ? '#e53935' : 'var(--gold-600)'}`}>
+                {v.status === 'approved' ? 'معتمد' : v.status === 'rejected' ? 'مرفوض' : 'معلق'}
+              </span>
+            </td>
+            <td style="white-space:nowrap">
+              {v.status === 'pending' && <>
+                <form action={`/api/volunteers/status/${v.id}`} method="post" style="display:inline; margin-inline-end:.3rem">
+                  <input type="hidden" name="status" value="approved" />
+                  <button type="submit" style="background:var(--emerald-600);color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:700">{icon('fa-circle-check')} قبول</button>
+                </form>
+                <form action={`/api/volunteers/status/${v.id}`} method="post" style="display:inline;margin-inline-end:.3rem">
+                  <input type="hidden" name="status" value="rejected" />
+                  <button type="submit" style="background:#ff6b6b;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:700">{icon('fa-circle-xmark')} رفض</button>
+                </form>
+              </>}
+              {isApproved && (
+                <span style="display:inline-flex;align-items:center;gap:6px;color:var(--emerald-600);font-size:.78rem;font-weight:700">
+                  {icon('fa-id-badge')} بطاقة نشطة
+                </span>
+              )}
+            </td>
+>>>>>>> 9693b28caa524b3bed70e7cca311b219d42b083e
           </tr>
         </thead>
         <tbody>

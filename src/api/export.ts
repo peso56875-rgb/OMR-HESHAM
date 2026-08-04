@@ -11,14 +11,17 @@ exportApi.use('*', adminMiddleware)
 let cachedLogoBase64 = ''
 function getLogoImgSrc(c: Context): string {
   if (cachedLogoBase64) return cachedLogoBase64
-  try {
-    const logoPath = path.join(process.cwd(), 'public', 'static', 'foundation-logo.png')
-    if (fs.existsSync(logoPath)) {
-      const buf = fs.readFileSync(logoPath)
-      cachedLogoBase64 = `data:image/png;base64,${buf.toString('base64')}`
-      return cachedLogoBase64
-    }
-  } catch (e) {}
+  // Prefer the lightweight 256px logo for embedding (keeps .xls files small)
+  for (const fileName of ['foundation-logo-256.png', 'foundation-logo.png']) {
+    try {
+      const logoPath = path.join(process.cwd(), 'public', 'static', fileName)
+      if (fs.existsSync(logoPath)) {
+        const buf = fs.readFileSync(logoPath)
+        cachedLogoBase64 = `data:image/png;base64,${buf.toString('base64')}`
+        return cachedLogoBase64
+      }
+    } catch (e) {}
+  }
 
   try {
     const reqUrl = new URL(c.req.url)
@@ -33,6 +36,144 @@ type ColumnDef = {
   label: string
   format?: (value: any, row: any) => string
 }
+
+// =====================================================
+// قالب التصدير الموحد الجديد — تصميم رسمي فاخر
+// =====================================================
+const esc = (v: any) => String(v ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+type ExcelTemplateOpts = {
+  sheetName: string
+  docTitle: string
+  docSubtitle: string
+  metaItems: { label: string, value: string }[]
+  colCount: number
+  headerCells: string
+  bodyRows: string
+  logoSrc: string
+  docRef: string
+}
+
+function buildExcelHtml(opts: ExcelTemplateOpts): string {
+  const metaCells = opts.metaItems.map((m, i) => `
+        <td style="width:${Math.floor(100 / opts.metaItems.length)}%; background-color:#ffffff; border:1px solid #d4e7f8; border-top:3px solid #3b9ed9; padding:12px 16px; text-align:center; vertical-align:middle;">
+          <div style="font-size:8.5pt; color:#6b93b8; font-weight:700; margin-bottom:4px;">${esc(m.label)}</div>
+          <div style="font-size:11pt; color:#0f4c81; font-weight:800;">${esc(m.value)}</div>
+        </td>${i < opts.metaItems.length - 1 ? '<td style="width:12px; border:none; background-color:#eef5fb;"></td>' : ''}`).join('')
+
+  return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!--[if gte mso 9]>
+<xml>
+ <x:ExcelWorkbook>
+  <x:ExcelWorksheets>
+   <x:ExcelWorksheet>
+    <x:Name>${esc(opts.sheetName).slice(0, 30)}</x:Name>
+    <x:WorksheetOptions>
+     <x:DisplayRightToLeft/>
+    </x:WorksheetOptions>
+   </x:ExcelWorksheet>
+  </x:ExcelWorksheets>
+ </x:ExcelWorkbook>
+</xml>
+<![endif]-->
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; background-color:#eef5fb; }
+  table { border-collapse: collapse; }
+</style>
+</head>
+<body>
+  <!-- ══ شريط علوي أزرق ══ -->
+  <table style="width:100%;"><tr><td colspan="${opts.colCount}" style="background-color:#3b9ed9; height:6px; font-size:1pt;">&nbsp;</td></tr></table>
+
+  <!-- ══ ترويسة الوثيقة ══ -->
+  <table style="width:100%; background-color:#0f4c81;">
+    <tr>
+      <td colspan="${opts.colCount}" style="padding:24px 30px; vertical-align:middle;">
+        <table style="width:100%; border:none;">
+          <tr>
+            <td style="width:104px; vertical-align:middle; border:none;">
+              <table style="border:none;"><tr>
+                <td style="background-color:#ffffff; border:3px solid #7ec3ef; padding:9px; text-align:center; vertical-align:middle;">
+                  <img src="${opts.logoSrc}" width="72" height="72" alt="شعار المؤسسة" style="display:block;" />
+                </td>
+              </tr></table>
+            </td>
+            <td style="vertical-align:middle; border:none; padding-right:22px; text-align:right;">
+              <div style="font-size:9pt; color:#a8d8f5; font-weight:800; letter-spacing:2px; margin-bottom:6px;">✦ &nbsp;وثيقة رسمية معتمدة&nbsp; ✦</div>
+              <div style="font-size:19pt; font-weight:900; color:#ffffff;">مؤسسة الدكتور عمر هشام الخيرية</div>
+              <div style="font-size:10.5pt; color:#cfe8f9; font-weight:600; margin-top:6px;">للخدمات المجتمعية والتنموية — الإدارة المركزية للبيانات والتقارير</div>
+            </td>
+            <td style="width:160px; vertical-align:middle; border:none; text-align:center;">
+              <table style="border:none; margin:0 auto;"><tr>
+                <td style="background-color:#1a5f9c; border:1px solid #5aa9e0; padding:10px 14px; text-align:center;">
+                  <div style="font-size:8pt; color:#a8d8f5; font-weight:700; margin-bottom:3px;">مرجع الوثيقة</div>
+                  <div style="font-size:11pt; color:#ffffff; font-weight:900; font-family:Consolas,monospace;">${esc(opts.docRef)}</div>
+                </td>
+              </tr></table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- ══ شريط عنوان التقرير ══ -->
+  <table style="width:100%; background-color:#1a5f9c;">
+    <tr>
+      <td colspan="${opts.colCount}" style="padding:14px 30px; text-align:center; vertical-align:middle; border-bottom:3px solid #7ec3ef;">
+        <div style="font-size:15pt; font-weight:900; color:#ffffff;">${esc(opts.docTitle)}</div>
+        <div style="font-size:9.5pt; color:#bfe2f8; font-weight:700; margin-top:4px;">${esc(opts.docSubtitle)}</div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- ══ بطاقات بيانات الوثيقة ══ -->
+  <table style="width:100%; background-color:#eef5fb;">
+    <tr><td colspan="${opts.colCount}" style="height:14px; font-size:1pt;">&nbsp;</td></tr>
+    <tr>${metaCells}</tr>
+    <tr><td colspan="${opts.colCount}" style="height:14px; font-size:1pt;">&nbsp;</td></tr>
+  </table>
+
+  <!-- ══ جدول البيانات ══ -->
+  <table style="width:100%; background-color:#ffffff;">
+    <thead>
+      <tr>${opts.headerCells}</tr>
+    </thead>
+    <tbody>
+      ${opts.bodyRows}
+    </tbody>
+  </table>
+
+  <!-- ══ تذييل الوثيقة ══ -->
+  <table style="width:100%;">
+    <tr><td colspan="${opts.colCount}" style="height:16px; font-size:1pt;">&nbsp;</td></tr>
+    <tr>
+      <td colspan="${opts.colCount}" style="background-color:#0f4c81; border-top:3px solid #3b9ed9; padding:14px 30px; text-align:center;">
+        <div style="font-size:10pt; color:#ffffff; font-weight:900;">✦ صدرت هذه الوثيقة آلياً من لوحة التحكم المركزية لمؤسسة الدكتور عمر هشام الخيرية ✦</div>
+        <div style="font-size:8.5pt; color:#a8d8f5; font-weight:600; margin-top:5px;">omarhesham.org — جميع البيانات الواردة بهذا السجل محفوظة وموثقة لدى الإدارة، ولا يجوز تداولها خارج الأطر الرسمية.</div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
+// مرجع وثيقة مختصر (حروف + أرقام)
+function timestampSuffix(): string {
+  const t = Date.now().toString(36).toUpperCase()
+  const r = Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0')
+  return `${t.slice(-5)}${r}`
+}
+
+// خلية رأس عمود موحدة — أزرق فاتح أنيق
+const thCell = (label: string, align: string = 'right', width?: number) =>
+  `<th style="background-color:#0f4c81; color:#ffffff; font-weight:800; font-size:11pt; border:1px solid #1a5f9c; border-bottom:3px solid #7ec3ef; padding:13px 14px; text-align:${align};${width ? ` width:${width}px;` : ''}">${esc(label)}</th>`
+
+// خلية بيانات موحدة — حدود زرقاء فاتحة
+const tdCell = (value: string, bg: string, opts2: { align?: string, color?: string, bold?: boolean, size?: string } = {}) =>
+  `<td style="border:1px solid #d4e7f8; padding:11px 14px; font-size:${opts2.size || '10.5pt'}; text-align:${opts2.align || 'right'}; color:${opts2.color || '#1d3a54'}; background-color:${bg};${opts2.bold ? ' font-weight:800;' : ''}">${value}</td>`
 
 type ConfigDef = {
   title: string
@@ -249,91 +390,38 @@ exportApi.get('/cases_sample', async (c) => {
     const logoSrc = getLogoImgSrc(c)
 
     const tableBodyRows = sample.map((name, idx) => {
-      const bg = idx % 2 === 0 ? '#ffffff' : '#f8faf9'
-      const safeName = String(name).replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      const bg = idx % 2 === 0 ? '#ffffff' : '#eef5fb'
       return `<tr>
-        <td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10.5pt; text-align:center; color:#047857; background-color:${bg}; font-weight:700;">${idx + 1}</td>
-        <td style="border:1px solid #cbd5e1; padding:9px 14px; font-size:11.5pt; text-align:right; color:#0f172a; background-color:${bg}; font-weight:700;">${safeName}</td>
-        <td style="border:1px solid #cbd5e1; padding:9px 14px; font-size:10.5pt; text-align:right; color:#047857; background-color:${bg}; font-weight:600;">${String(groupTitleFinal).replace(/</g, '&lt;')}</td>
-        <td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10pt; text-align:center; color:#475569; background-color:${bg};">${dateStr}</td>
-        <td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10pt; text-align:center; color:#94a3b8; background-color:${bg}; min-width:150px;">.........................................</td>
+        ${tdCell(String(idx + 1), bg, { align: 'center', color: '#0f4c81', bold: true, size: '10pt' })}
+        ${tdCell(esc(name), bg, { bold: true, size: '11.5pt' })}
+        ${tdCell(esc(groupTitleFinal), bg, { color: '#2f7fb8', bold: true })}
+        ${tdCell(esc(dateStr), bg, { align: 'center', color: '#5f7f9c', size: '9.5pt' })}
+        ${tdCell('<span style="color:#9db8cf;">.........................................</span>', bg, { align: 'center' })}
       </tr>`
     }).join('\n')
 
-    const colCount = 5
-    const excelHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!--[if gte mso 9]>
-<xml>
- <x:ExcelWorkbook>
-  <x:ExcelWorksheets>
-   <x:ExcelWorksheet>
-    <x:Name>${String(groupTitleFinal).slice(0, 30)}</x:Name>
-    <x:WorksheetOptions>
-     <x:DisplayRightToLeft/>
-    </x:WorksheetOptions>
-   </x:ExcelWorksheet>
-  </x:ExcelWorksheets>
- </x:ExcelWorkbook>
-</xml>
-<![endif]-->
-<style>
-  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; }
-  table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-</style>
-</head>
-<body>
-  <table>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#064e3b; color:#ffffff; padding:18px 24px; vertical-align:middle; border-bottom:4px solid #d97706;">
-        <table style="width:100%; border:none; border-collapse:collapse;">
-          <tr>
-            <td style="width:70px; vertical-align:middle; border:none;">
-              <img src="${logoSrc}" width="56" height="56" alt="Logo" style="display:block; border-radius:8px;" />
-            </td>
-            <td style="vertical-align:middle; border:none; padding-right:15px; text-align:right;">
-              <div style="font-size:18pt; font-weight:800; color:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية</div>
-              <div style="font-size:11pt; color:#fef3c7; font-weight:600; margin-top:3px;">لوحة التحكم والإدارة المركزية — وثيقة رسمية معتمدة</div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#047857; color:#ffffff; text-align:center; font-size:14pt; font-weight:700; padding:10px; border-bottom:2px solid #059669;">
-        ${String(groupTitleFinal).replace(/</g, '&lt;')} — قائمة العينة العشوائية
-      </td>
-    </tr>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#f0fdf4; color:#064e3b; text-align:right; font-size:10.5pt; padding:10px 16px; border-bottom:2px solid #a7f3d0; font-weight:600;">
-        <b>بيان الكشف:</b> ${String(groupTitleFinal).replace(/</g, '&lt;')} &nbsp;&nbsp;|&nbsp;&nbsp;
-        <b>إجمالي السجلات:</b> ${sampleCount} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
-        <b>تاريخ الاستخراج:</b> ${dateStr}
-      </td>
-    </tr>
-    <tr><td colspan="${colCount}" style="height:10px; background-color:#ffffff;"></td></tr>
-    <thead>
-      <tr>
-        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:center; width:60px;">م</th>
-        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11.5pt; border:1px solid #047857; padding:12px 14px; text-align:right;">اسم المستفيد</th>
-        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 14px; text-align:right;">المجموعة / البيان</th>
-        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:center;">تاريخ الاستخراج</th>
-        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:center;">ملاحظات / توقيع الاستلام</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${tableBodyRows}
-    </tbody>
-    <tr><td colspan="${colCount}" style="height:14px; background-color:#ffffff;"></td></tr>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#064e3b; color:#fbbf24; text-align:center; font-size:10pt; padding:12px; border-top:3px solid #d97706; font-weight:bold;">
-        ✦ وثيقة رسمية معتمدة — صُدرت من لوحة تحكم مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية ✦
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+    const headerCells =
+      thCell('م', 'center', 55) +
+      thCell('اسم المستفيد') +
+      thCell('المجموعة / البيان') +
+      thCell('تاريخ الاستخراج', 'center') +
+      thCell('ملاحظات / توقيع الاستلام', 'center', 190)
+
+    const excelHtml = buildExcelHtml({
+      sheetName: String(groupTitleFinal),
+      docTitle: 'كشف العينة العشوائية للمستفيدين',
+      docSubtitle: `بيان الكشف: ${String(groupTitleFinal)}`,
+      metaItems: [
+        { label: 'بيان الكشف', value: String(groupTitleFinal) },
+        { label: 'إجمالي السجلات', value: `${sampleCount} اسم` },
+        { label: 'تاريخ الاستخراج', value: dateStr }
+      ],
+      colCount: 5,
+      headerCells,
+      bodyRows: tableBodyRows,
+      logoSrc,
+      docRef: `SMP-${timestampSuffix()}`
+    })
 
     const timestamp = Date.now()
     const asciiFilename = `cases_sample_${sampleCount}_${timestamp}.xls`
@@ -397,89 +485,36 @@ exportApi.get('/cases_full/:id', async (c) => {
     const logoSrc = getLogoImgSrc(c)
 
     const tableBodyRows = allNames.map((name, idx) => {
-      const bg = idx % 2 === 0 ? '#ffffff' : '#f8faf9'
-      const safeName = String(name).replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      const bg = idx % 2 === 0 ? '#ffffff' : '#eef5fb'
       return `<tr>
-        <td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10.5pt; text-align:center; color:#047857; background-color:${bg}; font-weight:700;">${idx + 1}</td>
-        <td style="border:1px solid #cbd5e1; padding:9px 14px; font-size:11.5pt; text-align:right; color:#0f172a; background-color:${bg}; font-weight:700;">${safeName}</td>
-        <td style="border:1px solid #cbd5e1; padding:9px 14px; font-size:10.5pt; text-align:right; color:#047857; background-color:${bg}; font-weight:600;">${String(groupTitleFinal).replace(/</g, '&lt;')}</td>
-        <td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10pt; text-align:center; color:#94a3b8; background-color:${bg}; min-width:150px;">.........................................</td>
+        ${tdCell(String(idx + 1), bg, { align: 'center', color: '#0f4c81', bold: true, size: '10pt' })}
+        ${tdCell(esc(name), bg, { bold: true, size: '11.5pt' })}
+        ${tdCell(esc(groupTitleFinal), bg, { color: '#2f7fb8', bold: true })}
+        ${tdCell('<span style="color:#9db8cf;">.........................................</span>', bg, { align: 'center' })}
       </tr>`
     }).join('\n')
 
-    const colCount = 4
-    const excelHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!--[if gte mso 9]>
-<xml>
- <x:ExcelWorkbook>
-  <x:ExcelWorksheets>
-   <x:ExcelWorksheet>
-    <x:Name>${String(groupTitleFinal).slice(0, 30)}</x:Name>
-    <x:WorksheetOptions>
-     <x:DisplayRightToLeft/>
-    </x:WorksheetOptions>
-   </x:ExcelWorksheet>
-  </x:ExcelWorksheets>
- </x:ExcelWorkbook>
-</xml>
-<![endif]-->
-<style>
-  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; }
-  table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-</style>
-</head>
-<body>
-  <table>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#064e3b; color:#ffffff; padding:18px 24px; vertical-align:middle; border-bottom:4px solid #d97706;">
-        <table style="width:100%; border:none; border-collapse:collapse;">
-          <tr>
-            <td style="width:70px; vertical-align:middle; border:none;">
-              <img src="${logoSrc}" width="56" height="56" alt="Logo" style="display:block; border-radius:8px;" />
-            </td>
-            <td style="vertical-align:middle; border:none; padding-right:15px; text-align:right;">
-              <div style="font-size:18pt; font-weight:800; color:#ffffff;">مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية</div>
-              <div style="font-size:11pt; color:#fef3c7; font-weight:600; margin-top:3px;">لوحة التحكم والإدارة المركزية — وثيقة رسمية معتمدة</div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#047857; color:#ffffff; text-align:center; font-size:14pt; font-weight:700; padding:10px; border-bottom:2px solid #059669;">
-        ${String(groupTitleFinal).replace(/</g, '&lt;')} — القائمة الكاملة
-      </td>
-    </tr>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#f0fdf4; color:#064e3b; text-align:right; font-size:10.5pt; padding:10px 16px; border-bottom:2px solid #a7f3d0; font-weight:600;">
-        <b>المجموعة / البيان:</b> ${String(groupTitleFinal).replace(/</g, '&lt;')} &nbsp;&nbsp;|&nbsp;&nbsp;
-        <b>إجمالي السجلات:</b> ${allNames.length} اسم &nbsp;&nbsp;|&nbsp;&nbsp;
-        <b>تاريخ الاستخراج:</b> ${dateStr}
-      </td>
-    </tr>
-    <tr><td colspan="${colCount}" style="height:10px; background-color:#ffffff;"></td></tr>
-    <thead>
-      <tr>
-        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:center; width:60px;">م</th>
-        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11.5pt; border:1px solid #047857; padding:12px 14px; text-align:right;">اسم المستفيد</th>
-        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 14px; text-align:right;">المجموعة / البيان</th>
-        <th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:center;">ملاحظات / توقيع الاستلام</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${tableBodyRows}
-    </tbody>
-    <tr><td colspan="${colCount}" style="height:14px; background-color:#ffffff;"></td></tr>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#064e3b; color:#fbbf24; text-align:center; font-size:10pt; padding:12px; border-top:3px solid #d97706; font-weight:bold;">
-        ✦ وثيقة رسمية معتمدة — صُدرت من لوحة تحكم مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية ✦
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+    const headerCells =
+      thCell('م', 'center', 55) +
+      thCell('اسم المستفيد') +
+      thCell('المجموعة / البيان') +
+      thCell('ملاحظات / توقيع الاستلام', 'center', 210)
+
+    const excelHtml = buildExcelHtml({
+      sheetName: String(groupTitleFinal),
+      docTitle: 'القائمة الكاملة للمستفيدين',
+      docSubtitle: `بيان الكشف: ${String(groupTitleFinal)}`,
+      metaItems: [
+        { label: 'المجموعة / البيان', value: String(groupTitleFinal) },
+        { label: 'إجمالي السجلات', value: `${allNames.length} اسم` },
+        { label: 'تاريخ الاستخراج', value: dateStr }
+      ],
+      colCount: 4,
+      headerCells,
+      bodyRows: tableBodyRows,
+      logoSrc,
+      docRef: `FULL-${timestampSuffix()}`
+    })
 
     const timestamp = Date.now()
     const asciiFilename = `cases_full_${timestamp}.xls`
@@ -520,87 +555,37 @@ exportApi.get('/:collection', async (c) => {
 
     const logoSrc = getLogoImgSrc(c)
 
-    const tableHeaderRows = config.columns.map(col => `<th style="background-color:#064e3b; color:#ffffff; font-weight:bold; font-size:11pt; border:1px solid #047857; padding:12px 10px; text-align:right;">${col.label}</th>`).join('')
+    const headerCells = config.columns.map(col => thCell(col.label)).join('')
 
     const tableBodyRows = docs.length === 0
-      ? `<tr><td colspan="${config.columns.length}" style="text-align:center; padding:20px; color:#888;">لا توجد بيانات مسجلة في هذا القسم حتى الآن.</td></tr>`
+      ? `<tr><td colspan="${config.columns.length}" style="text-align:center; padding:26px; color:#6b93b8; font-size:11pt; font-weight:700; background-color:#ffffff; border:1px solid #d4e7f8;">لا توجد بيانات مسجلة في هذا القسم حتى الآن.</td></tr>`
       : docs.map((doc, idx) => {
-        const bg = idx % 2 === 0 ? '#ffffff' : '#f8faf9'
-        const cells = config.columns.map(col => {
+        const bg = idx % 2 === 0 ? '#ffffff' : '#eef5fb'
+        const cells = config.columns.map((col, ci) => {
           const rawVal = doc[col.key]
           const formattedVal = col.format ? col.format(rawVal, doc) : (rawVal ?? '-')
-          const safeText = String(formattedVal).replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          return `<td style="border:1px solid #cbd5e1; padding:9px 12px; font-size:10pt; text-align:right; color:#0f172a; background-color:${bg};">${safeText}</td>`
+          const isFirstCol = ci === 0
+          return tdCell(esc(formattedVal), bg, { bold: isFirstCol, color: isFirstCol ? '#0f4c81' : '#1d3a54' })
         }).join('')
         return `<tr>${cells}</tr>`
       }).join('\n')
 
     const colCount = config.columns.length
-    const excelHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!--[if gte mso 9]>
-<xml>
- <x:ExcelWorkbook>
-  <x:ExcelWorksheets>
-   <x:ExcelWorksheet>
-    <x:Name>${config.title.slice(0, 30)}</x:Name>
-    <x:WorksheetOptions>
-     <x:DisplayRightToLeft/>
-    </x:WorksheetOptions>
-   </x:ExcelWorksheet>
-  </x:ExcelWorksheets>
- </x:ExcelWorkbook>
-</xml>
-<![endif]-->
-<style>
-  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; }
-  table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-</style>
-</head>
-<body>
-  <table>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#064e3b; color:#ffffff; padding:18px 24px; vertical-align:middle; border-bottom:4px solid #d97706;">
-        <table style="width:100%; border:none; border-collapse:collapse;">
-          <tr>
-            <td style="width:70px; vertical-align:middle; border:none;">
-              <img src="${logoSrc}" width="56" height="56" alt="Logo" style="display:block; border-radius:8px;" />
-            </td>
-            <td style="vertical-align:middle; border:none; padding-right:15px; text-align:right;">
-              <div style="font-size:18pt; font-weight:800; color:#ffffff;">مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية</div>
-              <div style="font-size:11pt; color:#fef3c7; font-weight:600; margin-top:3px;">لوحة التحكم والإدارة المركزية — وثيقة رسمية معتمدة</div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#047857; color:#ffffff; text-align:center; font-size:13pt; font-weight:bold; padding:9px 10px;">
-        ${config.title}
-      </td>
-    </tr>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#f0fdf4; color:#064e3b; text-align:right; font-size:10pt; padding:8px 12px; border-bottom:2px solid #a7f3d0; font-weight:600;">
-        <b>تاريخ الاستخراج:</b> ${dateStr} &nbsp; | &nbsp; <b>إجمالي السجلات:</b> ${docs.length} سجل
-      </td>
-    </tr>
-    <tr><td colspan="${colCount}" style="height:10px; background-color:#ffffff;"></td></tr>
-    <thead>
-      <tr>${tableHeaderRows}</tr>
-    </thead>
-    <tbody>
-      ${tableBodyRows}
-    </tbody>
-    <tr><td colspan="${colCount}" style="height:14px; background-color:#ffffff;"></td></tr>
-    <tr>
-      <td colspan="${colCount}" style="background-color:#064e3b; color:#fbbf24; text-align:center; font-size:10pt; padding:12px; border-top:3px solid #d97706; font-weight:bold;">
-        ✦ وثيقة رسمية معتمدة — صُدرت من لوحة تحكم مؤسسة الدكتور عمر هشام للخدمات المجتمعية والخيرية ✦
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+    const excelHtml = buildExcelHtml({
+      sheetName: config.title,
+      docTitle: config.title,
+      docSubtitle: 'تقرير بيانات شامل — مستخرج مباشرة من قاعدة بيانات المنصة',
+      metaItems: [
+        { label: 'نوع التقرير', value: config.title },
+        { label: 'إجمالي السجلات', value: `${docs.length} سجل` },
+        { label: 'تاريخ الاستخراج', value: dateStr }
+      ],
+      colCount,
+      headerCells,
+      bodyRows: tableBodyRows,
+      logoSrc,
+      docRef: `EXP-${timestampSuffix()}`
+    })
 
     const fileName = `${collectionName}_export_${Date.now()}.xls`
 
