@@ -783,7 +783,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                 </>}
 
                 {/* Details & Admin Modal */}
-                <details style="position:relative; flex:1; display:contents">
+                <details style="position:relative; flex:1">
                   <summary style="list-style:none; cursor:pointer; background:var(--surface-2); border:1px solid var(--border); padding:7px 14px; border-radius:10px; font-size:.78rem; font-weight:800; color:var(--text); display:inline-flex; align-items:center; gap:5px; margin-right:auto">
                     {icon('fa-sliders')} التحكم والتفاصيل
                   </summary>
