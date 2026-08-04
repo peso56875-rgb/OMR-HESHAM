@@ -932,11 +932,11 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                           </form>
                         </details>
 
-                        {/* Modal Close Hint */}
+                        {/* Modal Close Button */}
                         <div style="text-align:center; margin-top:24px">
-                          <summary style="cursor:pointer; display:inline-block; background:var(--surface-2); border:1px solid var(--border); padding:8px 24px; border-radius:12px; font-weight:800; font-size:.85rem">
+                          <button type="button" class="vol-modal-close" style="cursor:pointer; display:inline-flex; align-items:center; gap:8px; background:var(--surface-2); border:1px solid var(--border); padding:10px 28px; border-radius:12px; font-weight:800; font-size:.85rem; color:var(--text)">
                             إغلاق النافذة {icon('fa-xmark')}
-                          </summary>
+                          </button>
                         </div>
 
                       </div>
@@ -956,7 +956,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                   </>}
 
                   {/* Delete volunteer button */}
-                  <form action={`/api/volunteers/delete/${v.id}`} method="post" style="display:inline">
+                  <form action={`/api/volunteers/delete/${v.id}`} method="post" style="display:inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المتطوع نهائياً؟')">
                     <button type="submit" style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:.85rem; padding:4px" title="حذف المتطوع">{icon('fa-trash-can')}</button>
                   </form>
                 </div>

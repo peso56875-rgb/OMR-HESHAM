@@ -417,7 +417,28 @@
       })
     }
 
-    // 6. Init Cases & Beneficiaries Handlers
+    // 6. Volunteer modal close buttons & backdrop click
+    $$('.vol-modal-close').forEach(btn => {
+      if (btn.dataset.bound === 'true') return
+      btn.dataset.bound = 'true'
+      btn.addEventListener('click', function() {
+        const details = this.closest('details')
+        if (details) details.removeAttribute('open')
+      })
+    })
+    // Close volunteer modal when clicking backdrop (the fixed overlay)
+    $$('details > div[style*="position:fixed"]').forEach(overlay => {
+      if (overlay.dataset.bound === 'true') return
+      overlay.dataset.bound = 'true'
+      overlay.addEventListener('click', function(e) {
+        if (e.target === this) {
+          const details = this.closest('details')
+          if (details) details.removeAttribute('open')
+        }
+      })
+    })
+
+    // 7. Init Cases & Beneficiaries Handlers
     initDashCasesHandlers()
 
     // 7. Reveal elements
