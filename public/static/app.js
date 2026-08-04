@@ -1414,24 +1414,25 @@
         if (data.found) {
           const v = data.volunteer
           const isExpired = data.expired
+          const isRevoked = data.revoked || v.status === 'revoked'
           result.innerHTML = `
             <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-              <div style="width:52px;height:52px;border-radius:50%;background:rgba(22,138,112,.3);display:grid;place-items:center;font-size:1.3rem;color:#7ee2bd;overflow:hidden;flex-shrink:0">
+              <div style="width:56px;height:56px;border-radius:50%;background:rgba(22,138,112,.3);display:grid;place-items:center;font-size:1.3rem;color:#7ee2bd;overflow:hidden;flex-shrink:0;border:2px solid #f0cf82;box-shadow:0 4px 12px rgba(0,0,0,.3)">
                 ${v.avatar_url ? `<img src="${v.avatar_url}" style="width:100%;height:100%;object-fit:cover" />` : '<i class="fa-solid fa-user"></i>'}
               </div>
               <div style="flex:1">
-                <strong style="font-size:1.05rem;display:block">${v.full_name}</strong>
+                <strong style="font-size:1.08rem;display:block">${v.full_name}</strong>
                 <span style="font-size:.82rem;color:rgba(255,255,255,.65)">${v.preferred_role || v.team || ''}</span>
               </div>
               <div style="text-align:center">
-                <span style="font-family:monospace;font-size:1.1rem;font-weight:900;color:#f0cf82;display:block">${v.volunteer_code}</span>
-                <small style="font-size:.68rem;color:rgba(255,255,255,.5)">${v.rank || 'متطوع مبادر'}</small>
+                <span style="font-family:monospace;font-size:1.15rem;font-weight:900;color:#f0cf82;display:block">${v.volunteer_code}</span>
+                <small style="font-size:.7rem;color:rgba(255,255,255,.5)">${v.rank || 'متطوع مبادر'}</small>
               </div>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:.8rem;font-weight:700;${isExpired ? 'color:#e86f51' : 'color:#7ee2bd'}">
-              <i class="fa-solid ${isExpired ? 'fa-triangle-exclamation' : 'fa-shield-halved'}"></i>
-              ${isExpired ? 'هذه البطاقة منتهية الصلاحية' : 'متطوع معتمد رسمياً من مؤسسة الدكتور عمر هشام ✦'}
-              ${v.expires_at ? `&nbsp;·&nbsp; تنتهي: ${new Date(v.expires_at).toLocaleDateString('ar-EG', {year:'numeric',month:'long'})}` : ''}
+            <div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:.82rem;font-weight:800;${isRevoked || isExpired ? 'color:#ff7675' : 'color:#7ee2bd'}">
+              <i class="fa-solid ${isRevoked ? 'fa-ban' : isExpired ? 'fa-triangle-exclamation' : 'fa-shield-halved'}"></i>
+              ${isRevoked ? 'هذه البطاقة ملغاة / مجمّدة برمجياً من قِبل الإدارة' : isExpired ? 'هذه البطاقة منتهية الصلاحية' : 'متطوع معتمد رسمياً من مؤسسة الدكتور عمر هشام ✦'}
+              ${v.expires_at && !isRevoked ? `&nbsp;·&nbsp; تنتهي: ${new Date(v.expires_at).toLocaleDateString('ar-EG', {year:'numeric',month:'long'})}` : ''}
             </div>
           `
         } else {
@@ -1458,7 +1459,7 @@
 
   initVolVerify()
 
-  // ===== Volunteer Avatar Preview =====
+  // ===== Volunteer Avatar Preview & Upload =====
   function initVolAvatarUpload() {
     const fileInput = $('#volAvatarInput')
     const preview = $('#volAvatarPreview')
@@ -1476,11 +1477,11 @@
       }
       reader.readAsDataURL(file)
 
-      // Upload to server
+      // Upload to public storage endpoint
       try {
         const formData = new FormData()
         formData.append('file', file)
-        const res = await fetch('/api/upload', { method: 'POST', body: formData })
+        const res = await fetch('/api/upload/public', { method: 'POST', body: formData })
         const data = await res.json()
         if (data.url && hiddenUrl) {
           hiddenUrl.value = data.url

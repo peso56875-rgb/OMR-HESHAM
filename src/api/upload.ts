@@ -66,6 +66,48 @@ upload.post('/', adminMiddleware, async (c) => {
   }
 })
 
+/** Public image upload endpoint (for volunteer photos & avatars). Max 5MB images. */
+upload.post('/public', async (c) => {
+  try {
+    const body = await c.req.parseBody()
+    const candidate = body.file || body.image || body.avatar || body.upload || body.media || body.avatar_file
+    const file = Array.isArray(candidate) ? candidate[0] : candidate
+
+    if (!file || !(file instanceof File)) {
+      return c.json({ error: 'لم يتم اختيار صورة' }, 400)
+    }
+
+    if (file.size === 0) {
+      return c.json({ error: 'الملف فارغ، فضلاً اختر صورة صالحة' }, 400)
+    }
+
+    const type = (file.type || '').toLowerCase()
+    const ext = String(file.name || '').split('.').pop()?.toLowerCase() || ''
+    const isImage = type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'].includes(ext)
+
+    if (!isImage) {
+      return c.json({ error: 'الرفع العام مخصص للصور فقط (JPG, PNG, WEBP)' }, 400)
+    }
+
+    const PUBLIC_MAX_BYTES = 5 * 1024 * 1024
+    if (file.size > PUBLIC_MAX_BYTES) {
+      return c.json({ error: 'حجم الصورة كبير جداً. الحد الأقصى 5 ميجابايت' }, 413)
+    }
+
+    const stored = await storeMediaFile(file, c)
+
+    return c.json({
+      success: true,
+      url: stored.url,
+      secure_url: stored.url,
+      provider: stored.provider
+    })
+  } catch (error: any) {
+    console.error('Public upload error:', error?.message)
+    return c.json({ error: 'فشل رفع الصورة: ' + (error?.message || 'خطأ غير معروف') }, 500)
+  }
+})
+
 /** Diagnostics so an admin can see which storage backends are usable. */
 upload.get('/status', adminMiddleware, (c) => {
   const buckets = storageBucketCandidates(c)

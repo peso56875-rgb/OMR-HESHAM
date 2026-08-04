@@ -643,97 +643,330 @@ export function DashDonations({ list = [] }: { list: any[] }) {
 
 export function DashVolunteers({ list = [] }: { list: any[] }) {
   const totalApproved = list.filter((v: any) => v.status === 'approved').length
+  const totalPending = list.filter((v: any) => v.status === 'pending').length
+  const totalRevoked = list.filter((v: any) => v.status === 'revoked' || v.is_active === false).length
   const totalHours = list.reduce((sum: number, v: any) => sum + (v.hours_count || 0), 0)
 
-  return <section class="dash-table">
-    <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px">
-      <div>
-        <h3>المتطوعون</h3>
-        <p style="color:var(--muted);font-size:.82rem;margin:4px 0 0">
-          {icon('fa-circle-check')} {totalApproved} معتمد &nbsp;|&nbsp; {icon('fa-clock')} إجمالي {totalHours} ساعة خدمة
-        </p>
-      </div>
-      <a href="/api/export/volunteers" download class="export-excel-btn">
-        {icon('fa-file-excel')} تصدير Excel
-      </a>
-    </header>
-    <table>
-      <thead>
-        <tr>
-          <th>الاسم</th>
-          <th>كود المتطوع</th>
-          <th>الهاتف</th>
-          <th>المجال</th>
-          <th>الرتبة</th>
-          <th>الساعات</th>
-          <th>الانتهاء</th>
-          <th>الحالة</th>
-          <th>الإجراءات</th>
-        </tr>
-      </thead>
-      <tbody>
-        {list.map((v: any) => {
-          const isApproved = v.status === 'approved'
-          const isExpired = v.expires_at && new Date(v.expires_at) < new Date()
-          const expiryDate = v.expires_at ? new Date(v.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'
-          return <tr>
-            <td style="font-weight:700">
-              {v.avatar_url && <img src={v.avatar_url} alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-left:8px;vertical-align:middle;display:inline-block" />}
-              {v.full_name}
-            </td>
-            <td>
-              {v.volunteer_code
-                ? <span style="font-family:monospace;font-weight:900;font-size:.9rem;color:var(--emerald);background:rgba(22,138,112,.1);padding:4px 10px;border-radius:8px;border:1px solid rgba(22,138,112,.2)">{v.volunteer_code}</span>
-                : <span style="color:var(--muted);font-size:.8rem">—</span>
-              }
-            </td>
-            <td>{v.phone}</td>
-            <td style="font-size:.82rem">{v.preferred_role}</td>
-            <td style="font-size:.8rem">{v.rank || (isApproved ? 'متطوع مبادر' : '—')}</td>
-            <td style="font-weight:700;color:var(--emerald)">{v.hours_count || 0} س</td>
-            <td style={`font-size:.78rem;color:${isExpired ? 'var(--coral)' : 'var(--muted)'}`}>
-              {isExpired ? icon('fa-triangle-exclamation') : ''} {expiryDate}
-            </td>
-            <td>
-              <span style={`padding:3px 9px; border-radius:6px; font-weight:700; font-size:.75rem; background:${isApproved ? 'rgba(67,160,71,.15)' : v.status === 'rejected' ? 'rgba(231,76,60,.15)' : 'rgba(245,124,0,.15)'}; color:${isApproved ? 'var(--emerald-600)' : v.status === 'rejected' ? '#e53935' : 'var(--gold-600)'}`}>
-                {v.status === 'approved' ? 'معتمد' : v.status === 'rejected' ? 'مرفوض' : 'معلق'}
-              </span>
-            </td>
-            <td style="white-space:nowrap">
-              {v.status === 'pending' && <>
-                <form action={`/api/volunteers/status/${v.id}`} method="post" style="display:inline; margin-inline-end:.3rem">
-                  <input type="hidden" name="status" value="approved" />
-                  <button type="submit" style="background:var(--emerald-600);color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:700">{icon('fa-circle-check')} قبول</button>
-                </form>
-                <form action={`/api/volunteers/status/${v.id}`} method="post" style="display:inline;margin-inline-end:.3rem">
-                  <input type="hidden" name="status" value="rejected" />
-                  <button type="submit" style="background:#ff6b6b;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:700">{icon('fa-circle-xmark')} رفض</button>
-                </form>
-              </>}
-              {isApproved && (
-                <details style="display:inline-block;position:relative">
-                  <summary style="cursor:pointer;list-style:none;background:var(--line);border:1px solid var(--border);padding:5px 10px;border-radius:6px;font-size:.78rem;font-weight:700">
-                    {icon('fa-pen')} تعديل
-                  </summary>
-                  <form action={`/api/volunteers/update-hours/${v.id}`} method="post" style="position:absolute;left:0;top:110%;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;z-index:10;min-width:220px;box-shadow:0 10px 30px rgba(0,0,0,.12)">
-                    <label style="display:flex;flex-direction:column;gap:5px;font-size:.8rem;font-weight:700;margin-bottom:10px">
-                      الساعات<input type="number" name="hours" value={String(v.hours_count || 0)} min="0" style="border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--ivory);color:var(--text)" />
-                    </label>
-                    <label style="display:flex;flex-direction:column;gap:5px;font-size:.8rem;font-weight:700;margin-bottom:12px">
-                      الرتبة<select name="rank" style="border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--ivory);color:var(--text)">
-                        {['متطوع مبادر', 'متطوع فعّال', 'قائد ميداني', 'سفير العطاء'].map(r => <option selected={v.rank === r}>{r}</option>)}
-                      </select>
-                    </label>
-                    <button type="submit" style="width:100%;background:var(--forest);color:white;border:none;border-radius:8px;padding:8px;font-weight:700;font-size:.8rem;cursor:pointer">حفظ</button>
-                  </form>
-                </details>
-              )}
-            </td>
+  return <>
+    {/* KPI Summary Cards */}
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1.5rem">
+      <article style="background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:1.2rem; display:flex; align-items:center; justify-content:space-between">
+        <div>
+          <span style="font-size:.82rem; color:var(--muted); display:block; font-weight:700">إجمالي المتطوعين</span>
+          <strong style="font-size:1.6rem; color:var(--text); font-weight:900">{list.length}</strong>
+        </div>
+        <div style="width:44px; height:44px; border-radius:12px; background:rgba(59,130,246,.12); color:#3b82f6; display:grid; place-items:center; font-size:1.2rem">
+          {icon('fa-people-group')}
+        </div>
+      </article>
+
+      <article style="background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:1.2rem; display:flex; align-items:center; justify-content:space-between">
+        <div>
+          <span style="font-size:.82rem; color:var(--muted); display:block; font-weight:700">المعتمَدون النشطون</span>
+          <strong style="font-size:1.6rem; color:var(--emerald-600); font-weight:900">{totalApproved}</strong>
+        </div>
+        <div style="width:44px; height:44px; border-radius:12px; background:rgba(67,160,71,.12); color:var(--emerald-600); display:grid; place-items:center; font-size:1.2rem">
+          {icon('fa-circle-check')}
+        </div>
+      </article>
+
+      <article style="background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:1.2rem; display:flex; align-items:center; justify-content:space-between">
+        <div>
+          <span style="font-size:.82rem; color:var(--muted); display:block; font-weight:700">طلبات قيد المراجعة</span>
+          <strong style="font-size:1.6rem; color:var(--gold-600); font-weight:900">{totalPending}</strong>
+        </div>
+        <div style="width:44px; height:44px; border-radius:12px; background:rgba(245,124,0,.12); color:var(--gold-600); display:grid; place-items:center; font-size:1.2rem">
+          {icon('fa-clock')}
+        </div>
+      </article>
+
+      <article style="background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:1.2rem; display:flex; align-items:center; justify-content:space-between">
+        <div>
+          <span style="font-size:.82rem; color:var(--muted); display:block; font-weight:700">البطاقات الملغاة / المنتهية</span>
+          <strong style="font-size:1.6rem; color:#e53935; font-weight:900">{totalRevoked}</strong>
+        </div>
+        <div style="width:44px; height:44px; border-radius:12px; background:rgba(229,57,53,.12); color:#e53935; display:grid; place-items:center; font-size:1.2rem">
+          {icon('fa-ban')}
+        </div>
+      </article>
+
+      <article style="background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:1.2rem; display:flex; align-items:center; justify-content:space-between">
+        <div>
+          <span style="font-size:.82rem; color:var(--muted); display:block; font-weight:700">ساعات الخدمة المسجلة</span>
+          <strong style="font-size:1.6rem; color:var(--forest); font-weight:900">{totalHours} س</strong>
+        </div>
+        <div style="width:44px; height:44px; border-radius:12px; background:rgba(12,74,63,.12); color:var(--forest); display:grid; place-items:center; font-size:1.2rem">
+          {icon('fa-award')}
+        </div>
+      </article>
+    </div>
+
+    {/* Main Table Section */}
+    <section class="dash-table">
+      <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px">
+        <div>
+          <h3 style="font-weight:900; font-size:1.2rem">سجل ومتطوعو المؤسسة</h3>
+          <p style="color:var(--muted); font-size:.82rem; margin:4px 0 0">
+            يمكنك عرض كافة التفاصيل والصور الرسمية، تعديل المدة، أو إلغاء صلاحية هوية المتطوع بسهولة.
+          </p>
+        </div>
+        <a href="/api/export/volunteers" download class="export-excel-btn">
+          {icon('fa-file-excel')} تصدير Excel
+        </a>
+      </header>
+
+      <table>
+        <thead>
+          <tr>
+            <th>الصورة والاسم</th>
+            <th>كود الهوية</th>
+            <th>الهاتف والتفاصيل</th>
+            <th>المجال / الرتبة</th>
+            <th>الساعات</th>
+            <th>تاريخ الانتهاء</th>
+            <th>الحالة</th>
+            <th>الإجراءات والتحكم</th>
           </tr>
-        })}
-      </tbody>
-    </table>
-  </section>
+        </thead>
+        <tbody>
+          {list.map((v: any) => {
+            const isApproved = v.status === 'approved'
+            const isRevoked = v.status === 'revoked' || v.is_active === false
+            const isExpired = Boolean(v.expires_at && new Date(v.expires_at) < new Date())
+            const expiryDate = v.expires_at ? new Date(v.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : 'مفتوح (دائم)'
+
+            return <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:10px">
+                  <div style="width:40px; height:40px; border-radius:50%; border:2px solid var(--line); overflow:hidden; background:var(--surface-2); display:grid; place-items:center; flex-shrink:0">
+                    {v.avatar_url
+                      ? <img src={v.avatar_url} alt={v.full_name} style="width:100%; height:100%; object-fit:cover" />
+                      : <span style="font-weight:900; font-size:.9rem; color:var(--emerald)">{v.full_name?.split(' ')?.[0]?.[0] || 'م'}</span>
+                    }
+                  </div>
+                  <div>
+                    <strong style="display:block; font-size:.92rem">{v.full_name}</strong>
+                    <small style="color:var(--muted); font-size:.75rem">{v.city ? `${v.city}` : ''} {v.age ? `· ${v.age} سنة` : ''}</small>
+                  </div>
+                </div>
+              </td>
+
+              <td>
+                {v.volunteer_code
+                  ? <span style="font-family:monospace; font-weight:900; font-size:.9rem; color:var(--emerald); background:rgba(22,138,112,.1); padding:4px 10px; border-radius:8px; border:1px solid rgba(22,138,112,.2)">{v.volunteer_code}</span>
+                  : <span style="color:var(--muted); font-size:.8rem">—</span>
+                }
+              </td>
+
+              <td>
+                <span style="display:block; font-size:.85rem; font-weight:700">{v.phone}</span>
+                {v.skills && <small style="color:var(--muted); font-size:.72rem; display:block; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title={v.skills}>{v.skills}</small>}
+              </td>
+
+              <td>
+                <span style="display:block; font-size:.82rem; font-weight:700">{v.preferred_role || v.team}</span>
+                <span style="font-size:.75rem; color:var(--gold-600); font-weight:700">{v.rank || (isApproved ? 'متطوع مبادر' : '—')}</span>
+              </td>
+
+              <td>
+                <span style="font-weight:900; color:var(--emerald-600); font-size:.95rem">{v.hours_count || 0} س</span>
+              </td>
+
+              <td>
+                <span style={`font-size:.78rem; font-weight:700; color:${isRevoked || isExpired ? '#e53935' : 'var(--text)'}`}>
+                  {isRevoked ? icon('fa-ban') : isExpired ? icon('fa-triangle-exclamation') : ''} {expiryDate}
+                </span>
+              </td>
+
+              <td>
+                <span style={`padding:4px 10px; border-radius:8px; font-weight:800; font-size:.75rem; background:${isRevoked ? 'rgba(239,68,68,.15)' : isApproved ? 'rgba(67,160,71,.15)' : v.status === 'rejected' ? 'rgba(231,76,60,.15)' : 'rgba(245,124,0,.15)'}; color:${isRevoked ? '#ef4444' : isApproved ? 'var(--emerald-600)' : v.status === 'rejected' ? '#e53935' : 'var(--gold-600)'}`}>
+                  {isRevoked ? 'ملغاة / مجمّدة' : isApproved ? 'معتمد' : v.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
+                </span>
+              </td>
+
+              <td style="white-space:nowrap">
+                <div style="display:flex; align-items:center; gap:6px">
+                  {/* Detailed View Modal */}
+                  <details style="position:relative">
+                    <summary style="list-style:none; cursor:pointer; background:var(--surface-2); border:1px solid var(--border); padding:6px 12px; border-radius:8px; font-size:.78rem; font-weight:800; color:var(--text)">
+                      {icon('fa-eye')} التفاصيل والـ ID
+                    </summary>
+
+                    <div style="position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(6px); z-index:99999; display:grid; place-items:center; padding:20px; overflow-y:auto">
+                      <div style="background:var(--paper); border:1px solid var(--line); border-radius:24px; max-width:700px; width:100%; max-height:90vh; overflow-y:auto; padding:28px; box-shadow:0 25px 80px rgba(0,0,0,.4); text-align:right">
+                        
+                        {/* Modal Header */}
+                        <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:20px">
+                          <div style="display:flex; align-items:center; gap:16px">
+                            <div style="width:64px; height:64px; border-radius:50%; border:3px solid var(--gold); overflow:hidden; background:var(--surface-2); flex-shrink:0">
+                              {v.avatar_url
+                                ? <img src={v.avatar_url} alt="" style="width:100%; height:100%; object-fit:cover" />
+                                : <div style="width:100%; height:100%; display:grid; place-items:center; font-weight:900; font-size:1.5rem; color:var(--emerald); background:var(--ivory)">{v.full_name?.[0]}</div>
+                              }
+                            </div>
+                            <div>
+                              <h3 style="margin:0; font-size:1.25rem; font-weight:900; color:var(--text)">{v.full_name}</h3>
+                              <span style="font-size:.82rem; color:var(--muted)">كود الهوية: <strong style="color:var(--emerald); font-family:monospace">{v.volunteer_code || 'غير مفعّل'}</strong></span>
+                            </div>
+                          </div>
+                          
+                          <span style="font-size:.85rem; font-weight:800; padding:6px 14px; border-radius:10px; background:var(--surface-2); border:1px solid var(--border)">
+                            {isRevoked ? '❌ بطاقة ملغاة' : isApproved ? '✅ متطوع معتمد' : '⏳ قيد المراجعة'}
+                          </span>
+                        </div>
+
+                        {/* Full Info Grid */}
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; background:var(--surface-2); padding:18px; border-radius:16px; border:1px solid var(--border); margin-bottom:24px">
+                          <div><small style="color:var(--muted); display:block; font-size:.72rem">رقم الهاتف</small><b style="font-size:.9rem">{v.phone}</b></div>
+                          <div><small style="color:var(--muted); display:block; font-size:.72rem">العمر</small><b style="font-size:.9rem">{v.age ? `${v.age} سنة` : 'غير محدد'}</b></div>
+                          <div><small style="color:var(--muted); display:block; font-size:.72rem">المدينة / المحافظة</small><b style="font-size:.9rem">{v.city || 'غير محدد'}</b></div>
+                          <div><small style="color:var(--muted); display:block; font-size:.72rem">المجال المفضل</small><b style="font-size:.9rem">{v.preferred_role || 'عام'}</b></div>
+                          <div><small style="color:var(--muted); display:block; font-size:.72rem">الرتبة التطوعية</small><b style="font-size:.9rem; color:var(--gold-600)">{v.rank || 'متطوع مبادر'}</b></div>
+                          <div><small style="color:var(--muted); display:block; font-size:.72rem">ساعات الخدمة</small><b style="font-size:.9rem; color:var(--emerald-600)">{v.hours_count || 0} ساعة</b></div>
+                          <div><small style="color:var(--muted); display:block; font-size:.72rem">تاريخ التقديم</small><b style="font-size:.9rem">{v.created_at ? new Date(v.created_at).toLocaleDateString('ar-EG') : '-'}</b></div>
+                          <div><small style="color:var(--muted); display:block; font-size:.72rem">صلاحية البطاقة</small><b style={`font-size:.9rem; color:${isRevoked || isExpired ? '#e53935' : 'var(--emerald-600)'}`}>{expiryDate}</b></div>
+                        </div>
+
+                        {v.skills && (
+                          <div style="background:var(--ivory); padding:14px; border-radius:12px; margin-bottom:24px; border:1px solid var(--line)">
+                            <small style="color:var(--muted); display:block; font-size:.75rem; font-weight:700">المهارات والخبرات:</small>
+                            <p style="margin:4px 0 0; font-size:.88rem">{v.skills}</p>
+                          </div>
+                        )}
+
+                        {/* ID Card Validity & Duration Control Panel */}
+                        <div style="background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:20px; margin-bottom:24px">
+                          <h4 style="margin:0 0 14px; font-size:1rem; font-weight:900; display:flex; align-items:center; gap:8px; color:var(--forest)">
+                            {icon('fa-sliders')} التحكم في صلاحية الـ ID ومدة التطوع
+                          </h4>
+
+                          <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px">
+                            {/* Extend +2 Years */}
+                            <form action={`/api/volunteers/validity/${v.id}`} method="post" style="display:inline">
+                              <input type="hidden" name="action" value="extend_2yr" />
+                              <button type="submit" style="background:var(--emerald-600); color:white; border:none; padding:8px 14px; border-radius:10px; font-weight:800; font-size:.8rem; cursor:pointer">
+                                {icon('fa-calendar-plus')} تجديد الصلاحية 2 سنة
+                              </button>
+                            </form>
+
+                            {/* Extend +1 Year */}
+                            <form action={`/api/volunteers/validity/${v.id}`} method="post" style="display:inline">
+                              <input type="hidden" name="action" value="extend_1yr" />
+                              <button type="submit" style="background:var(--blue-600); color:white; border:none; padding:8px 14px; border-radius:10px; font-weight:800; font-size:.8rem; cursor:pointer">
+                                {icon('fa-plus')} تمديد سنة واحدة
+                              </button>
+                            </form>
+
+                            {/* Set Indefinite Expiry */}
+                            <form action={`/api/volunteers/validity/${v.id}`} method="post" style="display:inline">
+                              <input type="hidden" name="action" value="indefinite" />
+                              <button type="submit" style="background:var(--forest); color:white; border:none; padding:8px 14px; border-radius:10px; font-weight:800; font-size:.8rem; cursor:pointer">
+                                {icon('fa-infinity')} جعل الصلاحية مفتوحة (بدون تاريخ انتهاء)
+                              </button>
+                            </form>
+
+                            {/* Revoke / Freeze ID */}
+                            {!isRevoked ? (
+                              <form action={`/api/volunteers/validity/${v.id}`} method="post" style="display:inline">
+                                <input type="hidden" name="action" value="revoke" />
+                                <button type="submit" style="background:#e53935; color:white; border:none; padding:8px 14px; border-radius:10px; font-weight:800; font-size:.8rem; cursor:pointer">
+                                  {icon('fa-ban')} إلغاء / تجميد صلاحية الـ ID
+                                </button>
+                              </form>
+                            ) : (
+                              <form action={`/api/volunteers/validity/${v.id}`} method="post" style="display:inline">
+                                <input type="hidden" name="action" value="activate" />
+                                <button type="submit" style="background:var(--emerald-600); color:white; border:none; padding:8px 14px; border-radius:10px; font-weight:800; font-size:.8rem; cursor:pointer">
+                                  {icon('fa-rotate-left')} إعادة تفعيل صلاحية الـ ID
+                                </button>
+                              </form>
+                            )}
+                          </div>
+
+                          {/* Custom Date Form */}
+                          <form action={`/api/volunteers/validity/${v.id}`} method="post" style="display:flex; align-items:center; gap:10px; background:var(--paper); padding:10px; border-radius:12px; border:1px solid var(--border); flex-wrap:wrap">
+                            <input type="hidden" name="action" value="set_custom" />
+                            <label style="font-size:.8rem; font-weight:800; white-space:nowrap">تاريخ انتهاء مخصص:</label>
+                            <input type="date" name="expires_at" defaultValue={v.expires_at ? new Date(v.expires_at).toISOString().slice(0,10) : ''} required style="border:1px solid var(--line); border-radius:8px; padding:6px; font-size:.82rem; background:var(--ivory)" />
+                            <button type="submit" style="background:var(--text); color:var(--paper); border:none; border-radius:8px; padding:6px 14px; font-size:.78rem; font-weight:800; cursor:pointer">تطبيق التاريخ</button>
+                          </form>
+                        </div>
+
+                        {/* Full Edit Form Collapsible */}
+                        <details style="background:var(--surface-2); border:1px solid var(--border); border-radius:18px; padding:16px">
+                          <summary style="font-weight:900; font-size:.92rem; cursor:pointer; color:var(--text)">
+                            {icon('fa-pen-to-square')} تعديل كافة بيانات المتطوع والصورة
+                          </summary>
+                          
+                          <form action={`/api/volunteers/update/${v.id}`} method="post" enctype="multipart/form-data" style="margin-top:16px; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px">
+                            <label style="font-size:.8rem; font-weight:700">الاسم الكامل<input name="full_name" value={v.full_name} required style="width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; background:var(--paper)" /></label>
+                            <label style="font-size:.8rem; font-weight:700">رقم الهاتف<input name="phone" value={v.phone} required style="width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; background:var(--paper)" /></label>
+                            <label style="font-size:.8rem; font-weight:700">العمر<input name="age" type="number" value={v.age || ''} style="width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; background:var(--paper)" /></label>
+                            <label style="font-size:.8rem; font-weight:700">المدينة<input name="city" value={v.city || ''} style="width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; background:var(--paper)" /></label>
+                            <label style="font-size:.8rem; font-weight:700">المجال<input name="preferred_role" value={v.preferred_role || ''} style="width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; background:var(--paper)" /></label>
+                            <label style="font-size:.8rem; font-weight:700">كود الهوية<input name="volunteer_code" value={v.volunteer_code || ''} style="width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; background:var(--paper)" /></label>
+                            <label style="font-size:.8rem; font-weight:700">ساعات الخدمة<input name="hours_count" type="number" value={v.hours_count || 0} style="width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; background:var(--paper)" /></label>
+                            <label style="font-size:.8rem; font-weight:700">الرتبة
+                              <select name="rank" style="width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; background:var(--paper)">
+                                {['متطوع مبادر', 'متطوع فعّال', 'قائد ميداني', 'سفير العطاء'].map(r => <option selected={v.rank === r}>{r}</option>)}
+                              </select>
+                            </label>
+                            <label style="font-size:.8rem; font-weight:700">الحالة
+                              <select name="status" style="width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; background:var(--paper)">
+                                <option value="approved" selected={v.status === 'approved'}>معتمد</option>
+                                <option value="pending" selected={v.status === 'pending'}>قيد المراجعة</option>
+                                <option value="rejected" selected={v.status === 'rejected'}>مرفوض</option>
+                                <option value="revoked" selected={v.status === 'revoked'}>ملغاة / مجمّدة</option>
+                              </select>
+                            </label>
+                            
+                            <div style="grid-column:1/-1; margin-top:8px">
+                              <label style="font-size:.8rem; font-weight:700; display:block; margin-bottom:6px">تغيير الصورة الشخصية:</label>
+                              <input type="file" name="avatar_file" accept="image/*" style="font-size:.8rem" />
+                              <input type="hidden" name="avatar_url" value={v.avatar_url || ''} />
+                            </div>
+
+                            <div style="grid-column:1/-1; display:flex; justify-content:flex-end; gap:10px; margin-top:10px">
+                              <button type="submit" style="background:var(--forest); color:white; border:none; border-radius:10px; padding:10px 20px; font-weight:800; cursor:pointer">حفظ التغييرات</button>
+                            </div>
+                          </form>
+                        </details>
+
+                        {/* Modal Close Hint */}
+                        <div style="text-align:center; margin-top:24px">
+                          <summary style="cursor:pointer; display:inline-block; background:var(--surface-2); border:1px solid var(--border); padding:8px 24px; border-radius:12px; font-weight:800; font-size:.85rem">
+                            إغلاق النافذة {icon('fa-xmark')}
+                          </summary>
+                        </div>
+
+                      </div>
+                    </div>
+                  </details>
+
+                  {/* Pending quick actions */}
+                  {v.status === 'pending' && <>
+                    <form action={`/api/volunteers/status/${v.id}`} method="post" style="display:inline">
+                      <input type="hidden" name="status" value="approved" />
+                      <button type="submit" style="background:var(--emerald-600); color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:.78rem; font-weight:700">{icon('fa-circle-check')} قبول</button>
+                    </form>
+                    <form action={`/api/volunteers/status/${v.id}`} method="post" style="display:inline">
+                      <input type="hidden" name="status" value="rejected" />
+                      <button type="submit" style="background:#ff6b6b; color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:.78rem; font-weight:700">{icon('fa-circle-xmark')} رفض</button>
+                    </form>
+                  </>}
+
+                  {/* Delete volunteer button */}
+                  <form action={`/api/volunteers/delete/${v.id}`} method="post" style="display:inline">
+                    <button type="submit" style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:.85rem; padding:4px" title="حذف المتطوع">{icon('fa-trash-can')}</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          })}
+        </tbody>
+      </table>
+    </section>
+  </>
 }
 
 export function DashContacts({ list = [] }: { list: any[] }) {

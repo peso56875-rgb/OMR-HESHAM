@@ -313,14 +313,19 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
             <h3>{icon('fa-people-group')} مسيرتك التطوعية</h3>
 
             {volunteer ? (
-              volunteer.status === 'approved' && volunteer.volunteer_code ? (
-                // ===== Digital Volunteer ID Card =====
+              (volunteer.status === 'approved' || volunteer.status === 'revoked') && volunteer.volunteer_code ? (
                 // ===== Ultra-Stunning Digital Volunteer ID Card =====
                 <div class="vol-id-card-wrapper">
-                  <div class="vol-id-card" id="volunteerIdCard">
+                  <div class="vol-id-card" id="volunteerIdCard" style={volunteer.status === 'revoked' || volunteer.is_active === false ? 'filter:grayscale(0.3);border-color:#ff7675' : ''}>
                     <div class="vol-id-card-bg-watermark">
                       <img src="/static/foundation-logo.png" alt="" />
                     </div>
+
+                    {(volunteer.status === 'revoked' || volunteer.is_active === false) && (
+                      <div style="background:linear-gradient(90deg,#d63031,#e74c3c);color:white;text-align:center;padding:8px;font-weight:900;font-size:.85rem;letter-spacing:.02em">
+                        {icon('fa-ban')} هذه البطاقة ملغاة / مجمّدة برمجياً من قِبل الإدارة
+                      </div>
+                    )}
 
                     <div class="vol-id-card-header">
                       <img src="/static/foundation-logo.png" alt="شعار المؤسسة" class="vol-id-logo" />
@@ -335,8 +340,8 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
 
                     <div class="vol-id-body">
                       <div class="vol-id-avatar-wrap">
-                        {volunteer.avatar_url
-                          ? <img src={volunteer.avatar_url} alt={volunteer.full_name} class="vol-id-avatar" />
+                        {(volunteer.avatar_url || user.avatar)
+                          ? <img src={volunteer.avatar_url || user.avatar} alt={volunteer.full_name} class="vol-id-avatar" />
                           : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0,2).map((n: string) => n[0]).join('')}</div>
                         }
                         <div class="vol-id-rank-badge">{icon('fa-star')} {volunteer.rank || 'متطوع مبادر'}</div>
@@ -362,8 +367,8 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                           </div>
                           <div class="vol-id-meta-item">
                             <span>{icon('fa-calendar-xmark')} الانتهاء</span>
-                            <b style={`color:${volunteer.expires_at && new Date(volunteer.expires_at) < new Date() ? '#ff7675' : '#55efc4'}`}>
-                              {volunteer.expires_at ? new Date(volunteer.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : '-'}
+                            <b style={`color:${(volunteer.status === 'revoked' || volunteer.is_active === false || (volunteer.expires_at && new Date(volunteer.expires_at) < new Date())) ? '#ff7675' : '#55efc4'}`}>
+                              {volunteer.expires_at ? new Date(volunteer.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short' }) : 'مفتوح (دائم)'}
                             </b>
                           </div>
                         </div>
@@ -380,7 +385,9 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                       </div>
 
                       <div class="vol-id-validity">
-                        {volunteer.expires_at && new Date(volunteer.expires_at) < new Date()
+                        {volunteer.status === 'revoked' || volunteer.is_active === false
+                          ? <span style="color:#ff7675">{icon('fa-ban')} بطاقة ملغاة</span>
+                          : volunteer.expires_at && new Date(volunteer.expires_at) < new Date()
                           ? <span style="color:#ff7675">{icon('fa-triangle-exclamation')} منتهية الصلاحية</span>
                           : <span style="color:#55efc4">{icon('fa-circle-check')} سارية المفعول</span>
                         }
