@@ -224,12 +224,20 @@ const collectionConfigs: Record<string, ConfigDef> = {
   volunteers: {
     title: 'سجل طلبات التطوع والمبادرات',
     columns: [
+      { key: 'volunteer_code', label: 'كود الهوية', format: (v) => v || '-' },
       { key: 'full_name', label: 'اسم المتطوع' },
       { key: 'phone', label: 'رقم الهاتف' },
+      { key: 'age', label: 'العمر', format: (v) => v || '-' },
       { key: 'city', label: 'المدينة / المحافظة' },
       { key: 'preferred_role', label: 'المجال المفضل' },
+      { key: 'team', label: 'الفريق', format: (v) => v || '-' },
+      { key: 'rank', label: 'الرتبة', format: (v) => v || '-' },
       { key: 'skills', label: 'المهارات والخبرات' },
-      { key: 'status', label: 'حالة الطلب', format: (v) => v === 'approved' ? 'مقبول' : v === 'rejected' ? 'مرفوض' : 'قيد المراجعة' },
+      { key: 'hours_count', label: 'ساعات الخدمة', format: (v) => v ?? 0 },
+      { key: 'status', label: 'حالة الطلب', format: (v) => v === 'approved' ? 'مقبول' : v === 'rejected' ? 'مرفوض' : v === 'revoked' ? 'ملغاة / مجمّدة' : 'قيد المراجعة' },
+      { key: 'is_active', label: 'البطاقة نشطة', format: (v) => v === false ? 'لا' : 'نعم' },
+      { key: 'expires_at', label: 'انتهاء صلاحية البطاقة', format: (v) => v ? new Date(v).toLocaleDateString('ar-EG') : 'مفتوحة' },
+      { key: 'approved_at', label: 'تاريخ الاعتماد', format: (v) => v ? new Date(v).toLocaleString('ar-EG') : '-' },
       { key: 'created_at', label: 'تاريخ التقديم', format: (v) => v ? new Date(v).toLocaleString('ar-EG') : '-' }
     ]
   },

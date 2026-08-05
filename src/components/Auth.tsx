@@ -363,7 +363,9 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                   <p>هويتك الرقمية وحالة انضمامك لأسرة المتطوعين</p>
                 </div>
               </div>
-              {volunteer?.status === 'approved' && <span class="profile-card-count profile-card-count-green">{icon('fa-shield-halved')} متطوع معتمد</span>}
+              {/* A frozen card (approved but is_active === false) must not still
+                  advertise "متطوع معتمد" next to a revoked-looking ID card. */}
+              {volunteer?.status === 'approved' && volunteer?.is_active !== false && <span class="profile-card-count profile-card-count-green">{icon('fa-shield-halved')} متطوع معتمد</span>}
             </div>
 
             {volunteer ? (

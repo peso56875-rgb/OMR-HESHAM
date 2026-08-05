@@ -398,7 +398,7 @@ export function DashIncome({ list = [], campaigns = [], user }: { list: any[], c
             {campaigns.map((c: any) => <option value={c.id}>{c.title}</option>)}
           </select>
         </label>
-        <label>تاريخ الاستلام *<input type="date" name="date" defaultValue={today} required /></label>
+        <label>تاريخ الاستلام *<input type="date" name="date" value={today} required /></label>
         <label>ملاحظات وتفاصيل إضافية<textarea name="description" rows={3} placeholder="أي تفاصيل تتعلق بالاستلام أو الحساب البنكي..."></textarea></label>
         <div style="background:rgba(22,138,112,.08); padding:10px 14px; border-radius:10px; font-size:.85rem; color:var(--emerald-600)">
           {icon('fa-user-check')} سيتم تسجيل هذا الإيراد باسم الأدمن الحالي: <b>{user.name}</b>
@@ -479,7 +479,7 @@ export function DashExpenses({ list = [], campaigns = [], user }: { list: any[],
           </select>
         </label>
         <label>وصف ومبرر الصرف *<textarea name="description" rows={3} required placeholder="اكتب التفاصيل والفواتير المرتبطة بهذا الصرف..."></textarea></label>
-        <label>تاريخ الصرف *<input type="date" name="date" defaultValue={today} required /></label>
+        <label>تاريخ الصرف *<input type="date" name="date" value={today} required /></label>
         <div style="background:rgba(232,111,81,.08); padding:10px 14px; border-radius:10px; font-size:.85rem; color:#e86f51">
           {icon('fa-user-check')} سيتم تسجيل هذا المصروف باسم الأدمن الحالى: <b>{user.name}</b>
         </div>
@@ -555,7 +555,7 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
             <span id="icon-preview-badge" style="width:40px; height:40px; border-radius:8px; background:var(--gold-600); color:#fff; display:grid; place-items:center; font-size:1.2rem">
               <i class="fa-solid fa-heart"></i>
             </span>
-            <input name="icon" id="campaign-icon-input" defaultValue="fa-heart" placeholder="fa-heart" style="flex:1" />
+            <input name="icon" id="campaign-icon-input" value="fa-heart" placeholder="fa-heart" style="flex:1" />
           </div>
           <div class="icon-presets" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px">
             {['fa-heart', 'fa-capsules', 'fa-basket-shopping', 'fa-school', 'fa-stethoscope', 'fa-book-open', 'fa-gift', 'fa-hand-holding-heart', 'fa-house-medical', 'fa-seedling'].map(ic => (
@@ -642,10 +642,15 @@ export function DashDonations({ list = [] }: { list: any[] }) {
 }
 
 export function DashVolunteers({ list = [] }: { list: any[] }) {
-  const totalApproved = list.filter((v: any) => v.status === 'approved').length
-  const totalPending = list.filter((v: any) => v.status === 'pending').length
+  // These buckets must be mutually exclusive, otherwise the KPI numbers add up
+  // to more than the list length. `status` is the source of truth; a frozen card
+  // is an approved record whose is_active flag was switched off, so it belongs
+  // to "ملغاة / مجمّدة" only — never to "معتمدون" at the same time.
+  const isFrozenCard = (v: any) => v.status === 'approved' && v.is_active === false
+  const totalApproved = list.filter((v: any) => v.status === 'approved' && !isFrozenCard(v)).length
+  const totalPending = list.filter((v: any) => !v.status || v.status === 'pending').length
   const totalRejected = list.filter((v: any) => v.status === 'rejected').length
-  const totalRevoked = list.filter((v: any) => v.status === 'revoked' || v.is_active === false).length
+  const totalRevoked = list.filter((v: any) => v.status === 'revoked' || isFrozenCard(v)).length
   const totalHours = list.reduce((sum: number, v: any) => sum + (v.hours_count || 0), 0)
 
   return <>
@@ -694,21 +699,27 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
     ) : (
       <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:18px">
         {list.map((v: any) => {
+          // `status` is the single source of truth. Treating is_active === false
+          // as "revoked" wrongly painted every pending/rejected application red,
+          // because a fresh application is not active yet either.
           const isApproved = v.status === 'approved'
-          const isRevoked = v.status === 'revoked' || v.is_active === false
-          const isPending = v.status === 'pending'
+          const isRevoked = v.status === 'revoked'
+          const isPending = !v.status || v.status === 'pending'
           const isRejected = v.status === 'rejected'
+          // An approved card whose active flag was turned off is frozen, not revoked.
+          const isFrozen = isApproved && v.is_active === false
+          const isInactive = isRevoked || isFrozen
           const isExpired = Boolean(v.expires_at && new Date(v.expires_at) < new Date())
           const expiryDate = v.expires_at ? new Date(v.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }) : 'مفتوح'
           const createdDate = v.created_at ? new Date(v.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'
 
-          const statusColor = isRevoked ? '#dc2626' : isApproved ? '#10b981' : isRejected ? '#ef4444' : '#f59e0b'
-          const statusBg = isRevoked ? 'rgba(220,38,38,.1)' : isApproved ? 'rgba(16,185,129,.1)' : isRejected ? 'rgba(239,68,68,.1)' : 'rgba(245,158,11,.1)'
-          const statusText = isRevoked ? 'ملغاة / مجمّدة' : isApproved ? 'معتمد' : isRejected ? 'مرفوض' : 'قيد المراجعة'
-          const statusIcon = isRevoked ? 'fa-ban' : isApproved ? 'fa-shield-halved' : isRejected ? 'fa-circle-xmark' : 'fa-clock'
+          const statusColor = isInactive ? '#dc2626' : isApproved ? '#10b981' : isRejected ? '#ef4444' : '#f59e0b'
+          const statusBg = isInactive ? 'rgba(220,38,38,.1)' : isApproved ? 'rgba(16,185,129,.1)' : isRejected ? 'rgba(239,68,68,.1)' : 'rgba(245,158,11,.1)'
+          const statusText = isRevoked ? 'ملغاة / مجمّدة' : isFrozen ? 'مجمّدة مؤقتاً' : isApproved ? (isExpired ? 'معتمد — منتهية الصلاحية' : 'معتمد') : isRejected ? 'مرفوض' : 'قيد المراجعة'
+          const statusIcon = isInactive ? 'fa-ban' : isApproved ? (isExpired ? 'fa-triangle-exclamation' : 'fa-shield-halved') : isRejected ? 'fa-circle-xmark' : 'fa-clock'
 
           return (
-            <div style={`background:var(--surface); border:1px solid var(--border); border-radius:20px; overflow:hidden; transition:transform .25s, box-shadow .25s; position:relative${isRevoked ? '; opacity:.75' : ''}`}>
+            <div style={`background:var(--surface); border:1px solid var(--border); border-radius:20px; overflow:hidden; transition:transform .25s, box-shadow .25s; position:relative${isInactive ? '; opacity:.75' : ''}`}>
 
               {/* ── Card Header with Avatar ── */}
               <div style={`padding:20px 20px 16px; display:flex; align-items:center; gap:16px; border-bottom:1px solid var(--border); background:${statusBg}`}>
@@ -757,8 +768,8 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                 </div>
                 <div>
                   <small style="color:var(--muted); font-size:.68rem; display:block">{icon('fa-calendar-xmark')} صلاحية البطاقة</small>
-                  <b style={`font-size:.85rem; color:${isExpired || isRevoked ? '#dc2626' : 'var(--emerald-600)'}`}>
-                    {isRevoked ? 'ملغاة' : isExpired ? 'منتهية' : expiryDate}
+                  <b style={`font-size:.85rem; color:${isExpired || isInactive ? '#dc2626' : 'var(--emerald-600)'}`}>
+                    {isRevoked ? 'ملغاة' : isFrozen ? 'مجمّدة' : isExpired ? 'منتهية' : expiryDate}
                   </b>
                 </div>
               </div>
@@ -825,7 +836,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                           <div><small style="color:var(--muted); display:block; font-size:.7rem; font-weight:700">{icon('fa-star')} الرتبة</small><b style="font-size:.88rem; color:var(--gold-600)">{v.rank || 'متطوع مبادر'}</b></div>
                           <div><small style="color:var(--muted); display:block; font-size:.7rem; font-weight:700">{icon('fa-clock')} ساعات الخدمة</small><b style="font-size:.88rem; color:var(--emerald-600)">{v.hours_count || 0} ساعة</b></div>
                           <div><small style="color:var(--muted); display:block; font-size:.7rem; font-weight:700">{icon('fa-calendar')} تاريخ التقديم</small><b style="font-size:.88rem">{createdDate}</b></div>
-                          <div><small style="color:var(--muted); display:block; font-size:.7rem; font-weight:700">{icon('fa-calendar-xmark')} صلاحية البطاقة</small><b style={`font-size:.88rem; color:${isExpired || isRevoked ? '#dc2626' : 'var(--emerald-600)'}`}>{expiryDate}</b></div>
+                          <div><small style="color:var(--muted); display:block; font-size:.7rem; font-weight:700">{icon('fa-calendar-xmark')} صلاحية البطاقة</small><b style={`font-size:.88rem; color:${isExpired || isInactive ? '#dc2626' : 'var(--emerald-600)'}`}>{expiryDate}</b></div>
                         </div>
 
                         {v.skills && (
@@ -859,7 +870,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                                 {icon('fa-infinity')} صلاحية مفتوحة
                               </button>
                             </form>
-                            {!isRevoked ? (
+                            {!isInactive ? (
                               <form action={`/api/volunteers/validity/${v.id}`} method="post" style="display:inline">
                                 <input type="hidden" name="action" value="revoke" />
                                 <button type="submit" style="background:#dc2626; color:white; border:none; padding:7px 12px; border-radius:8px; font-weight:800; font-size:.76rem; cursor:pointer; display:inline-flex; align-items:center; gap:4px">
@@ -878,7 +889,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                           <form action={`/api/volunteers/validity/${v.id}`} method="post" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--surface); padding:10px; border-radius:10px; border:1px solid var(--border)">
                             <input type="hidden" name="action" value="set_custom" />
                             <label style="font-size:.78rem; font-weight:800; white-space:nowrap; color:var(--muted)">{icon('fa-calendar-day')} تاريخ مخصص:</label>
-                            <input type="date" name="expires_at" defaultValue={v.expires_at ? new Date(v.expires_at).toISOString().slice(0,10) : ''} required style="border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-size:.82rem; background:var(--surface-2); color:var(--text)" />
+                            <input type="date" name="expires_at" value={v.expires_at ? new Date(v.expires_at).toISOString().slice(0,10) : ''} required style="border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-size:.82rem; background:var(--surface-2); color:var(--text)" />
                             <button type="submit" style="background:var(--heading); color:var(--surface); border:none; border-radius:8px; padding:6px 14px; font-size:.76rem; font-weight:800; cursor:pointer">تطبيق</button>
                           </form>
                         </div>
@@ -909,10 +920,23 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                                 <option value="revoked" selected={v.status === 'revoked'}>ملغاة / مجمّدة</option>
                               </select>
                             </label>
+                            <label style="font-size:.78rem; font-weight:700; color:var(--muted); grid-column:1/-1">تاريخ انتهاء البطاقة <small style="font-weight:600; opacity:.75">(اتركه فارغاً لصلاحية مفتوحة)</small>
+                              <input type="date" name="expires_at" value={v.expires_at ? new Date(v.expires_at).toISOString().slice(0, 10) : ''} style="width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; background:var(--surface); color:var(--text); margin-top:4px" />
+                            </label>
+                            {/* This field was missing entirely. Its absence meant the API received
+                                skills === undefined, which made Firestore reject the WHOLE update,
+                                so none of the other edits were saved either. */}
+                            <label style="font-size:.78rem; font-weight:700; color:var(--muted); grid-column:1/-1">المهارات والخبرات
+                              <textarea name="skills" rows={2} style="width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; background:var(--surface); color:var(--text); margin-top:4px; font-family:inherit; resize:vertical">{v.skills || ''}</textarea>
+                            </label>
                             <div style="grid-column:1/-1">
                               <label style="font-size:.78rem; font-weight:700; color:var(--muted); display:block; margin-bottom:6px">{icon('fa-camera')} تغيير الصورة الشخصية</label>
                               <input type="file" name="avatar_file" accept="image/*" style="font-size:.78rem" />
-                              <input type="hidden" name="avatar_url" value={v.avatar_url || ''} />
+                              {/* Visible (not hidden) so the admin can paste a link or clear the
+                                  field to remove the photo — a hidden field could only ever
+                                  re-submit the existing value. */}
+                              <input name="avatar_url" value={v.avatar_url || ''} placeholder="أو ضع رابط الصورة مباشرة https://..." style="width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; background:var(--surface); color:var(--text); margin-top:8px; font-size:.78rem" />
+                              <small style="display:block; margin-top:4px; color:var(--muted); font-size:.7rem">اختر ملفاً لرفعه، أو الصق رابطاً، أو امسح الحقل لإزالة الصورة.</small>
                             </div>
                             <div style="grid-column:1/-1; display:flex; justify-content:flex-end; gap:10px; margin-top:6px">
                               <button type="submit" style="background:var(--emerald-600); color:white; border:none; border-radius:10px; padding:10px 24px; font-weight:800; font-size:.85rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px">
@@ -924,7 +948,10 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
 
                         {/* Modal Actions Bar */}
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:16px; border-top:1px solid var(--border)">
-                          <form action={`/api/volunteers/delete/${v.id}`} method="post" style="display:inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المتطوع نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')">
+                          {/* data-confirm, not inline onsubmit: the AJAX handler calls
+                              preventDefault() and shows its own themed confirm dialog, so the
+                              two mechanisms fought each other and the delete was unreliable. */}
+                          <form action={`/api/volunteers/delete/${v.id}`} method="post" style="display:inline" data-confirm={`هل أنت متأكد من حذف المتطوع "${v.full_name}" نهائياً؟ لا يمكن التراجع عن هذا الإجراء.`}>
                             <button type="submit" style="background:rgba(220,38,38,.1); color:#dc2626; border:1px solid rgba(220,38,38,.2); padding:8px 16px; border-radius:10px; font-weight:800; font-size:.8rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px">
                               {icon('fa-trash-can')} حذف المتطوع نهائياً
                             </button>
@@ -939,7 +966,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                 </details>
 
                 {/* Quick Delete (outside modal) */}
-                <form action={`/api/volunteers/delete/${v.id}`} method="post" style="display:inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المتطوع؟')">
+                <form action={`/api/volunteers/delete/${v.id}`} method="post" style="display:inline" data-confirm={`هل أنت متأكد من حذف المتطوع "${v.full_name}"؟`}>
                   <button type="submit" style="background:none; border:1px solid var(--border); color:var(--muted); cursor:pointer; font-size:.8rem; padding:6px 8px; border-radius:8px; display:inline-flex; align-items:center" title="حذف">
                     {icon('fa-trash-can')}
                   </button>
@@ -1195,7 +1222,7 @@ export function DashStories({ list = [] }: { list: any[] }) {
         <h3>إضافة قصة نجاح جديدة</h3>
         <label>الاسم<input name="name" placeholder="أحمد م." required /></label>
         <label>الدور / الصفة<input name="role" placeholder="مستفيد، متطوع" required /></label>
-        <label>التقييم (1-5)<input type="number" name="rating" min="1" max="5" defaultValue="5" required /></label>
+        <label>التقييم (1-5)<input type="number" name="rating" min="1" max="5" value="5" required /></label>
         <div class="upload-widget">
           <input type="hidden" name="image_url" class="cloudinary-url" />
           <label>صورة صاحب القصة (اختياري)</label>
@@ -1277,7 +1304,7 @@ export function DashGallery({ list = [] }: { list: any[] }) {
               <option value="موسمي">موسمي وأعياد</option>
             </select>
           </label>
-          <label>الموقع / المكان<input name="location" placeholder="مثل: كفر العنانية، الدقهلية" defaultValue="كفر العنانية" /></label>
+          <label>الموقع / المكان<input name="location" placeholder="مثل: كفر العنانية، الدقهلية" value="كفر العنانية" /></label>
         </div>
 
         <div class="upload-widget">
@@ -1355,7 +1382,7 @@ export function DashJobs({ list = [] }: { list: any[] }) {
         <label>المسمى الوظيفي<input name="title" required /></label>
         <label>القسم<input name="department" placeholder="إدارة، ميداني، طبي" required /></label>
         <label>نوع الوظيفة<input name="job_type" placeholder="دوام كامل، دوام جزئي" required /></label>
-        <label>الموقع<input name="location" defaultValue="كفر العنانية" required /></label>
+        <label>الموقع<input name="location" value="كفر العنانية" required /></label>
         <label>وصف الوظيفة والمتطلبات<textarea name="description" rows={5} required></textarea></label>
         <label style="display:flex; align-items:center; gap:.5rem"><input type="checkbox" name="is_active" value="true" defaultChecked /> وظيفة نشطة (تظهر في الموقع)؟</label>
         <button class="primary-btn" type="submit" id="job-submit-btn">حفظ الوظيفة</button>
@@ -1543,7 +1570,7 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
               type="text"
               id="custom-group-title"
               placeholder="مثال: كشف توزيع كراتين رمضان - دفعة ١"
-              defaultValue="مجموعة مستفيدين — عينة عشوائية"
+              value="مجموعة مستفيدين — عينة عشوائية"
               style="padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--ivory); font-size:.95rem; color:var(--text); font-weight:600"
             />
             <small style="color:var(--muted); font-size:.78rem">هذا الاسم سيظهر في ترويسة ملف Excel واسم الملف المُحمل</small>
@@ -1577,7 +1604,7 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
                 name="count"
                 min="1"
                 max={Math.max(totalBeneficiaries, 100)}
-                defaultValue="50"
+                value="50"
                 style="flex:1; accent-color:#8b5cf6"
               />
               <input
@@ -1585,7 +1612,7 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
                 id="sample-count-input"
                 min="1"
                 max="9999"
-                defaultValue="50"
+                value="50"
                 style="width:90px; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--ivory); text-align:center; font-size:1.1rem; font-weight:700; color:#8b5cf6"
               />
             </div>
