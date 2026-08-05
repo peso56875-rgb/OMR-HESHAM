@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
+import { getEmailConfig, sendInBackground, jobApplicationAlert } from '../lib/email'
 
 export const jobs = new Hono()
 
@@ -122,7 +123,7 @@ jobs.post('/apply', rateLimiter(5, 60000, 'job-apply'), async (c) => {
       }
     }
 
-    await db.collection('job_applications').add({
+    const applicationData = {
       job_id: job_id || null,
       job_title: job_title || 'عام',
       full_name,
@@ -132,7 +133,18 @@ jobs.post('/apply', rateLimiter(5, 60000, 'job-apply'), async (c) => {
       cv_url: cv_url || '',
       status: 'pending',
       created_at: new Date().toISOString()
-    })
+    }
+
+    const ref = await db.collection('job_applications').add(applicationData)
+
+    const cfg = getEmailConfig(c)
+    await sendInBackground(c, () =>
+      jobApplicationAlert(cfg, {
+        ...applicationData,
+        id: ref.id,
+        message: applicationData.bio
+      })
+    )
 
     if (!contentType.includes('application/json')) {
       return c.redirect('/careers?success=1#applyForm')

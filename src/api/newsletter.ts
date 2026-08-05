@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
+import { getEmailConfig, sendInBackground, newsletterWelcome } from '../lib/email'
 
 export const newsletter = new Hono()
 
@@ -26,25 +27,40 @@ newsletter.post('/', rateLimiter(5, 60000, 'newsletter'), async (c) => {
     return c.json({ error: 'البريد الإلكتروني مطلوب' }, 400)
   }
 
+  const normalizedEmail = email.trim().toLowerCase()
+
   try {
     // Find if subscriber already exists
     const querySnapshot = await db.collection('newsletter_subscribers')
-      .where('email', '==', email.trim().toLowerCase())
+      .where('email', '==', normalizedEmail)
       .get()
+
+    // Only genuinely new (or previously unsubscribed) addresses get a welcome.
+    // Re-submitting the footer form must not re-send the same email over and
+    // over — that is how a legitimate sender gets marked as spam.
+    let isNewSubscriber = false
 
     if (!querySnapshot.empty) {
       // Update status to active if already exists
       const docId = querySnapshot.docs[0].id
+      const wasUnsubscribed = querySnapshot.docs[0].data()?.status !== 'subscribed'
       await db.collection('newsletter_subscribers').doc(docId).update({
         status: 'subscribed'
       })
+      isNewSubscriber = wasUnsubscribed
     } else {
       // Insert new subscriber
       await db.collection('newsletter_subscribers').add({
-        email: email.trim().toLowerCase(),
+        email: normalizedEmail,
         status: 'subscribed',
         created_at: new Date().toISOString()
       })
+      isNewSubscriber = true
+    }
+
+    if (isNewSubscriber) {
+      const cfg = getEmailConfig(c)
+      await sendInBackground(c, () => newsletterWelcome(cfg, normalizedEmail))
     }
 
     if (!contentType.includes('application/json')) {

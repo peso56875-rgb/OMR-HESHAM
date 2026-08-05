@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
+import { getEmailConfig, sendInBackground, contactAlert, contactAck } from '../lib/email'
 
 export const contacts = new Hono()
 
@@ -36,7 +37,17 @@ contacts.post('/', rateLimiter(5, 60000, 'contact'), async (c) => {
       created_at: new Date().toISOString()
     }
 
-    await db.collection('contacts').add(contactData)
+    const ref = await db.collection('contacts').add(contactData)
+
+    // Notify the team and reassure the sender. Email is best-effort: a mail
+    // failure must never turn a saved message into an error for the visitor.
+    const cfg = getEmailConfig(c)
+    await sendInBackground(c, async () => {
+      await Promise.allSettled([
+        contactAlert(cfg, { ...contactData, id: ref.id }),
+        contactAck(cfg, contactData)
+      ])
+    })
 
     if (!contentType.includes('application/json')) {
       return c.redirect('/contact?success=1')

@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, authMiddleware, rateLimiter } from './middleware'
+import { getEmailConfig, sendInBackground, donationAlert, donationThanks } from '../lib/email'
 
 export const donations = new Hono()
 
@@ -54,9 +55,18 @@ donations.post('/', rateLimiter(10, 60000, 'donate'), async (c) => {
     }
 
     const docRef = await db.collection('donations').add(donationData)
-    
+    const record = { id: docRef.id, ...donationData }
+
+    // Receipt for the donor + alert for the team. Deliberately best-effort:
+    // throwing here would surface an error after the money was already
+    // recorded, and could push the donor into donating a second time.
+    const cfg = getEmailConfig(c)
+    await sendInBackground(c, async () => {
+      await Promise.allSettled([donationAlert(cfg, record), donationThanks(cfg, record)])
+    })
+
     return c.json({ 
-      data: { id: docRef.id, ...donationData }, 
+      data: record, 
       message: 'تم تسجيل تبرعك بنجاح. شكرًا لعطائك!' 
     })
   } catch (error: any) {
@@ -158,7 +168,14 @@ donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
       created_at: new Date().toISOString()
     }
 
-    await db.collection('donations').add(donationData)
+    const docRef = await db.collection('donations').add(donationData)
+    const record = { id: docRef.id, ...donationData }
+
+    const cfg = getEmailConfig(c)
+    await sendInBackground(c, async () => {
+      await Promise.allSettled([donationAlert(cfg, record), donationThanks(cfg, record)])
+    })
+
     return c.json({ message: 'تم تسجيل تبرعك بنجاح. شكرًا لعطائك! 🤲' })
   } catch (error: any) {
     console.error('Public donation insertion error:', error.message)
