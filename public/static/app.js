@@ -1580,256 +1580,184 @@
       })
     }
 
-    // ---- the manual card painter ----
+    // ---- minimal high-resolution ID painter ----
     async function renderCardToCanvas() {
       const nameEl = cardEl.querySelector('.vol-id-name')
       const codeEl = cardEl.querySelector('.vol-id-code')
       const expiryEl = cardEl.querySelector('.vol-id-expiry-date')
+      const roleEl = cardEl.querySelector('.vol-id-role')
       const avatarImgEl = cardEl.querySelector('.vol-id-avatar')
       const initialsEl = cardEl.querySelector('.vol-id-avatar-initials')
       const statusEl = cardEl.querySelector('.vol-id-status')
 
       const name = nameEl ? nameEl.textContent.trim() : 'متطوع المؤسسة'
       const code = codeEl ? codeEl.textContent.trim() : 'VOL-PASS'
-      const expiry = expiryEl ? expiryEl.textContent.trim() : ''
-      const statusText = statusEl ? statusEl.textContent.trim() : ''
+      const expiry = expiryEl ? expiryEl.textContent.trim() : 'صلاحية مفتوحة'
+      const role = roleEl ? roleEl.textContent.trim() : 'متطوع معتمد'
+      const statusText = statusEl ? statusEl.textContent.trim() : 'سارية'
       const isActive = statusEl ? statusEl.classList.contains('is-active') : true
       const initials = initialsEl ? initialsEl.textContent.trim()
         : name.split(/\s+/).slice(0, 2).map(w => w[0] || '').join('')
 
-      const S = 3 // high-DPI scale
-      const W = 1060, H = 640
+      const S = 3
+      const W = 1060, H = 600
       const canvas = document.createElement('canvas')
       canvas.width = W * S
       canvas.height = H * S
       const ctx = canvas.getContext('2d')
       ctx.scale(S, S)
+      ctx.textBaseline = 'middle'
+      ctx.direction = 'rtl'
 
-      // ===== background =====
+      // Quiet deep-green identity surface.
       const bg = ctx.createLinearGradient(0, 0, W, H)
-      bg.addColorStop(0, '#083832')
-      bg.addColorStop(0.42, '#0d5b4c')
-      bg.addColorStop(0.68, '#0a453c')
-      bg.addColorStop(1, '#062420')
-      roundRect(ctx, 0, 0, W, H, 34)
+      bg.addColorStop(0, '#06352f')
+      bg.addColorStop(0.6, '#07483e')
+      bg.addColorStop(1, '#052d28')
+      roundRect(ctx, 0, 0, W, H, 32)
       ctx.fillStyle = bg
       ctx.fill()
 
-      // soft glows
-      let glow = ctx.createRadialGradient(130, 50, 10, 130, 50, 420)
-      glow.addColorStop(0, 'rgba(126,226,189,.14)')
-      glow.addColorStop(1, 'rgba(126,226,189,0)')
-      ctx.fillStyle = glow
-      ctx.fillRect(0, 0, W, H)
-      glow = ctx.createRadialGradient(W - 110, H - 70, 10, W - 110, H - 70, 430)
-      glow.addColorStop(0, 'rgba(214,166,75,.16)')
-      glow.addColorStop(1, 'rgba(214,166,75,0)')
-      ctx.fillStyle = glow
-      ctx.fillRect(0, 0, W, H)
-
-      // gold border
-      roundRect(ctx, 3, 3, W - 6, H - 6, 31)
-      ctx.strokeStyle = 'rgba(240,207,130,.55)'
+      // Fine gold edge and top signature line.
+      roundRect(ctx, 3, 3, W - 6, H - 6, 29)
+      ctx.strokeStyle = 'rgba(238,201,107,.58)'
       ctx.lineWidth = 2
       ctx.stroke()
-
-      ctx.textBaseline = 'middle'
-
-      // ===== top gold ribbon =====
-      const rib = ctx.createLinearGradient(0, 0, W, 0)
-      rib.addColorStop(0, '#b8860b')
-      rib.addColorStop(0.35, '#e9c468')
-      rib.addColorStop(0.5, '#f6e0a0')
-      rib.addColorStop(0.65, '#e9c468')
-      rib.addColorStop(1, '#b8860b')
+      const accent = ctx.createLinearGradient(0, 0, W, 0)
+      accent.addColorStop(0, '#b98527')
+      accent.addColorStop(.5, '#f1d77f')
+      accent.addColorStop(1, '#b98527')
       ctx.save()
-      roundRect(ctx, 0, 0, W, H, 34)
+      roundRect(ctx, 0, 0, W, H, 32)
       ctx.clip()
-      ctx.fillStyle = rib
-      ctx.fillRect(0, 0, W, 46)
+      ctx.fillStyle = accent
+      ctx.fillRect(0, 0, W, 7)
       ctx.restore()
-      ctx.fillStyle = '#3a2c05'
-      ctx.font = '900 22px Cairo, Tajawal, Arial, sans-serif'
-      ctx.textAlign = 'right'
-      ctx.fillText('بطاقة هوية متطوع رسمية', W - 34, 24)
-      ctx.font = '800 15px Manrope, Arial, sans-serif'
-      ctx.textAlign = 'left'
-      ctx.fillText('V O L U N T E E R   P A S S', 34, 24)
 
-      // ===== header: logo + org name =====
-      const logo = await loadImage('/static/foundation-logo.png')
-      const lfX = W - 34 - 74, lfY = 68, lfS = 74
-      roundRect(ctx, lfX, lfY, lfS, lfS, 20)
-      ctx.fillStyle = 'rgba(255,255,255,.09)'
-      ctx.fill()
-      ctx.strokeStyle = 'rgba(240,207,130,.35)'
-      ctx.lineWidth = 1.5
-      ctx.stroke()
-      if (logo) {
-        ctx.drawImage(logo, lfX + 11, lfY + 11, lfS - 22, lfS - 22)
-      }
+      // Restrained geometric watermark.
+      ctx.save()
+      ctx.globalAlpha = .055
+      ctx.strokeStyle = '#f1d77f'
+      ctx.lineWidth = 2
+      ;[150, 205, 260].forEach(r => {
+        ctx.beginPath()
+        ctx.arc(80, H - 20, r, 0, Math.PI * 2)
+        ctx.stroke()
+      })
+      ctx.restore()
 
+      // Header logo and institution name.
+      const logo = await loadImage('/static/foundation-export-logo.png')
+      if (logo) ctx.drawImage(logo, W - 118, 30, 76, 76)
       ctx.textAlign = 'right'
       ctx.fillStyle = '#ffffff'
-      ctx.font = '900 32px Cairo, Tajawal, Arial, sans-serif'
-      ctx.fillText('مؤسسة الدكتور عمر هشام الخيرية', lfX - 22, 92)
-      ctx.fillStyle = '#f0cf82'
-      ctx.font = '700 20px Cairo, Tajawal, Arial, sans-serif'
-      ctx.fillText('بطاقة معتمدة من الإدارة المركزية ✦', lfX - 22, 126)
+      ctx.font = '900 27px Cairo, Tajawal, Arial, sans-serif'
+      ctx.fillText('مؤسسة الدكتور عمر هشام الخيرية', W - 136, 57)
+      ctx.fillStyle = '#e9cd7b'
+      ctx.font = '800 14px Manrope, Cairo, Arial, sans-serif'
+      ctx.fillText('VOLUNTEER ID  ·  بطاقة متطوع', W - 136, 87)
 
-      // ===== divider =====
-      const divY = 168
-      const dGrad = ctx.createLinearGradient(34, 0, W - 34, 0)
-      dGrad.addColorStop(0, 'rgba(240,207,130,0)')
-      dGrad.addColorStop(0.5, 'rgba(240,207,130,.5)')
-      dGrad.addColorStop(1, 'rgba(240,207,130,0)')
-      ctx.fillStyle = dGrad
-      ctx.fillRect(34, divY, W - 68, 1.5)
-      ctx.fillStyle = '#f0cf82'
-      ctx.font = '16px Arial'
-      ctx.textAlign = 'center'
-      ctx.fillText('✦', W / 2, divY + 1)
-
-      // ===== photo (rounded square) =====
-      const phS = 236, phX = W - 34 - phS, phY = 200, phR = 30
-      const avatar = avatarImgEl ? await loadImage(avatarImgEl.currentSrc || avatarImgEl.src, true) : null
-
-      // gold frame
-      ctx.save()
-      roundRect(ctx, phX - 5, phY - 5, phS + 10, phS + 10, phR + 5)
-      const frame = ctx.createLinearGradient(phX, phY, phX + phS, phY + phS)
-      frame.addColorStop(0, '#d6a64b')
-      frame.addColorStop(0.5, '#f6e0a0')
-      frame.addColorStop(1, '#8a6a1f')
-      ctx.fillStyle = frame
+      // Compact status pill.
+      ctx.font = '800 18px Cairo, Tajawal, Arial, sans-serif'
+      const pillW = Math.max(112, ctx.measureText(statusText).width + 48)
+      const pillX = 42, pillY = 43, pillH = 42
+      roundRect(ctx, pillX, pillY, pillW, pillH, 21)
+      ctx.fillStyle = isActive ? 'rgba(112,220,178,.12)' : 'rgba(239,115,104,.14)'
       ctx.fill()
-      ctx.restore()
+      ctx.strokeStyle = isActive ? 'rgba(112,220,178,.34)' : 'rgba(239,115,104,.42)'
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+      ctx.fillStyle = isActive ? '#8ce3c1' : '#ff9b91'
+      ctx.textAlign = 'center'
+      ctx.fillText(statusText, pillX + pillW / 2, pillY + pillH / 2 + 1)
 
-      roundRect(ctx, phX, phY, phS, phS, phR)
+      ctx.fillStyle = 'rgba(255,255,255,.11)'
+      ctx.fillRect(42, 130, W - 84, 1)
+
+      // Portrait — formal portrait ratio rather than a decorative square.
+      const phW = 210, phH = 250, phX = W - 42 - phW, phY = 170, phR = 28
+      const avatar = avatarImgEl ? await loadImage(avatarImgEl.currentSrc || avatarImgEl.src, true) : null
+      roundRect(ctx, phX - 4, phY - 4, phW + 8, phH + 8, phR + 4)
+      ctx.fillStyle = accent
+      ctx.fill()
+      roundRect(ctx, phX, phY, phW, phH, phR)
       ctx.save()
       ctx.clip()
       if (avatar) {
-        // center-crop the avatar into the square
         const iw = avatar.naturalWidth || avatar.width
         const ih = avatar.naturalHeight || avatar.height
-        const side = Math.min(iw, ih)
-        const sx = (iw - side) / 2, sy = (ih - side) / 2
-        try {
-          ctx.drawImage(avatar, sx, sy, side, side, phX, phY, phS, phS)
-        } catch (e) {
-          drawInitialsTile()
-        }
-      } else {
-        drawInitialsTile()
-      }
+        const targetRatio = phW / phH
+        const sourceRatio = iw / ih
+        let sx = 0, sy = 0, sw = iw, sh = ih
+        if (sourceRatio > targetRatio) { sw = ih * targetRatio; sx = (iw - sw) / 2 }
+        else { sh = iw / targetRatio; sy = (ih - sh) / 2 }
+        try { ctx.drawImage(avatar, sx, sy, sw, sh, phX, phY, phW, phH) }
+        catch (e) { drawInitialsTile() }
+      } else drawInitialsTile()
       ctx.restore()
 
       function drawInitialsTile() {
-        const tGrad = ctx.createLinearGradient(phX, phY, phX + phS, phY + phS)
-        tGrad.addColorStop(0, '#168a70')
-        tGrad.addColorStop(1, '#0c4a3f')
-        ctx.fillStyle = tGrad
-        ctx.fillRect(phX, phY, phS, phS)
+        ctx.fillStyle = '#0c6657'
+        ctx.fillRect(phX, phY, phW, phH)
         ctx.fillStyle = '#ffffff'
-        ctx.font = '900 84px Cairo, Tajawal, Arial, sans-serif'
+        ctx.font = '900 72px Cairo, Tajawal, Arial, sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText(initials || '✦', phX + phS / 2, phY + phS / 2 + 4)
+        ctx.fillText(initials || '✦', phX + phW / 2, phY + phH / 2)
       }
 
-      // ===== info column (right-to-left, beside photo) =====
-      const infoX = phX - 30 // right edge of info column
+      // Only the essential identity fields.
+      const infoRight = phX - 42
+      const infoLeft = 42
+      const infoW = infoRight - infoLeft
       ctx.textAlign = 'right'
+      ctx.fillStyle = '#e9cd7b'
+      ctx.font = '900 20px Cairo, Tajawal, Arial, sans-serif'
+      ctx.fillText(role, infoRight, 196)
 
-      // name
       ctx.fillStyle = '#ffffff'
-      ctx.font = '900 46px Cairo, Tajawal, Arial, sans-serif'
-      ctx.fillText(name, infoX, phY + 40)
+      let nameSize = 45
+      do {
+        ctx.font = `900 ${nameSize}px Cairo, Tajawal, Arial, sans-serif`
+        if (ctx.measureText(name).width <= infoW) break
+        nameSize -= 2
+      } while (nameSize > 28)
+      ctx.fillText(name, infoRight, 246)
 
-      // code box
-      const cbW = infoX - 34, cbH = 74, cbY = phY + 76, cbX = 34
-      roundRect(ctx, cbX, cbY, cbW, cbH, 18)
-      const cbGrad = ctx.createLinearGradient(cbX, 0, cbX + cbW, 0)
-      cbGrad.addColorStop(0, 'rgba(240,207,130,.18)')
-      cbGrad.addColorStop(1, 'rgba(240,207,130,.06)')
-      ctx.fillStyle = cbGrad
-      ctx.fill()
-      ctx.strokeStyle = 'rgba(240,207,130,.4)'
-      ctx.lineWidth = 1.5
-      ctx.stroke()
-      ctx.fillStyle = 'rgba(255,255,255,.65)'
-      ctx.font = '700 19px Cairo, Tajawal, Arial, sans-serif'
-      ctx.textAlign = 'right'
-      ctx.fillText('⌖ كود الهوية الرقمي', infoX - 22, cbY + 23)
-      ctx.fillStyle = '#f0cf82'
-      ctx.font = '900 40px Manrope, Consolas, monospace'
-      ctx.fillText(code, infoX - 22, cbY + 53)
-
-      // expiry row
-      const exY = cbY + cbH + 18, exH = 62
-      roundRect(ctx, cbX, exY, cbW, exH, 16)
-      ctx.fillStyle = 'rgba(255,255,255,.06)'
+      const boxY = 292, boxH = 96
+      roundRect(ctx, infoLeft, boxY, infoW, boxH, 18)
+      ctx.fillStyle = 'rgba(255,255,255,.07)'
       ctx.fill()
       ctx.strokeStyle = 'rgba(255,255,255,.12)'
       ctx.lineWidth = 1.5
       ctx.stroke()
-      ctx.fillStyle = 'rgba(255,255,255,.6)'
-      ctx.font = '700 19px Cairo, Tajawal, Arial, sans-serif'
-      ctx.fillText('▣ صالحة حتى', infoX - 22, exY + exH / 2)
-      ctx.fillStyle = '#ffffff'
-      ctx.font = '800 23px Cairo, Tajawal, Arial, sans-serif'
-      ctx.textAlign = 'left'
-      ctx.fillText(expiry, cbX + 22, exY + exH / 2)
-      ctx.textAlign = 'right'
-
-      // ===== footer =====
-      const ftY = 560
-      ctx.save()
-      roundRect(ctx, 0, 0, W, H, 34)
-      ctx.clip()
-      const ftGrad = ctx.createLinearGradient(0, 0, W, 0)
-      ftGrad.addColorStop(0, 'rgba(0,0,0,.32)')
-      ftGrad.addColorStop(1, 'rgba(0,0,0,.18)')
-      ctx.fillStyle = ftGrad
-      ctx.fillRect(0, ftY, W, H - ftY)
-      ctx.restore()
-      ctx.fillStyle = 'rgba(240,207,130,.22)'
-      ctx.fillRect(34, ftY, W - 68, 1.5)
-
-      // seal
-      const sealX = W - 34 - 44, sealY = ftY + 40
-      const sealGrad = ctx.createRadialGradient(sealX + 12, sealY + 10, 4, sealX + 22, sealY + 22, 30)
-      sealGrad.addColorStop(0, '#f6e0a0')
-      sealGrad.addColorStop(1, '#c99a3a')
-      ctx.beginPath()
-      ctx.arc(sealX + 22, sealY, 22, 0, Math.PI * 2)
-      ctx.fillStyle = sealGrad
-      ctx.fill()
-      ctx.fillStyle = '#3a2c05'
-      ctx.font = '900 20px Arial'
-      ctx.textAlign = 'center'
-      ctx.fillText('✓', sealX + 22, sealY + 1)
-      ctx.textAlign = 'right'
-      ctx.fillStyle = '#f0cf82'
-      ctx.font = '800 19px Cairo, Tajawal, Arial, sans-serif'
-      ctx.fillText('هوية موثوقة ومعتمدة', sealX - 14, sealY - 8)
       ctx.fillStyle = 'rgba(255,255,255,.55)'
-      ctx.font = '600 15px Manrope, Arial, sans-serif'
-      ctx.fillText('omarhesham.org', sealX - 14, sealY + 14)
+      ctx.font = '800 16px Cairo, Tajawal, Arial, sans-serif'
+      ctx.fillText('رقم الهوية', infoRight - 20, boxY + 28)
+      ctx.fillStyle = '#f1d77f'
+      ctx.font = '900 38px Manrope, Consolas, monospace'
+      ctx.fillText(code, infoRight - 20, boxY + 66)
 
-      // status pill (left side)
-      const pillText = statusText || (isActive ? 'سارية المفعول' : 'منتهية الصلاحية')
-      ctx.font = '800 18px Cairo, Tajawal, Arial, sans-serif'
-      const pillW = ctx.measureText(pillText).width + 52
-      const pillX = 34, pillY = sealY - 20, pillH = 40
-      roundRect(ctx, pillX, pillY, pillW, pillH, pillH / 2)
-      ctx.fillStyle = isActive ? 'rgba(126,226,189,.14)' : 'rgba(232,111,81,.16)'
-      ctx.fill()
-      ctx.strokeStyle = isActive ? 'rgba(126,226,189,.4)' : 'rgba(232,111,81,.45)'
-      ctx.lineWidth = 1.5
-      ctx.stroke()
-      ctx.fillStyle = isActive ? '#7ee2bd' : '#ff8a75'
-      ctx.textAlign = 'center'
-      ctx.fillText(pillText, pillX + pillW / 2, sealY + 1)
+      // Minimal footer: expiry + trust marker.
+      const ftY = 478
+      ctx.fillStyle = 'rgba(0,0,0,.14)'
+      ctx.fillRect(0, ftY, W, H - ftY)
+      ctx.fillStyle = 'rgba(255,255,255,.09)'
+      ctx.fillRect(42, ftY, W - 84, 1)
+      ctx.textAlign = 'right'
+      ctx.fillStyle = 'rgba(255,255,255,.5)'
+      ctx.font = '800 16px Cairo, Tajawal, Arial, sans-serif'
+      ctx.fillText('صالحة حتى', W - 42, 520)
+      ctx.fillStyle = isActive ? '#ffffff' : '#ff9b91'
+      ctx.font = '900 22px Cairo, Tajawal, Arial, sans-serif'
+      ctx.fillText(expiry, W - 42, 552)
+
+      ctx.textAlign = 'left'
+      ctx.fillStyle = '#e9cd7b'
+      ctx.font = '900 18px Cairo, Tajawal, Arial, sans-serif'
+      ctx.fillText('◆  هوية رقمية موثّقة', 42, 530)
+      ctx.fillStyle = 'rgba(255,255,255,.5)'
+      ctx.font = '700 14px Manrope, Arial, sans-serif'
+      ctx.fillText('omarhesham.org', 42, 557)
 
       return canvas
     }

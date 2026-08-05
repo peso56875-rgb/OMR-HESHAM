@@ -2236,90 +2236,46 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
 .vol-form-footer{display:flex;flex-direction:column;align-items:center;gap:14px}
 .vol-privacy-note{font-size:.78rem;color:var(--muted);margin:0;display:flex;align-items:center;gap:8px}
 
-/* ===== PREMIUM REDESIGNED DIGITAL VOLUNTEER ID CARD ===== */
-.vol-id-card-wrapper{display:flex;flex-direction:column;gap:20px}
-.vol-id-card{position:relative;border-radius:30px;overflow:hidden;border:1px solid rgba(240,207,130,.55);box-shadow:0 30px 80px rgba(5,32,28,.45),0 4px 18px rgba(214,166,75,.18);background:linear-gradient(150deg,#083832 0%,#0d5b4c 42%,#0a453c 68%,#062420 100%);color:white;padding:0}
-.vol-id-card:before{content:'';position:absolute;inset:0;background-image:linear-gradient(30deg,transparent 48.5%,rgba(255,255,255,.035) 49.5%,rgba(255,255,255,.035) 50.5%,transparent 51.5%),linear-gradient(-30deg,transparent 48.5%,rgba(255,255,255,.025) 49.5%,rgba(255,255,255,.025) 50.5%,transparent 51.5%);background-size:56px 97px;pointer-events:none;z-index:1}
-.vol-id-card:after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 12% 8%,rgba(126,226,189,.14),transparent 42%),radial-gradient(circle at 88% 92%,rgba(214,166,75,.16),transparent 46%);pointer-events:none;z-index:1}
-
-/* Embossed logo watermark behind the card content */
-.vol-id-watermark{position:absolute;inset:0;z-index:0;display:grid;place-items:center;pointer-events:none;opacity:.05}
-.vol-id-watermark img{width:60%;max-width:300px;filter:grayscale(1) brightness(2.4)}
-
-/* Revoked / frozen card treatment */
-.vol-id-card.is-void{border-color:rgba(255,118,117,.6);box-shadow:0 30px 80px rgba(60,10,10,.4),0 4px 18px rgba(214,75,75,.2)}
-.vol-id-card.is-void .vol-id-avatar,.vol-id-card.is-void .vol-id-avatar-initials{filter:grayscale(.65)}
-.vol-id-alert{position:relative;z-index:3;display:flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(90deg,#c0392b,#e74c3c 50%,#c0392b);color:#fff;text-align:center;padding:10px 20px;font-weight:900;font-size:.82rem;letter-spacing:.01em;box-shadow:inset 0 -1px 0 rgba(0,0,0,.18)}
-
-/* Gold top ribbon */
-.vol-id-ribbon{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(90deg,#b8860b,#e9c468 35%,#f6e0a0 50%,#e9c468 65%,#b8860b);color:#3a2c05;padding:9px 28px;font-size:.72rem;font-weight:900;letter-spacing:.08em}
-.vol-id-ribbon-latin{font-family:'Manrope',sans-serif;font-size:.62rem;letter-spacing:.3em;opacity:.85}
-
-.vol-id-card-header{position:relative;z-index:2;display:flex;align-items:center;gap:16px;padding:22px 28px 16px}
-.vol-id-logo-frame{width:62px;height:62px;min-width:62px;border-radius:18px;background:rgba(255,255,255,.09);border:1px solid rgba(240,207,130,.35);display:grid;place-items:center;box-shadow:0 10px 26px rgba(0,0,0,.28)}
-.vol-id-logo{width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,0,0,.4))}
-.vol-id-org{flex:1}
-.vol-id-org span{display:block;font-weight:900;font-size:1.05rem;color:white;letter-spacing:-.01em}
-.vol-id-org small{color:var(--gold-2);font-size:.72rem;font-weight:700;display:block;margin-top:3px;opacity:.9}
-
-.vol-id-divider{position:relative;z-index:2;display:flex;align-items:center;gap:12px;padding:0 28px}
-.vol-id-divider i{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(240,207,130,.45),transparent)}
-.vol-id-divider span{color:var(--gold-2);font-size:.65rem;opacity:.8}
-
-.vol-id-body{position:relative;z-index:2;display:flex;gap:26px;padding:20px 28px 24px;align-items:center}
-.vol-id-avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:126px}
-.vol-id-avatar-ring{position:relative;width:128px;height:128px;border-radius:26px;padding:5px;background:linear-gradient(145deg,#d6a64b,#f6e0a0 45%,#8a6a1f);box-shadow:0 14px 34px rgba(0,0,0,.4),0 0 0 6px rgba(240,207,130,.08)}
-.vol-id-avatar{width:100%;height:100%;border-radius:21px;object-fit:cover;display:block}
-.vol-id-avatar-initials{width:100%;height:100%;border-radius:21px;background:linear-gradient(135deg,var(--emerald),var(--forest));display:grid;place-items:center;font-size:2.3rem;font-weight:900;color:white}
-/* Rank badge under the avatar */
-.vol-id-rank-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(240,207,130,.22),rgba(240,207,130,.08));border:1px solid rgba(240,207,130,.45);color:var(--gold-2);border-radius:999px;padding:6px 14px;font-size:.72rem;font-weight:800;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
-.vol-id-rank-badge i{font-size:.68rem}
-
-.vol-id-info{flex:1;min-width:0}
-.vol-id-name{font-size:1.6rem;font-weight:900;margin:0 0 8px;color:white;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.3)}
-.vol-id-team{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;font-weight:700;color:rgba(255,255,255,.62);margin-bottom:14px}
-.vol-id-team i{color:var(--gold-2);font-size:.75rem}
-.vol-id-code-box{background:linear-gradient(90deg,rgba(240,207,130,.18),rgba(240,207,130,.06));border:1px solid rgba(240,207,130,.4);border-radius:16px;padding:11px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
-.vol-id-code-label{font-size:.7rem;color:rgba(255,255,255,.65);font-weight:700;display:flex;align-items:center;gap:7px}
-.vol-id-code-label i{color:var(--gold-2);font-size:.85rem}
-.vol-id-code{font-family:'Manrope','Courier New',monospace;font-size:1.8rem;font-weight:900;color:var(--gold-2);letter-spacing:.14em;text-shadow:0 0 18px rgba(240,207,130,.35)}
-
-/* Expiry row (simplified card) */
-/* Meta grid (hours / approval date) — these classes were used in the markup but
-   had no CSS at all, so the rows rendered as unstyled stacked text. */
-.vol-id-meta-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
-.vol-id-meta-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:9px 14px;min-width:0}
-.vol-id-meta-item span{display:flex;align-items:center;gap:6px;font-size:.68rem;color:rgba(255,255,255,.58);font-weight:700;margin-bottom:4px}
-.vol-id-meta-item span i{color:var(--gold-2);font-size:.7rem}
-.vol-id-meta-item b{display:block;font-size:.86rem;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* Expiry row — the field the admin edits from the dashboard, so it is the most
-   prominent element on the card. */
-.vol-id-expiry-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:linear-gradient(90deg,rgba(126,226,189,.14),rgba(126,226,189,.04));border:1px solid rgba(126,226,189,.34);border-radius:14px;padding:11px 16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
-.vol-id-expiry-row.is-expired{background:linear-gradient(90deg,rgba(255,118,117,.16),rgba(255,118,117,.04));border-color:rgba(255,118,117,.42)}
-.vol-id-expiry-label{font-size:.72rem;color:rgba(255,255,255,.68);font-weight:700;display:flex;align-items:center;gap:7px}
-.vol-id-expiry-label i{color:var(--gold-2);font-size:.85rem}
-.vol-id-expiry-value{text-align:left;min-width:0}
-.vol-id-expiry-date{display:block;font-size:1.02rem;font-weight:900;color:#7ee2bd;letter-spacing:-.01em}
-.vol-id-expiry-row.is-expired .vol-id-expiry-date{color:#ff8a75}
-.vol-id-expiry-remaining{display:block;font-size:.66rem;font-weight:700;color:rgba(255,255,255,.5);margin-top:2px}
-
-.vol-id-footer{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:15px 28px;border-top:1px solid rgba(240,207,130,.22);background:linear-gradient(90deg,rgba(0,0,0,.32),rgba(0,0,0,.18));flex-wrap:wrap;gap:12px}
-.vol-id-seal{display:flex;align-items:center;gap:11px;color:var(--gold-2);font-size:.82rem;font-weight:800}
-.vol-id-seal-badge{width:38px;height:38px;min-width:38px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#f6e0a0,#c99a3a);border:1px solid #f0cf82;display:grid;place-items:center;font-size:.95rem;color:#3a2c05;box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 2px rgba(255,255,255,.5)}
-.vol-id-seal-text small{display:block;opacity:.65;font-size:.65rem;font-weight:600}
-.vol-id-validity{font-size:.82rem;font-weight:800}
-.vol-id-verify-hint{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.68rem;font-weight:700;color:rgba(255,255,255,.45);text-align:left}
-.vol-id-verify-hint i{color:var(--gold-2)}
-.vol-id-verify-hint b{color:rgba(255,255,255,.68);font-family:'Manrope',sans-serif;letter-spacing:.02em}
-.vol-id-status{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;font-size:.78rem;font-weight:800;white-space:nowrap}
-.vol-id-status.is-active{background:rgba(126,226,189,.14);color:#7ee2bd;border:1px solid rgba(126,226,189,.35)}
-.vol-id-status.is-expired{background:rgba(232,111,81,.16);color:#ff8a75;border:1px solid rgba(232,111,81,.4)}
-
-/* Actions bar */
+/* ===== MINIMAL OFFICIAL VOLUNTEER ID ===== */
+.vol-id-card-wrapper{display:flex;flex-direction:column;gap:20px;max-width:760px;margin-inline:auto}
+.vol-id-card{position:relative;isolation:isolate;overflow:hidden;border-radius:28px;background:#073f37;color:#fff;border:1px solid rgba(238,201,107,.5);box-shadow:0 28px 70px rgba(7,63,55,.25);padding:0}
+.vol-id-card:before{content:'';position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,#c8952d,#f2d67e,#c8952d);z-index:4}
+.vol-id-card:after{content:'';position:absolute;width:270px;height:270px;left:-135px;bottom:-155px;border:1px solid rgba(242,214,126,.12);border-radius:50%;box-shadow:0 0 0 34px rgba(242,214,126,.035),0 0 0 68px rgba(242,214,126,.025);z-index:-1}
+.vol-id-orbit{position:absolute;width:280px;height:280px;right:-155px;top:-170px;border:1px solid rgba(255,255,255,.08);border-radius:50%;box-shadow:0 0 0 38px rgba(255,255,255,.025);z-index:-1}
+.vol-id-watermark{position:absolute;width:270px;height:270px;object-fit:contain;left:42px;top:50%;transform:translateY(-50%);opacity:.035;filter:grayscale(1) brightness(3);z-index:-1;pointer-events:none}
+.vol-id-card.is-void{border-color:rgba(239,115,104,.65);box-shadow:0 28px 70px rgba(89,26,22,.22)}
+.vol-id-card.is-void .vol-id-avatar,.vol-id-card.is-void .vol-id-avatar-initials{filter:grayscale(.72)}
+.vol-id-card-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:25px 30px 18px;border-bottom:1px solid rgba(255,255,255,.1)}
+.vol-id-brand{display:flex;align-items:center;gap:13px;min-width:0}
+.vol-id-logo{width:54px;height:54px;object-fit:contain;filter:drop-shadow(0 5px 12px rgba(0,0,0,.22))}
+.vol-id-org{min-width:0}
+.vol-id-org span{display:block;font-weight:900;font-size:1rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vol-id-org small{display:block;margin-top:3px;color:#e9cd7b;font-family:'Manrope','Cairo',sans-serif;font-size:.61rem;font-weight:800;letter-spacing:.12em}
+.vol-id-status{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;font-size:.72rem;font-weight:900;white-space:nowrap}
+.vol-id-status.is-active{background:rgba(112,220,178,.12);color:#8ce3c1;border:1px solid rgba(112,220,178,.28)}
+.vol-id-status.is-expired{background:rgba(239,115,104,.13);color:#ff9b91;border:1px solid rgba(239,115,104,.35)}
+.vol-id-alert{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 20px;background:rgba(181,55,45,.92);color:#fff;font-size:.76rem;font-weight:900;text-align:center}
+.vol-id-body{display:grid;grid-template-columns:138px minmax(0,1fr);align-items:center;gap:30px;padding:29px 30px 30px}
+.vol-id-avatar-ring{width:138px;height:156px;padding:3px;border-radius:24px;background:linear-gradient(155deg,#f2d67e,#a87920);box-shadow:0 14px 34px rgba(0,0,0,.24)}
+.vol-id-avatar,.vol-id-avatar-initials{width:100%;height:100%;border-radius:21px}
+.vol-id-avatar{object-fit:cover;display:block}
+.vol-id-avatar-initials{display:grid;place-items:center;background:#0c6657;color:#fff;font-size:2.25rem;font-weight:900}
+.vol-id-info{min-width:0}
+.vol-id-role{display:block;color:#e9cd7b;font-size:.73rem;font-weight:900;margin-bottom:5px}
+.vol-id-name{margin:0 0 20px;color:#fff;font-size:clamp(1.55rem,4vw,2.15rem);font-weight:900;line-height:1.25;letter-spacing:-.025em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vol-id-code-box{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:13px 16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);border-radius:15px}
+.vol-id-code-label{color:rgba(255,255,255,.58);font-size:.67rem;font-weight:800}
+.vol-id-code{color:#f2d67e;font-family:'Manrope','Courier New',monospace;font-size:1.45rem;font-weight:900;letter-spacing:.13em;line-height:1}
+.vol-id-footer{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 30px;background:rgba(0,0,0,.14);border-top:1px solid rgba(255,255,255,.09)}
+.vol-id-expiry-row{display:flex;align-items:center;gap:10px;min-width:0}
+.vol-id-expiry-label{color:rgba(255,255,255,.5);font-size:.68rem;font-weight:800;white-space:nowrap}
+.vol-id-expiry-date{color:#fff;font-size:.82rem;font-weight:900;white-space:nowrap}
+.vol-id-footer.is-expired .vol-id-expiry-date{color:#ff9b91}
+.vol-id-verified{display:flex;align-items:center;gap:8px;color:#e9cd7b;white-space:nowrap}
+.vol-id-verified>span{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:rgba(233,205,123,.12);border:1px solid rgba(233,205,123,.25)}
+.vol-id-verified small{font-size:.68rem;font-weight:800}
 .vol-id-actions-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 
-/* Responsive volunteer */
 @media(max-width:780px){
   .vol-impact-grid{grid-template-columns:repeat(2,1fr)}
   .vol-role-grid,.vol-benefits-grid{display:flex;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scroll-padding:0 20px;scrollbar-width:none;margin-left:-20px;margin-right:-20px;padding:0 20px 25px;gap:14px}
@@ -2328,23 +2284,29 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
   .vol-verify-input-row{flex-direction:column}
   .vol-application-form{padding:35px 22px}
   .vol-input-grid{grid-template-columns:1fr}
-  .vol-id-body{flex-direction:column;align-items:center;text-align:center}
-  .vol-id-code-box{flex-direction:column;gap:6px;text-align:center}
-  .vol-id-expiry-row{width:100%;flex-direction:column;align-items:stretch;text-align:center;gap:6px}
-  .vol-id-expiry-label{justify-content:center}
-  .vol-id-expiry-value{text-align:center}
-  .vol-id-meta-row{grid-template-columns:1fr}
-  .vol-id-meta-item{text-align:center}
-  .vol-id-meta-item span{justify-content:center}
-  .vol-id-card-header{flex-wrap:wrap;justify-content:center;text-align:center}
-  .vol-id-org{flex:1 1 100%;order:2}
-  .vol-id-status{order:3;margin:0 auto}
-  .vol-id-team{justify-content:center}
-  .vol-id-info{width:100%}
-  .vol-id-footer{flex-direction:column;text-align:center}
-  .vol-id-verify-hint{justify-content:center;text-align:center}
+  .vol-id-card-header{padding:22px 20px 16px}
+  .vol-id-logo{width:45px;height:45px}
+  .vol-id-org span{font-size:.84rem}
+  .vol-id-org small{font-size:.52rem}
+  .vol-id-body{grid-template-columns:105px minmax(0,1fr);gap:18px;padding:24px 20px}
+  .vol-id-avatar-ring{width:105px;height:126px;border-radius:20px}
+  .vol-id-avatar,.vol-id-avatar-initials{border-radius:17px}
+  .vol-id-name{font-size:1.3rem;margin-bottom:14px}
+  .vol-id-code-box{align-items:flex-start;flex-direction:column;gap:7px;padding:11px 13px}
+  .vol-id-code{font-size:1.08rem}
+  .vol-id-footer{padding:14px 20px;align-items:flex-start}
+  .vol-id-expiry-row{align-items:flex-start;flex-direction:column;gap:3px}
+  .vol-id-verified small{display:none}
   .vol-id-actions-bar{flex-direction:column;width:100%}
   .vol-id-actions-bar button{width:100%;justify-content:center}
+}
+@media(max-width:470px){
+  .vol-id-card-header{align-items:flex-start}
+  .vol-id-org span{white-space:normal;line-height:1.35}
+  .vol-id-body{grid-template-columns:1fr;text-align:center}
+  .vol-id-avatar-ring{margin-inline:auto;width:118px;height:136px}
+  .vol-id-code-box{align-items:center}
+  .vol-id-footer{align-items:center}
 }
 
 /* Print volunteer card */

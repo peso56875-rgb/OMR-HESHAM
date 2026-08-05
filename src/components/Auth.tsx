@@ -370,121 +370,68 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
 
             {volunteer ? (
               (volunteer.status === 'approved' || volunteer.status === 'revoked') && volunteer.volunteer_code ? (
-                // ===== Official Digital Volunteer ID Card =====
+                // ===== Minimal official volunteer identity =====
                 (() => {
                   const isRevoked = volunteer.status === 'revoked'
                   const isFrozen = volunteer.status === 'approved' && volunteer.is_active === false
                   const isInactive = isRevoked || isFrozen
                   const isExpired = Boolean(volunteer.expires_at && new Date(volunteer.expires_at) < new Date())
-                  // Always print the FULL date (day + month + year). The card used to
-                  // show only month+year, so an admin moving the expiry from 1 March
-                  // to 15 March produced a visually identical card.
                   const expiryText = volunteer.expires_at
                     ? new Date(volunteer.expires_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })
-                    : 'مفتوحة — بدون تاريخ انتهاء'
-                  const approvedText = volunteer.approved_at
-                    ? new Date(volunteer.approved_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })
-                    : '—'
-                  // Days remaining gives the expiry date meaning at a glance.
-                  const daysLeft = volunteer.expires_at
-                    ? Math.ceil((new Date(volunteer.expires_at).getTime() - Date.now()) / 86400000)
-                    : null
+                    : 'صلاحية مفتوحة'
                   const statusClass = isInactive || isExpired ? 'is-expired' : 'is-active'
-                  const statusLabel = isRevoked ? 'بطاقة ملغاة' : isFrozen ? 'مجمّدة مؤقتاً' : isExpired ? 'منتهية الصلاحية' : 'سارية المفعول'
+                  const statusLabel = isRevoked ? 'ملغاة' : isFrozen ? 'مجمّدة' : isExpired ? 'منتهية' : 'سارية'
                   const statusIcon = isRevoked ? 'fa-ban' : isFrozen ? 'fa-snowflake' : isExpired ? 'fa-triangle-exclamation' : 'fa-circle-check'
                   return (
                 <div class="vol-id-card-wrapper">
                   <div class={`vol-id-card${isInactive ? ' is-void' : ''}`} id="volunteerIdCard">
-                    <div class="vol-id-watermark" aria-hidden="true">
-                      <img src="/static/foundation-logo.png" alt="" />
-                    </div>
+                    <div class="vol-id-orbit" aria-hidden="true"></div>
+                    <img src="/static/foundation-logo.png" alt="" class="vol-id-watermark" aria-hidden="true" />
 
-                    {/* Gold ribbon — the CSS for this already existed but was never used. */}
-                    <div class="vol-id-ribbon">
-                      <span>{icon('fa-id-card-clip')} بطاقة متطوع رسمية</span>
-                      <span class="vol-id-ribbon-latin">OFFICIAL VOLUNTEER ID</span>
+                    <div class="vol-id-card-header">
+                      <div class="vol-id-brand">
+                        <img src="/static/foundation-logo.png" alt="شعار المؤسسة" class="vol-id-logo" />
+                        <div class="vol-id-org">
+                          <span>مؤسسة الدكتور عمر هشام الخيرية</span>
+                          <small>VOLUNTEER ID · بطاقة متطوع</small>
+                        </div>
+                      </div>
+                      <div class={`vol-id-status ${statusClass}`}>{icon(statusIcon)} {statusLabel}</div>
                     </div>
 
                     {isInactive && (
                       <div class="vol-id-alert">
                         {icon(isRevoked ? 'fa-ban' : 'fa-snowflake')}
-                        {isRevoked
-                          ? 'هذه البطاقة ملغاة من قِبل الإدارة وغير صالحة للاستخدام'
-                          : 'هذه البطاقة مجمّدة مؤقتاً من قِبل الإدارة'}
+                        {isRevoked ? 'هذه البطاقة ملغاة وغير صالحة للاستخدام' : 'هذه البطاقة مجمّدة مؤقتاً'}
                       </div>
                     )}
 
-                    <div class="vol-id-card-header">
-                      <div class="vol-id-logo-frame">
-                        <img src="/static/foundation-logo.png" alt="شعار المؤسسة" class="vol-id-logo" />
-                      </div>
-                      <div class="vol-id-org">
-                        <span>مؤسسة الدكتور عمر هشام الخيرية</span>
-                        <small>بطاقة معتمدة من الإدارة المركزية ✦</small>
-                      </div>
-                      <div class={`vol-id-status ${statusClass}`}>{icon(statusIcon)} {statusLabel}</div>
-                    </div>
-
-                    <div class="vol-id-divider"><i></i><span>✦</span><i></i></div>
-
                     <div class="vol-id-body">
-                      <div class="vol-id-avatar-wrap">
-                        {/* Gold gradient ring — CSS existed, markup never used it. */}
-                        <div class="vol-id-avatar-ring">
-                          {(volunteer.avatar_url || user.avatar)
-                            ? <img src={volunteer.avatar_url || user.avatar} alt={volunteer.full_name} class="vol-id-avatar" />
-                            : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0,2).map((n: string) => n[0]).join('')}</div>
-                          }
-                        </div>
-                        <div class="vol-id-rank-badge">{icon('fa-star')} {volunteer.rank || 'متطوع مبادر'}</div>
+                      <div class="vol-id-avatar-ring">
+                        {(volunteer.avatar_url || user.avatar)
+                          ? <img src={volunteer.avatar_url || user.avatar} alt={volunteer.full_name} class="vol-id-avatar" />
+                          : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0,2).map((n: string) => n[0]).join('')}</div>
+                        }
                       </div>
 
                       <div class="vol-id-info">
+                        <span class="vol-id-role">{volunteer.rank || 'متطوع معتمد'}</span>
                         <h4 class="vol-id-name">{volunteer.full_name}</h4>
-                        {volunteer.team && <div class="vol-id-team">{icon('fa-people-group')} {volunteer.team}</div>}
-
                         <div class="vol-id-code-box">
-                          <span class="vol-id-code-label">{icon('fa-fingerprint')} كود الهوية الرقمي</span>
+                          <span class="vol-id-code-label">رقم الهوية</span>
                           <strong class="vol-id-code">{volunteer.volunteer_code}</strong>
-                        </div>
-
-                        <div class="vol-id-meta-row">
-                          <div class="vol-id-meta-item">
-                            <span>{icon('fa-clock')} ساعات الخدمة</span>
-                            <b>{Number(volunteer.hours_count || 0).toLocaleString('ar-EG')} ساعة</b>
-                          </div>
-                          <div class="vol-id-meta-item">
-                            <span>{icon('fa-calendar-check')} تاريخ الاعتماد</span>
-                            <b>{approvedText}</b>
-                          </div>
-                        </div>
-
-                        {/* Expiry gets its own prominent row: it is the field the admin
-                            changes from the dashboard, so it must be unmistakable. */}
-                        <div class={`vol-id-expiry-row${isInactive || isExpired ? ' is-expired' : ''}`}>
-                          <span class="vol-id-expiry-label">{icon('fa-calendar-xmark')} صلاحية البطاقة حتى</span>
-                          <span class="vol-id-expiry-value">
-                            <b class="vol-id-expiry-date">{expiryText}</b>
-                            {daysLeft !== null && !isInactive && (
-                              <small class="vol-id-expiry-remaining">
-                                {daysLeft > 0 ? `متبقٍ ${daysLeft.toLocaleString('ar-EG')} يوم` : 'انتهت الصلاحية'}
-                              </small>
-                            )}
-                          </span>
                         </div>
                       </div>
                     </div>
 
-                    <div class="vol-id-footer">
-                      <div class="vol-id-seal">
-                        <div class="vol-id-seal-badge">{icon('fa-shield-halved')}</div>
-                        <div class="vol-id-seal-text">
-                          <span>هوية موثوقة ومعتمدة</span>
-                          <small>omarhesham.org</small>
-                        </div>
+                    <div class={`vol-id-footer${isInactive || isExpired ? ' is-expired' : ''}`}>
+                      <div class="vol-id-expiry-row">
+                        <span class="vol-id-expiry-label">صالحة حتى</span>
+                        <b class="vol-id-expiry-date">{expiryText}</b>
                       </div>
-                      <div class="vol-id-verify-hint">
-                        {icon('fa-magnifying-glass')} تحقق من صلاحية البطاقة عبر <b>omarhesham.org/volunteers</b>
+                      <div class="vol-id-verified">
+                        <span>{icon('fa-shield-halved')}</span>
+                        <small>هوية رقمية موثّقة</small>
                       </div>
                     </div>
                   </div>
