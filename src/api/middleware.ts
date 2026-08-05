@@ -154,28 +154,57 @@ export const adminPageGuard = async (c: Context, next: Next) => {
 
 /**
  * Simple in-memory rate limiter.
+ *
+ * NOTE ON SERVERLESS: state lives in the memory of a single function instance.
+ * Vercel may run several instances concurrently, so the effective limit is
+ * (maxRequests × instances). This is deliberately accepted: the goal is to blunt
+ * naive floods from one IP, not to be an exact global quota. A shared store
+ * (Redis / Firestore counters) is the follow-up if precise limits are needed.
  */
 const rateLimitMap = new Map<string, { count: number; reset: number }>()
 
-export const rateLimiter = (maxRequests: number = 30, windowMs: number = 60000) => {
+/**
+ * Resolves the caller's IP. X-Forwarded-For is a comma-separated chain
+ * (client, proxy1, proxy2…) so only the FIRST entry is the real client — using
+ * the raw header would bucket every visitor behind one proxy into one counter.
+ */
+const clientIp = (c: Context): string => {
+  const forwarded = c.req.header('X-Forwarded-For') || ''
+  return c.req.header('CF-Connecting-IP') || forwarded.split(',')[0].trim() || 'unknown'
+}
+
+/**
+ * @param maxRequests max allowed requests per window
+ * @param windowMs    window length in milliseconds
+ * @param bucket      optional namespace. Without it every endpoint shares one
+ *                    counter per IP, so a burst of donations would lock the
+ *                    visitor out of the contact form too.
+ */
+export const rateLimiter = (maxRequests: number = 30, windowMs: number = 60000, bucket?: string) => {
   return async (c: Context, next: Next) => {
-    const ip = c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || 'unknown'
+    const key = `${bucket || c.req.path}|${clientIp(c)}`
     const now = Date.now()
-    const entry = rateLimitMap.get(ip)
+    const entry = rateLimitMap.get(key)
 
     if (entry && now < entry.reset) {
       entry.count++
       if (entry.count > maxRequests) {
-        return c.json({ error: 'عدد كبير من الطلبات. يرجى الانتظار.' }, 429)
+        const retryAfter = Math.max(1, Math.ceil((entry.reset - now) / 1000))
+        c.header('Retry-After', String(retryAfter))
+        return c.json({
+          error: `عدد كبير من الطلبات. يرجى المحاولة بعد ${retryAfter} ثانية.`,
+          retry_after: retryAfter
+        }, 429)
       }
     } else {
-      rateLimitMap.set(ip, { count: 1, reset: now + windowMs })
+      rateLimitMap.set(key, { count: 1, reset: now + windowMs })
     }
 
-    // Cleanup old entries periodically
-    if (rateLimitMap.size > 10000) {
-      for (const [key, val] of rateLimitMap) {
-        if (now > val.reset) rateLimitMap.delete(key)
+    // Sweep expired entries. Threshold kept low because a serverless instance
+    // has a small memory budget and gets recycled often anyway.
+    if (rateLimitMap.size > 5000) {
+      for (const [k, val] of rateLimitMap) {
+        if (now > val.reset) rateLimitMap.delete(k)
       }
     }
 

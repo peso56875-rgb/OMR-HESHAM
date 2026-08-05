@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
-import { getFirestore } from '../lib/firebase-admin'
+import { getFirestore, getAuth } from '../lib/firebase-admin'
 import { getCookie } from 'hono/cookie'
-import { adminMiddleware, authMiddleware } from './middleware'
+import { adminMiddleware, authMiddleware, rateLimiter } from './middleware'
 import { normalizeMediaUrl, storeMediaFile } from '../lib/storage'
 
 export const volunteers = new Hono()
@@ -101,17 +101,28 @@ const syncProfile = async (
 const VALID_STATUSES = ['approved', 'pending', 'rejected', 'revoked']
 
 // Submit a volunteer application (accepts form data from browser or JSON)
-volunteers.post('/', async (c) => {
+volunteers.post('/', rateLimiter(5, 60000, 'volunteer-apply'), async (c) => {
   const db = getFirestore(c)
 
-  // Extract profile ID from cookie if logged in
+  // Link the application to a profile when the visitor is signed in.
+  //
+  // SECURITY: this used to be `JSON.parse(atob(cookie.split('.')[1]))`, which
+  // only base64-decodes the payload without verifying the signature — anyone
+  // could hand-craft a cookie and attach their application to another user's
+  // profile. verifySessionCookie() validates the signature, issuer, expiry and
+  // revocation state against Firebase.
+  //
+  // Volunteering is open to guests, so an unverifiable cookie degrades to an
+  // anonymous submission instead of rejecting the request outright.
   let profile_id: string | null = null
   const sessionCookie = getCookie(c, 'fb-session')
   if (sessionCookie) {
     try {
-      const payload = JSON.parse(atob(sessionCookie.split('.')[1]))
-      profile_id = payload.uid || payload.sub
-    } catch(e) {}
+      const decodedClaims = await getAuth(c).verifySessionCookie(sessionCookie, true)
+      profile_id = decodedClaims?.uid || null
+    } catch (e: any) {
+      console.warn('[volunteers] ignoring unverifiable session cookie:', e?.code || e?.message)
+    }
   }
 
   const contentType = c.req.header('content-type') || ''

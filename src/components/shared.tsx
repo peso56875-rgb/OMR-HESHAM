@@ -1,5 +1,6 @@
 import { routeNames } from '../defaults'
 import type { UserSession } from '../types'
+import { pageSeo, SITE_ORIGIN } from '../lib/seo'
 
 export const icon = (name: string) => <i class={`fa-solid ${name}`} aria-hidden="true"></i>
 
@@ -81,18 +82,60 @@ export function Footer() {
   </footer>
 }
 
-export function Layout({ children, title = 'مؤسسة الدكتور عمر هشام الخيرية', description = 'عطاء مستمر لتنمية الإنسان والمجتمع', user, showFooter = true, pageType = 'public' }: { children: any, title?: string, description?: string, user?: UserSession, showFooter?: boolean, pageType?: 'public' | 'auth' | 'dashboard' }) {
+export function Layout({ children, title = 'مؤسسة الدكتور عمر هشام الخيرية', description = 'عطاء مستمر لتنمية الإنسان والمجتمع', user, showFooter = true, pageType = 'public', image }: { children: any, title?: string, description?: string, user?: UserSession, showFooter?: boolean, pageType?: 'public' | 'auth' | 'dashboard', image?: string }) {
+  const { canonical, noindex } = pageSeo()
+  // og:image must be an absolute URL — social crawlers do not resolve relative
+  // paths, so a relative value means no preview image at all. It also has to be
+  // a real card image: foundation-logo.png is a transparent logo that renders as
+  // an invisible smear on a dark timeline, which is why the purpose-made
+  // og-image.png is the default instead.
+  const rawImage = image || '/static/img/og-image.png'
+  const ogImage = rawImage.startsWith('http') ? rawImage : SITE_ORIGIN + rawImage
+
   return <html lang="ar" dir="rtl"><head>
     <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} /><meta name="theme-color" content="#f9f6ee" /><meta name="color-scheme" content="light dark" />
-    <meta property="og:title" content={title} /><meta property="og:description" content={description} /><meta property="og:image" content="/static/foundation-logo.png" />
+    <link rel="canonical" href={canonical} />
+    {/* The dashboard, login and profile pages hold private or duplicate content
+        and must stay out of search results entirely. */}
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
+    <meta property="og:type" content="website" /><meta property="og:site_name" content="مؤسسة الدكتور عمر هشام الخيرية" />
+    <meta property="og:locale" content="ar_EG" /><meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} /><meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} /><meta property="og:image:alt" content="مؤسسة الدكتور عمر هشام الخيرية" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} /><meta name="twitter:description" content={description} /><meta name="twitter:image" content={ogImage} />
     <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Manrope:wght@400;600;700;800&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/png" href="/static/foundation-logo.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="/static/style.css" />
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'NGO', name: 'مؤسسة الدكتور عمر هشام الخيرية', url: 'https://omarhesham.org', telephone: '+201060920249', address: 'كفر العنانية، الدقهلية، مصر' }) }}></script>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'NGO',
+      name: 'مؤسسة الدكتور عمر هشام الخيرية',
+      alternateName: 'Dr. Omar Hesham Charity Foundation',
+      url: SITE_ORIGIN,
+      logo: SITE_ORIGIN + '/static/foundation-logo.png',
+      image: ogImage,
+      description: 'مؤسسة أهلية مشهرة تعمل على تفريج الكرب ودعم المرضى ونشر العلم وتعليم القرآن.',
+      // The public registration number is what lets a donor verify this is a
+      // real licensed NGO — worth exposing as structured data.
+      identifier: 'رقم التشهير 3115 لسنة 2026',
+      telephone: '+201060920249',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: 'كفر العنانية',
+        addressRegion: 'الدقهلية',
+        addressCountry: 'EG'
+      },
+      sameAs: [
+        'https://www.facebook.com/share/1Dj3HrELjY/?mibextid=wwXIfr',
+        'https://www.instagram.com/dr.omarheshamfoundation',
+        'https://www.tiktok.com/@dr.omarfoundation'
+      ]
+    }) }}></script>
   </head><body class={`page-${pageType}`}>
       {pageType !== 'dashboard' && <div class="preloader" id="preloader"><div class="preloader-orbit"><img src="/static/foundation-logo.png" alt="" /><span></span></div><p>يبدأ الأثر من قلبٍ تؤمن بالخير</p></div>}
       <div class="noise"></div><div class="cursor-dot" id="cursor-dot"></div><div class="cursor-ring" id="cursor-ring"></div>
