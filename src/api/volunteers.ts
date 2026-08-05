@@ -3,6 +3,7 @@ import { getFirestore, getAuth } from '../lib/firebase-admin'
 import { getCookie } from 'hono/cookie'
 import { adminMiddleware, authMiddleware, rateLimiter } from './middleware'
 import { normalizeMediaUrl, storeMediaFile } from '../lib/storage'
+import { getEmailConfig, sendInBackground, volunteerAlert, volunteerAck } from '../lib/email'
 
 export const volunteers = new Hono()
 
@@ -137,6 +138,9 @@ volunteers.post('/', rateLimiter(5, 60000, 'volunteer-apply'), async (c) => {
   const phone = body.phone as string
   const age = body.age ? parseInt(body.age as string) : null
   const city = body.city as string
+  // Optional: the form asks for it only so we can acknowledge the application.
+  // Phone stays the field the foundation actually calls back on.
+  const email = ((body.email as string) || '').trim().toLowerCase()
   const preferred_role = (body.role || body.preferred_role) as string
   const skills = body.skills as string
   let avatar_url = body.avatar_url ? normalizeMediaUrl(body.avatar_url) : ''
@@ -179,6 +183,7 @@ volunteers.post('/', rateLimiter(5, 60000, 'volunteer-apply'), async (c) => {
       age,
       phone,
       city: city || '',
+      email,
       preferred_role: preferred_role || '',
       skills: skills || '',
       avatar_url,
@@ -195,7 +200,15 @@ volunteers.post('/', rateLimiter(5, 60000, 'volunteer-apply'), async (c) => {
       created_at: new Date().toISOString()
     }
 
-    await db.collection('volunteers').add(volData)
+    const ref = await db.collection('volunteers').add(volData)
+
+    const cfg = getEmailConfig(c)
+    await sendInBackground(c, async () => {
+      const jobs: Array<Promise<unknown>> = [volunteerAlert(cfg, { ...volData, id: ref.id })]
+      // The email field is optional, so only acknowledge when we have one.
+      if (email) jobs.push(volunteerAck(cfg, { ...volData, id: ref.id }))
+      await Promise.allSettled(jobs)
+    })
 
     if (!contentType.includes('application/json')) {
       return c.redirect('/volunteers?success=1#volForm')

@@ -155,6 +155,20 @@ export function Volunteers({ user, stats }: { user?: UserSession, stats?: any })
             </div>
           </div>
 
+          <div class="vol-input-group">
+            <label>{icon('fa-envelope')} البريد الإلكتروني</label>
+            <div class="vol-input-wrapper">
+              <i class="fa-solid fa-envelope input-icon"></i>
+              <input
+                name="email"
+                type="email"
+                placeholder="لإرسال تأكيد استلام طلبك (اختياري)"
+                dir="ltr"
+                style="text-align:right"
+              />
+            </div>
+          </div>
+
           <div class="vol-input-group vol-full-width">
             <label>{icon('fa-briefcase')} مجال التطوع المفضل <span class="req">*</span></label>
             <div class="vol-input-wrapper">
