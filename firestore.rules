@@ -73,9 +73,32 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Photo gallery (Public read, Admin write)
+    match /gallery/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Beneficiary groups — the most sensitive data the foundation holds (names,
+    // conditions and circumstances of the families it supports). Admin-only for
+    // both read and write; never exposed to the public site.
+    match /beneficiary_groups/{document=**} {
+      allow read, write: if isAdmin();
+    }
+
     // Media fallback store — written and read only by the server (Admin SDK,
     // which bypasses these rules). Clients must never touch it directly.
+    // The recursive glob also covers the per-document `chunks` subcollection
+    // used when a file is split across Firestore documents.
     match /media/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Explicit deny-all catch-all. Firestore already denies unmatched paths,
+    // but stating it makes the intent unmissable: a new collection added by
+    // future code stays locked down until a rule is written for it deliberately,
+    // rather than silently relying on the default.
+    match /{document=**} {
       allow read, write: if false;
     }
   }

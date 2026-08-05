@@ -1,3 +1,12 @@
 User-agent: *
 Allow: /
+
+# Private / non-indexable areas. These also emit <meta name="robots" content="noindex">
+# server-side (see src/lib/seo.ts) — robots.txt only asks crawlers not to fetch
+# them, whereas the meta tag is what actually keeps them out of the index.
+Disallow: /dashboard
+Disallow: /login
+Disallow: /profile
+Disallow: /api/
+
 Sitemap: https://omarhesham.org/sitemap.xml

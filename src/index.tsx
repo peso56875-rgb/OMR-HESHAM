@@ -14,8 +14,21 @@ import { Achievements, Volunteers, Contact, FAQ, Transparency, Gallery, GenericN
 import { Dashboard } from './components/Dashboard'
 
 import { api } from './api'
+import { securityHeaders } from './lib/security-headers'
+import { contextStorage } from 'hono/context-storage'
 
 const app = new Hono()
+
+// Makes the active request available to deeply-nested components (used by the
+// SEO helper to derive the canonical URL without threading a prop through all
+// 21 Layout call sites). Must be registered before anything that renders HTML.
+app.use('*', contextStorage())
+
+// Security headers (CSP, HSTS, X-Frame-Options, Referrer-Policy, …).
+// Registered early so the headers apply to every response, including error
+// pages and 404s. See src/lib/security-headers.ts for the per-directive
+// rationale.
+app.use('*', securityHeaders())
 
 // Session Middleware — reads the Firebase session cookie and populates c.get('user')
 app.use('*', async (c, next) => {
@@ -427,7 +440,90 @@ app.get('/dashboard', async (c) => {
   return c.html(<Dashboard view={view} data={viewData} user={user} />)
 })
 
-app.get('/sitemap.xml', c => c.body(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${['', 'about', 'campaigns', 'achievements', 'success-stories', 'events', 'gallery', 'donate', 'volunteers', 'careers', 'news', 'transparency', 'faq', 'contact'].map(x => `<url><loc>https://omarhesham.org/${x}</loc></url>`).join('')}</urlset>`, 200, { 'Content-Type': 'application/xml' }))
+/**
+ * Sitemap.
+ *
+ * Previously this listed only the 14 static pages with no <lastmod>, so every
+ * campaign, news article and event — the content that actually changes and that
+ * people search for — was invisible to crawlers unless they happened to follow
+ * an internal link. Now the published dynamic records are included too, with
+ * lastmod so crawlers can tell what has changed since their last visit.
+ */
+app.get('/sitemap.xml', async (c) => {
+  const ORIGIN = 'https://omarhesham.org'
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
+
+  const entry = (path: string, opts: { lastmod?: string, priority?: string, changefreq?: string } = {}) =>
+    `<url><loc>${esc(ORIGIN + path)}</loc>` +
+    (opts.lastmod ? `<lastmod>${esc(opts.lastmod)}</lastmod>` : '') +
+    (opts.changefreq ? `<changefreq>${opts.changefreq}</changefreq>` : '') +
+    (opts.priority ? `<priority>${opts.priority}</priority>` : '') +
+    '</url>'
+
+  // Donation and campaign pages carry the highest priority — they are the ones
+  // the foundation actually needs found.
+  const statics: Array<[string, string, string]> = [
+    ['/', '1.0', 'daily'],
+    ['/campaigns', '0.9', 'daily'],
+    ['/donate', '0.9', 'weekly'],
+    ['/news', '0.8', 'daily'],
+    ['/about', '0.7', 'monthly'],
+    ['/achievements', '0.7', 'monthly'],
+    ['/success-stories', '0.7', 'weekly'],
+    ['/events', '0.7', 'weekly'],
+    ['/volunteers', '0.7', 'monthly'],
+    ['/transparency', '0.7', 'monthly'],
+    ['/gallery', '0.6', 'weekly'],
+    ['/careers', '0.6', 'weekly'],
+    ['/faq', '0.5', 'monthly'],
+    ['/contact', '0.5', 'monthly']
+  ]
+
+  let urls = statics.map(([path, priority, changefreq]) => entry(path, { priority, changefreq })).join('')
+
+  const isoDate = (v: any): string | undefined => {
+    if (!v) return undefined
+    try {
+      const d = typeof v?.toDate === 'function' ? v.toDate() : new Date(v)
+      return isNaN(d.getTime()) ? undefined : d.toISOString().slice(0, 10)
+    } catch { return undefined }
+  }
+
+  // A sitemap that 500s is worse than one missing a few rows, so any Firestore
+  // problem degrades to the static list rather than failing the response.
+  try {
+    const db = getFirestore(c)
+    const collections: Array<[string, string, string]> = [
+      ['campaigns', '/campaigns/', '0.8'],
+      ['news', '/news/', '0.7'],
+      ['events', '/events/', '0.6']
+    ]
+
+    for (const [name, prefix, priority] of collections) {
+      try {
+        const snap = await db.collection(name).where('is_published', '==', true).get()
+        urls += snap.docs.map((doc: any) => {
+          const d = doc.data() || {}
+          return entry(prefix + doc.id, {
+            lastmod: isoDate(d.updated_at) || isoDate(d.created_at),
+            priority,
+            changefreq: 'weekly'
+          })
+        }).join('')
+      } catch (e: any) {
+        console.warn(`[sitemap] skipped ${name}:`, e?.message)
+      }
+    }
+  } catch (e: any) {
+    console.warn('[sitemap] dynamic entries unavailable:', e?.message)
+  }
+
+  return c.body(
+    `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`,
+    200,
+    { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' }
+  )
+})
 
 app.notFound(c => c.html(<GenericNotFound user={(c as any).get('user')} />, 404))
 

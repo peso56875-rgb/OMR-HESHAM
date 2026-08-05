@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
-import { adminMiddleware, authMiddleware } from './middleware'
+import { adminMiddleware, authMiddleware, rateLimiter } from './middleware'
 
 export const donations = new Hono()
 
 // Create a new donation
-donations.post('/', async (c) => {
+donations.post('/', rateLimiter(10, 60000, 'donate'), async (c) => {
   const db = getFirestore(c)
   
   let body: any
@@ -92,7 +92,7 @@ donations.get('/my', authMiddleware, async (c) => {
 })
 
 // Accept donation from the public HTML form (supports both JSON and form-encoded)
-donations.post('/add', async (c) => {
+donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
   const db = getFirestore(c)
   
   let body: any
@@ -113,17 +113,40 @@ donations.post('/add', async (c) => {
   const donor_phone = (body.phone || body.donor_phone || '').toString().trim()
   const donor_email = (body.email || body.donor_email || '').toString().trim() || null
   const payment_method = (body.method || body.payment_method || 'instapay').toString()
+  const requested_campaign_id = (body.campaign_id || '').toString().trim() || null
 
   if (!amount || !donor_name || !donor_phone) {
     return c.json({ error: 'الحقول المطلوبة غير مكتملة (الاسم، الهاتف، المبلغ)' }, 400)
   }
 
   try {
+    // The public form (Donate.tsx) has always submitted a `campaign_id`, but
+    // this handler hardcoded null — so every donation made through the site was
+    // filed under the general fund and no campaign's `raised` total ever moved,
+    // leaving the progress bars permanently wrong. Resolve it here, and verify
+    // the campaign exists and is published so a tampered form value cannot
+    // attach money to a hidden or deleted campaign.
+    let campaign_id: string | null = null
+    let campaign_title = 'الصندوق العام'
+    let campaign_category = 'عام'
+
+    if (requested_campaign_id) {
+      const campDoc = await db.collection('campaigns').doc(requested_campaign_id).get()
+      const campData = campDoc.exists ? campDoc.data() : null
+      if (campData && campData.is_published !== false) {
+        campaign_id = campDoc.id
+        campaign_title = campData.title || campaign_title
+        campaign_category = campData.category || campaign_category
+      } else {
+        console.warn(`[donations] campaign ${requested_campaign_id} not found or unpublished — filed under the general fund`)
+      }
+    }
+
     const donationData = {
       profile_id: null,
-      campaign_id: null,
-      campaign_title: 'الصندوق العام',
-      campaign_category: 'عام',
+      campaign_id,
+      campaign_title,
+      campaign_category,
       amount,
       donation_type: 'once',
       donor_name,

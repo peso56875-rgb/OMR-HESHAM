@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { adminMiddleware } from './middleware'
+import { adminMiddleware, rateLimiter } from './middleware'
 import { storeMediaFile, storageBucketCandidates, cloudinaryConfigured } from '../lib/storage'
 
 export const upload = new Hono()
@@ -67,7 +67,10 @@ upload.post('/', adminMiddleware, async (c) => {
 })
 
 /** Public image upload endpoint (for volunteer photos & avatars). Max 5MB images. */
-upload.post('/public', async (c) => {
+// Tightest budget on the site: each accepted request can persist up to 5MB
+// of media, so an unthrottled loop here is both a storage-cost and a
+// denial-of-service vector.
+upload.post('/public', rateLimiter(8, 300000, 'public-upload'), async (c) => {
   try {
     const body = await c.req.parseBody()
     const candidate = body.file || body.image || body.avatar || body.upload || body.media || body.avatar_file

@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
-import { adminMiddleware } from './middleware'
+import { adminMiddleware, rateLimiter } from './middleware'
 
 export const contacts = new Hono()
 
 // Submit a contact message (accepts form data from browser or JSON)
-contacts.post('/', async (c) => {
+contacts.post('/', rateLimiter(5, 60000, 'contact'), async (c) => {
   const db = getFirestore(c)
 
   const contentType = c.req.header('content-type') || ''

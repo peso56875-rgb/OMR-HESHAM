@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
-import { adminMiddleware } from './middleware'
+import { adminMiddleware, rateLimiter } from './middleware'
 
 export const newsletter = new Hono()
 
 // Subscribe to newsletter (accepts form data from browser or JSON)
-newsletter.post('/', async (c) => {
+newsletter.post('/', rateLimiter(5, 60000, 'newsletter'), async (c) => {
   const db = getFirestore(c)
 
   const contentType = c.req.header('content-type') || ''
