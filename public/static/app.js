@@ -342,22 +342,39 @@
       // Skip GET forms, export endpoints, and forms marked with data-no-ajax
       if (method === 'GET' || action.includes('/api/export/') || form.dataset.noAjax === 'true') return
 
+      // NEVER read `form.action` inside this handler: a field named "action"
+      // (used by the volunteer card-validity controls) shadows the property, so
+      // `form.action` returns that <input> element instead of the URL string.
+      // `form.action.includes(...)` then threw a TypeError which aborted the
+      // whole submit listener -> every validity button silently did nothing.
+      const actionUrl = new URL(action, location.origin).href
+
       form.dataset.bound = 'true'
       form.addEventListener('submit', async event => {
         event.preventDefault()
-        const message = form.dataset.confirm || (form.action.includes('/delete/') ? 'هل أنت متأكد من حذف هذا العنصر؟' : '')
+        const message = form.dataset.confirm || (action.includes('/delete/') ? 'هل أنت متأكد من حذف هذا العنصر؟' : '')
         if (message && !(await window.confirmAction(message))) return
         const submit = $('button[type="submit"]', form), original = submit?.innerHTML
         if (submit) { submit.disabled = true; submit.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جارٍ التنفيذ' }
         try {
-          const fetchOptions = { method, credentials: 'same-origin' }
+          const fetchOptions = {
+            method,
+            credentials: 'same-origin',
+            // Tells the API to answer with JSON + a real status code instead of a
+            // 302 to /dashboard?error=1. fetch() follows redirects transparently,
+            // so an error redirect resolved to 200 and was reported as success
+            // even though nothing had actually been saved.
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+          }
           if (method !== 'GET' && method !== 'HEAD') {
             window.syncUploadWidgets?.(form)
             fetchOptions.body = new FormData(form)
           }
-          const response = await fetch(form.action, fetchOptions)
-          if (!response.ok) throw new Error('تعذر تنفيذ الطلب')
-          toast('تم حفظ التغييرات بنجاح', 'success')
+          const response = await fetch(actionUrl, fetchOptions)
+          let payload = null
+          try { payload = await response.clone().json() } catch (_e) { payload = null }
+          if (!response.ok || payload?.error) throw new Error(payload?.error || 'تعذر تنفيذ الطلب')
+          toast(payload?.message || 'تم حفظ التغييرات بنجاح', 'success')
           setTimeout(() => {
             if (location.pathname.startsWith('/dashboard')) {
               loadDashboardView(location.href, false)
