@@ -436,6 +436,13 @@ app.get('/dashboard', async (c) => {
           total_beneficiaries: totalBeneficiaries
         }
       }
+    } else if (view === 'audit') {
+      // سجل التدقيق: أحدث 100 سطر فقط. السجل ينمو مع كل عملية إدارية،
+      // وتحميله كاملًا سيبطئ الصفحة تدريجيًا حتى تتوقف عن العمل.
+      const snap = await db.collection('audit_logs').orderBy('created_at', 'desc').limit(100).get()
+      viewData = {
+        list: snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      }
     }
   } catch (error: any) {
     console.error(`Error loading dashboard view ${view}:`, error.message)
