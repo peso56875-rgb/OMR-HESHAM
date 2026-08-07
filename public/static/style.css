@@ -450,6 +450,10 @@ body.dark .profile-card-modern { background: var(--paper); box-shadow: 0 12px 40
 .profile-donation-info b { display: block; font-size: .95rem; color: var(--text); margin-bottom: 3px; }
 .profile-donation-info span { font-size: .76rem; color: var(--muted); font-weight: 600; }
 .profile-donation-info span i { margin-left: 4px; font-size: .7rem; }
+/* رابط إيصال التبرع داخل بطاقة المساهمة */
+.profile-donation-receipt { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; font-size: .74rem; font-weight: 700; color: var(--emerald-600); text-decoration: none; }
+.profile-donation-receipt:hover { text-decoration: underline; }
+.profile-donation-receipt i { font-size: .7rem; }
 .profile-donation-amount { text-align: left; }
 .profile-donation-amount b { font-family: var(--serif); font-size: 1.3rem; color: var(--emerald); }
 .profile-donation-amount small { font-size: .7rem; color: var(--muted); margin-right: 3px; font-weight: 700; }

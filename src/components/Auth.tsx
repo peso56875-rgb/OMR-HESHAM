@@ -348,6 +348,20 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                       <div class="profile-donation-info">
                         <b>{d.campaign_title || 'الصندوق العام'}</b>
                         <span>{icon('fa-calendar-day')} {date}</span>
+                        {/*
+                          رابط الإيصال يظهر للمتبرع في حسابه، حتى يستطيع
+                          الوصول لمستنده لو فقد رسالة البريد الأصلية.
+                        */}
+                        {d.receipt_number && (
+                          <a
+                            class="profile-donation-receipt"
+                            href={`/receipt/${encodeURIComponent(d.receipt_number)}?t=${encodeURIComponent(d.receipt_token || '')}`}
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            {icon('fa-receipt')} إيصال التبرع
+                          </a>
+                        )}
                       </div>
                       <div class="profile-donation-amount">
                         <b>{Number(d.amount).toLocaleString('ar-EG')}</b>

@@ -13,8 +13,13 @@ import { Login, Profile } from './components/Auth'
 import { Achievements, Volunteers, Contact, FAQ, Transparency, Gallery, GenericNotFound } from './components/Pages'
 import { Dashboard } from './components/Dashboard'
 
+import { Receipt, ReceiptVerification } from './components/Receipt'
+
 import { api } from './api'
+import { rateLimiter } from './api/middleware'
 import { securityHeaders } from './lib/security-headers'
+import { verifyReceiptToken } from './lib/receipts'
+import { SITE_ORIGIN } from './lib/seo'
 import { contextStorage } from 'hono/context-storage'
 
 const app = new Hono()
@@ -438,6 +443,113 @@ app.get('/dashboard', async (c) => {
   }
 
   return c.html(<Dashboard view={view} data={viewData} user={user} />)
+})
+
+/**
+ * إيصالات التبرع — Donation receipts
+ * ==================================
+ *
+ * لا يُطلب تسجيل دخول لعرض الإيصال، والسبب مقصود: كثير من المتبرعين
+ * يتبرعون كزوار بلا حساب. إلزامهم بإنشاء حساب لرؤية مستندهم المالي
+ * يعني حجب مستند يملكونه بالفعل.
+ *
+ * الحماية تأتي من التوقيع الرقمي في الرابط بدلًا من ذلك. ويُقبل الوصول
+ * أيضًا لصاحب التبرع المسجّل أو للمسؤول، حتى يستطيع المتبرع الذي فقد
+ * الرابط الوصول لإيصاله من حسابه.
+ */
+app.get('/receipt/:number', rateLimiter(30, 60000, 'receipt-view'), async (c) => {
+  const number = c.req.param('number') as string
+  const token = c.req.query('t') || ''
+  const user = (c as any).get('user')
+
+  try {
+    const db = getFirestore(c)
+    const snap = await db
+      .collection('donations')
+      .where('receipt_number', '==', number)
+      .limit(1)
+      .get()
+
+    if (snap.empty) {
+      return c.html(
+        <ReceiptVerification valid={false} reason="لا يوجد إيصال بهذا الرقم في سجلات المؤسسة." />,
+        404
+      )
+    }
+
+    const doc = snap.docs[0]
+    const donation = { id: doc.id, ...doc.data() } as any
+
+    const signatureOk = await verifyReceiptToken(number, token, c)
+    const isOwner = Boolean(user?.id && donation.user_id && user.id === donation.user_id)
+    const isAdmin = user?.role === 'admin'
+
+    if (!signatureOk && !isOwner && !isAdmin) {
+      // 403 وليس 404: المستند موجود فعلًا، والمشكلة في الصلاحية.
+      return c.html(
+        <ReceiptVerification
+          valid={false}
+          reason="رابط الإيصال غير مكتمل أو غير صحيح. تأكد من نسخ الرابط بالكامل."
+        />,
+        403
+      )
+    }
+
+    const verifyUrl = `${SITE_ORIGIN}/receipt/verify/${encodeURIComponent(number)}?t=${encodeURIComponent(donation.receipt_token || token)}`
+    return c.html(<Receipt donation={donation} verifyUrl={verifyUrl} />)
+  } catch (error: any) {
+    console.error('Error loading receipt:', error.message)
+    return c.html(
+      <ReceiptVerification valid={false} reason="حدث خطأ أثناء قراءة الإيصال. حاول لاحقًا." />,
+      500
+    )
+  }
+})
+
+/**
+ * صفحة التحقق العامة من صحة إيصال.
+ *
+ * موجّهة للجهات الرقابية والمراجعين: يستطيع من يحمل إيصالًا ورقيًا أن
+ * يتأكد أن المؤسسة أصدرته فعلًا. التوقيع مطلوب هنا أيضًا حتى لا تتحول
+ * الصفحة إلى وسيلة لتعداد أرقام الإيصالات وحصاد بيانات المتبرعين.
+ */
+app.get('/receipt/verify/:number', rateLimiter(30, 60000, 'receipt-verify'), async (c) => {
+  const number = c.req.param('number') as string
+  const token = c.req.query('t') || ''
+
+  try {
+    if (!(await verifyReceiptToken(number, token, c))) {
+      return c.html(
+        <ReceiptVerification valid={false} reason="رابط التحقق غير صحيح أو غير مكتمل." />,
+        403
+      )
+    }
+
+    const db = getFirestore(c)
+    const snap = await db
+      .collection('donations')
+      .where('receipt_number', '==', number)
+      .limit(1)
+      .get()
+
+    if (snap.empty) {
+      return c.html(
+        <ReceiptVerification valid={false} reason="لا يوجد إيصال بهذا الرقم في سجلات المؤسسة." />,
+        404
+      )
+    }
+
+    const doc = snap.docs[0]
+    return c.html(
+      <ReceiptVerification valid={true} donation={{ id: doc.id, ...doc.data() }} />
+    )
+  } catch (error: any) {
+    console.error('Error verifying receipt:', error.message)
+    return c.html(
+      <ReceiptVerification valid={false} reason="حدث خطأ أثناء التحقق. حاول لاحقًا." />,
+      500
+    )
+  }
 })
 
 /**
