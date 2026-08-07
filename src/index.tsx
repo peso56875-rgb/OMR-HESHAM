@@ -480,7 +480,9 @@ app.get('/receipt/:number', rateLimiter(30, 60000, 'receipt-view'), async (c) =>
     const doc = snap.docs[0]
     const donation = { id: doc.id, ...doc.data() } as any
 
-    const signatureOk = await verifyReceiptToken(number, token, c)
+    // يُمرَّر التوقيع المخزَّن ليكون هو المرجع: إعادة الحساب من المفتاح
+    // وحدها تجعل تدوير المفتاح يقتل كل روابط المتبرعين الصادرة.
+    const signatureOk = await verifyReceiptToken(number, token, c, donation.receipt_token)
     const isOwner = Boolean(user?.id && donation.user_id && user.id === donation.user_id)
     const isAdmin = user?.role === 'admin'
 
@@ -518,13 +520,8 @@ app.get('/receipt/verify/:number', rateLimiter(30, 60000, 'receipt-verify'), asy
   const token = c.req.query('t') || ''
 
   try {
-    if (!(await verifyReceiptToken(number, token, c))) {
-      return c.html(
-        <ReceiptVerification valid={false} reason="رابط التحقق غير صحيح أو غير مكتمل." />,
-        403
-      )
-    }
-
+    // يُقرأ المستند قبل التحقق لأن التوقيع المخزَّن فيه هو المرجع.
+    // الترتيب لا يُسرّب شيئًا: الرد عند فشل التحقق لا يحمل أي بيانات.
     const db = getFirestore(c)
     const snap = await db
       .collection('donations')
@@ -540,8 +537,17 @@ app.get('/receipt/verify/:number', rateLimiter(30, 60000, 'receipt-verify'), asy
     }
 
     const doc = snap.docs[0]
+    const data = doc.data() as any
+
+    if (!(await verifyReceiptToken(number, token, c, data.receipt_token))) {
+      return c.html(
+        <ReceiptVerification valid={false} reason="رابط التحقق غير صحيح أو غير مكتمل." />,
+        403
+      )
+    }
+
     return c.html(
-      <ReceiptVerification valid={true} donation={{ id: doc.id, ...doc.data() }} />
+      <ReceiptVerification valid={true} donation={{ id: doc.id, ...data }} />
     )
   } catch (error: any) {
     console.error('Error verifying receipt:', error.message)
