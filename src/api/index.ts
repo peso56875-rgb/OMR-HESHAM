@@ -18,6 +18,8 @@ import { exportApi } from './export'
 import { treasury } from './treasury'
 import { cases } from './cases'
 import { gallery } from './gallery'
+import { auditMiddleware } from '../lib/audit'
+import { audit } from './audit'
 
 const api = new Hono()
 
@@ -43,6 +45,12 @@ api.use('*', async (c, next) => {
   console.log(`[${c.req.method}] ${c.req.path} — ${c.res.status} (${ms}ms)`)
 })
 
+// سجل التدقيق — يسجّل كل عملية تعديل ناجحة (POST/PUT/PATCH/DELETE).
+// رُكّب هنا عالميًا لا في كل نقطة نهاية: المشروع فيه 60 نقطة تعديل موزّعة
+// على 17 وحدة، وتعديلها يدويًا يعني أن أي نقطة جديدة ستُنسى بصمت فيمنح
+// السجل ثقة زائفة. هذا الوسيط يغطّي الحالي والمستقبلي تلقائيًا.
+api.use('*', auditMiddleware)
+
 // Health check
 api.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }))
 
@@ -65,5 +73,6 @@ api.route('/export', exportApi)
 api.route('/treasury', treasury)
 api.route('/cases', cases)
 api.route('/gallery', gallery)
+api.route('/audit', audit)
 
 export { api }
