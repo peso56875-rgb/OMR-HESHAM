@@ -94,6 +94,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Sequential counters (e.g. counters/receipts-2026 backing receipt numbers).
+    // Server-only: the Admin SDK bypasses these rules, so denying clients here
+    // costs nothing and prevents a client from ever tampering with a sequence
+    // that a financial auditor relies on being gap-free and monotonic.
+    match /counters/{document} {
+      allow read, write: if false;
+    }
+
     // Explicit deny-all catch-all. Firestore already denies unmatched paths,
     // but stating it makes the intent unmissable: a new collection added by
     // future code stays locked down until a rule is written for it deliberately,

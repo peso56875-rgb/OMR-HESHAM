@@ -14,6 +14,8 @@
  *  5. كل نص مستخدم يمر على esc() ضد XSS.
  */
 
+import { amountInWords } from './receipts'
+
 export interface EmailConfig {
   apiKey: string
   from: string
@@ -409,7 +411,58 @@ export const jobApplicationAlert = (cfg: EmailConfig, a: any): Promise<SendResul
   )
 }
 
-/** 8) ترحيب بمشترك جديد في النشرة البريدية. */
+/**
+ * 8) إيصال التبرع الرسمي — يُرسل عند تأكيد التبرع فقط.
+ *
+ * لماذا هذا القالب منفصل عن donationThanks؟
+ * القالب الأول رسالة شكر فورية على تبرع **لم يُتحقق منه بعد**، وهذا
+ * مستند مالي لتبرع **مؤكد الاستلام**. دمجهما يعني إما تأخير الشكر حتى
+ * انتهاء المراجعة، أو إصدار إيصال لمبلغ قد لا يصل — وكلاهما غير مقبول.
+ */
+export const donationReceipt = (
+  cfg: EmailConfig,
+  d: any,
+  receiptUrl: string
+): Promise<SendResult> => {
+  const snap = d?.receipt_snapshot || {}
+  const to = (snap.donor_email || d?.donor_email || d?.email || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no donor email' })
+
+  const name = snap.donor_name || d?.donor_name || 'المتبرع الكريم'
+  const amount = snap.amount ?? d?.amount
+  const number = d?.receipt_number || ''
+
+  const html = shell(
+    'إيصال تبرعك',
+    `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
+     ${para('تم تأكيد استلام تبرعك، وهذا إيصالك الرسمي الصادر عن المؤسسة.')}
+     <div style="background:#f0faf7;border-right:4px solid ${brand.emerald};border-radius:8px;padding:16px;margin:18px 0;text-align:center;">
+       <div style="color:${brand.muted};font-size:13px;margin-bottom:6px;">المبلغ المستلم</div>
+       <div style="color:${brand.green};font-size:26px;font-weight:800;">${esc(money(amount))}</div>
+       <div style="color:${brand.ink};font-size:13px;font-weight:600;margin-top:10px;padding-top:10px;border-top:1px solid #d7ece5;line-height:1.8;">${esc(amountInWords(amount))}</div>
+     </div>
+     ${table(
+       rows([
+         ['رقم الإيصال', number],
+         ['أُنفق في', snap.campaign_title],
+         ['طريقة الدفع', snap.payment_method],
+         [
+           'تاريخ الإصدار',
+           d?.receipt_issued_at ? new Date(d.receipt_issued_at).toLocaleString('ar-EG') : ''
+         ]
+       ])
+     )}
+     <div style="text-align:center;margin:24px 0 8px;">
+       <a href="${esc(receiptUrl)}" style="background:${brand.green};color:#ffffff;text-decoration:none;padding:13px 30px;border-radius:8px;font-weight:700;font-size:15px;display:inline-block;">عرض الإيصال وطباعته</a>
+     </div>
+     ${para('جزاك الله خيرًا، وجعل صدقتك في ميزان حسناتك.')}`,
+    'احتفظ بهذا الرابط — يمكن من خلاله التحقق من صحة الإيصال في أي وقت.'
+  )
+
+  return deliver(cfg, to, `إيصال تبرعك ${number}`.trim(), html)
+}
+
+/** 9) ترحيب بمشترك جديد في النشرة البريدية. */
 export const newsletterWelcome = (cfg: EmailConfig, email: string): Promise<SendResult> => {
   const to = (email || '').trim()
   if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })

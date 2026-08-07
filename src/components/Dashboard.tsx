@@ -606,6 +606,7 @@ export function DashDonations({ list = [] }: { list: any[] }) {
           <th>الحملة</th>
           <th>الطريقة</th>
           <th>الحالة</th>
+          <th>الإيصال</th>
           <th>التاريخ</th>
           <th>الإجراءات</th>
         </tr>
@@ -624,6 +625,25 @@ export function DashDonations({ list = [] }: { list: any[] }) {
               <span style={`padding:2px 8px; border-radius:4px; font-weight:600; background:${isCompleted ? 'rgba(67,160,71,.15)' : 'rgba(245,124,0,.15)'}; color:${isCompleted ? 'var(--emerald-600)' : 'var(--gold-600)'}`}>
                 {isCompleted ? 'مكتمل' : 'قيد المراجعة'}
               </span>
+            </td>
+            {/*
+              رقم الإيصال يظهر فقط للتبرعات المؤكدة، لأنه لا يُصدر إلا عند
+              التأكيد. الرابط يحمل التوقيع لأن الصفحة تتحقق منه قبل العرض.
+            */}
+            <td>
+              {d.receipt_number ? (
+                <a
+                  href={`/receipt/${encodeURIComponent(d.receipt_number)}?t=${encodeURIComponent(d.receipt_token || '')}`}
+                  target="_blank"
+                  rel="noopener"
+                  title="عرض الإيصال وطباعته"
+                  style="color:var(--emerald-600); font-weight:600; text-decoration:none; direction:ltr; display:inline-block"
+                >
+                  {icon('fa-receipt')} {d.receipt_number}
+                </a>
+              ) : (
+                <span style="color:var(--ink-400,#9ca3af)">—</span>
+              )}
             </td>
             <td>{date}</td>
             <td>

@@ -1,7 +1,15 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, authMiddleware, rateLimiter } from './middleware'
-import { getEmailConfig, sendInBackground, donationAlert, donationThanks } from '../lib/email'
+import {
+  getEmailConfig,
+  sendInBackground,
+  donationAlert,
+  donationThanks,
+  donationReceipt
+} from '../lib/email'
+import { buildReceipt, receiptPath } from '../lib/receipts'
+import { SITE_ORIGIN } from '../lib/seo'
 
 export const donations = new Hono()
 
@@ -203,12 +211,29 @@ donations.post('/status/:id', adminMiddleware, async (c) => {
     const amount = Number(donationData.amount || 0)
     const campaignId = donationData.campaign_id
 
+    // إصدار الإيصال قبل الـ transaction وليس داخلها.
+    //
+    // السبب التقني: mintReceiptNumber تشغّل transaction خاصة بها، و Firestore
+    // لا يسمح بتداخل الـ transactions.
+    //
+    // السبب المحاسبي: لو فشل تحديث الحالة بعد توليد الرقم نخسر رقمًا من
+    // التسلسل. وهذا مقبول — الفجوة يمكن تفسيرها للمراجع، أما تكرار نفس
+    // الرقم على إيصالين فهو خلل مراجعة حقيقي.
+    //
+    // يُصدر مرة واحدة فقط: لو أُلغي التأكيد ثم أُعيد، يحتفظ التبرع بإيصاله
+    // الأصلي لأن المستند المالي لا يُعاد إصداره.
+    const isIssuing = newStatus === 'completed' && oldStatus !== 'completed'
+    const receipt = isIssuing && !donationData.receipt_number
+      ? await buildReceipt(db, donationData, c)
+      : null
+
     // Use transaction to update status and increment campaign raised amount if completed
     await db.runTransaction(async (transaction) => {
       // 1. Update donation status
       transaction.update(donationRef, { 
         status: newStatus,
-        payment_status: newStatus === 'completed' ? 'paid' : 'pending' 
+        payment_status: newStatus === 'completed' ? 'paid' : 'pending',
+        ...(receipt || {})
       })
 
       // 2. If status is changing to completed, increment campaign raised progress
@@ -231,6 +256,16 @@ donations.post('/status/:id', adminMiddleware, async (c) => {
         }
       }
     })
+
+    // إرسال الإيصال بعد نجاح الـ transaction فقط — لا نرسل مستندًا
+    // ماليًا لمبلغ لم تُثبت حالته في قاعدة البيانات.
+    if (receipt) {
+      const cfg = getEmailConfig(c)
+      const url = SITE_ORIGIN + receiptPath(receipt.receipt_number, receipt.receipt_token)
+      await sendInBackground(c, () =>
+        donationReceipt(cfg, { ...donationData, ...receipt }, url)
+      )
+    }
 
     return c.redirect('/dashboard?view=donations&success=1')
   } catch (error: any) {
