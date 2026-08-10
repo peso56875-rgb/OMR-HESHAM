@@ -1868,12 +1868,34 @@ const AUDIT_RESOURCES: Record<string, string> = {
   upload: 'الملفات'
 }
 
+/**
+ * صياغة عدد العمليات بعربية صحيحة.
+ *
+ * العدد في العربية يفرض صيغة المعدود، والصياغة الآلية
+ * (`${n} عملية`) تُنتج "٣ عملية" وهي خطأ نحوي واضح على واجهة
+ * مؤسسة مسجَّلة:
+ *   ١ → عملية واحدة        (مفرد)
+ *   ٢ → عمليتان            (مثنى)
+ *   ٣–١٠ → ٣ عمليات        (جمع)
+ *   ١١+ → ١١ عملية         (مفرد، تمييز منصوب)
+ * والمئات المضبوطة (١٠٠، ٢٠٠…) تعود للمفرد كذلك.
+ */
+const countLabel = (n: number): string => {
+  const d = (x: number) => x.toLocaleString('ar-EG')
+  if (n === 0) return 'لا عمليات'
+  if (n === 1) return 'أحدث عملية'
+  if (n === 2) return 'أحدث عمليتين'
+  const mod100 = n % 100
+  if (mod100 >= 3 && mod100 <= 10) return `أحدث ${d(n)} عمليات`
+  return `أحدث ${d(n)} عملية`
+}
+
 export function DashAudit({ list = [] }: { list: any[] }) {
   return <section class="dash-table">
     <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px">
       <h3>سجل التدقيق</h3>
       <span style="font-size:.82rem; color:var(--muted)">
-        أحدث {list.length.toLocaleString('ar-EG')} عملية · للقراءة فقط
+        {countLabel(list.length)} · للقراءة فقط
       </span>
     </header>
 
