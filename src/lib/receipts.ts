@@ -79,25 +79,45 @@ export const signReceipt = async (receiptNumber: string, c?: any): Promise<strin
 }
 
 /**
- * تحقق من التوقيع بمقارنة ثابتة الزمن.
+ * مقارنة نصين بزمن ثابت.
  *
  * المقارنة العادية (===) تتوقف عند أول حرف مختلف، فيصبح زمن الرد
  * مؤشرًا على عدد الأحرف الصحيحة، ويمكن نظريًا تخمين التوقيع حرفًا حرفًا.
  * هنا نجمع الفروق بـ XOR على كل الأحرف فيكون الزمن ثابتًا.
  */
+export const constantTimeEqual = (a: string, b: string): boolean => {
+  if (!a || !b || a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  }
+  return diff === 0
+}
+
+/**
+ * تحقق من توقيع الإيصال.
+ *
+ * الترتيب مقصود: يُقارَن التوقيع المُرسل أولًا بالتوقيع *المخزَّن* في
+ * المستند، ولا يُعاد حسابه من المفتاح إلا إن لم يكن مخزَّنًا.
+ *
+ * لماذا؟ لأن إعادة الحساب وحدها تربط صلاحية الرابط ببقاء المفتاح كما هو،
+ * فأي تدوير للمفتاح (أو فقدانه عند تغيير البيئة) يقتل كل روابط الإيصالات
+ * الصادرة للمتبرعين — وقد حدث هذا فعلًا في بيئة التطوير: أُعيد توليد
+ * RECEIPT_SECRET فتوقّف إيصال صادر عن التحقق رغم أن توقيعه المخزَّن سليم.
+ *
+ * التوقيع المخزَّن هو المرجع لأنه صدر لحظة إنشاء المستند المالي؛ وإعادة
+ * الحساب تبقى كخطة بديلة للمستندات القديمة التي لا تحمل توقيعًا مخزَّنًا.
+ * أمان المقارنة لا يتغيّر: كلتا الحالتين تستخدمان مقارنة ثابتة الزمن.
+ */
 export const verifyReceiptToken = async (
   receiptNumber: string,
   token: string,
-  c?: any
+  c?: any,
+  storedToken?: string
 ): Promise<boolean> => {
   if (!receiptNumber || !token) return false
-  const expected = await signReceipt(receiptNumber, c)
-  if (expected.length !== token.length) return false
-  let diff = 0
-  for (let i = 0; i < expected.length; i++) {
-    diff |= expected.charCodeAt(i) ^ token.charCodeAt(i)
-  }
-  return diff === 0
+  if (storedToken) return constantTimeEqual(storedToken, token)
+  return constantTimeEqual(await signReceipt(receiptNumber, c), token)
 }
 
 /* ------------------------------------------------------------------ *
