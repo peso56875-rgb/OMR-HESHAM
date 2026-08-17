@@ -696,8 +696,20 @@
 
     let currentScale = 1
     let currentRotate = 0
+    let translateX = 0
+    let translateY = 0
+    let activePointerId = null
+    let pointerStart = null
+    let pinchStartDistance = 0
+    let pinchStartScale = 1
+    let currentDownloadUrl = ''
+    let currentImageUrl = ''
+    let currentFileName = 'volunteer-photo.jpg'
+    let previousActiveElement = null
+    const pointers = new Map()
 
     const mainImg = $('#vol-lb-main-img', modal)
+    const imageWrapper = $('#vol-lb-img-wrapper', modal)
     const noImgBox = $('#vol-lb-no-img', modal)
     const zoomBadge = $('#vol-lb-zoom-badge', modal)
     const nameEl = $('#vol-lb-name', modal)
@@ -723,38 +735,97 @@
     const rotateBtn = $('#vol-lb-rotate', modal)
     const resetBtn = $('#vol-lb-reset', modal)
     const viewport = $('#vol-lb-viewport', modal)
+    const infoBar = $('.vol-lightbox-infobar', modal)
+    const controls = $('.vol-lightbox-controls', modal)
 
-    function updateTransform() {
-      if (!mainImg) return
-      mainImg.style.transform = `rotate(${currentRotate}deg) scale(${currentScale})`
-      if (zoomBadge) {
-        zoomBadge.textContent = `${Math.round(currentScale * 100)}%`
+    const loadingEl = document.createElement('div')
+    loadingEl.className = 'vol-lb-loading'
+    loadingEl.innerHTML = '<span class="vol-lb-spinner"></span><b>جارٍ تجهيز الصورة...</b>'
+    viewport?.appendChild(loadingEl)
+
+    const fullscreenBtn = document.createElement('button')
+    fullscreenBtn.type = 'button'
+    fullscreenBtn.className = 'vol-lb-btn'
+    fullscreenBtn.id = 'vol-lb-fullscreen'
+    fullscreenBtn.title = 'ملء الشاشة (F)'
+    fullscreenBtn.setAttribute('aria-label', 'عرض الصورة بملء الشاشة')
+    fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>'
+    controls?.appendChild(fullscreenBtn)
+
+    const infoToggleBtn = document.createElement('button')
+    infoToggleBtn.type = 'button'
+    infoToggleBtn.className = 'vol-lb-info-toggle'
+    infoToggleBtn.innerHTML = '<i class="fa-solid fa-circle-info"></i><span>بيانات المتطوع</span><i class="fa-solid fa-chevron-down"></i>'
+    infoBar?.before(infoToggleBtn)
+
+    function clampTranslation() {
+      if (!viewport || currentScale <= 1) {
+        translateX = 0
+        translateY = 0
+        return
       }
+      const maxX = viewport.clientWidth * (currentScale - 1) / 2
+      const maxY = viewport.clientHeight * (currentScale - 1) / 2
+      translateX = Math.min(maxX, Math.max(-maxX, translateX))
+      translateY = Math.min(maxY, Math.max(-maxY, translateY))
+    }
+
+    function updateTransform(animate = true) {
+      if (!mainImg) return
+      clampTranslation()
+      mainImg.classList.toggle('is-dragging', !animate)
+      mainImg.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) rotate(${currentRotate}deg) scale(${currentScale})`
+      mainImg.classList.toggle('is-zoomed', currentScale > 1)
+      viewport?.classList.toggle('can-pan', currentScale > 1)
+      if (zoomBadge) zoomBadge.textContent = `${Math.round(currentScale * 100)}%`
+    }
+
+    function setScale(scale, originX, originY) {
+      const oldScale = currentScale
+      currentScale = Math.min(Math.max(scale, 0.5), 5)
+      if (viewport && oldScale > 0 && originX !== undefined && originY !== undefined) {
+        const rect = viewport.getBoundingClientRect()
+        const offsetX = originX - rect.left - rect.width / 2
+        const offsetY = originY - rect.top - rect.height / 2
+        const ratio = currentScale / oldScale
+        translateX = (translateX - offsetX) * ratio + offsetX
+        translateY = (translateY - offsetY) * ratio + offsetY
+      }
+      updateTransform()
     }
 
     function resetTransform() {
       currentScale = 1
       currentRotate = 0
+      translateX = 0
+      translateY = 0
       updateTransform()
+    }
+
+    function setLoading(isLoading) {
+      loadingEl.classList.toggle('active', isLoading)
+      if (imageWrapper) imageWrapper.classList.toggle('is-loading', isLoading)
     }
 
     function openModal(data) {
       resetTransform()
+      previousActiveElement = document.activeElement
       const hasImg = Boolean(data.img && data.img.trim())
+      currentImageUrl = hasImg ? data.img : ''
+      currentDownloadUrl = hasImg ? (data.download || data.img) : ''
+      currentFileName = `صورة-${(data.name || 'متطوع').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'متطوع'}.jpg`
 
       if (nameEl) nameEl.textContent = data.name || 'متطوع'
       if (codeEl) {
-        codeEl.textContent = data.code || 'بدون كود'
+        codeEl.textContent = data.code || ''
         codeEl.style.display = data.code ? 'inline-block' : 'none'
       }
       if (statusEl) {
         statusEl.textContent = data.status || 'معتمد'
-        if (data.statusColor) statusEl.style.color = data.statusColor
-        if (data.statusBg) statusEl.style.background = data.statusBg
+        statusEl.style.color = data.statusColor || '#10b981'
+        statusEl.style.background = data.statusBg || 'rgba(16,185,129,.12)'
       }
-      if (metaEl) {
-        metaEl.textContent = `المجال: ${data.role || 'عام'} • ساعات الخدمة: ${data.hours || 0} ساعة`
-      }
+      if (metaEl) metaEl.textContent = `${data.role || 'عام'} • ${data.hours || 0} ساعة خدمة`
       if (phoneEl) phoneEl.textContent = data.phone || '—'
       if (cityEl) cityEl.textContent = data.city || '—'
       if (rankEl) rankEl.textContent = data.rank || 'متطوع مبادر'
@@ -763,26 +834,31 @@
       if (expiryEl) expiryEl.textContent = data.expiry || 'مفتوح'
 
       if (hasImg) {
+        setLoading(true)
         if (mainImg) {
           mainImg.src = data.img
-          mainImg.alt = data.name || 'صورة المتطوع'
+          mainImg.alt = `الصورة الشخصية للمتطوع ${data.name || ''}`
           mainImg.style.display = 'block'
         }
         if (noImgBox) noImgBox.style.display = 'none'
         if (thumbImg) {
           thumbImg.src = data.img
+          thumbImg.alt = ''
           thumbImg.style.display = 'block'
         }
         if (thumbInitials) thumbInitials.style.display = 'none'
-
         if (downloadBtn) {
-          downloadBtn.href = data.img
-          downloadBtn.download = `متطوع-${(data.name || 'volunteer').replace(/\s+/g, '_')}.jpg`
+          downloadBtn.href = currentDownloadUrl
+          downloadBtn.download = currentFileName
           downloadBtn.style.display = 'inline-flex'
+          downloadBtn.classList.remove('is-loading')
+          downloadBtn.removeAttribute('aria-disabled')
+          const label = $('span', downloadBtn)
+          if (label) label.textContent = 'تحميل الصورة'
         }
         if (openTabBtn) {
           openTabBtn.href = data.img
-          openTabBtn.style.display = 'inline-flex'
+          openTabBtn.style.display = 'inline-grid'
         }
         if (copyLinkBtn) {
           copyLinkBtn.style.display = 'inline-flex'
@@ -790,8 +866,9 @@
         }
         if (zoomBadge) zoomBadge.style.display = 'block'
       } else {
+        setLoading(false)
         if (mainImg) {
-          mainImg.src = ''
+          mainImg.removeAttribute('src')
           mainImg.style.display = 'none'
         }
         if (noImgBox) noImgBox.style.display = 'block'
@@ -810,89 +887,194 @@
       void modal.offsetWidth
       modal.classList.add('active')
       modal.setAttribute('aria-hidden', 'false')
-      document.body.style.overflow = 'hidden'
+      document.body.classList.add('vol-lightbox-open')
+      setTimeout(() => closeBtn?.focus(), 60)
     }
 
     function closeModal() {
       modal.classList.remove('active')
       modal.setAttribute('aria-hidden', 'true')
-      document.body.style.overflow = ''
+      document.body.classList.remove('vol-lightbox-open')
+      if (document.fullscreenElement === modal) document.exitFullscreen?.().catch(() => {})
       setTimeout(() => {
         if (!modal.classList.contains('active')) {
           modal.style.display = 'none'
           resetTransform()
+          mainImg?.removeAttribute('src')
+          previousActiveElement?.focus?.()
         }
-      }, 300)
+      }, 260)
+    }
+
+    async function downloadCurrentImage(event) {
+      event.preventDefault()
+      if (!currentDownloadUrl || downloadBtn?.classList.contains('is-loading')) return
+      const label = $('span', downloadBtn)
+      downloadBtn?.classList.add('is-loading')
+      downloadBtn?.setAttribute('aria-disabled', 'true')
+      if (label) label.textContent = 'جارٍ التحميل...'
+
+      try {
+        const response = await fetch(currentDownloadUrl, { credentials: 'same-origin' })
+        if (!response.ok) {
+          let message = 'تعذر تحميل الصورة'
+          try { message = (await response.json()).error || message } catch (_) {}
+          throw new Error(message)
+        }
+        const blob = await response.blob()
+        const disposition = response.headers.get('Content-Disposition') || ''
+        const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
+        const filename = encodedName ? decodeURIComponent(encodedName) : currentFileName
+        const blobUrl = URL.createObjectURL(blob)
+        const anchor = document.createElement('a')
+        anchor.href = blobUrl
+        anchor.download = filename
+        document.body.appendChild(anchor)
+        anchor.click()
+        anchor.remove()
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1500)
+        toast('تم تحميل صورة المتطوع على جهازك', 'success')
+      } catch (error) {
+        console.error('Volunteer photo download failed:', error)
+        toast(error.message || 'تعذر تحميل الصورة — حاول مرة أخرى', 'error')
+      } finally {
+        downloadBtn?.classList.remove('is-loading')
+        downloadBtn?.removeAttribute('aria-disabled')
+        if (label) label.textContent = 'تحميل الصورة'
+      }
     }
 
     if (!modal.dataset.bound) {
       modal.dataset.bound = 'true'
-
       closeBtn?.addEventListener('click', closeModal)
       closeBottomBtn?.addEventListener('click', closeModal)
       backdrop?.addEventListener('click', closeModal)
+      downloadBtn?.addEventListener('click', downloadCurrentImage)
 
-      zoomInBtn?.addEventListener('click', () => {
-        currentScale = Math.min(currentScale + 0.25, 3.5)
-        updateTransform()
+      mainImg?.addEventListener('load', () => {
+        setLoading(false)
+        mainImg.classList.add('is-ready')
+      })
+      mainImg?.addEventListener('error', () => {
+        setLoading(false)
+        mainImg.style.display = 'none'
+        if (noImgBox) {
+          noImgBox.style.display = 'block'
+          const title = $('h4', noImgBox)
+          const copy = $('p', noImgBox)
+          if (title) title.textContent = 'تعذر عرض الصورة'
+          if (copy) copy.textContent = 'يمكنك محاولة تحميل الصورة أو فتح المصدر الأصلي.'
+        }
       })
 
-      zoomOutBtn?.addEventListener('click', () => {
-        currentScale = Math.max(currentScale - 0.25, 0.5)
-        updateTransform()
-      })
-
+      zoomInBtn?.addEventListener('click', () => setScale(currentScale + 0.25))
+      zoomOutBtn?.addEventListener('click', () => setScale(currentScale - 0.25))
       rotateBtn?.addEventListener('click', () => {
         currentRotate = (currentRotate + 90) % 360
         updateTransform()
       })
-
       resetBtn?.addEventListener('click', resetTransform)
 
-      mainImg?.addEventListener('dblclick', (e) => {
-        e.preventDefault()
-        if (currentScale > 1) {
-          resetTransform()
-        } else {
-          currentScale = 1.85
-          updateTransform()
+      fullscreenBtn.addEventListener('click', async () => {
+        try {
+          if (document.fullscreenElement === modal) await document.exitFullscreen()
+          else await modal.requestFullscreen()
+        } catch (_) {
+          modal.classList.toggle('vol-lightbox-expanded')
         }
       })
+      document.addEventListener('fullscreenchange', () => {
+        fullscreenBtn.innerHTML = document.fullscreenElement === modal
+          ? '<i class="fa-solid fa-compress"></i>'
+          : '<i class="fa-solid fa-expand"></i>'
+      })
 
-      viewport?.addEventListener('wheel', (e) => {
+      infoToggleBtn.addEventListener('click', () => {
+        const collapsed = modal.classList.toggle('info-collapsed')
+        infoToggleBtn.setAttribute('aria-expanded', String(!collapsed))
+      })
+
+      mainImg?.addEventListener('dblclick', e => {
+        e.preventDefault()
+        if (currentScale > 1) resetTransform()
+        else setScale(2, e.clientX, e.clientY)
+      })
+
+      viewport?.addEventListener('wheel', e => {
         if (!modal.classList.contains('active')) return
         e.preventDefault()
-        const delta = e.deltaY < 0 ? 0.15 : -0.15
-        currentScale = Math.min(Math.max(currentScale + delta, 0.5), 3.5)
-        updateTransform()
+        setScale(currentScale + (e.deltaY < 0 ? 0.18 : -0.18), e.clientX, e.clientY)
       }, { passive: false })
 
-      copyLinkBtn?.addEventListener('click', () => {
-        const url = copyLinkBtn.dataset.url
-        if (url) {
-          navigator.clipboard.writeText(url).then(() => {
-            toast('تم نسخ رابط صورة المتطوع بنجاح', 'success')
-          }).catch(() => {
-            toast('تعذر نسخ الرابط تلقائياً', 'warning')
-          })
+      viewport?.addEventListener('pointerdown', e => {
+        if (!currentImageUrl) return
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        viewport.setPointerCapture?.(e.pointerId)
+        if (pointers.size === 1 && currentScale > 1) {
+          activePointerId = e.pointerId
+          pointerStart = { x: e.clientX, y: e.clientY, tx: translateX, ty: translateY }
+        } else if (pointers.size === 2) {
+          const [a, b] = [...pointers.values()]
+          pinchStartDistance = Math.hypot(a.x - b.x, a.y - b.y)
+          pinchStartScale = currentScale
         }
       })
 
-      document.addEventListener('keydown', (e) => {
+      viewport?.addEventListener('pointermove', e => {
+        if (!pointers.has(e.pointerId)) return
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        if (pointers.size === 2) {
+          const [a, b] = [...pointers.values()]
+          const distance = Math.hypot(a.x - b.x, a.y - b.y)
+          if (pinchStartDistance) setScale(pinchStartScale * distance / pinchStartDistance)
+        } else if (e.pointerId === activePointerId && pointerStart && currentScale > 1) {
+          translateX = pointerStart.tx + e.clientX - pointerStart.x
+          translateY = pointerStart.ty + e.clientY - pointerStart.y
+          updateTransform(false)
+        }
+      })
+
+      const releasePointer = e => {
+        pointers.delete(e.pointerId)
+        if (e.pointerId === activePointerId) {
+          activePointerId = null
+          pointerStart = null
+          updateTransform()
+        }
+        if (pointers.size < 2) pinchStartDistance = 0
+      }
+      viewport?.addEventListener('pointerup', releasePointer)
+      viewport?.addEventListener('pointercancel', releasePointer)
+
+      copyLinkBtn?.addEventListener('click', async () => {
+        const url = copyLinkBtn.dataset.url
+        if (!url) return
+        try {
+          await navigator.clipboard.writeText(url)
+          toast('تم نسخ رابط صورة المتطوع', 'success')
+        } catch (_) {
+          toast('تعذر نسخ الرابط تلقائياً', 'warning')
+        }
+      })
+
+      document.addEventListener('keydown', e => {
         if (!modal.classList.contains('active')) return
-        if (e.key === 'Escape') {
-          closeModal()
-        } else if (e.key === '+' || e.key === '=') {
-          currentScale = Math.min(currentScale + 0.25, 3.5)
-          updateTransform()
-        } else if (e.key === '-' || e.key === '_') {
-          currentScale = Math.max(currentScale - 0.25, 0.5)
-          updateTransform()
-        } else if (e.key === 'r' || e.key === 'R' || e.key === 'ق') {
+        if (e.key === 'Escape') closeModal()
+        else if (e.key === '+' || e.key === '=') setScale(currentScale + 0.25)
+        else if (e.key === '-' || e.key === '_') setScale(currentScale - 0.25)
+        else if (e.key === 'r' || e.key === 'R' || e.key === 'ق') {
           currentRotate = (currentRotate + 90) % 360
           updateTransform()
-        } else if (e.key === '0') {
-          resetTransform()
+        } else if (e.key === '0') resetTransform()
+        else if (e.key === 'f' || e.key === 'F') fullscreenBtn.click()
+        else if (e.key === 'Tab') {
+          const focusable = [...modal.querySelectorAll('button:not([disabled]), a[href]:not([aria-disabled="true"])')]
+            .filter(el => el.offsetParent !== null)
+          if (!focusable.length) return
+          const first = focusable[0]
+          const last = focusable[focusable.length - 1]
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
         }
       })
     }
@@ -1035,6 +1217,7 @@
 
       const data = {
         img: trigger.getAttribute('data-vol-img') || '',
+        download: trigger.getAttribute('data-vol-download') || '',
         name: trigger.getAttribute('data-vol-name') || '',
         code: trigger.getAttribute('data-vol-code') || '',
         role: trigger.getAttribute('data-vol-role') || '',
