@@ -19,7 +19,8 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
     ['fa-briefcase', 'الوظائف', 'jobs'],
     ['fa-file-signature', 'طلبات التوظيف', 'job_applications'],
     ['fa-envelope-open-text', 'النشرة البريدية', 'newsletter'],
-    ['fa-clipboard-list', 'الحالات والمستفيدون', 'cases']
+    ['fa-clipboard-list', 'الحالات والمستفيدون', 'cases'],
+    ['fa-clipboard-check', 'سجل التدقيق', 'audit']
   ]
 
   const dateStr = new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -64,6 +65,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
         {view === 'newsletter' && <DashNewsletter list={data.list} />}
         {view === 'users' && <DashUsers list={data.list} currentUserId={user.id} />}
         {view === 'cases' && <DashCases groups={data.groups || []} stats={data.stats || {}} user={user} />}
+        {view === 'audit' && <DashAudit list={data.list || []} />}
       </div>
     </section>
 
@@ -1974,4 +1976,129 @@ export function DashCases({ groups = [], stats = {}, user }: { groups: any[], st
       )}
     </section>
   </>
+}
+
+/**
+ * سجل التدقيق — عرض للقراءة فقط.
+ *
+ * لا يوجد هنا زر تعديل أو حذف، وهذا مقصود: سجل التدقيق الذي يمكن للمشرف
+ * تعديله أو حذف أسطر منه لا يُثبت شيئًا لأي مراجع خارجي. القيمة الكاملة
+ * للسجل تأتي من كونه غير قابل للتغيير من داخل الواجهة.
+ *
+ * يُعرض أحدث 100 عملية فقط (الحدّ مطبَّق في مُحمِّل البيانات) لأن السجل
+ * ينمو مع كل عملية إدارية بلا توقف.
+ */
+const AUDIT_ACTIONS: Record<string, [string, string]> = {
+  create: ['إضافة', 'var(--emerald-600)'],
+  update: ['تعديل', 'var(--gold-600)'],
+  delete: ['حذف', '#e53935']
+}
+
+const AUDIT_RESOURCES: Record<string, string> = {
+  campaigns: 'الحملات',
+  donations: 'التبرعات',
+  volunteers: 'المتطوعون',
+  users: 'المستخدمون',
+  cases: 'الحالات والمستفيدون',
+  treasury: 'الخزينة',
+  gallery: 'معرض الصور',
+  news: 'الأخبار',
+  reports: 'التقارير',
+  partners: 'الشركاء',
+  team: 'فريق العمل',
+  testimonials: 'شهادات',
+  contact: 'رسائل التواصل',
+  newsletter: 'النشرة البريدية',
+  settings: 'الإعدادات',
+  upload: 'الملفات'
+}
+
+/**
+ * صياغة عدد العمليات بعربية صحيحة.
+ *
+ * العدد في العربية يفرض صيغة المعدود، والصياغة الآلية
+ * (`${n} عملية`) تُنتج "٣ عملية" وهي خطأ نحوي واضح على واجهة
+ * مؤسسة مسجَّلة:
+ *   ١ → عملية واحدة        (مفرد)
+ *   ٢ → عمليتان            (مثنى)
+ *   ٣–١٠ → ٣ عمليات        (جمع)
+ *   ١١+ → ١١ عملية         (مفرد، تمييز منصوب)
+ * والمئات المضبوطة (١٠٠، ٢٠٠…) تعود للمفرد كذلك.
+ */
+const countLabel = (n: number): string => {
+  const d = (x: number) => x.toLocaleString('ar-EG')
+  if (n === 0) return 'لا عمليات'
+  if (n === 1) return 'أحدث عملية'
+  if (n === 2) return 'أحدث عمليتين'
+  const mod100 = n % 100
+  if (mod100 >= 3 && mod100 <= 10) return `أحدث ${d(n)} عمليات`
+  return `أحدث ${d(n)} عملية`
+}
+
+export function DashAudit({ list = [] }: { list: any[] }) {
+  return <section class="dash-table">
+    <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px">
+      <h3>سجل التدقيق</h3>
+      <span style="font-size:.82rem; color:var(--muted)">
+        {countLabel(list.length)} · للقراءة فقط
+      </span>
+    </header>
+
+    {list.length === 0 ? (
+      <p style="padding:24px; text-align:center; color:var(--muted)">
+        لا توجد عمليات مسجّلة بعد.
+      </p>
+    ) : (
+      <table>
+        <thead>
+          <tr>
+            <th>العملية</th>
+            <th>القسم</th>
+            <th>المُنفِّذ</th>
+            <th>السجل</th>
+            <th>التاريخ والوقت</th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((row: any) => {
+            const [label, color] = AUDIT_ACTIONS[row.action] || [row.action || '-', 'var(--muted)']
+            const resource = AUDIT_RESOURCES[row.resource] || row.resource || '-'
+            // الوقت بالدقيقة وليس التاريخ فقط: التدقيق يحتاج ترتيبًا زمنيًا
+            // دقيقًا للتمييز بين عمليات وقعت في اليوم نفسه.
+            //
+            // التوقيت مثبَّت على القاهرة عن قصد: الطوابع تُخزَّن بـ UTC،
+            // والصفحة تُبنى على السيرفر (Vercel) الذي يعمل بـ UTC أيضًا،
+            // فلو تُرك للسيرفر لظهرت كل العمليات بفارق ساعتين أو ثلاث عن
+            // التوقيت المحلي. في سجل مهمته إثبات *وقت* حدوث العملية،
+            // فارق كهذا يجعل السجل مضلِّلًا لا مفيدًا.
+            const when = row.created_at
+              ? new Date(row.created_at).toLocaleString('ar-EG', {
+                  day: '2-digit', month: '2-digit', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit',
+                  timeZone: 'Africa/Cairo'
+                })
+              : '-'
+            return <tr>
+              <td>
+                <span style={`display:inline-block; padding:3px 10px; border-radius:999px; font-size:.78rem; font-weight:700; color:#fff; background:${color}`}>
+                  {label}
+                </span>
+              </td>
+              <td>{resource}</td>
+              <td>
+                <div style="font-weight:600">{row.actor_name || 'غير معروف'}</div>
+                {row.actor_email && (
+                  <div style="font-size:.76rem; color:var(--muted); direction:ltr; text-align:right">{row.actor_email}</div>
+                )}
+              </td>
+              <td style="direction:ltr; text-align:right; font-size:.78rem; color:var(--muted)">
+                {row.target_id || '—'}
+              </td>
+              <td style="white-space:nowrap">{when}</td>
+            </tr>
+          })}
+        </tbody>
+      </table>
+    )}
+  </section>
 }

@@ -102,6 +102,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Audit trail. Server-only, and deliberately deny-all — including reads.
+    // An audit log a client can write to proves nothing to an auditor, and one
+    // a client can read leaks who-did-what plus request payloads. The Admin SDK
+    // bypasses these rules, so the dashboard still reads it through the API.
+    match /audit_logs/{document} {
+      allow read, write: if false;
+    }
+
     // Explicit deny-all catch-all. Firestore already denies unmatched paths,
     // but stating it makes the intent unmissable: a new collection added by
     // future code stays locked down until a rule is written for it deliberately,

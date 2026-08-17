@@ -7,7 +7,7 @@
  * ملف تحقق قائم بذاته. وُضع داخل المستودع لا في /tmp حتى يمكن إعادة
  * تشغيله عند أي تعديل مستقبلي على منطق الإيصالات.
  */
-import { amountInWords, formatMoney, buildReceipt, verifyReceiptToken, signReceipt, receiptPath } from '../../src/lib/receipts.ts'
+import { amountInWords, formatMoney, buildReceipt, verifyReceiptToken, signReceipt, receiptPath, constantTimeEqual } from '../../src/lib/receipts.ts'
 import { Receipt, ReceiptVerification } from '../../src/components/Receipt.tsx'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -143,6 +143,38 @@ if (out) {
   fs.writeFileSync(path.join(out, 'verify-ok.html'), vOk)
   fs.writeFileSync(path.join(out, 'verify-bad.html'), vBad)
   console.log(`\nكُتبت ملفات HTML في ${out}`)
+}
+
+console.log('\n  صمود الروابط أمام تدوير المفتاح:')
+{
+  // سيناريو حقيقي حدث في التطوير: فُقد RECEIPT_SECRET عند تغيير البيئة
+  // فأُعيد توليده، فتوقّف إيصال صادر عن التحقق رغم سلامة توقيعه المخزَّن.
+  const num = 'REC-2026-000001'
+  const authentic = 'd248b7c9b0d311bd0d5a'   // توقيع صدر بمفتاح قديم
+  const recomputed = await signReceipt(num)   // بمفتاح مختلف الآن
+
+  check('المفتاح فعلًا مختلف (شرط صحة الاختبار)', recomputed !== authentic)
+  check('التوقيع المخزَّن يُقبل بعد تدوير المفتاح',
+    await verifyReceiptToken(num, authentic, undefined, authentic))
+  check('توقيع مزيّف يُرفض حتى مع وجود توقيع مخزَّن',
+    !(await verifyReceiptToken(num, 'ffffffffffffffffffff', undefined, authentic)))
+  check('توقيع مقصوص يُرفض',
+    !(await verifyReceiptToken(num, authentic.slice(0, 10), undefined, authentic)))
+  check('حرف واحد مقلوب يُرفض',
+    !(await verifyReceiptToken(num, authentic.slice(0, -1) + 'f', undefined, authentic)))
+  check('بلا توقيع مخزَّن يعود لإعادة الحساب (توافق مع المستندات القديمة)',
+    await verifyReceiptToken(num, recomputed, undefined, undefined))
+  check('التوقيع الفارغ لا يتجاوز التحقق',
+    !(await verifyReceiptToken(num, '', undefined, authentic)))
+}
+
+console.log('\n  المقارنة ثابتة الزمن:')
+{
+  check('متطابقان', constantTimeEqual('abc123', 'abc123'))
+  check('مختلفان', !constantTimeEqual('abc123', 'abc124'))
+  check('طولان مختلفان', !constantTimeEqual('abc', 'abcd'))
+  check('فراغ يُرفض', !constantTimeEqual('', ''))
+  check('null آمن', !constantTimeEqual(null, 'abc'))
 }
 
 console.log(`\n${'═'.repeat(46)}\n  ${pass} ناجح · ${fail} فاشل\n${'═'.repeat(46)}`)
