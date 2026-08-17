@@ -2442,3 +2442,515 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
   .legal-credentials-card h3{font-size:1.25rem}
   .legal-credentials-card li{font-size:.84rem;gap:11px}
 }
+
+/* =====================================================================
+   Volunteer Avatar Clickable Trigger & Premium Lightbox Modal
+   ===================================================================== */
+
+/* Clickable Avatar Thumbnail */
+.vol-avatar-trigger {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  overflow: hidden;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.28s ease,
+              border-color 0.28s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+.vol-avatar-trigger.in-modal {
+  width: 72px;
+  height: 72px;
+}
+
+.vol-avatar-trigger:hover,
+.vol-avatar-trigger:focus-visible {
+  transform: scale(1.09);
+  border-color: var(--emerald);
+  box-shadow: 0 0 0 4px rgba(22, 138, 112, 0.28), 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.vol-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.vol-avatar-trigger:hover .vol-avatar-img {
+  transform: scale(1.12);
+}
+
+.vol-avatar-initials {
+  font-weight: 900;
+  font-size: 1.35rem;
+  color: var(--emerald);
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.vol-avatar-trigger.in-modal .vol-avatar-initials {
+  font-size: 1.85rem;
+}
+
+.vol-avatar-zoom-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 20, 18, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-size: 1.05rem;
+  opacity: 0;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  transform: scale(0.85);
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.vol-avatar-trigger:hover .vol-avatar-zoom-overlay,
+.vol-avatar-trigger:focus-visible .vol-avatar-zoom-overlay {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Lightbox Modal Overlay */
+.vol-lightbox-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
+  visibility: hidden;
+}
+
+.vol-lightbox-modal.active {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.vol-lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 16, 14, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Lightbox Card */
+.vol-lightbox-card {
+  position: relative;
+  z-index: 2;
+  max-width: 860px;
+  width: 100%;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  transform: scale(0.92) translateY(15px);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+
+.vol-lightbox-modal.active .vol-lightbox-card {
+  transform: scale(1) translateY(0);
+}
+
+/* Topbar */
+.vol-lightbox-topbar {
+  padding: 16px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  flex-wrap: wrap;
+}
+
+.vol-lightbox-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.vol-lightbox-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  overflow: hidden;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.vol-lightbox-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vol-lightbox-thumb span {
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: var(--emerald);
+}
+
+.vol-lb-name {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--heading);
+}
+
+.vol-lb-code {
+  font-family: monospace;
+  font-size: .78rem;
+  font-weight: 900;
+  color: var(--emerald);
+  background: rgba(22, 138, 112, .12);
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(22, 138, 112, .2);
+  letter-spacing: .03em;
+}
+
+.vol-lb-status {
+  font-size: .72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, .12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, .2);
+}
+
+.vol-lb-meta {
+  margin: 3px 0 0;
+  font-size: .78rem;
+  color: var(--muted);
+}
+
+/* Actions in Topbar */
+.vol-lightbox-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vol-lightbox-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.vol-lb-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  font-size: .92rem;
+  cursor: pointer;
+  transition: background .18s, color .18s, transform .18s;
+  text-decoration: none;
+}
+
+.vol-lb-btn:hover {
+  background: var(--surface-2);
+  color: var(--emerald);
+  transform: scale(1.06);
+}
+
+.vol-lb-btn:active {
+  transform: scale(0.95);
+}
+
+.vol-lb-btn-primary {
+  width: auto;
+  padding: 0 12px;
+  gap: 6px;
+  display: inline-flex;
+  align-items: center;
+  background: var(--emerald-600);
+  color: #ffffff !important;
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.vol-lb-btn-primary:hover {
+  background: var(--emerald-700, #0d5f4e);
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.vol-lb-btn-close {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.vol-lb-btn-close:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.vol-lightbox-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 2px;
+}
+
+/* Photo Viewport */
+.vol-lightbox-viewport {
+  position: relative;
+  width: 100%;
+  height: 52vh;
+  min-height: 340px;
+  max-height: 520px;
+  background: radial-gradient(circle at center, #0e2a25 0%, #051613 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+}
+
+.vol-lightbox-img-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.vol-lb-main-img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6);
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: center center;
+  cursor: grab;
+}
+
+.vol-lb-main-img:active {
+  cursor: grabbing;
+}
+
+.vol-lb-no-img {
+  text-align: center;
+  color: #ffffff;
+  padding: 30px 20px;
+  max-width: 400px;
+}
+
+.vol-lb-no-img-icon {
+  font-size: 3.5rem;
+  opacity: .35;
+  margin-bottom: 12px;
+  color: var(--emerald-light, #a7f3d0);
+}
+
+.vol-lb-no-img h4 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.vol-lb-no-img p {
+  margin: 0;
+  font-size: .85rem;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.vol-lightbox-zoom-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #ffffff;
+  font-size: .75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.vol-lightbox-hint {
+  position: absolute;
+  bottom: 12px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #cbd5e1;
+  font-size: .72rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Info & Meta Strip at Bottom */
+.vol-lightbox-infobar {
+  padding: 18px 24px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vol-lightbox-infogrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  background: var(--surface-2);
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+
+.vol-lb-infoitem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vol-lb-infolabel {
+  font-size: .68rem;
+  color: var(--muted);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vol-lb-infoval {
+  font-size: .84rem;
+  color: var(--text);
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vol-lightbox-bottom-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.vol-lb-copy-link-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: .78rem;
+  font-weight: 800;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .2s;
+}
+
+.vol-lb-copy-link-btn:hover {
+  background: var(--emerald-600);
+  color: #ffffff;
+  border-color: var(--emerald-600);
+}
+
+.vol-lb-close-bottom-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 800;
+  padding: 8px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  transition: all .2s;
+}
+
+.vol-lb-close-bottom-btn:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .vol-lightbox-topbar {
+    padding: 12px 14px;
+  }
+  .vol-lightbox-viewport {
+    height: 42vh;
+    min-height: 260px;
+  }
+  .vol-lightbox-infobar {
+    padding: 14px;
+  }
+  .vol-lightbox-infogrid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .vol-lightbox-controls {
+    display: none;
+  }
+  .vol-lightbox-hint {
+    display: none;
+  }
+}
+

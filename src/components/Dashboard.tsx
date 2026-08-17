@@ -743,12 +743,37 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
 
               {/* ── Card Header with Avatar ── */}
               <div style={`padding:20px 20px 16px; display:flex; align-items:center; gap:16px; border-bottom:1px solid var(--border); background:${statusBg}`}>
-                <div style="width:56px; height:56px; border-radius:50%; border:3px solid var(--border); overflow:hidden; background:var(--surface-2); display:grid; place-items:center; flex-shrink:0">
-                  {v.avatar_url
-                    ? <img src={v.avatar_url} alt={v.full_name} style="width:100%; height:100%; object-fit:cover" />
-                    : <span style="font-weight:900; font-size:1.3rem; color:var(--emerald)">{v.full_name?.split(' ')?.[0]?.[0] || 'م'}</span>
-                  }
-                </div>
+                <button
+                  type="button"
+                  class="vol-avatar-trigger"
+                  aria-label={`عرض صورة ${v.full_name}`}
+                  title={v.avatar_url ? "اضغط لعرض وتكبير الصورة بالكامل" : "لا توجد صورة مرفوعة"}
+                  data-vol-img={v.avatar_url || ''}
+                  data-vol-name={v.full_name || ''}
+                  data-vol-code={v.volunteer_code || ''}
+                  data-vol-role={v.preferred_role || 'عام'}
+                  data-vol-status={statusText}
+                  data-vol-status-color={statusColor}
+                  data-vol-status-bg={statusBg}
+                  data-vol-phone={v.phone || ''}
+                  data-vol-city={v.city || ''}
+                  data-vol-rank={v.rank || (isApproved ? 'متطوع مبادر' : '—')}
+                  data-vol-hours={v.hours_count || 0}
+                  data-vol-created={createdDate}
+                  data-vol-expiry={expiryDate}
+                  data-vol-initials={v.full_name?.split(' ')?.[0]?.[0] || 'م'}
+                >
+                  {v.avatar_url ? (
+                    <>
+                      <img src={v.avatar_url} alt={v.full_name} class="vol-avatar-img" />
+                      <span class="vol-avatar-zoom-overlay">
+                        {icon('fa-magnifying-glass-plus')}
+                      </span>
+                    </>
+                  ) : (
+                    <span class="vol-avatar-initials">{v.full_name?.split(' ')?.[0]?.[0] || 'م'}</span>
+                  )}
+                </button>
                 <div style="flex:1; min-width:0">
                   <h4 style="margin:0; font-size:1.05rem; font-weight:900; color:var(--heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{v.full_name}</h4>
                   <div style="display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap">
@@ -825,12 +850,37 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
 
                       {/* Modal Header */}
                       <div style={`padding:24px 28px; background:linear-gradient(135deg, ${statusBg}, transparent); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:18px`}>
-                        <div style="width:72px; height:72px; border-radius:50%; border:3px solid var(--border); overflow:hidden; background:var(--surface-2); flex-shrink:0; display:grid; place-items:center">
-                          {v.avatar_url
-                            ? <img src={v.avatar_url} alt="" style="width:100%; height:100%; object-fit:cover" />
-                            : <span style="font-weight:900; font-size:1.8rem; color:var(--emerald)">{v.full_name?.[0]}</span>
-                          }
-                        </div>
+                        <button
+                          type="button"
+                          class="vol-avatar-trigger in-modal"
+                          aria-label={`عرض صورة ${v.full_name}`}
+                          title={v.avatar_url ? "اضغط لعرض وتكبير الصورة بالكامل" : "لا توجد صورة مرفوعة"}
+                          data-vol-img={v.avatar_url || ''}
+                          data-vol-name={v.full_name || ''}
+                          data-vol-code={v.volunteer_code || ''}
+                          data-vol-role={v.preferred_role || 'عام'}
+                          data-vol-status={statusText}
+                          data-vol-status-color={statusColor}
+                          data-vol-status-bg={statusBg}
+                          data-vol-phone={v.phone || ''}
+                          data-vol-city={v.city || ''}
+                          data-vol-rank={v.rank || (isApproved ? 'متطوع مبادر' : '—')}
+                          data-vol-hours={v.hours_count || 0}
+                          data-vol-created={createdDate}
+                          data-vol-expiry={expiryDate}
+                          data-vol-initials={v.full_name?.[0] || 'م'}
+                        >
+                          {v.avatar_url ? (
+                            <>
+                              <img src={v.avatar_url} alt="" class="vol-avatar-img" />
+                              <span class="vol-avatar-zoom-overlay">
+                                {icon('fa-magnifying-glass-plus')}
+                              </span>
+                            </>
+                          ) : (
+                            <span class="vol-avatar-initials">{v.full_name?.[0] || 'م'}</span>
+                          )}
+                        </button>
                         <div style="flex:1">
                           <h3 style="margin:0; font-size:1.3rem; font-weight:900; color:var(--heading)">{v.full_name}</h3>
                           <div style="display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap">
@@ -943,18 +993,12 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                             <label style="font-size:.78rem; font-weight:700; color:var(--muted); grid-column:1/-1">تاريخ انتهاء البطاقة <small style="font-weight:600; opacity:.75">(اتركه فارغاً لصلاحية مفتوحة)</small>
                               <input type="date" name="expires_at" value={v.expires_at ? new Date(v.expires_at).toISOString().slice(0, 10) : ''} style="width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; background:var(--surface); color:var(--text); margin-top:4px" />
                             </label>
-                            {/* This field was missing entirely. Its absence meant the API received
-                                skills === undefined, which made Firestore reject the WHOLE update,
-                                so none of the other edits were saved either. */}
                             <label style="font-size:.78rem; font-weight:700; color:var(--muted); grid-column:1/-1">المهارات والخبرات
                               <textarea name="skills" rows={2} style="width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; background:var(--surface); color:var(--text); margin-top:4px; font-family:inherit; resize:vertical">{v.skills || ''}</textarea>
                             </label>
                             <div style="grid-column:1/-1">
                               <label style="font-size:.78rem; font-weight:700; color:var(--muted); display:block; margin-bottom:6px">{icon('fa-camera')} تغيير الصورة الشخصية</label>
                               <input type="file" name="avatar_file" accept="image/*" style="font-size:.78rem" />
-                              {/* Visible (not hidden) so the admin can paste a link or clear the
-                                  field to remove the photo — a hidden field could only ever
-                                  re-submit the existing value. */}
                               <input name="avatar_url" value={v.avatar_url || ''} placeholder="أو ضع رابط الصورة مباشرة https://..." style="width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; background:var(--surface); color:var(--text); margin-top:8px; font-size:.78rem" />
                               <small style="display:block; margin-top:4px; color:var(--muted); font-size:.7rem">اختر ملفاً لرفعه، أو الصق رابطاً، أو امسح الحقل لإزالة الصورة.</small>
                             </div>
@@ -968,9 +1012,6 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
 
                         {/* Modal Actions Bar */}
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:16px; border-top:1px solid var(--border)">
-                          {/* data-confirm, not inline onsubmit: the AJAX handler calls
-                              preventDefault() and shows its own themed confirm dialog, so the
-                              two mechanisms fought each other and the delete was unreliable. */}
                           <form action={`/api/volunteers/delete/${v.id}`} method="post" style="display:inline" data-confirm={`هل أنت متأكد من حذف المتطوع "${v.full_name}" نهائياً؟ لا يمكن التراجع عن هذا الإجراء.`}>
                             <button type="submit" style="background:rgba(220,38,38,.1); color:#dc2626; border:1px solid rgba(220,38,38,.2); padding:8px 16px; border-radius:10px; font-weight:800; font-size:.8rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px">
                               {icon('fa-trash-can')} حذف المتطوع نهائياً
@@ -997,6 +1038,110 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
         })}
       </div>
     )}
+
+    {/* ══════ Volunteer Photo Lightbox Modal ══════ */}
+    <div id="vol-photo-lightbox" class="vol-lightbox-modal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none">
+      <div class="vol-lightbox-backdrop"></div>
+      <div class="vol-lightbox-card">
+        {/* Header Bar */}
+        <div class="vol-lightbox-topbar">
+          <div class="vol-lightbox-identity">
+            <div class="vol-lightbox-thumb" id="vol-lb-thumb">
+              <span id="vol-lb-thumb-initials">م</span>
+              <img id="vol-lb-thumb-img" src="" alt="" style="display:none" />
+            </div>
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+                <h3 id="vol-lb-name" class="vol-lb-name">اسم المتطوع</h3>
+                <span id="vol-lb-code" class="vol-lb-code">VOL-000</span>
+                <span id="vol-lb-status" class="vol-lb-status">معتمد</span>
+              </div>
+              <p id="vol-lb-meta" class="vol-lb-meta">المجال: عام • ساعات الخدمة: 0 ساعة</p>
+            </div>
+          </div>
+          <div class="vol-lightbox-actions">
+            <div class="vol-lightbox-controls">
+              <button type="button" class="vol-lb-btn" id="vol-lb-zoom-in" title="تكبير (+)">
+                {icon('fa-magnifying-glass-plus')}
+              </button>
+              <button type="button" class="vol-lb-btn" id="vol-lb-zoom-out" title="تصغير (-)">
+                {icon('fa-magnifying-glass-minus')}
+              </button>
+              <button type="button" class="vol-lb-btn" id="vol-lb-rotate" title="تدوير الصورة 90 درجة (R)">
+                {icon('fa-rotate-right')}
+              </button>
+              <button type="button" class="vol-lb-btn" id="vol-lb-reset" title="إعادة ضبط العرض (0)">
+                {icon('fa-arrows-rotate')}
+              </button>
+            </div>
+            <div class="vol-lightbox-divider"></div>
+            <a id="vol-lb-download" href="#" download="volunteer-photo.jpg" class="vol-lb-btn vol-lb-btn-primary" title="تحميل الصورة بالجودة الكاملة">
+              {icon('fa-download')} <span>تحميل</span>
+            </a>
+            <a id="vol-lb-open-tab" href="#" target="_blank" rel="noopener noreferrer" class="vol-lb-btn" title="فتح الرابط في علامة تبويب جديدة">
+              {icon('fa-arrow-up-right-from-square')}
+            </a>
+            <button type="button" class="vol-lb-btn vol-lb-btn-close" id="vol-lb-close" title="إغلاق (Esc)">
+              {icon('fa-xmark')}
+            </button>
+          </div>
+        </div>
+
+        {/* Viewport / Image Container */}
+        <div class="vol-lightbox-viewport" id="vol-lb-viewport">
+          <div class="vol-lightbox-img-wrapper" id="vol-lb-img-wrapper">
+            <img id="vol-lb-main-img" src="" alt="" class="vol-lb-main-img" />
+            <div id="vol-lb-no-img" class="vol-lb-no-img" style="display:none">
+              <div class="vol-lb-no-img-icon">{icon('fa-image')}</div>
+              <h4>لا توجد صورة شخصية مرفوعة لهذا المتطوع</h4>
+              <p>يمكنك رفع صورة شخصية للمتطوع من خلال خيار "التحكم والتفاصيل" ثم "تعديل كافة بيانات المتطوع".</p>
+            </div>
+          </div>
+          <div class="vol-lightbox-zoom-badge" id="vol-lb-zoom-badge">100%</div>
+          <div class="vol-lightbox-hint">
+            <span>{icon('fa-computer-mouse')} انقر مرتين للتبديل السريع للتكبير • عجلة الفأرة للتكبير والتصغير</span>
+          </div>
+        </div>
+
+        {/* Bottom Detailed Info Bar */}
+        <div class="vol-lightbox-infobar">
+          <div class="vol-lightbox-infogrid">
+            <div class="vol-lb-infoitem">
+              <span class="vol-lb-infolabel">{icon('fa-phone')} الهاتف</span>
+              <strong id="vol-lb-phone" class="vol-lb-infoval">—</strong>
+            </div>
+            <div class="vol-lb-infoitem">
+              <span class="vol-lb-infolabel">{icon('fa-location-dot')} المدينة</span>
+              <strong id="vol-lb-city" class="vol-lb-infoval">—</strong>
+            </div>
+            <div class="vol-lb-infoitem">
+              <span class="vol-lb-infolabel">{icon('fa-star')} الرتبة</span>
+              <strong id="vol-lb-rank" class="vol-lb-infoval" style="color:var(--gold-600)">—</strong>
+            </div>
+            <div class="vol-lb-infoitem">
+              <span class="vol-lb-infolabel">{icon('fa-clock')} ساعات الخدمة</span>
+              <strong id="vol-lb-hours" class="vol-lb-infoval" style="color:var(--emerald-600)">0 ساعة</strong>
+            </div>
+            <div class="vol-lb-infoitem">
+              <span class="vol-lb-infolabel">{icon('fa-calendar')} تاريخ التقديم</span>
+              <strong id="vol-lb-created" class="vol-lb-infoval">—</strong>
+            </div>
+            <div class="vol-lb-infoitem">
+              <span class="vol-lb-infolabel">{icon('fa-calendar-xmark')} الصلاحية</span>
+              <strong id="vol-lb-expiry" class="vol-lb-infoval">—</strong>
+            </div>
+          </div>
+          <div class="vol-lightbox-bottom-actions">
+            <button type="button" class="vol-lb-copy-link-btn" id="vol-lb-copy-link">
+              {icon('fa-link')} نسخ رابط الصورة
+            </button>
+            <button type="button" class="vol-lb-close-bottom-btn" id="vol-lb-close-bottom">
+              إغلاق النافذة {icon('fa-xmark')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </>
 }
 

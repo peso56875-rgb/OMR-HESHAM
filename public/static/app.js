@@ -458,10 +458,13 @@
     // 7. Init Cases & Beneficiaries Handlers
     initDashCasesHandlers()
 
-    // 7. Reveal elements
+    // 8. Init Volunteer Image Modal
+    initVolunteerImageModal()
+
+    // 9. Reveal elements
     $$('.reveal').forEach(el => revealObserver.observe(el))
 
-    // 8. Sync theme icon
+    // 10. Sync theme icon
     updateThemeIcon()
   }
 
@@ -576,6 +579,326 @@
         triggerSampleExport(gid, count, customTitle)
       })
     }
+  }
+
+  /* ─── Volunteer Photo Lightbox Modal System ─── */
+  function initVolunteerImageModal() {
+    let modal = document.getElementById('vol-photo-lightbox')
+
+    // Create modal DOM element dynamically if not present
+    if (!modal) {
+      modal = document.createElement('div')
+      modal.id = 'vol-photo-lightbox'
+      modal.className = 'vol-lightbox-modal'
+      modal.setAttribute('role', 'dialog')
+      modal.setAttribute('aria-modal', 'true')
+      modal.setAttribute('aria-hidden', 'true')
+      modal.style.display = 'none'
+      modal.innerHTML = `
+        <div class="vol-lightbox-backdrop"></div>
+        <div class="vol-lightbox-card">
+          <div class="vol-lightbox-topbar">
+            <div class="vol-lightbox-identity">
+              <div class="vol-lightbox-thumb" id="vol-lb-thumb">
+                <span id="vol-lb-thumb-initials">م</span>
+                <img id="vol-lb-thumb-img" src="" alt="" style="display:none" />
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+                  <h3 id="vol-lb-name" class="vol-lb-name">اسم المتطوع</h3>
+                  <span id="vol-lb-code" class="vol-lb-code">VOL-000</span>
+                  <span id="vol-lb-status" class="vol-lb-status">معتمد</span>
+                </div>
+                <p id="vol-lb-meta" class="vol-lb-meta">المجال: عام • ساعات الخدمة: 0 ساعة</p>
+              </div>
+            </div>
+            <div class="vol-lightbox-actions">
+              <div class="vol-lightbox-controls">
+                <button type="button" class="vol-lb-btn" id="vol-lb-zoom-in" title="تكبير (+)">
+                  <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </button>
+                <button type="button" class="vol-lb-btn" id="vol-lb-zoom-out" title="تصغير (-)">
+                  <i class="fa-solid fa-magnifying-glass-minus"></i>
+                </button>
+                <button type="button" class="vol-lb-btn" id="vol-lb-rotate" title="تدوير 90 درجة (R)">
+                  <i class="fa-solid fa-rotate-right"></i>
+                </button>
+                <button type="button" class="vol-lb-btn" id="vol-lb-reset" title="إعادة ضبط العرض (0)">
+                  <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+              </div>
+              <div class="vol-lightbox-divider"></div>
+              <a id="vol-lb-download" href="#" download="volunteer-photo.jpg" class="vol-lb-btn vol-lb-btn-primary" title="تحميل الصورة">
+                <i class="fa-solid fa-download"></i> <span>تحميل</span>
+              </a>
+              <a id="vol-lb-open-tab" href="#" target="_blank" rel="noopener noreferrer" class="vol-lb-btn" title="فتح الصورة الأصلية">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              </a>
+              <button type="button" class="vol-lb-btn vol-lb-btn-close" id="vol-lb-close" title="إغلاق (Esc)">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+          <div class="vol-lightbox-viewport" id="vol-lb-viewport">
+            <div class="vol-lightbox-img-wrapper" id="vol-lb-img-wrapper">
+              <img id="vol-lb-main-img" src="" alt="" class="vol-lb-main-img" />
+              <div id="vol-lb-no-img" class="vol-lb-no-img" style="display:none">
+                <div class="vol-lb-no-img-icon"><i class="fa-solid fa-image"></i></div>
+                <h4>لا توجد صورة شخصية مرفوعة</h4>
+                <p>يمكنك إضافة صورة من خلال قسم "التحكم والتفاصيل" ثم "تعديل كافة بيانات المتطوع".</p>
+              </div>
+            </div>
+            <div class="vol-lightbox-zoom-badge" id="vol-lb-zoom-badge">100%</div>
+            <div class="vol-lightbox-hint">
+              <span><i class="fa-solid fa-computer-mouse"></i> انقر مرتين للتبديل السريع للتكبير • عجلة الفأرة للتكبير والتصغير</span>
+            </div>
+          </div>
+          <div class="vol-lightbox-infobar">
+            <div class="vol-lightbox-infogrid">
+              <div class="vol-lb-infoitem">
+                <span class="vol-lb-infolabel"><i class="fa-solid fa-phone"></i> الهاتف</span>
+                <strong id="vol-lb-phone" class="vol-lb-infoval">—</strong>
+              </div>
+              <div class="vol-lb-infoitem">
+                <span class="vol-lb-infolabel"><i class="fa-solid fa-location-dot"></i> المدينة</span>
+                <strong id="vol-lb-city" class="vol-lb-infoval">—</strong>
+              </div>
+              <div class="vol-lb-infoitem">
+                <span class="vol-lb-infolabel"><i class="fa-solid fa-star"></i> الرتبة</span>
+                <strong id="vol-lb-rank" class="vol-lb-infoval" style="color:var(--gold-600)">—</strong>
+              </div>
+              <div class="vol-lb-infoitem">
+                <span class="vol-lb-infolabel"><i class="fa-solid fa-clock"></i> ساعات الخدمة</span>
+                <strong id="vol-lb-hours" class="vol-lb-infoval" style="color:var(--emerald-600)">0 ساعة</strong>
+              </div>
+              <div class="vol-lb-infoitem">
+                <span class="vol-lb-infolabel"><i class="fa-solid fa-calendar"></i> تاريخ التقديم</span>
+                <strong id="vol-lb-created" class="vol-lb-infoval">—</strong>
+              </div>
+              <div class="vol-lb-infoitem">
+                <span class="vol-lb-infolabel"><i class="fa-solid fa-calendar-xmark"></i> الصلاحية</span>
+                <strong id="vol-lb-expiry" class="vol-lb-infoval">—</strong>
+              </div>
+            </div>
+            <div class="vol-lightbox-bottom-actions">
+              <button type="button" class="vol-lb-copy-link-btn" id="vol-lb-copy-link">
+                <i class="fa-solid fa-link"></i> نسخ رابط الصورة
+              </button>
+              <button type="button" class="vol-lb-close-bottom-btn" id="vol-lb-close-bottom">
+                إغلاق النافذة <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `
+      document.body.appendChild(modal)
+    }
+
+    let currentScale = 1
+    let currentRotate = 0
+
+    const mainImg = $('#vol-lb-main-img', modal)
+    const noImgBox = $('#vol-lb-no-img', modal)
+    const zoomBadge = $('#vol-lb-zoom-badge', modal)
+    const nameEl = $('#vol-lb-name', modal)
+    const codeEl = $('#vol-lb-code', modal)
+    const statusEl = $('#vol-lb-status', modal)
+    const metaEl = $('#vol-lb-meta', modal)
+    const phoneEl = $('#vol-lb-phone', modal)
+    const cityEl = $('#vol-lb-city', modal)
+    const rankEl = $('#vol-lb-rank', modal)
+    const hoursEl = $('#vol-lb-hours', modal)
+    const createdEl = $('#vol-lb-created', modal)
+    const expiryEl = $('#vol-lb-expiry', modal)
+    const thumbImg = $('#vol-lb-thumb-img', modal)
+    const thumbInitials = $('#vol-lb-thumb-initials', modal)
+    const downloadBtn = $('#vol-lb-download', modal)
+    const openTabBtn = $('#vol-lb-open-tab', modal)
+    const copyLinkBtn = $('#vol-lb-copy-link', modal)
+    const closeBtn = $('#vol-lb-close', modal)
+    const closeBottomBtn = $('#vol-lb-close-bottom', modal)
+    const backdrop = $('.vol-lightbox-backdrop', modal)
+    const zoomInBtn = $('#vol-lb-zoom-in', modal)
+    const zoomOutBtn = $('#vol-lb-zoom-out', modal)
+    const rotateBtn = $('#vol-lb-rotate', modal)
+    const resetBtn = $('#vol-lb-reset', modal)
+    const viewport = $('#vol-lb-viewport', modal)
+
+    function updateTransform() {
+      if (!mainImg) return
+      mainImg.style.transform = `rotate(${currentRotate}deg) scale(${currentScale})`
+      if (zoomBadge) {
+        zoomBadge.textContent = `${Math.round(currentScale * 100)}%`
+      }
+    }
+
+    function resetTransform() {
+      currentScale = 1
+      currentRotate = 0
+      updateTransform()
+    }
+
+    function openModal(data) {
+      resetTransform()
+      const hasImg = Boolean(data.img && data.img.trim())
+
+      if (nameEl) nameEl.textContent = data.name || 'متطوع'
+      if (codeEl) {
+        codeEl.textContent = data.code || 'بدون كود'
+        codeEl.style.display = data.code ? 'inline-block' : 'none'
+      }
+      if (statusEl) {
+        statusEl.textContent = data.status || 'معتمد'
+        if (data.statusColor) statusEl.style.color = data.statusColor
+        if (data.statusBg) statusEl.style.background = data.statusBg
+      }
+      if (metaEl) {
+        metaEl.textContent = `المجال: ${data.role || 'عام'} • ساعات الخدمة: ${data.hours || 0} ساعة`
+      }
+      if (phoneEl) phoneEl.textContent = data.phone || '—'
+      if (cityEl) cityEl.textContent = data.city || '—'
+      if (rankEl) rankEl.textContent = data.rank || 'متطوع مبادر'
+      if (hoursEl) hoursEl.textContent = `${data.hours || 0} ساعة`
+      if (createdEl) createdEl.textContent = data.created || '—'
+      if (expiryEl) expiryEl.textContent = data.expiry || 'مفتوح'
+
+      if (hasImg) {
+        if (mainImg) {
+          mainImg.src = data.img
+          mainImg.alt = data.name || 'صورة المتطوع'
+          mainImg.style.display = 'block'
+        }
+        if (noImgBox) noImgBox.style.display = 'none'
+        if (thumbImg) {
+          thumbImg.src = data.img
+          thumbImg.style.display = 'block'
+        }
+        if (thumbInitials) thumbInitials.style.display = 'none'
+
+        if (downloadBtn) {
+          downloadBtn.href = data.img
+          downloadBtn.download = `متطوع-${(data.name || 'volunteer').replace(/\s+/g, '_')}.jpg`
+          downloadBtn.style.display = 'inline-flex'
+        }
+        if (openTabBtn) {
+          openTabBtn.href = data.img
+          openTabBtn.style.display = 'inline-flex'
+        }
+        if (copyLinkBtn) {
+          copyLinkBtn.style.display = 'inline-flex'
+          copyLinkBtn.dataset.url = data.img
+        }
+        if (zoomBadge) zoomBadge.style.display = 'block'
+      } else {
+        if (mainImg) {
+          mainImg.src = ''
+          mainImg.style.display = 'none'
+        }
+        if (noImgBox) noImgBox.style.display = 'block'
+        if (thumbImg) thumbImg.style.display = 'none'
+        if (thumbInitials) {
+          thumbInitials.textContent = data.initials || data.name?.[0] || 'م'
+          thumbInitials.style.display = 'block'
+        }
+        if (downloadBtn) downloadBtn.style.display = 'none'
+        if (openTabBtn) openTabBtn.style.display = 'none'
+        if (copyLinkBtn) copyLinkBtn.style.display = 'none'
+        if (zoomBadge) zoomBadge.style.display = 'none'
+      }
+
+      modal.style.display = 'flex'
+      void modal.offsetWidth
+      modal.classList.add('active')
+      modal.setAttribute('aria-hidden', 'false')
+      document.body.style.overflow = 'hidden'
+    }
+
+    function closeModal() {
+      modal.classList.remove('active')
+      modal.setAttribute('aria-hidden', 'true')
+      document.body.style.overflow = ''
+      setTimeout(() => {
+        if (!modal.classList.contains('active')) {
+          modal.style.display = 'none'
+          resetTransform()
+        }
+      }, 300)
+    }
+
+    if (!modal.dataset.bound) {
+      modal.dataset.bound = 'true'
+
+      closeBtn?.addEventListener('click', closeModal)
+      closeBottomBtn?.addEventListener('click', closeModal)
+      backdrop?.addEventListener('click', closeModal)
+
+      zoomInBtn?.addEventListener('click', () => {
+        currentScale = Math.min(currentScale + 0.25, 3.5)
+        updateTransform()
+      })
+
+      zoomOutBtn?.addEventListener('click', () => {
+        currentScale = Math.max(currentScale - 0.25, 0.5)
+        updateTransform()
+      })
+
+      rotateBtn?.addEventListener('click', () => {
+        currentRotate = (currentRotate + 90) % 360
+        updateTransform()
+      })
+
+      resetBtn?.addEventListener('click', resetTransform)
+
+      mainImg?.addEventListener('dblclick', (e) => {
+        e.preventDefault()
+        if (currentScale > 1) {
+          resetTransform()
+        } else {
+          currentScale = 1.85
+          updateTransform()
+        }
+      })
+
+      viewport?.addEventListener('wheel', (e) => {
+        if (!modal.classList.contains('active')) return
+        e.preventDefault()
+        const delta = e.deltaY < 0 ? 0.15 : -0.15
+        currentScale = Math.min(Math.max(currentScale + delta, 0.5), 3.5)
+        updateTransform()
+      }, { passive: false })
+
+      copyLinkBtn?.addEventListener('click', () => {
+        const url = copyLinkBtn.dataset.url
+        if (url) {
+          navigator.clipboard.writeText(url).then(() => {
+            toast('تم نسخ رابط صورة المتطوع بنجاح', 'success')
+          }).catch(() => {
+            toast('تعذر نسخ الرابط تلقائياً', 'warning')
+          })
+        }
+      })
+
+      document.addEventListener('keydown', (e) => {
+        if (!modal.classList.contains('active')) return
+        if (e.key === 'Escape') {
+          closeModal()
+        } else if (e.key === '+' || e.key === '=') {
+          currentScale = Math.min(currentScale + 0.25, 3.5)
+          updateTransform()
+        } else if (e.key === '-' || e.key === '_') {
+          currentScale = Math.max(currentScale - 0.25, 0.5)
+          updateTransform()
+        } else if (e.key === 'r' || e.key === 'R' || e.key === 'ق') {
+          currentRotate = (currentRotate + 90) % 360
+          updateTransform()
+        } else if (e.key === '0') {
+          resetTransform()
+        }
+      })
+    }
+
+    window.openVolunteerPhotoModal = openModal
+    window.closeVolunteerPhotoModal = closeModal
   }
 
   function triggerSampleExport(gid, count, customTitle) {
@@ -701,6 +1024,37 @@
 
     e.preventDefault()
     loadDashboardView(targetUrl, true)
+  })
+
+  // Intercept volunteer avatar click to open photo lightbox modal
+  document.addEventListener('click', e => {
+    const trigger = e.target.closest('.vol-avatar-trigger, [data-vol-img]')
+    if (trigger) {
+      e.preventDefault()
+      e.stopPropagation()
+
+      const data = {
+        img: trigger.getAttribute('data-vol-img') || '',
+        name: trigger.getAttribute('data-vol-name') || '',
+        code: trigger.getAttribute('data-vol-code') || '',
+        role: trigger.getAttribute('data-vol-role') || '',
+        status: trigger.getAttribute('data-vol-status') || '',
+        statusColor: trigger.getAttribute('data-vol-status-color') || '',
+        statusBg: trigger.getAttribute('data-vol-status-bg') || '',
+        phone: trigger.getAttribute('data-vol-phone') || '',
+        city: trigger.getAttribute('data-vol-city') || '',
+        rank: trigger.getAttribute('data-vol-rank') || '',
+        hours: trigger.getAttribute('data-vol-hours') || '0',
+        created: trigger.getAttribute('data-vol-created') || '',
+        expiry: trigger.getAttribute('data-vol-expiry') || '',
+        initials: trigger.getAttribute('data-vol-initials') || ''
+      }
+
+      if (!window.openVolunteerPhotoModal) {
+        initVolunteerImageModal()
+      }
+      window.openVolunteerPhotoModal?.(data)
+    }
   })
 
   // Handle browser Back / Forward buttons
