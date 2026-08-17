@@ -100,6 +100,101 @@ const syncProfile = async (
 }
 
 const VALID_STATUSES = ['approved', 'pending', 'rejected', 'revoked']
+const MAX_PHOTO_DOWNLOAD_BYTES = 15 * 1024 * 1024
+
+/** Blocks obvious local/private targets before proxying an admin-only photo download. */
+const isSafePhotoUrl = (url: URL, requestOrigin: string): boolean => {
+  if (!['http:', 'https:'].includes(url.protocol)) return false
+  if (url.origin === requestOrigin) return true
+
+  const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, '')
+  if (host === 'localhost' || host.endsWith('.localhost') || host === '0.0.0.0' || host === '::1') return false
+  if (/^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) || /^169\.254\./.test(host)) return false
+
+  const secondOctet = host.match(/^172\.(\d{1,3})\./)?.[1]
+  if (secondOctet && Number(secondOctet) >= 16 && Number(secondOctet) <= 31) return false
+  return true
+}
+
+const safeDownloadName = (name: string, contentType: string): string => {
+  const extensionByType: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+    'image/avif': 'avif',
+    'image/svg+xml': 'svg'
+  }
+  const extension = extensionByType[contentType.toLowerCase()] || 'jpg'
+  const base = (name || 'volunteer').replace(/[\\/:*?"<>|\r\n]+/g, '-').trim().slice(0, 80) || 'volunteer'
+  return `صورة-${base}.${extension}`
+}
+
+/**
+ * Streams the stored volunteer photo through our own origin so the browser's
+ * download button always saves a file (cross-origin `download` attributes are
+ * commonly ignored and open the image in a new tab instead).
+ */
+volunteers.get('/photo/:id/download', adminMiddleware, async (c) => {
+  const db = getFirestore(c)
+  const id = c.req.param('id') || ''
+
+  try {
+    const volDoc = await db.collection('volunteers').doc(id).get()
+    if (!volDoc.exists) return c.json({ error: 'لم يتم العثور على هذا المتطوع.' }, 404)
+
+    const volunteer = volDoc.data() || {}
+    const avatarUrl = normalizeMediaUrl(volunteer.avatar_url || '')
+    if (!avatarUrl) return c.json({ error: 'لا توجد صورة مرفوعة لهذا المتطوع.' }, 404)
+
+    const requestUrl = new URL(c.req.url)
+    const sourceUrl = new URL(avatarUrl, requestUrl.origin)
+    if (!isSafePhotoUrl(sourceUrl, requestUrl.origin)) {
+      return c.json({ error: 'رابط الصورة غير مسموح بتحميله.' }, 400)
+    }
+
+    const imageResponse = await fetch(sourceUrl.toString(), {
+      redirect: 'follow',
+      headers: { Accept: 'image/*' }
+    })
+    if (!imageResponse.ok || !imageResponse.body) {
+      return c.json({ error: 'تعذر الوصول إلى الصورة الأصلية.' }, 502)
+    }
+
+    const finalUrl = new URL(imageResponse.url || sourceUrl.toString(), requestUrl.origin)
+    if (!isSafePhotoUrl(finalUrl, requestUrl.origin)) {
+      return c.json({ error: 'تم رفض وجهة إعادة توجيه الصورة.' }, 400)
+    }
+
+    const contentType = (imageResponse.headers.get('content-type') || 'image/jpeg').split(';')[0].trim()
+    if (!contentType.startsWith('image/')) return c.json({ error: 'الملف المطلوب ليس صورة.' }, 415)
+
+    const declaredSize = Number(imageResponse.headers.get('content-length') || 0)
+    if (declaredSize > MAX_PHOTO_DOWNLOAD_BYTES) {
+      return c.json({ error: 'حجم الصورة أكبر من الحد المسموح للتحميل.' }, 413)
+    }
+
+    const bytes = await imageResponse.arrayBuffer()
+    if (bytes.byteLength > MAX_PHOTO_DOWNLOAD_BYTES) {
+      return c.json({ error: 'حجم الصورة أكبر من الحد المسموح للتحميل.' }, 413)
+    }
+
+    const filename = safeDownloadName(volunteer.full_name || volunteer.volunteer_code || 'volunteer', contentType)
+    const asciiFilename = `volunteer-photo.${filename.split('.').pop()}`
+    return new Response(bytes, {
+      headers: {
+        'Content-Type': contentType,
+        'Content-Length': String(bytes.byteLength),
+        'Content-Disposition': `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff'
+      }
+    })
+  } catch (error: any) {
+    console.error('Volunteer photo download error:', error?.message)
+    return c.json({ error: 'تعذر تحميل صورة المتطوع.' }, 500)
+  }
+})
 
 // Submit a volunteer application (accepts form data from browser or JSON)
 volunteers.post('/', rateLimiter(5, 60000, 'volunteer-apply'), async (c) => {
