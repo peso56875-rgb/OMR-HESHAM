@@ -87,7 +87,7 @@ export function Footer() {
   </footer>
 }
 
-export function Layout({ children, title = 'مؤسسة الدكتور عمر هشام الخيرية', description = 'عطاء مستمر لتنمية الإنسان والمجتمع', user, showFooter = true, pageType = 'public', image }: { children: any, title?: string, description?: string, user?: UserSession, showFooter?: boolean, pageType?: 'public' | 'auth' | 'dashboard', image?: string }) {
+export function Layout({ children, title = 'مؤسسة الدكتور عمر هشام الخيرية', description = 'عطاء مستمر لتنمية الإنسان والمجتمع', user, showFooter = true, pageType = 'public', image, pushConfig }: { children: any, title?: string, description?: string, user?: UserSession, showFooter?: boolean, pageType?: 'public' | 'auth' | 'dashboard', image?: string, pushConfig?: Record<string, string> | null }) {
   const { canonical, noindex } = pageSeo()
   // og:image must be an absolute URL — social crawlers do not resolve relative
   // paths, so a relative value means no preview image at all. It also has to be
@@ -153,6 +153,14 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
       <div class="confirm-modal" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true"><div class="confirm-card"><span class="confirm-icon">{icon('fa-triangle-exclamation')}</span><h2 id="confirm-title">تأكيد الإجراء</h2><p id="confirm-message">هل أنت متأكد من تنفيذ هذا الإجراء؟</p><div><button type="button" class="confirm-cancel">إلغاء</button><button type="button" class="confirm-accept">تأكيد</button></div></div></div>
       {pageType === 'public' && <nav class="mobile-bottom" aria-label="تنقل سريع"><a href="/">{icon('fa-house')}<span>الرئيسية</span></a><a href="/campaigns">{icon('fa-seedling')}<span>الحملات</span></a><a class="bottom-donate" href="/donate">{icon('fa-heart')}<span>تبرّع</span></a><a href="/volunteers">{icon('fa-hand-holding-hand')}<span>تطوع</span></a><a href="/contact">{icon('fa-comment-dots')}<span>تواصل</span></a></nav>}
       <script src="/static/app.js"></script>
+      {/* Push يُحمَّل فقط عند وجود مفتاح VAPID: بدونه السكربت لا يفعل
+          شيئًا سوى تنزيل بايتات على كل صفحة بلا مقابل.
+          يجب أن يسبق notifications.js لأن الأخير يقرأ window.pushState()
+          ليعرض الحالة الصحيحة على زر التفعيل. */}
+      {user && pushConfig && <>
+        <script dangerouslySetInnerHTML={{ __html: `window.__FIREBASE_PUSH__=${JSON.stringify(pushConfig)}` }}></script>
+        <script src="/static/push-client.js"></script>
+      </>}
       {/* محرّك الإشعارات يُحمَّل للمسجّلين فقط — لا داعي لتحميل كود
           يستقصي /api/notifications على صفحات عامة يزورها غير مسجّل. */}
       {user && <script src="/static/notifications.js"></script>}

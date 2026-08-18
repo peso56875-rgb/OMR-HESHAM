@@ -47,6 +47,37 @@ export const getVapidKey = (c?: any): string => {
 
 export const isPushConfigured = (c?: any): boolean => Boolean(getVapidKey(c))
 
+/**
+ * إعدادات Firebase التي يحتاجها العميل لتفعيل الـ Push.
+ *
+ * تُرجع null عند غياب أي مفتاح مطلوب — والواجهة تستخدم هذا العدم كإشارة
+ * لعدم تحميل سكربت الـ Push إطلاقًا. لولا ذلك لحمَّلنا مكتبة كاملة على كل
+ * صفحة ثم فشلت بصمت لأن vapidKey فارغ.
+ *
+ * كل هذه القيم عامة بطبيعتها: أي موقع يستخدم Firebase على العميل يكشفها
+ * في مصدر صفحته. الحماية الفعلية في قواعد Firestore وتحقّق الجلسة، لا في
+ * إخفاء apiKey. لكن لا يُدرج هنا أي مفتاح خاص (private key / client email).
+ */
+export const getPushClientConfig = (c?: any): Record<string, string> | null => {
+  const env = c?.env || {}
+  const procEnv = typeof glob.process !== 'undefined' ? glob.process.env || {} : {}
+  const read = (k: string) => String(env[k] || procEnv[k] || '')
+
+  const cfg = {
+    apiKey: read('FIREBASE_API_KEY'),
+    authDomain: read('FIREBASE_AUTH_DOMAIN'),
+    projectId: read('FIREBASE_PROJECT_ID'),
+    storageBucket: read('FIREBASE_STORAGE_BUCKET'),
+    messagingSenderId: read('FIREBASE_MESSAGING_SENDER_ID'),
+    appId: read('FIREBASE_APP_ID'),
+    vapidKey: getVapidKey(c)
+  }
+
+  // messagingSenderId و vapidKey شرطان لا بديل عنهما في FCM Web.
+  if (!cfg.projectId || !cfg.messagingSenderId || !cfg.vapidKey) return null
+  return cfg
+}
+
 export const getMessaging = (c?: any) => {
   const app = getFirebaseAdminApp(c)
   return getMessagingAdmin(app)

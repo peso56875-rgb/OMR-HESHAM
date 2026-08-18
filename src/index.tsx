@@ -19,7 +19,7 @@ import { api } from './api'
 import { rateLimiter } from './api/middleware'
 import { securityHeaders } from './lib/security-headers'
 import { verifyReceiptToken } from './lib/receipts'
-import { isPushConfigured } from './lib/push'
+import { isPushConfigured, getPushClientConfig } from './lib/push'
 import { NotificationsPage } from './components/NotificationsPage'
 import { SITE_ORIGIN } from './lib/seo'
 import { contextStorage } from 'hono/context-storage'
@@ -282,7 +282,7 @@ app.get('/notifications', async (c) => {
   if (!user) return c.redirect('/login?error=unauthorized&next=/notifications')
 
   return c.html(
-    <NotificationsPage user={user} pushAvailable={isPushConfigured(c)} />
+    <NotificationsPage user={user} pushAvailable={isPushConfigured(c)} pushConfig={getPushClientConfig(c)} />
   )
 })
 
@@ -472,6 +472,10 @@ app.get('/dashboard', async (c) => {
     console.error(`Error loading dashboard view ${view}:`, error.message)
     viewData = { list: [], stats: {}, recentDonations: [], pushAvailable: isPushConfigured(c) }
   }
+
+  // إعدادات الـ Push تُمرَّر مع بيانات العرض لا كخاصية منفصلة، لأن
+  // Dashboard يستقبل كائن data واحدًا فقط ولا داعي لتغيير توقيعه.
+  viewData.pushConfig = getPushClientConfig(c)
 
   return c.html(<Dashboard view={view} data={viewData} user={user} />)
 })

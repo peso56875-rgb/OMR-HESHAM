@@ -329,6 +329,33 @@
     // زر تفعيل إشعارات الجهاز — منطق FCM نفسه في push-client.js.
     const pushBtn = $('[data-notif-push-toggle]', page)
     if (pushBtn) {
+      const pushLabel = $('[data-notif-push-label]', pushBtn)
+
+      // الحالة الحقيقية عند التحميل: من منح الإذن سابقًا لا يصحّ أن يرى
+      // «تفعيل إشعارات الجهاز»، ومن حجبها لا يصحّ أن يضغط زرًا لا يمكنه
+      // أن ينجح (الرفض لا يُتجاوز برمجيًا).
+      const st = window.pushState?.()
+      if (st) {
+        if (!st.supported) {
+          pushBtn.disabled = true
+          if (pushLabel) pushLabel.textContent = 'غير مدعوم على هذا المتصفح'
+          // على iPhone يعمل الـ Push بعد تثبيت الموقع على الشاشة الرئيسية فقط،
+          // وهي معلومة لا يعرفها المستخدم ولا يخبره بها المتصفح.
+          if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+            const hint = document.createElement('p')
+            hint.className = 'notif-hint'
+            hint.innerHTML = '<i class="fa-solid fa-mobile-screen"></i> لتلقّي إشعارات الجهاز على iPhone: اضغط زر المشاركة في Safari ثم «إضافة إلى الشاشة الرئيسية»، وافتح الموقع من الأيقونة الجديدة.'
+            pushBtn.closest('header')?.insertAdjacentElement('afterend', hint)
+          }
+        } else if (st.permission === 'granted') {
+          if (pushLabel) pushLabel.textContent = 'إشعارات الجهاز مُفعّلة'
+          pushBtn.classList.add('is-on')
+        } else if (st.permission === 'denied') {
+          pushBtn.disabled = true
+          if (pushLabel) pushLabel.textContent = 'الإشعارات محجوبة من المتصفح'
+        }
+      }
+
       pushBtn.addEventListener('click', async () => {
         if (typeof window.enableDevicePush !== 'function') {
           toast('إشعارات الجهاز غير متاحة على هذا المتصفح', 'warning')
@@ -337,9 +364,8 @@
         pushBtn.disabled = true
         try {
           const res = await window.enableDevicePush()
-          const label = $('[data-notif-push-label]', pushBtn)
           if (res && res.ok) {
-            if (label) label.textContent = 'إشعارات الجهاز مُفعّلة'
+            if (pushLabel) pushLabel.textContent = 'إشعارات الجهاز مُفعّلة'
             pushBtn.classList.add('is-on')
             toast('تم تفعيل إشعارات الجهاز على هذا المتصفح', 'success')
           } else {

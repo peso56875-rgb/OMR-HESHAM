@@ -9,9 +9,10 @@ import { Layout, PageHero } from './shared'
 import { DashNotifications, NotificationPrefsCard } from './Notifications'
 import type { UserSession } from '../types'
 
-export function NotificationsPage({ user, pushAvailable = false }: { user: UserSession; pushAvailable?: boolean }) {
+export function NotificationsPage({ user, pushAvailable = false, pushConfig = null }: { user: UserSession; pushAvailable?: boolean; pushConfig?: Record<string, string> | null }) {
   return <Layout
     user={user}
+    pushConfig={pushConfig}
     title="الإشعارات | مؤسسة الدكتور عمر هشام الخيرية"
     description="كل ما يخصّك من تحديثات المؤسسة في مكان واحد."
   >
