@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getAuth, getFirestore } from '../lib/firebase-admin'
 import { setCookie, deleteCookie } from 'hono/cookie'
+import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
 
 export const auth = new Hono()
 
@@ -50,14 +51,26 @@ auth.post('/session', async (c) => {
       const email = decodedToken.email || ''
       const isAdminEmail = email === 'dr.omarheshamfoundation@gmail.com' || email === 'rahmmaaa9900@gmail.com' || email.startsWith('admin')
       role = (isFirst || isAdminEmail) ? 'admin' : 'donor'
+      const fullName = decodedToken.name || email.split('@')[0] || 'عضو جديد'
 
       await profileRef.set({
-        full_name: decodedToken.name || email.split('@')[0] || 'فاعل خير',
+        full_name: fullName,
         phone: '',
         role: role,
         avatar_url: decodedToken.picture || '',
         email: email,
         created_at: new Date().toISOString()
+      })
+
+      // A7 — إشعار صامت للإدارة بانضمام مستخدم جديد للمنصة
+      await notifyInBackground(c, async () => {
+        await notifyAdmins(c, {
+          type: 'user_registered',
+          title: `مستخدم جديد مسجّل: ${fullName}`,
+          body: `البريد: ${email} — الصلاحية: ${role === 'admin' ? 'مشرف' : 'عضو'}`,
+          link: dashLink('users'),
+          meta: { user_id: decodedToken.uid, email, full_name: fullName, role }
+        })
       })
     } else {
       role = profileDoc.data()?.role || 'donor'

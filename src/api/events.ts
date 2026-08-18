@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 import { normalizeMediaUrl } from '../lib/storage'
+import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
 
 export const events = new Hono()
 
@@ -42,7 +43,7 @@ events.post('/add', adminMiddleware, async (c) => {
   }
 
   try {
-    await db.collection('events').add({
+    const ref = await db.collection('events').add({
       title,
       type: body.type || 'عام',
       place: body.place || '',
@@ -51,6 +52,17 @@ events.post('/add', adminMiddleware, async (c) => {
       image_url: normalizeMediaUrl(body.image_url),
       is_published: true,
       created_at: new Date().toISOString()
+    })
+
+    // U6 — إشعار بفعالية جديدة
+    await notifyInBackground(c, async () => {
+      await notifyAdmins(c, {
+        type: 'event_upcoming',
+        title: `فعالية جديدة: ${title}`,
+        body: `المكان: ${body.place || 'مقر المؤسسة'} — النوع: ${body.type || 'عام'}`,
+        link: dashLink('events'),
+        meta: { event_id: ref.id, type: body.type || 'عام', place: body.place || '' }
+      })
     })
 
     if (contentType.includes('application/json')) {

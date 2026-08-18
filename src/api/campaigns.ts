@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 import { normalizeMediaUrl } from '../lib/storage'
+import { notifyAdmins, notifyInBackground, notifyMoney, dashLink } from '../lib/notifications'
 
 export const campaigns = new Hono()
 
@@ -63,7 +64,7 @@ campaigns.post('/add', adminMiddleware, async (c) => {
   }
 
   try {
-    await db.collection('campaigns').add({
+    const ref = await db.collection('campaigns').add({
       title,
       category: category || 'عام',
       goal,
@@ -73,6 +74,17 @@ campaigns.post('/add', adminMiddleware, async (c) => {
       is_published: true,
       description: body.description || '',
       created_at: new Date().toISOString()
+    })
+
+    // U5 — إشعار بنشر حملة جديدة
+    await notifyInBackground(c, async () => {
+      await notifyAdmins(c, {
+        type: 'content_published',
+        title: `حملة جديدة نُشرت: ${title}`,
+        body: `القسم: ${category || 'عام'} — الهدف: ${notifyMoney(goal)}`,
+        link: dashLink('campaigns'),
+        meta: { campaign_id: ref.id, goal, is_urgent }
+      })
     })
 
     if (contentType.includes('application/json')) {

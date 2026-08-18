@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 import { normalizeMediaUrl } from '../lib/storage'
+import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
 
 export const news = new Hono()
 
@@ -62,7 +63,7 @@ news.post('/add', adminMiddleware, async (c) => {
   }
 
   try {
-    await db.collection('news').add({
+    const ref = await db.collection('news').add({
       title,
       category: body.category || 'عام',
       excerpt,
@@ -71,6 +72,17 @@ news.post('/add', adminMiddleware, async (c) => {
       is_published: true,
       publish_date: new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString()
+    })
+
+    // U5 — إشعار بنشر خبر جديد
+    await notifyInBackground(c, async () => {
+      await notifyAdmins(c, {
+        type: 'content_published',
+        title: `خبر جديد نُشر: ${title}`,
+        body: excerpt || 'تم نشر خبر جديد على موقع المؤسسة.',
+        link: dashLink('news'),
+        meta: { news_id: ref.id, category: body.category || 'عام' }
+      })
     })
 
     if (contentType.includes('application/json')) {

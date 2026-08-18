@@ -1,0 +1,27 @@
+{
+  "name": "مؤسسة الدكتور عمر هشام الخيرية",
+  "short_name": "مؤسسة عمر هشام",
+  "description": "مؤسسة أهلية مشهرة تعمل على تفريج الكرب ودعم المرضى ونشر العلم وتعليم القرآن",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0c4a3f",
+  "theme_color": "#0c4a3f",
+  "lang": "ar",
+  "dir": "rtl",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/foundation-logo-256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/foundation-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

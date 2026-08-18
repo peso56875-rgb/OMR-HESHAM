@@ -1,6 +1,7 @@
 import { routeNames } from '../defaults'
 import type { UserSession } from '../types'
 import { pageSeo, SITE_ORIGIN } from '../lib/seo'
+import { NotificationBell } from './Notifications'
 
 export const icon = (name: string) => <i class={`fa-solid ${name}`} aria-hidden="true"></i>
 
@@ -36,6 +37,7 @@ export function Header({ user }: { user?: UserSession }) {
         )}
       </nav>
       <div class="header-actions">
+        {user && <NotificationBell user={user} />}
         <button class="icon-btn" id="theme-toggle" aria-label="تغيير المظهر">{icon('fa-moon')}</button>
         <button class="icon-btn menu-toggle" id="menu-toggle" aria-label="فتح القائمة">{icon('fa-bars-staggered')}</button>
         <a class="donate-pill magnetic" href="/donate"><span>تبرّع الآن</span>{icon('fa-heart')}</a>
@@ -49,6 +51,7 @@ export function Header({ user }: { user?: UserSession }) {
         <div style="border-top:1px solid var(--border); margin:1rem 0; padding-top:1rem"></div>
         {user ? (
           <>
+            <a href="/notifications" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-bell"></i> مركز الإشعارات</a>
             <a href="/profile" style="color:var(--blue-600);font-weight:bold"><i class="fa-solid fa-user"></i> حسابي ({user.name})</a>
             {user.role === 'admin' && <a href="/dashboard" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>}
           </>
@@ -109,6 +112,7 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
     <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Manrope:wght@400;600;700;800&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/png" href="/static/foundation-logo.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="/static/style.css" />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
@@ -145,6 +149,7 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
       <div class="confirm-modal" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true"><div class="confirm-card"><span class="confirm-icon">{icon('fa-triangle-exclamation')}</span><h2 id="confirm-title">تأكيد الإجراء</h2><p id="confirm-message">هل أنت متأكد من تنفيذ هذا الإجراء؟</p><div><button type="button" class="confirm-cancel">إلغاء</button><button type="button" class="confirm-accept">تأكيد</button></div></div></div>
       {pageType === 'public' && <nav class="mobile-bottom" aria-label="تنقل سريع"><a href="/">{icon('fa-house')}<span>الرئيسية</span></a><a href="/campaigns">{icon('fa-seedling')}<span>الحملات</span></a><a class="bottom-donate" href="/donate">{icon('fa-heart')}<span>تبرّع</span></a><a href="/volunteers">{icon('fa-hand-holding-hand')}<span>تطوع</span></a><a href="/contact">{icon('fa-comment-dots')}<span>تواصل</span></a></nav>}
       <script src="/static/app.js"></script>
+      <script src="/static/notifications.js"></script>
     </body></html>
 }
 

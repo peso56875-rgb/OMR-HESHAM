@@ -1,6 +1,13 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
+import {
+  getNotifyConfig,
+  notifyAdmins,
+  notifyInBackground,
+  notifyMoney,
+  dashLink
+} from '../lib/notifications'
 
 export const treasury = new Hono()
 
@@ -66,7 +73,22 @@ treasury.post('/income/add', async (c) => {
       created_at: new Date().toISOString()
     }
 
-    await db.collection('treasury_income').add(incomeData)
+    const ref = await db.collection('treasury_income').add(incomeData)
+
+    // A6 — إشعار الإدارة بحركة مالية كبيرة في الخزنة
+    const cfg = getNotifyConfig(c)
+    if (amount >= cfg.treasuryThreshold) {
+      await notifyInBackground(c, async () => {
+        await notifyAdmins(c, {
+          type: 'treasury_large',
+          title: `إيراد مالي كبير في الخزنة: ${notifyMoney(amount)}`,
+          body: `المصدر: ${source} — المسجل: ${user.name || 'مشرف'}`,
+          link: dashLink('income'),
+          meta: { income_id: ref.id, amount, source, date }
+        })
+      })
+    }
+
     return c.redirect('/dashboard?view=income&success=1')
   } catch (error: any) {
     console.error('Error adding income:', error.message)
@@ -200,7 +222,22 @@ treasury.post('/expense/add', async (c) => {
       created_at: new Date().toISOString()
     }
 
-    await db.collection('treasury_expenses').add(expenseData)
+    const ref = await db.collection('treasury_expenses').add(expenseData)
+
+    // A6 — إشعار الإدارة بمصروف مالي كبير في الخزنة
+    const cfg = getNotifyConfig(c)
+    if (amount >= cfg.treasuryThreshold) {
+      await notifyInBackground(c, async () => {
+        await notifyAdmins(c, {
+          type: 'treasury_large',
+          title: `مصروف مالي كبير في الخزنة: ${notifyMoney(amount)}`,
+          body: `البند: ${category} — الجهة: ${beneficiary} — المسجل: ${user.name || 'مشرف'}`,
+          link: dashLink('expenses'),
+          meta: { expense_id: ref.id, amount, category, beneficiary, date }
+        })
+      })
+    }
+
     return c.redirect('/dashboard?view=expenses&success=1')
   } catch (error: any) {
     console.error('Error adding expense:', error.message)

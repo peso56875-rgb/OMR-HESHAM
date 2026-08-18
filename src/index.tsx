@@ -12,6 +12,7 @@ import { Careers } from './components/Careers'
 import { Login, Profile } from './components/Auth'
 import { Achievements, Volunteers, Contact, FAQ, Transparency, Gallery, GenericNotFound } from './components/Pages'
 import { Dashboard } from './components/Dashboard'
+import { NotificationsPage } from './components/Notifications'
 
 import { Receipt, ReceiptVerification } from './components/Receipt'
 
@@ -19,6 +20,7 @@ import { api } from './api'
 import { rateLimiter } from './api/middleware'
 import { securityHeaders } from './lib/security-headers'
 import { verifyReceiptToken } from './lib/receipts'
+import { isPushConfigured } from './lib/push'
 import { SITE_ORIGIN } from './lib/seo'
 import { contextStorage } from 'hono/context-storage'
 
@@ -267,6 +269,100 @@ app.get('/profile', async (c) => {
   return c.html(<Profile user={user} donations={donations} volunteer={volunteer} />)
 })
 
+app.get('/notifications', async (c) => {
+  const user = (c as any).get('user')
+  if (!user) {
+    return c.redirect('/login?error=unauthorized')
+  }
+
+  const category = (c.req.query('category') || '').trim()
+  let items: any[] = []
+  let unreadCount = 0
+
+  try {
+    const db = getFirestore(c)
+    const isAdmin = user.role === 'admin'
+    const limit = 50
+
+    const queries: Promise<any>[] = [
+      db.collection('notifications')
+        .where('user_id', '==', user.id)
+        .orderBy('created_at', 'desc')
+        .limit(limit)
+        .get()
+        .catch(() => ({ docs: [] }))
+    ]
+
+    if (isAdmin) {
+      queries.push(
+        db.collection('notifications')
+          .where('audience', '==', 'admins')
+          .orderBy('created_at', 'desc')
+          .limit(limit)
+          .get()
+          .catch(() => ({ docs: [] }))
+      )
+    }
+
+    const snaps = await Promise.all(queries)
+    const rows: Array<{ id: string; data: any }> = []
+    const seen = new Set<string>()
+
+    for (const snap of snaps) {
+      for (const doc of snap.docs || []) {
+        if (!seen.has(doc.id)) {
+          seen.add(doc.id)
+          rows.push({ id: doc.id, data: doc.data() || {} })
+        }
+      }
+    }
+
+    rows.sort((a, b) => String(b.data.created_at || '').localeCompare(String(a.data.created_at || '')))
+
+    // Read state for admin notifications
+    const sharedIds = rows.filter(r => r.data.audience === 'admins').map(r => r.id)
+    const readSet = new Set<string>()
+
+    if (sharedIds.length) {
+      try {
+        const refs = sharedIds.map(nid => db.collection('notification_reads').doc(`${nid}__${user.id}`))
+        const docs = await db.getAll(...refs)
+        for (const d of docs) {
+          if (d.exists) readSet.add(d.data()?.notification_id)
+        }
+      } catch (e) {}
+    }
+
+    items = rows.map(({ id, data }) => {
+      const isShared = data.audience === 'admins'
+      const isRead = isShared ? readSet.has(id) : Boolean(data.is_read)
+      return {
+        id,
+        ...data,
+        is_read: isRead
+      }
+    })
+
+    if (category) {
+      items = items.filter(i => i.category === category)
+    }
+
+    unreadCount = items.filter(i => !i.is_read).length
+  } catch (error: any) {
+    console.error('Error loading notifications page:', error?.message)
+  }
+
+  return c.html(
+    <NotificationsPage
+      user={user}
+      items={items}
+      unreadCount={unreadCount}
+      pushAvailable={isPushConfigured(c)}
+      selectedCategory={category}
+    />
+  )
+})
+
 app.get('/dashboard', async (c) => {
   const user = (c as any).get('user')
   if (!user) {
@@ -435,6 +531,55 @@ app.get('/dashboard', async (c) => {
           total_groups: groups.length,
           total_beneficiaries: totalBeneficiaries
         }
+      }
+    } else if (view === 'notifications') {
+      const [userSnap, adminSnap, tokensSnap] = await Promise.all([
+        db.collection('notifications').where('user_id', '==', user.id).orderBy('created_at', 'desc').limit(50).get().catch(() => ({ docs: [] })),
+        db.collection('notifications').where('audience', '==', 'admins').orderBy('created_at', 'desc').limit(50).get().catch(() => ({ docs: [] })),
+        db.collection('push_tokens').where('is_active', '==', true).get().catch(() => ({ size: 0 }))
+      ])
+
+      const rows: Array<{ id: string; data: any }> = []
+      const seen = new Set<string>()
+
+      for (const snap of [userSnap, adminSnap]) {
+        for (const doc of (snap as any).docs || []) {
+          if (!seen.has(doc.id)) {
+            seen.add(doc.id)
+            rows.push({ id: doc.id, data: doc.data() || {} })
+          }
+        }
+      }
+
+      rows.sort((a, b) => String(b.data.created_at || '').localeCompare(String(a.data.created_at || '')))
+
+      const sharedIds = rows.filter(r => r.data.audience === 'admins').map(r => r.id)
+      const readSet = new Set<string>()
+
+      if (sharedIds.length) {
+        try {
+          const refs = sharedIds.map(nid => db.collection('notification_reads').doc(`${nid}__${user.id}`))
+          const docs = await db.getAll(...refs)
+          for (const d of docs) {
+            if (d.exists) readSet.add(d.data()?.notification_id)
+          }
+        } catch (e) {}
+      }
+
+      const list = rows.map(({ id, data }) => ({
+        id,
+        ...data,
+        is_read: data.audience === 'admins' ? readSet.has(id) : Boolean(data.is_read)
+      }))
+
+      viewData = {
+        list,
+        stats: {
+          total: list.length,
+          unread: list.filter(i => !i.is_read).length,
+          devices: (tokensSnap as any).size || 0
+        },
+        pushConfigured: isPushConfigured(c)
       }
     } else if (view === 'audit') {
       // سجل التدقيق: أحدث 100 سطر فقط. السجل ينمو مع كل عملية إدارية،

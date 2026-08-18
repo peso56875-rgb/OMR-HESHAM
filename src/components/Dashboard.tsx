@@ -1,9 +1,11 @@
 import { icon, Layout } from './shared'
 import type { UserSession } from '../types'
+import { NotificationBell, DashNotifications } from './Notifications'
 
 export function Dashboard({ view, data, user }: { view: string, data: any, user: UserSession }) {
   const sideMenu = [
     ['fa-chart-pie', 'نظرة عامة', 'overview'],
+    ['fa-bell', 'مركز الإشعارات', 'notifications'],
     ['fa-vault', 'الخزنة المالية', 'treasury'],
     ['fa-arrow-down', 'الإيرادات (الوارد)', 'income'],
     ['fa-arrow-up', 'المصروفات (المنصرف)', 'expenses'],
@@ -42,6 +44,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
               <span style="color:var(--muted)">{icon('fa-magnifying-glass')}</span>
               <input type="text" id="dash-search-input" placeholder="بحث في الجدول..." style="border:none; background:transparent; outline:none; font-size:.88rem; width:140px; color:var(--text)" />
             </div>
+            <NotificationBell user={user} isDashboard={true} />
             <button id="theme-toggle" type="button" aria-label="تغيير المظهر">{icon('fa-moon')}</button>
             <span>{icon('fa-user-shield')}</span>
             <b>{user.name}</b>
@@ -49,6 +52,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
         </header>
 
         {view === 'overview' && <DashOverview stats={data.stats} recentDonations={data.recentDonations} />}
+        {view === 'notifications' && <DashNotifications list={data.list || []} stats={data.stats || {}} pushConfigured={data.pushConfigured || false} user={user} />}
         {view === 'treasury' && <DashTreasury summary={data.summary} incomeList={data.incomeList} expenseList={data.expenseList} campaigns={data.campaigns} user={user} />}
         {view === 'income' && <DashIncome list={data.list} campaigns={data.campaigns} user={user} />}
         {view === 'expenses' && <DashExpenses list={data.list} campaigns={data.campaigns} user={user} />}

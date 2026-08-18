@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
 import { getEmailConfig, sendInBackground, contactAlert, contactAck } from '../lib/email'
+import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
 
 export const contacts = new Hono()
 
@@ -47,6 +48,17 @@ contacts.post('/', rateLimiter(5, 60000, 'contact'), async (c) => {
         contactAlert(cfg, { ...contactData, id: ref.id }),
         contactAck(cfg, contactData)
       ])
+    })
+
+    // A3 — إشعار المشرفين برسالة تواصل جديدة داخل مركز الإشعارات
+    await notifyInBackground(c, async () => {
+      await notifyAdmins(c, {
+        type: 'contact_new',
+        title: `رسالة تواصل جديدة: ${name}`,
+        body: `${subject || 'استفسار'} — ${String(message || '').slice(0, 120)}`,
+        link: dashLink('contacts'),
+        meta: { contact_id: ref.id, name, email, phone: phone || '' }
+      })
     })
 
     if (!contentType.includes('application/json')) {

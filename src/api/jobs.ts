@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
 import { getEmailConfig, sendInBackground, jobApplicationAlert } from '../lib/email'
+import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
 
 export const jobs = new Hono()
 
@@ -145,6 +146,17 @@ jobs.post('/apply', rateLimiter(5, 60000, 'job-apply'), async (c) => {
         message: applicationData.bio
       })
     )
+
+    // A4 — إشعار المشرفين بطلب توظيف جديد داخل مركز الإشعارات
+    await notifyInBackground(c, async () => {
+      await notifyAdmins(c, {
+        type: 'job_application_new',
+        title: `طلب توظيف جديد: ${full_name}`,
+        body: `لوظيفة: ${job_title || 'عام'} — هاتف: ${phone}`,
+        link: dashLink('job_applications'),
+        meta: { job_application_id: ref.id, job_id: job_id || '', full_name, email, phone }
+      })
+    })
 
     if (!contentType.includes('application/json')) {
       return c.redirect('/careers?success=1#applyForm')

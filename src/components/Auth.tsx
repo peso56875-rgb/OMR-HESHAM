@@ -1,5 +1,6 @@
 import { icon, Layout, PageHero } from './shared'
 import type { UserSession } from '../types'
+import { NotificationPrefsSection } from './Notifications'
 
 export function Login({ firebaseConfig }: { firebaseConfig: any }) {
   return <Layout title="تسجيل الدخول | مؤسسة الدكتور عمر هشام" pageType="auth">
@@ -534,6 +535,8 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
             </form>
           </div>
 
+          <NotificationPrefsSection user={user} />
+
           <div class="profile-card-modern reveal" style="padding: 28px">
             <div class="profile-card-head" style="margin-bottom:18px">
               <div class="profile-card-title-wrap">
@@ -545,6 +548,11 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
               </div>
             </div>
             <div class="profile-quick-actions">
+              <a href="/notifications" class="profile-action-link profile-action-gold">
+                <span class="profile-action-icon">{icon('fa-bell')}</span>
+                <span>مركز الإشعارات والتنبيهات</span>
+                <i class="fa-solid fa-arrow-left"></i>
+              </a>
               <a href="/donate" class="profile-action-link">
                 <span class="profile-action-icon">{icon('fa-hand-holding-heart')}</span>
                 <span>تبرع الآن</span>
