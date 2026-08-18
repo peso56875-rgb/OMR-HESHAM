@@ -30,6 +30,22 @@ const FIREBASE_APIS = [
   'https://www.googleapis.com'
 ]
 
+/**
+ * Firebase Cloud Messaging endpoints for Web Push.
+ *
+ * Both are required and both fail *silently* without them, which is why they
+ * are called out separately from FIREBASE_APIS rather than folded in:
+ *  - fcmregistrations.googleapis.com is hit by getToken() to mint the device
+ *    token. Blocked → the browser grants notification permission, the UI shows
+ *    "enabled", and no token is ever saved. The user believes push works.
+ *  - fcm.googleapis.com is the receive channel the service worker keeps open.
+ *    Blocked → tokens exist and the server reports "sent", but nothing arrives.
+ */
+const FCM_APIS = [
+  'https://fcmregistrations.googleapis.com',
+  'https://fcm.googleapis.com'
+]
+
 /** Where user-uploaded and remote media can legitimately come from. */
 const MEDIA_HOSTS = [
   'https://res.cloudinary.com',
@@ -65,7 +81,15 @@ export const securityHeaders = () =>
       // before it has been uploaded anywhere.
       imgSrc: ["'self'", 'data:', 'blob:', ...MEDIA_HOSTS],
 
-      connectSrc: ["'self'", ...FIREBASE_APIS, 'https://api.cloudinary.com'],
+      connectSrc: ["'self'", ...FIREBASE_APIS, ...FCM_APIS, 'https://api.cloudinary.com'],
+
+      // The FCM service worker is served from our own origin
+      // (/firebase-messaging-sw.js). Without an explicit worker-src, browsers
+      // fall back to child-src and then default-src; on the stricter engines
+      // that resolution rejects the registration outright, so push would never
+      // start — again silently, since registration failure is a caught promise.
+      workerSrc: ["'self'"],
+      childSrc: ["'self'", 'blob:'],
 
       // The Google/Firebase sign-in flow renders a helper iframe on the
       // project's authDomain, so frames must be allowed from those origins —
