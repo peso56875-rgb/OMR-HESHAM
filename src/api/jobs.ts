@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
 import { getEmailConfig, sendInBackground, jobApplicationAlert } from '../lib/email'
+import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
 
 export const jobs = new Hono()
 
@@ -145,6 +146,30 @@ jobs.post('/apply', rateLimiter(5, 60000, 'job-apply'), async (c) => {
         message: applicationData.bio
       })
     )
+
+    // A4 — إشعار المشرفين بطلب توظيف جديد.
+    //
+    // نذكر وجود السيرة الذاتية في النص: أول سؤال يسأله المشرف هو «فيه CV؟»،
+    // ولو ما كانش موجود بيوفّر عليه فتح الصفحة من الأساس.
+    await notifyInBackground(c, async () => {
+      await notifyAdmins(c, {
+        type: 'job_application_new',
+        title: `طلب توظيف جديد: ${applicationData.job_title}`,
+        body: `${applicationData.full_name} — ${applicationData.phone}${
+          applicationData.cv_url ? ' — سيرة ذاتية مرفقة' : ' — بدون سيرة ذاتية'
+        }`,
+        link: dashLink('jobs'),
+        meta: {
+          application_id: ref.id,
+          job_id: applicationData.job_id,
+          job_title: applicationData.job_title,
+          applicant_name: applicationData.full_name,
+          applicant_email: applicationData.email,
+          applicant_phone: applicationData.phone,
+          has_cv: !!applicationData.cv_url
+        }
+      })
+    })
 
     if (!contentType.includes('application/json')) {
       return c.redirect('/careers?success=1#applyForm')

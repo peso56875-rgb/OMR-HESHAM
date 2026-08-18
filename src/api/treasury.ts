@@ -1,10 +1,95 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
+import { getEmailConfig, treasuryAlert } from '../lib/email'
+import {
+  getNotifyConfig,
+  notifyAdmins,
+  notifyInBackground,
+  notifyMoney,
+  dashLink
+} from '../lib/notifications'
 
 export const treasury = new Hono()
 
 treasury.use('*', adminMiddleware)
+
+/**
+ * A6 — تنبيه رقابي على حركة مالية كبيرة.
+ *
+ * الغرض رقابي بحت: صاحب المؤسسة يعرف لحظة تسجيل أي مبلغ ضخم في الخزينة،
+ * سواء كان إيرادًا أو مصروفًا، بدل ما يكتشفه في مراجعة آخر الشهر.
+ *
+ * ملاحظتان مهمّتان:
+ *
+ *  1) الحدّ يأتي من NOTIFY_TREASURY_THRESHOLD (افتراضي ٥٠٠٠٠ ج.م). بدون حدّ
+ *     كان كل مصروف نجيلة أو فاتورة كهرباء هيبعت Push — وده أسرع طريق لأن
+ *     المستخدم يقفل الإشعارات كلها فيخسر التنبيه الحقيقي وقت ما يحصل.
+ *
+ *  2) الحركة **تُسجَّل أولًا** ثم نُشعِر. أي فشل في التنبيه لا يجوز أن يمنع
+ *     حفظ حركة مالية — سلامة الدفاتر أهم من وصول الإشعار.
+ */
+const notifyLargeMovement = async (
+  c: any,
+  kind: 'income' | 'expense',
+  id: string,
+  record: {
+    amount: number
+    category?: string | null
+    source?: string | null
+    beneficiary?: string | null
+    donor_name?: string | null
+    description?: string | null
+    campaign_title?: string | null
+    recorded_by?: string | null
+  }
+): Promise<void> => {
+  const cfgNotify = getNotifyConfig(c)
+  const amount = Number(record.amount)
+
+  if (!Number.isFinite(amount) || amount < cfgNotify.treasuryThreshold) return
+
+  const isExpense = kind === 'expense'
+  const kindLabel = isExpense ? 'مصروف' : 'إيراد'
+  const party = isExpense
+    ? record.beneficiary || 'غير محدد'
+    : record.donor_name || record.source || 'غير محدد'
+  const item = isExpense ? record.category || 'غير مصنّف' : record.source || 'غير محدد'
+  const view = isExpense ? 'expenses' : 'income'
+
+  await notifyInBackground(c, async () => {
+    const cfgEmail = getEmailConfig(c)
+    await Promise.allSettled([
+      notifyAdmins(c, {
+        type: 'treasury_large',
+        title: `${kindLabel} كبير: ${notifyMoney(amount)}`,
+        body: `${item} — ${party}${record.campaign_title ? ` — حملة «${record.campaign_title}»` : ''}. سجّلها ${
+          record.recorded_by || 'مشرف'
+        }.`,
+        link: dashLink(view),
+        meta: {
+          movement_id: id,
+          kind,
+          amount,
+          threshold: cfgNotify.treasuryThreshold,
+          item,
+          party,
+          campaign_title: record.campaign_title || null,
+          recorded_by: record.recorded_by || null
+        }
+      }),
+      treasuryAlert(cfgEmail, {
+        kind,
+        amount,
+        category: item,
+        beneficiary: party,
+        description: record.description || '',
+        actor: record.recorded_by || '',
+        id
+      })
+    ])
+  })
+}
 
 // ───────── INCOME ─────────
 
@@ -66,7 +151,10 @@ treasury.post('/income/add', async (c) => {
       created_at: new Date().toISOString()
     }
 
-    await db.collection('treasury_income').add(incomeData)
+    const incomeRef = await db.collection('treasury_income').add(incomeData)
+
+    await notifyLargeMovement(c, 'income', incomeRef.id, incomeData)
+
     return c.redirect('/dashboard?view=income&success=1')
   } catch (error: any) {
     console.error('Error adding income:', error.message)
@@ -200,7 +288,10 @@ treasury.post('/expense/add', async (c) => {
       created_at: new Date().toISOString()
     }
 
-    await db.collection('treasury_expenses').add(expenseData)
+    const expenseRef = await db.collection('treasury_expenses').add(expenseData)
+
+    await notifyLargeMovement(c, 'expense', expenseRef.id, expenseData)
+
     return c.redirect('/dashboard?view=expenses&success=1')
   } catch (error: any) {
     console.error('Error adding expense:', error.message)

@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
 import { getEmailConfig, sendInBackground, newsletterWelcome } from '../lib/email'
+import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
 
 export const newsletter = new Hono()
 
@@ -61,6 +62,25 @@ newsletter.post('/', rateLimiter(5, 60000, 'newsletter'), async (c) => {
     if (isNewSubscriber) {
       const cfg = getEmailConfig(c)
       await sendInBackground(c, () => newsletterWelcome(cfg, normalizedEmail))
+
+      // A5 — مشترك جديد في النشرة.
+      //
+      // النوع newsletter_new معلَّم silent في الكتالوج: يُسجَّل في مركز
+      // الإشعارات فقط، بلا Push ولا بريد. مقصود — الاشتراكات ممكن تجي
+      // بالعشرات في اليوم، ولو كل واحد رنّ على تليفون صاحب المؤسسة كان
+      // هيقفل الإشعارات كلها، فنخسر التبرعات والتنبيهات المهمة معاها.
+      //
+      // مربوط بـ isNewSubscriber لا بمجرد إرسال الفورم: إعادة إدخال نفس
+      // البريد لا تُعدّ اشتراكًا جديدًا.
+      await notifyInBackground(c, async () => {
+        await notifyAdmins(c, {
+          type: 'newsletter_new',
+          title: 'مشترك جديد في النشرة البريدية',
+          body: normalizedEmail,
+          link: dashLink('newsletter'),
+          meta: { email: normalizedEmail }
+        })
+      })
     }
 
     if (!contentType.includes('application/json')) {
