@@ -1174,19 +1174,47 @@ export function DashContacts({ list = [] }: { list: any[] }) {
       </thead>
       <tbody>
         {list.map((c: any) => {
-          const isRead = c.status === 'read'
+          const isReplied = c.status === 'replied'
+          const isRead = c.status === 'read' || isReplied
           return <tr>
             <td>{c.name}</td>
             <td>{c.phone} / {c.email}</td>
             <td>{c.subject}</td>
             <td style="max-width:300px; white-space:pre-wrap">{c.message}</td>
-            <td>{isRead ? 'مقروءة' : 'جديدة'}</td>
-            <td>
+            <td>{isReplied ? 'تم الرد' : isRead ? 'مقروءة' : 'جديدة'}</td>
+            <td style="min-width:230px">
               {!isRead && (
-                <form action={`/api/contacts/status/${c.id}`} method="post" style="display:inline">
+                <form action={`/api/contacts/status/${c.id}`} method="post" style="display:inline-block; margin-bottom:6px">
                   <input type="hidden" name="status" value="read" />
-                  <button type="submit" style="background:var(--blue-600); color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer">تحديد كمقروءة</button>
+                  <button type="submit" class="outline-btn contact-mini-btn">تحديد كمقروءة</button>
                 </form>
+              )}
+              {/*
+                نموذج الردّ: هو ما يشعل إشعار "تم الرد على رسالتك" (U7).
+                بدون هذا الحقل كان الـ endpoint يستقبل status فقط ولا يصل
+                للسائل أي ردّ — أي أن نصف الدائرة كان مفقودًا.
+              */}
+              {!isReplied && (
+                <form action={`/api/contacts/status/${c.id}`} method="post" class="contact-reply-form">
+                  <input type="hidden" name="status" value="replied" />
+                  <textarea
+                    name="reply"
+                    rows={3}
+                    required
+                    maxlength={2000}
+                    placeholder="اكتب ردّك على السائل… (يُرسل بالبريد ويظهر في إشعاراته)"
+                  ></textarea>
+                  <button type="submit" class="primary-btn contact-mini-btn">
+                    {icon('fa-reply')} إرسال الردّ
+                  </button>
+                </form>
+              )}
+              {isReplied && c.reply && (
+                <div class="contact-reply-done">
+                  <strong>الردّ المُرسل:</strong>
+                  <span>{c.reply}</span>
+                  {c.replied_by && <em>— {c.replied_by}</em>}
+                </div>
               )}
             </td>
           </tr>
