@@ -110,6 +110,35 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ─────────────────────── نظام الإشعارات ───────────────────────
+    // كل المجموعات الأربع server-only. لماذا نمنع القراءة أيضًا؟
+    // تدفّق الإشعارات يخلط سجلات المستخدم بسجلات الإدارة، وفتح القراءة
+    // للعميل يعني إما قواعد معقّدة قابلة للخطأ، أو تسريب إشعارات إدارية
+    // (تبرعات، حركات مالية، بيانات متطوعين) لأي مستخدم مسجّل. الواجهة
+    // تقرأ عبر /api/notifications الذي يتحقق من الهوية والدور أولًا،
+    // وAdmin SDK يتجاوز هذه القواعد فلا يتأثر الخادم.
+    match /notifications/{document} {
+      allow read, write: if false;
+    }
+
+    // حالة اطلاع كل مشرف على الإشعارات المشتركة. الكتابة من العميل
+    // تسمح بتعليم إشعار مشرف آخر كمقروء — لذا server-only.
+    match /notification_reads/{document} {
+      allow read, write: if false;
+    }
+
+    // توكنات أجهزة Push. القراءة تكشف عدد أجهزة كل مستخدم ومنصّاتها،
+    // والكتابة تسمح بحقن توكن جهاز مهاجم لاعتراض إشعارات غيره.
+    match /push_tokens/{document} {
+      allow read, write: if false;
+    }
+
+    // تفضيلات الإشعارات. تمرّ عبر /api/notifications/prefs الذي يفرض
+    // قائمة بيضاء للحقول، بينما الكتابة المباشرة تسمح بحقن حقول عشوائية.
+    match /notification_prefs/{document} {
+      allow read, write: if false;
+    }
+
     // Explicit deny-all catch-all. Firestore already denies unmatched paths,
     // but stating it makes the intent unmissable: a new collection added by
     // future code stays locked down until a rule is written for it deliberately,

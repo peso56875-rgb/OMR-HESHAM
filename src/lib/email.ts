@@ -477,3 +477,375 @@ export const newsletterWelcome = (cfg: EmailConfig, email: string): Promise<Send
 
   return deliver(cfg, to, 'مرحبًا بك في نشرة مؤسسة الدكتور عمر هشام', html)
 }
+
+/* ───────────────────── قوالب نظام الإشعارات ─────────────────────
+ *
+ * القوالب 10–18 أُضيفت مع نظام الإشعارات المتكامل.
+ * كلها تتبع نفس العقد: تُرجّع { sent: false, skipped } بدل ما ترمي
+ * استثناء لو مفيش مستلم، وتمر على esc() لكل نص قادم من المستخدم.
+ */
+
+/** مربّع تنبيه ملوّن يُستخدم في قوالب الحالة (موافقة/رفض/تجميد). */
+const banner = (label: string, value: string, color: string, tint: string): string => `
+  <div style="background:${tint};border-right:4px solid ${color};border-radius:8px;padding:16px;margin:18px 0;text-align:center;">
+    <div style="color:${brand.muted};font-size:13px;margin-bottom:6px;">${esc(label)}</div>
+    <div style="color:${color};font-size:22px;font-weight:800;line-height:1.5;">${esc(value)}</div>
+  </div>`
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'مدير النظام',
+  donor: 'متبرع',
+  volunteer: 'متطوع',
+  user: 'مستخدم'
+}
+
+const roleLabel = (role: unknown): string => {
+  const key = String(role ?? '').trim()
+  return ROLE_LABELS[key] || key || 'مستخدم'
+}
+
+/**
+ * 10) تغيّر صلاحية الحساب — تعيين مدير أو سحب الصلاحية.
+ *
+ * هذا أحد الحدثين اللذين طلبهما صاحب الموقع بالنص: «لما حد يتعين ادمن».
+ * الرسالة تُصاغ بنبرة مختلفة تمامًا في الحالتين، لأن سحب الصلاحية
+ * إشعار حساس ولا يصحّ إرساله بنفس نبرة الترقية.
+ */
+export const roleChanged = (
+  cfg: EmailConfig,
+  u: { email?: string; name?: string; role: string; actor?: string }
+): Promise<SendResult> => {
+  const to = (u?.email || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
+
+  const name = u?.name || 'عضو المؤسسة'
+  const isAdmin = String(u?.role || '') === 'admin'
+
+  const html = isAdmin
+    ? shell(
+        'تم تعيينك مديرًا للنظام',
+        `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
+         ${para('تم منح حسابك صلاحيات <strong>مدير النظام</strong> على موقع مؤسسة الدكتور عمر هشام الخيرية.')}
+         ${banner('صلاحيتك الجديدة', 'مدير النظام', brand.emerald, '#f0faf7')}
+         ${para('أصبح بإمكانك الآن الدخول إلى لوحة التحكم لإدارة التبرعات، والمتطوعين، والحملات، والمحتوى، وخزينة المؤسسة.')}
+         ${table(rows([['نُفّذ بواسطة', u?.actor]]))}
+         ${para('نرجو منك التعامل مع هذه الصلاحية بما تستحقه من أمانة — كل إجراء تقوم به يُسجَّل في سجل التدقيق.')}`,
+        'لو لم تكن تتوقع هذا التغيير، تواصل مع إدارة المؤسسة فورًا.'
+      )
+    : shell(
+        'تحديث على صلاحيات حسابك',
+        `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
+         ${para('نُخبرك بأن صلاحيات <strong>مدير النظام</strong> لم تعد مرتبطة بحسابك.')}
+         ${banner('صلاحيتك الحالية', roleLabel(u?.role), brand.gold, '#fdf8e7')}
+         ${para('حسابك ما زال نشطًا بالكامل، ويمكنك استخدام الموقع بشكل طبيعي — التغيير يخص لوحة التحكم الإدارية فقط.')}
+         ${table(rows([['نُفّذ بواسطة', u?.actor]]))}
+         ${para('نشكرك على ما قدّمته، ونتمنى استمرار تواصلك مع المؤسسة.')}`,
+        'لأي استفسار بخصوص هذا التغيير، تواصل مع إدارة المؤسسة.'
+      )
+
+  return deliver(cfg, to, isAdmin ? 'تم تعيينك مديرًا للنظام' : 'تحديث على صلاحيات حسابك', html)
+}
+
+/** 11) نتيجة مراجعة طلب التطوع — قبول أو رفض. */
+export const volunteerDecision = (
+  cfg: EmailConfig,
+  v: {
+    email?: string
+    full_name?: string
+    status: string
+    volunteer_code?: string
+    expires_at?: string
+    reason?: string
+  }
+): Promise<SendResult> => {
+  const to = (v?.email || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
+
+  const name = v?.full_name || 'المتطوع الكريم'
+  const approved = String(v?.status || '') === 'approved'
+
+  const html = approved
+    ? shell(
+        'تم قبول طلب تطوّعك',
+        `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
+         ${para('يسعدنا إبلاغك بقبول طلب انضمامك لفريق متطوعي مؤسسة الدكتور عمر هشام الخيرية.')}
+         ${banner('حالة الطلب', 'مقبول', brand.emerald, '#f0faf7')}
+         ${table(
+           rows([
+             ['كود المتطوع', v?.volunteer_code],
+             [
+               'صلاحية الكارنيه حتى',
+               v?.expires_at ? new Date(v.expires_at).toLocaleDateString('ar-EG') : ''
+             ]
+           ])
+         )}
+         ${para('يمكنك الآن الدخول إلى حسابك لعرض كارنيه التطوّع الخاص بك ومتابعة ساعات عملك التطوعي.')}
+         ${para('أهلًا بك في الفريق — جزاك الله خيرًا على وقتك وجهدك.')}`,
+        'احتفظ بكود المتطوع الخاص بك، فهو مُعرّفك داخل أنشطة المؤسسة.'
+      )
+    : shell(
+        'بخصوص طلب تطوّعك',
+        `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
+         ${para('نشكرك على رغبتك في التطوّع معنا وعلى الوقت الذي منحته لتقديم طلبك.')}
+         ${banner('حالة الطلب', 'غير مقبول حاليًا', brand.gold, '#fdf8e7')}
+         ${table(rows([['ملاحظات اللجنة', v?.reason]]))}
+         ${para('عدم القبول الآن لا يعني إغلاق الباب — احتياجات المؤسسة تتغيّر مع كل حملة، ويسعدنا أن تتقدّم بطلب جديد لاحقًا.')}
+         ${para('تقبّل تقديرنا واحترامنا.')}`,
+        'لأي استفسار عن أسباب القرار، تواصل مع إدارة المتطوعين.'
+      )
+
+  return deliver(cfg, to, approved ? 'تم قبول طلب تطوّعك' : 'بخصوص طلب تطوّعك', html)
+}
+
+/**
+ * 12) ترقية المتطوع في الرتبة.
+ *
+ * الحدث الثاني الذي طلبه صاحب الموقع بالنص: «او يترقي في المتطوعين».
+ */
+export const volunteerRankPromoted = (
+  cfg: EmailConfig,
+  v: { email?: string; full_name?: string; from?: string; to?: string; hours?: unknown; actor?: string }
+): Promise<SendResult> => {
+  const to = (v?.email || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
+
+  const name = v?.full_name || 'المتطوع الكريم'
+  const newRank = (v?.to || '').trim() || 'رتبة جديدة'
+
+  const html = shell(
+    'مبارك — تمت ترقيتك',
+    `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
+     ${para('تقديرًا لجهدك وانتظامك في العمل التطوعي، تمت ترقيتك إلى رتبة جديدة داخل فريق متطوعي المؤسسة.')}
+     ${banner('رتبتك الجديدة', newRank, brand.emerald, '#f0faf7')}
+     ${table(
+       rows([
+         ['الرتبة السابقة', v?.from],
+         ['الرتبة الحالية', v?.to],
+         ['إجمالي ساعات التطوّع', v?.hours],
+         ['اعتُمدت بواسطة', v?.actor]
+       ])
+     )}
+     ${para('هذه الترقية شهادة على أثرٍ حقيقي تركته في عمل المؤسسة. نتمنى لك استمرار العطاء.')}
+     ${para('جزاك الله خيرًا.')}`,
+    'يمكنك عرض رتبتك المحدّثة على كارنيه التطوّع من حسابك.'
+  )
+
+  return deliver(cfg, to, `مبارك — تمت ترقيتك إلى ${newRank}`, html)
+}
+
+/** 13) تغيّر حالة كارنيه التطوّع — تجميد أو تجديد. */
+export const volunteerCardStatus = (
+  cfg: EmailConfig,
+  v: { email?: string; full_name?: string; status: string; expires_at?: string; actor?: string }
+): Promise<SendResult> => {
+  const to = (v?.email || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
+
+  const name = v?.full_name || 'المتطوع الكريم'
+  const frozen = String(v?.status || '') === 'revoked'
+
+  const html = frozen
+    ? shell(
+        'تم تجميد كارنيه التطوّع',
+        `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
+         ${para('نُخبرك بأن كارنيه التطوّع الخاص بك أصبح <strong>موقوفًا</strong> مؤقتًا، ولا يصلح للاستخدام في أنشطة المؤسسة حتى إشعار آخر.')}
+         ${banner('حالة الكارنيه', 'موقوف', '#b91c1c', '#fef2f2')}
+         ${table(rows([['نُفّذ بواسطة', v?.actor]]))}
+         ${para('إن كنت ترى أن هناك خطأً في هذا الإجراء، برجاء التواصل مع إدارة المتطوعين لمراجعة الحالة.')}`,
+        'لا يترتب على تجميد الكارنيه حذف بياناتك أو ساعات تطوّعك.'
+      )
+    : shell(
+        'تم تجديد كارنيه التطوّع',
+        `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
+         ${para('تم تجديد صلاحية كارنيه التطوّع الخاص بك بنجاح.')}
+         ${banner(
+           'صالح حتى',
+           v?.expires_at ? new Date(v.expires_at).toLocaleDateString('ar-EG') : 'تم التحديث',
+           brand.emerald,
+           '#f0faf7'
+         )}
+         ${table(rows([['نُفّذ بواسطة', v?.actor]]))}
+         ${para('يمكنك عرض الكارنيه المحدّث من حسابك في أي وقت.')}
+         ${para('شكرًا لاستمرارك معنا.')}`,
+        'ننبّهك قبل انتهاء الصلاحية بوقت كافٍ لتجديدها.'
+      )
+
+  return deliver(cfg, to, frozen ? 'تم تجميد كارنيه التطوّع' : 'تم تجديد كارنيه التطوّع', html)
+}
+
+/** 14) تنبيه المتطوع قبل انتهاء صلاحية الكارنيه (يُرسل من مهمة الكرون). */
+export const volunteerCardExpiring = (
+  cfg: EmailConfig,
+  v: { email?: string; full_name?: string; expires_at?: string; days?: number; volunteer_code?: string }
+): Promise<SendResult> => {
+  const to = (v?.email || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
+
+  const name = v?.full_name || 'المتطوع الكريم'
+  const days = Number(v?.days)
+  const daysText = isFinite(days) && days > 0 ? `${days} يومًا` : 'أيام قليلة'
+
+  const html = shell(
+    'كارنيه التطوّع على وشك الانتهاء',
+    `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
+     ${para(`نُنبّهك بأن صلاحية كارنيه التطوّع الخاص بك ستنتهي خلال <strong>${esc(daysText)}</strong>.`)}
+     ${banner(
+       'ينتهي في',
+       v?.expires_at ? new Date(v.expires_at).toLocaleDateString('ar-EG') : daysText,
+       brand.gold,
+       '#fdf8e7'
+     )}
+     ${table(rows([['كود المتطوع', v?.volunteer_code]]))}
+     ${para('برجاء التواصل مع إدارة المتطوعين لتجديد الكارنيه قبل انتهاء صلاحيته، حتى لا تتأثر مشاركتك في الأنشطة القادمة.')}`,
+    'هذا تنبيه آلي — لو تم التجديد بالفعل يمكنك تجاهل الرسالة.'
+  )
+
+  return deliver(cfg, to, 'كارنيه التطوّع على وشك الانتهاء', html)
+}
+
+/** 15) إخبار المتبرع بإلغاء أو فشل تبرعه. */
+export const donationCancelled = (
+  cfg: EmailConfig,
+  d: { email?: string; donor_name?: string; amount?: unknown; id?: string; reason?: string }
+): Promise<SendResult> => {
+  const to = (d?.email || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
+
+  const name = d?.donor_name || 'المتبرع الكريم'
+
+  const html = shell(
+    'بخصوص عملية تبرعك',
+    `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
+     ${para('نأسف لإبلاغك بأن عملية التبرع المسجّلة باسمك لم تكتمل، وتم تحديث حالتها إلى <strong>غير مكتملة</strong>.')}
+     ${banner('قيمة التبرع', money(d?.amount), brand.gold, '#fdf8e7')}
+     ${table(
+       rows([
+         ['رقم العملية', d?.id],
+         ['السبب', d?.reason]
+       ])
+     )}
+     ${para('لم يُخصم من حسابك أي مبلغ مقابل هذه العملية. لو كنت ترى غير ذلك، برجاء التواصل معنا فورًا وسنراجع الأمر بنفسك اليوم.')}
+     ${para('يمكنك إعادة المحاولة من الموقع في أي وقت — ونشكر لك حسن نيتك ورغبتك في العطاء.')}`,
+    'لأي استفسار مالي، تواصل مع إدارة المؤسسة مع ذكر رقم العملية.'
+  )
+
+  return deliver(cfg, to, 'بخصوص عملية تبرعك', html)
+}
+
+/** 16) إخبار مُرسل رسالة «اتصل بنا» بأن رسالته تمت مراجعتها والرد عليها. */
+export const contactReplied = (
+  cfg: EmailConfig,
+  m: { email?: string; name?: string; subject?: string; id?: string; reply?: string }
+): Promise<SendResult> => {
+  const to = (m?.email || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
+
+  const name = m?.name || 'السائل الكريم'
+
+  const html = shell(
+    'تم الرد على رسالتك',
+    `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
+     ${para('راجع فريق المؤسسة رسالتك وتم الرد عليها.')}
+     ${table(
+       rows([
+         ['موضوع الرسالة', m?.subject],
+         ['رقم الرسالة', m?.id]
+       ])
+     )}
+     ${
+       m?.reply
+         ? `<div style="background:#f0faf7;border-right:4px solid ${brand.emerald};border-radius:8px;padding:16px;margin:18px 0;">
+              <div style="color:${brand.muted};font-size:13px;margin-bottom:8px;">ردّ المؤسسة</div>
+              <div style="color:${brand.ink};font-size:15px;line-height:1.9;white-space:pre-line;">${esc(m.reply)}</div>
+            </div>`
+         : para('لو احتجت أي توضيح إضافي، يمكنك مراسلتنا مرة أخرى من صفحة «اتصل بنا».')
+     }
+     ${para('شكرًا لتواصلك معنا.')}`,
+    'يمكنك الرد على هذه الرسالة لمتابعة نفس الموضوع.'
+  )
+
+  return deliver(cfg, to, `تم الرد على رسالتك${m?.subject ? `: ${m.subject}` : ''}`, html)
+}
+
+/**
+ * 17) تنبيه إداري على حركة مالية كبيرة في الخزينة.
+ *
+ * يُرسل لبريد الإدارة فقط (ADMIN_EMAIL) لأنه إشعار رقابي داخلي،
+ * الغرض منه أن يعرف صاحب المؤسسة بالحركات الكبيرة لحظة حدوثها.
+ */
+export const treasuryAlert = (
+  cfg: EmailConfig,
+  t: {
+    kind: string
+    amount?: unknown
+    category?: string
+    beneficiary?: string
+    description?: string
+    actor?: string
+    id?: string
+  }
+): Promise<SendResult> => {
+  const to = (cfg?.adminEmail || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
+
+  const isExpense = String(t?.kind || '') === 'expense'
+  const kindLabel = isExpense ? 'مصروف' : 'إيراد'
+  const color = isExpense ? '#b91c1c' : brand.emerald
+  const tint = isExpense ? '#fef2f2' : '#f0faf7'
+
+  const html = shell(
+    `حركة مالية كبيرة: ${kindLabel}`,
+    `${para('تم تسجيل حركة مالية تجاوزت الحد المُعرّف للتنبيه في خزينة المؤسسة.')}
+     ${banner(`قيمة ال${kindLabel}`, money(t?.amount), color, tint)}
+     ${table(
+       rows([
+         ['النوع', kindLabel],
+         ['البند', t?.category],
+         ['الجهة/المستفيد', t?.beneficiary],
+         ['الوصف', t?.description],
+         ['سُجّلت بواسطة', t?.actor],
+         ['رقم الحركة', t?.id]
+       ])
+     )}
+     ${para('برجاء مراجعة الحركة من لوحة التحكم للتأكد من صحة البيانات والمستندات المرفقة.')}`,
+    'هذا تنبيه رقابي آلي موجّه لإدارة المؤسسة فقط.'
+  )
+
+  return deliver(cfg, to, `تنبيه: ${kindLabel} بقيمة ${money(t?.amount)}`, html)
+}
+
+/** 18) تنبيه إداري ببلوغ حملة هدفها المالي. */
+export const campaignGoalReached = (
+  cfg: EmailConfig,
+  ca: { id?: string; title?: string; goal?: unknown; raised?: unknown }
+): Promise<SendResult> => {
+  const to = (cfg?.adminEmail || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
+
+  const title = ca?.title || 'حملة'
+  const goalNum = Number(ca?.goal)
+  const raisedNum = Number(ca?.raised)
+  const pct =
+    isFinite(goalNum) && goalNum > 0 && isFinite(raisedNum)
+      ? `${Math.round((raisedNum / goalNum) * 100).toLocaleString('ar-EG')}%`
+      : ''
+
+  const html = shell(
+    'حملة بلغت هدفها',
+    `${para(`الحمد لله، حملة <strong>${esc(title)}</strong> وصلت إلى هدفها المالي بالكامل.`)}
+     ${banner('إجمالي ما تم جمعه', money(ca?.raised), brand.emerald, '#f0faf7')}
+     ${table(
+       rows([
+         ['الحملة', title],
+         ['الهدف المُعلن', money(ca?.goal)],
+         ['المُحصّل', money(ca?.raised)],
+         ['نسبة الإنجاز', pct],
+         ['رقم الحملة', ca?.id]
+       ])
+     )}
+     ${para('يُفضّل الآن تحديث حالة الحملة على الموقع، ونشر تقرير بما تم إنجازه ليطمئن المتبرعون على أثر تبرعاتهم.')}`,
+    'هذا تنبيه إداري آلي موجّه لإدارة المؤسسة.'
+  )
+
+  return deliver(cfg, to, `حملة «${title}» بلغت هدفها`, html)
+}

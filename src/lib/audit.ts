@@ -115,7 +115,12 @@ export const parseTarget = (path: string): { resource: string; id: string | null
     'add', 'edit', 'update', 'delete', 'status', 'role', 'clear-all',
     'income', 'expense', 'groups', 'validity', 'update-hours', 'apply',
     'public', 'session', 'toggle', 'approve', 'reject', 'publish',
-    'feature', 'bulk', 'import'
+    'feature', 'bulk', 'import',
+    // أفعال نظام الإشعارات. 'read-all' و 'prefs' خصوصًا: بدونهما كان
+    // parseTarget يسجّلهما كمعرّف مستند، فيشير سطر التدقيق إلى سجل غير
+    // موجود ويضيّع وقت المراجع في متابعة معرّف وهمي.
+    'read', 'read-all', 'subscribe', 'unsubscribe', 'prefs', 'count',
+    'test', 'types'
   ])
 
   const last = rest[rest.length - 1] || ''
@@ -197,6 +202,21 @@ export const makeAuditMiddleware = (getDb?: (c: any) => any) => async (c: any, n
     const path = c.req.path || ''
     // لا معنى لتسجيل تسجيل الدخول أو الاشتراك في النشرة كتغيير إداري
     if (path.includes('/auth/') || path.includes('/newsletter/subscribe')) return
+
+    // ── استثناء نظام الإشعارات ──
+    // الوسيط عام على كل POST ناجح، وقراءة الإشعارات فعل يتكرر عشرات
+    // المرات يوميًا لكل مستخدم. تسجيله يُنتج ضجيجًا يدفع التغييرات
+    // المالية الحقيقية خارج آخر ١٠٠ سطر التي تعرضها لوحة التدقيق —
+    // أي أن تسجيل كل شيء يُفقد السجل قيمته بدل أن يزيدها.
+    // ملاحظة: /prefs *غير* مستثناة عن قصد — تغيير التفضيلات إعداد
+    // يخص الحساب ويستحق التتبّع، ويحدث نادرًا فلا يُغرق السجل.
+    if (
+      path.includes('/notifications/read') ||
+      path.includes('/notifications/subscribe') ||
+      path.includes('/notifications/unsubscribe') ||
+      path.includes('/notifications/count') ||
+      path.includes('/notifications/test')
+    ) return
 
     const user = c.get('user') || null
     const { resource, id } = parseTarget(path)

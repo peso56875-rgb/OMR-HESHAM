@@ -180,3 +180,64 @@ export interface TreasuryExpense {
   recorded_by_id: string
   created_at?: string
 }
+
+/* ────────────────────────── نظام الإشعارات ────────────────────────── */
+
+export type NotificationCategory = 'financial' | 'volunteers' | 'content' | 'system' | 'account'
+export type NotificationPriority = 'low' | 'normal' | 'high'
+
+/**
+ * 'user'   = إشعار موجّه لمستخدم واحد (user_id مطلوب، حالة القراءة داخله).
+ * 'admins' = سجل واحد مشترك لكل المشرفين (user_id = null، وحالة القراءة
+ *            لكل مشرف في notification_reads). النسخ لكل مشرف كان سيضاعف
+ *            الكتابات بعدد المشرفين لكل حدث.
+ */
+export type NotificationAudience = 'user' | 'admins'
+
+export interface AppNotification {
+  id?: string
+  user_id: string | null
+  audience: NotificationAudience
+  type: string
+  category: NotificationCategory
+  title: string
+  body: string
+  link: string | null
+  icon: string
+  priority: NotificationPriority
+  /** يُستخدم لإشعارات 'user' فقط؛ المشتركة تُقاس بـ notification_reads. */
+  is_read: boolean
+  read_at: string | null
+  actor_id: string | null
+  actor_name: string | null
+  meta: Record<string, unknown>
+  push_sent: boolean
+  created_at: string
+}
+
+/** معرّف المستند = `${notification_id}__${user_id}` — قراءة مباشرة بلا استعلام. */
+export interface NotificationRead {
+  notification_id: string
+  user_id: string
+  read_at: string
+}
+
+/** معرّف المستند = التوكن نفسه، فإعادة التسجيل تحدّث الصف ولا تُنشئ نسخة. */
+export interface PushToken {
+  user_id: string
+  platform: string
+  user_agent: string
+  created_at: string
+  last_seen_at: string
+  is_active: boolean
+}
+
+/** معرّف المستند = معرّف المستخدم. الغياب = كل شيء مفعّل. */
+export interface NotificationPrefs {
+  push_enabled: boolean
+  email_enabled: boolean
+  categories: Partial<Record<NotificationCategory, boolean>>
+  /** ساعات الهدوء بتوقيت القاهرة؛ الأولوية 'high' تتجاوزها. */
+  quiet_hours?: { enabled: boolean; from: string; to: string }
+  updated_at?: string
+}

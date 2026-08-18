@@ -18,6 +18,7 @@ import { exportApi } from './export'
 import { treasury } from './treasury'
 import { cases } from './cases'
 import { gallery } from './gallery'
+import { notifications } from './notifications'
 import { auditMiddleware } from '../lib/audit'
 import { audit } from './audit'
 
@@ -73,6 +74,7 @@ api.route('/export', exportApi)
 api.route('/treasury', treasury)
 api.route('/cases', cases)
 api.route('/gallery', gallery)
+api.route('/notifications', notifications)
 api.route('/audit', audit)
 
 export { api }

@@ -6,12 +6,49 @@ import {
   sendInBackground,
   donationAlert,
   donationThanks,
-  donationReceipt
+  donationReceipt,
+  donationCancelled,
+  campaignGoalReached
 } from '../lib/email'
+import {
+  notify,
+  notifyAdmins,
+  notifyInBackground,
+  notifyMoney,
+  dashLink
+} from '../lib/notifications'
 import { buildReceipt, receiptPath } from '../lib/receipts'
 import { SITE_ORIGIN } from '../lib/seo'
 
 export const donations = new Hono()
+
+/**
+ * A1 — إشعار المشرفين بتبرع جديد.
+ *
+ * مشترك بين مسارين (POST / و POST /add) لأن الموقع يستقبل التبرعات من
+ * نموذجين مختلفين: واحد للمستخدم المسجّل وواحد عام. لو كل مسار كتب
+ * الإشعار بنفسه، أي تغيير في الصياغة أو الرابط لازم يتكرر مرتين.
+ *
+ * التبرع الجديد **معلّق** ولم يُتحقق منه بعد، فالإشعار موجّه للمشرفين
+ * فقط ليراجعوه — المتبرع بياخد إشعاره لما الحالة تتأكد (U1).
+ */
+const notifyNewDonation = (c: any, record: any): Promise<void> =>
+  notifyInBackground(c, async () => {
+    await notifyAdmins(c, {
+      type: 'donation_new',
+      title: `تبرع جديد: ${notifyMoney(record?.amount)}`,
+      body: [record?.donor_name || 'متبرع', record?.campaign_title, record?.payment_method]
+        .filter(Boolean)
+        .join(' — '),
+      link: dashLink('donations'),
+      meta: {
+        donation_id: record?.id,
+        amount: Number(record?.amount || 0),
+        campaign_id: record?.campaign_id || '',
+        payment_method: record?.payment_method || ''
+      }
+    })
+  })
 
 // Create a new donation
 donations.post('/', rateLimiter(10, 60000, 'donate'), async (c) => {
@@ -72,6 +109,7 @@ donations.post('/', rateLimiter(10, 60000, 'donate'), async (c) => {
     await sendInBackground(c, async () => {
       await Promise.allSettled([donationAlert(cfg, record), donationThanks(cfg, record)])
     })
+    await notifyNewDonation(c, record)
 
     return c.json({ 
       data: record, 
@@ -183,6 +221,7 @@ donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
     await sendInBackground(c, async () => {
       await Promise.allSettled([donationAlert(cfg, record), donationThanks(cfg, record)])
     })
+    await notifyNewDonation(c, record)
 
     return c.json({ message: 'تم تسجيل تبرعك بنجاح. شكرًا لعطائك! 🤲' })
   } catch (error: any) {
@@ -265,6 +304,111 @@ donations.post('/status/:id', adminMiddleware, async (c) => {
       await sendInBackground(c, () =>
         donationReceipt(cfg, { ...donationData, ...receipt }, url)
       )
+    }
+
+    // إشعارات تغيّر حالة التبرع.
+    // الشرط newStatus !== oldStatus ضروري: لوحة التحكم تسمح بإعادة حفظ نفس
+    // الحالة، ولو أرسلنا الإشعار على كل حفظ كان المتبرع هيستلم «تم تأكيد
+    // تبرعك» أكثر من مرة لنفس المبلغ — وده يخلق شكًّا في سلامة المحاسبة.
+    if (newStatus !== oldStatus) {
+      const targetId = donationData.profile_id || null
+      const donorEmail = String(donationData.donor_email || '')
+      const donorName = String(donationData.donor_name || 'المتبرع الكريم')
+      const actor = (c as any).get('user')
+      const actorRef = { id: actor?.id || null, name: actor?.name || actor?.email || 'إدارة المؤسسة' }
+      const cancelReason = String((body as any).reason || '')
+
+      await notifyInBackground(c, async () => {
+        const cfg = getEmailConfig(c)
+        const jobs: Array<Promise<unknown>> = []
+
+        // U1 — تأكيد التبرع.
+        // نستخدم isIssuing وليس (newStatus === 'completed') لأنها محسوبة على
+        // أساس «الانتقال إلى completed» لا مجرد الوجود فيها.
+        // لا بريد إضافي هنا: الإيصال الرسمي أُرسل بالأعلى بالفعل.
+        if (isIssuing) {
+          jobs.push(
+            notify(c, {
+              user_id: targetId,
+              type: 'donation_confirmed',
+              title: `تم تأكيد تبرعك: ${notifyMoney(amount)}`,
+              body: donationData.campaign_title
+                ? `وصل تبرعك وسُجّل لحملة «${donationData.campaign_title}». جزاك الله خيرًا.`
+                : 'وصل تبرعك وتم تسجيله رسميًا. جزاك الله خيرًا.',
+              link: '/profile?tab=donations',
+              actor: actorRef,
+              meta: {
+                donation_id: id,
+                amount,
+                receipt_number: receipt?.receipt_number || donationData.receipt_number || ''
+              }
+            })
+          )
+        }
+
+        // U2 — إلغاء أو فشل التبرع
+        if (newStatus === 'cancelled' || newStatus === 'failed') {
+          jobs.push(
+            notify(c, {
+              user_id: targetId,
+              type: 'donation_cancelled',
+              title: 'بخصوص عملية تبرعك',
+              body: `لم تكتمل عملية التبرع بقيمة ${notifyMoney(amount)}. لم يُخصم منك أي مبلغ.`,
+              link: '/donate',
+              actor: actorRef,
+              meta: { donation_id: id, amount, status: newStatus }
+            }),
+            donationCancelled(cfg, {
+              email: donorEmail,
+              donor_name: donorName,
+              amount,
+              id,
+              reason: cancelReason
+            })
+          )
+        }
+
+        // A8 — بلوغ الحملة هدفها المالي.
+        //
+        // نعيد قراءة الحملة **بعد** الـ transaction للحصول على raised المحدّث.
+        //
+        // الشرط الحاسم: raised - amount < goal. بدونه كان الإشعار يتكرّر مع
+        // **كل** تبرع لاحق على حملة بلغت هدفها، لأن raised >= goal تبقى صحيحة
+        // للأبد. الطرح يضمن أن هذا التبرع تحديدًا هو من عبر بالحملة الحد.
+        if (isIssuing && campaignId) {
+          try {
+            const campSnap = await db.collection('campaigns').doc(campaignId).get()
+            const camp = campSnap.data()
+            if (campSnap.exists && camp) {
+              const goal = Number(camp.goal || camp.target_amount || 0)
+              const raised = Number(camp.raised || 0)
+
+              if (goal > 0 && raised >= goal && raised - amount < goal) {
+                jobs.push(
+                  notifyAdmins(c, {
+                    type: 'campaign_goal_reached',
+                    title: `حملة «${camp.title || 'حملة'}» بلغت هدفها`,
+                    body: `تم جمع ${notifyMoney(raised)} من هدف ${notifyMoney(goal)}.`,
+                    link: dashLink('campaigns'),
+                    actor: actorRef,
+                    meta: { campaign_id: campaignId, goal, raised }
+                  }),
+                  campaignGoalReached(cfg, {
+                    id: campaignId,
+                    title: camp.title,
+                    goal,
+                    raised
+                  })
+                )
+              }
+            }
+          } catch (e: any) {
+            console.error('[donations] campaign goal check failed:', e?.message || e)
+          }
+        }
+
+        if (jobs.length) await Promise.allSettled(jobs)
+      })
     }
 
     return c.redirect('/dashboard?view=donations&success=1')
