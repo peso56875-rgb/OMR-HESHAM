@@ -1,0 +1,70 @@
+{
+  "//": "فهارس مركّبة مطلوبة لنظام الإشعارات. Firestore ترفض أي استعلام يجمع where + orderBy على حقلين مختلفين بلا فهرس، وتعيد خطأ 500 في أول طلب حقيقي. انشرها قبل التشغيل: firebase deploy --only firestore:indexes",
+  "indexes": [
+    {
+      "//": "تدفّق إشعارات المستخدم — GET /api/notifications",
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "تصفية غير المقروء للمستخدم",
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "is_read", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "تدفّق إشعارات الإدارة المشتركة",
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "audience", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "تنظيف دوري: أقدم الإشعارات المقروءة أولًا",
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_read", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "جلب توكنات مستخدم النشطة — إرسال Push وعدّ الأجهزة",
+      "collectionGroup": "push_tokens",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "is_active", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "تنظيف التوكنات الخاملة",
+      "collectionGroup": "push_tokens",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_active", "order": "ASCENDING" },
+        { "fieldPath": "last_seen_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "المهمة المجدولة: كارنيهات معتمدة قاربت على الانتهاء",
+      "collectionGroup": "volunteers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "expires_at", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
