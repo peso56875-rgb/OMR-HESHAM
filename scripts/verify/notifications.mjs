@@ -250,6 +250,82 @@ console.log('\n  كشف المنصّة من User-Agent:')
   check('UA غير معروف يرجّع قيمة', detectPlatform('xyz').length > 0)
 }
 
+/* ───────────────────── البث العام (audience: 'all') ───────────────────── */
+console.log('\n  البث العام — نشر الأخبار والحملات والفعاليات:')
+{
+  // القاعدة الحاسمة: البث سجل واحد بلا مالك. لو انسرب user_id للسجل كان
+  // هيظهر مرتين في التدفّق — مرة من استعلام user_id ومرة من استعلام البث.
+  const broadcast = buildNotification({
+    audience: 'all',
+    user_id: 'someone',
+    type: 'content_published',
+    title: 'خبر جديد'
+  })
+  check("البث يُفرِّغ user_id دائمًا", broadcast.user_id === null, String(broadcast.user_id))
+  check("جمهور البث 'all'", broadcast.audience === 'all', broadcast.audience)
+
+  // إشعارات الإدارة تحتفظ بنفس القاعدة — لم نكسرها بإضافة البث.
+  const adminRec = buildNotification({
+    audience: 'admins',
+    user_id: 'someone',
+    type: 'contact_new',
+    title: 'رسالة'
+  })
+  check("إشعار الإدارة يُفرِّغ user_id", adminRec.user_id === null, String(adminRec.user_id))
+
+  // إشعار المستخدم لا يتأثر: لسه بيحتفظ بمالكه.
+  const userRec = buildNotification({
+    user_id: 'u1',
+    type: 'donation_confirmed',
+    title: 'تأكيد'
+  })
+  check('إشعار المستخدم يحتفظ بمالكه', userRec.user_id === 'u1', String(userRec.user_id))
+  check("جمهور إشعار المستخدم 'user'", userRec.audience === 'user', userRec.audience)
+
+  // نشر الأخبار أولويته low: قاعدة notifyAll تمنع الـ Push لها بشكل مقصود
+  // حتى لا يقفل المستخدم الإشعارات كلها من كثرة أخبار غير عاجلة.
+  check("نوع content_published أولويته low", typeDef('content_published').priority === 'low',
+    typeDef('content_published').priority)
+
+  // الحملة العاجلة ترفع الأولوية يدويًا إلى normal فتستحق Push.
+  const urgent = buildNotification({
+    audience: 'all',
+    type: 'content_published',
+    title: 'حملة عاجلة',
+    priority: 'normal'
+  })
+  check('الحملة العاجلة ترفع الأولوية إلى normal', urgent.priority === 'normal', urgent.priority)
+
+  // تجاوز الأيقونة لازم يشتغل: الفعالية أيقونتها تقويم لا صحيفة.
+  const evt = buildNotification({
+    audience: 'all',
+    type: 'content_published',
+    title: 'فعالية',
+    icon: 'fa-calendar-day'
+  })
+  check('تجاوز الأيقونة يعمل', evt.icon === 'fa-calendar-day', evt.icon)
+}
+
+console.log('\n  أنواع أحداث المرحلة الرابعة موجودة في الكتالوج:')
+{
+  for (const t of [
+    'contact_new',
+    'contact_replied',
+    'job_application_new',
+    'newsletter_new',
+    'treasury_large',
+    'content_published'
+  ]) {
+    check(`النوع ${t} معرَّف`, !!NOTIFICATION_TYPES[t])
+  }
+  // newsletter_new لازم يبقى silent: عشرات الاشتراكات يوميًا × Push = المستخدم
+  // يقفل الإشعارات فنخسر التنبيهات المهمة معاها.
+  check('newsletter_new صامت', NOTIFICATION_TYPES.newsletter_new?.silent === true)
+  check('treasury_large أولوية عالية', NOTIFICATION_TYPES.treasury_large?.priority === 'high')
+  check('contact_new تصنيفه content', NOTIFICATION_TYPES.contact_new?.category === 'content')
+  check('treasury_large تصنيفه financial', NOTIFICATION_TYPES.treasury_large?.category === 'financial')
+}
+
 console.log('\n══════════════════════════════════════════════')
 console.log(`  ${pass} ناجح · ${fail} فاشل`)
 console.log('══════════════════════════════════════════════')

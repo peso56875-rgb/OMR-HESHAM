@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 import { normalizeMediaUrl } from '../lib/storage'
+import { notifyAll, notifyInBackground, notifyMoney } from '../lib/notifications'
 
 export const campaigns = new Hono()
 
@@ -63,7 +64,7 @@ campaigns.post('/add', adminMiddleware, async (c) => {
   }
 
   try {
-    await db.collection('campaigns').add({
+    const ref = await db.collection('campaigns').add({
       title,
       category: category || 'عام',
       goal,
@@ -73,6 +74,25 @@ campaigns.post('/add', adminMiddleware, async (c) => {
       is_published: true,
       description: body.description || '',
       created_at: new Date().toISOString()
+    })
+
+    // U5 — بث حملة جديدة لكل المستخدمين.
+    //
+    // الحملة العاجلة ترفع الأولوية إلى normal فتُرسل Push فعلًا؛ الحملة
+    // العادية تبقى low (مركز الإشعارات فقط). التمييز مقصود: كلمة «عاجل»
+    // تفقد معناها لو كل حملة رنّت على التليفون.
+    await notifyInBackground(c, async () => {
+      await notifyAll(c, {
+        type: 'content_published',
+        title: is_urgent ? `حملة عاجلة: ${title}` : `حملة جديدة: ${title}`,
+        body: `الهدف ${notifyMoney(goal)}. ${
+          body.description ? String(body.description) : 'شاركنا في دعمها.'
+        }`,
+        link: `/campaigns/${ref.id}`,
+        icon: is_urgent ? 'fa-triangle-exclamation' : undefined,
+        priority: is_urgent ? 'normal' : 'low',
+        meta: { campaign_id: ref.id, goal, is_urgent }
+      })
     })
 
     if (contentType.includes('application/json')) {

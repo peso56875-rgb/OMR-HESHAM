@@ -81,6 +81,15 @@ interface FeedItem {
  * نسحب `limit` من كل تدفّق ثم نُرتّب ونقطع: لو سحبنا نصف الحد من كل
  * تدفّق لضاع عنصر أحدث موجود بكثافة في تدفّق واحد.
  */
+/**
+ * هل حالة قراءة هذا الإشعار مشتركة (في notification_reads) لا داخل السجل؟
+ *
+ * سجلات 'admins' و'all' يراها أكثر من مستخدم، فلا يجوز تعليمها مقروءة في
+ * المستند نفسه — أول من يقرأ كان سيُخفيها عن الجميع.
+ */
+const isShared = (audience: unknown): boolean =>
+  audience === 'admins' || audience === 'all'
+
 const fetchFeed = async (
   db: any,
   uid: string,
@@ -119,6 +128,24 @@ const fetchFeed = async (
     )
   }
 
+  // البث العام — يراه كل مستخدم مسجَّل، بمن فيهم المشرفون.
+  // استعلام ثالث منفصل لأن Firestore لا تدعم OR على قيم مختلفة لنفس الحقل
+  // مع orderBy؛ الدمج والترتيب يحدثان في الذاكرة بالأسفل.
+  if (uid) {
+    queries.push(
+      db
+        .collection('notifications')
+        .where('audience', '==', 'all')
+        .orderBy('created_at', 'desc')
+        .limit(limit)
+        .get()
+        .catch((e: any) => {
+          console.error('[notifications] فشل استعلام البث:', e?.message || e)
+          return { docs: [] }
+        })
+    )
+  }
+
   if (!queries.length) return []
 
   const snaps = await Promise.all(queries)
@@ -138,8 +165,8 @@ const fetchFeed = async (
   )
   const page = rows.slice(0, limit)
 
-  // حالة القراءة لإشعارات الإدارة — قراءة دفعة واحدة بـ getAll
-  const sharedIds = page.filter((r) => r.data.audience === 'admins').map((r) => r.id)
+  // حالة القراءة للإشعارات المشتركة (إدارة + بث) — قراءة دفعة واحدة بـ getAll
+  const sharedIds = page.filter((r) => isShared(r.data.audience)).map((r) => r.id)
   const readMap = new Map<string, string | null>()
 
   if (sharedIds.length) {
@@ -160,7 +187,7 @@ const fetchFeed = async (
 
   return page.map(({ id, data }) => {
     const def = typeDef(String(data.type || ''))
-    const shared = data.audience === 'admins'
+    const shared = isShared(data.audience)
     const isRead = shared ? readMap.has(id) : data.is_read === true
     return {
       id,
@@ -171,7 +198,7 @@ const fetchFeed = async (
       link: data.link || null,
       icon: String(data.icon || def.icon),
       priority: String(data.priority || def.priority),
-      audience: shared ? 'admins' : 'user',
+      audience: shared ? String(data.audience) : 'user',
       actor_name: data.actor_name || null,
       created_at: String(data.created_at || ''),
       is_read: isRead,
@@ -265,8 +292,11 @@ notifications.post('/read/:id', authMiddleware, async (c) => {
     const data = snap.data() || {}
     const now = new Date().toISOString()
 
-    if (data.audience === 'admins') {
-      if (user.role !== 'admin') return c.json({ error: 'غير مصرّح' }, 403)
+    if (isShared(data.audience)) {
+      // البث العام متاح لكل مستخدم مسجَّل؛ إشعارات الإدارة للمشرفين فقط.
+      if (data.audience === 'admins' && user.role !== 'admin') {
+        return c.json({ error: 'غير مصرّح' }, 403)
+      }
       await db
         .collection('notification_reads')
         .doc(readId(id, uid))
@@ -305,7 +335,7 @@ notifications.post('/read-all', authMiddleware, async (c) => {
     const batch = db.batch()
 
     for (const item of unread) {
-      if (item.audience === 'admins') {
+      if (isShared(item.audience)) {
         batch.set(db.collection('notification_reads').doc(readId(item.id, uid)), {
           notification_id: item.id,
           user_id: uid,

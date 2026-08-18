@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 import { normalizeMediaUrl } from '../lib/storage'
+import { notifyAll, notifyInBackground } from '../lib/notifications'
 
 export const news = new Hono()
 
@@ -62,7 +63,7 @@ news.post('/add', adminMiddleware, async (c) => {
   }
 
   try {
-    await db.collection('news').add({
+    const ref = await db.collection('news').add({
       title,
       category: body.category || 'عام',
       excerpt,
@@ -71,6 +72,25 @@ news.post('/add', adminMiddleware, async (c) => {
       is_published: true,
       publish_date: new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString()
+    })
+
+    // U5 — بث خبر جديد لكل المستخدمين.
+    //
+    // النوع content_published أولويته low، وnotifyAll لا ترسل Push للأولوية
+    // low بشكل مقصود: الخبر يظهر في مركز الإشعارات وحده. نشر ٣ أخبار في
+    // الأسبوع × Push لكل مستخدم = المستخدم يقفل الإشعارات، فنخسر معاها
+    // تنبيه «تم تأكيد تبرعك» وهو التنبيه اللي بيهمّه فعلًا.
+    //
+    // مربوط بـ /add فقط لا /edit: تصحيح خطأ مطبعي في خبر قديم ليس حدثًا
+    // يستحق إشعار كل المستخدمين من جديد.
+    await notifyInBackground(c, async () => {
+      await notifyAll(c, {
+        type: 'content_published',
+        title: `خبر جديد: ${title}`,
+        body: excerpt,
+        link: `/news/${ref.id}`,
+        meta: { news_id: ref.id, category: body.category || 'عام' }
+      })
     })
 
     if (contentType.includes('application/json')) {

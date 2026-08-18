@@ -191,8 +191,11 @@ export type NotificationPriority = 'low' | 'normal' | 'high'
  * 'admins' = سجل واحد مشترك لكل المشرفين (user_id = null، وحالة القراءة
  *            لكل مشرف في notification_reads). النسخ لكل مشرف كان سيضاعف
  *            الكتابات بعدد المشرفين لكل حدث.
+ * 'all'    = بث عام لكل مستخدم مسجَّل (user_id = null، وحالة القراءة في
+ *            notification_reads كذلك). يُستخدم لنشر الأخبار والحملات
+ *            والفعاليات: سجل واحد بدل مستند لكل مستخدم.
  */
-export type NotificationAudience = 'user' | 'admins'
+export type NotificationAudience = 'user' | 'admins' | 'all'
 
 export interface AppNotification {
   id?: string

@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 import { normalizeMediaUrl } from '../lib/storage'
+import { notifyAll, notifyInBackground } from '../lib/notifications'
 
 export const events = new Hono()
 
@@ -42,15 +43,43 @@ events.post('/add', adminMiddleware, async (c) => {
   }
 
   try {
-    await db.collection('events').add({
+    const eventDate = body.event_date
+      ? new Date(body.event_date as string).toISOString()
+      : new Date().toISOString()
+
+    const ref = await db.collection('events').add({
       title,
       type: body.type || 'عام',
       place: body.place || '',
-      event_date: body.event_date ? new Date(body.event_date as string).toISOString() : new Date().toISOString(),
+      event_date: eventDate,
       description: body.description || '',
       image_url: normalizeMediaUrl(body.image_url),
       is_published: true,
       created_at: new Date().toISOString()
+    })
+
+    // U6 — بث فعالية جديدة.
+    //
+    // نضع التاريخ والمكان في نص الإشعار نفسه: الفعالية قرار حضور، والمستخدم
+    // محتاج «إمتى وفين» قبل ما يفتح أي صفحة. التاريخ منسّق بتوقيت القاهرة
+    // صراحةً لأن الدالة تعمل على UTC في Vercel، وبدون tz كان يوم فعالية
+    // الساعة ١٢ صباحًا هيظهر باليوم السابق.
+    const when = new Date(eventDate).toLocaleDateString('ar-EG', {
+      timeZone: 'Africa/Cairo',
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    })
+
+    await notifyInBackground(c, async () => {
+      await notifyAll(c, {
+        type: 'content_published',
+        title: `فعالية جديدة: ${title}`,
+        body: `${when}${body.place ? ` — ${String(body.place)}` : ''}`,
+        link: `/events/${ref.id}`,
+        icon: 'fa-calendar-day',
+        meta: { event_id: ref.id, event_date: eventDate, place: body.place || '' }
+      })
     })
 
     if (contentType.includes('application/json')) {

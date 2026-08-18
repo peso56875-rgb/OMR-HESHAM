@@ -197,6 +197,96 @@ const buildMessage = (payload: PushPayload, origin: string) => {
  * يرسل Push لمجموعة مستخدمين.
  * لا يرمي استثناءً — يعيد وصفًا لما حدث.
  */
+/**
+ * حلقة التسليم المشتركة بين الإرسال الموجَّه والبث العام.
+ *
+ * مستخلَصة في دالة واحدة عن قصد: منطق التقسيم إلى دفعات ٥٠٠، وتصنيف
+ * أخطاء التوكن، وتنظيف التوكنات الميتة — كل ده كان لازم يتكرر حرفيًا في
+ * دالة البث، وأي تعديل مستقبلي على دفعة واحدة كان هيسيب التانية متأخرة.
+ */
+const deliverToTokens = async (
+  c: any,
+  db: any,
+  tokens: string[],
+  payload: PushPayload
+): Promise<PushResult> => {
+  const messaging = getMessaging(c)
+  const message = buildMessage(payload, siteOrigin(c))
+
+  let sent = 0
+  let failed = 0
+  const dead: string[] = []
+
+  for (let i = 0; i < tokens.length; i += FCM_BATCH_LIMIT) {
+    const batch = tokens.slice(i, i + FCM_BATCH_LIMIT)
+    try {
+      const res = await messaging.sendEachForMulticast({ ...message, tokens: batch })
+      sent += res.successCount
+      failed += res.failureCount
+
+      res.responses.forEach((r: any, idx: number) => {
+        if (!r.success) {
+          const code = r.error?.code || ''
+          if (DEAD_TOKEN_CODES.has(code)) dead.push(batch[idx] as string)
+          else console.error('[push] فشل إرسال لتوكن:', code || r.error?.message)
+        }
+      })
+    } catch (e: any) {
+      failed += batch.length
+      console.error('[push] فشل إرسال دفعة:', e?.message || e)
+    }
+  }
+
+  const pruned = await pruneDeadTokens(db, dead)
+  return { sent, failed, pruned }
+}
+
+/**
+ * سقف المستقبلين في البث العام.
+ *
+ * البث يقرأ كل التوكنات النشطة في قاعدة البيانات. لولا السقف كان استعلام
+ * واحد قادرًا على تحميل عشرات الآلاف من المستندات في دالة serverless محدودة
+ * الذاكرة والزمن — فتفشل الدالة كلها لا الإشعار وحده.
+ */
+const BROADCAST_TOKEN_CAP = 2000
+
+/**
+ * إرسال Push لكل الأجهزة المسجَّلة (بث عام).
+ *
+ * تُستخدم لإشعارات الجمهور مثل نشر خبر أو حملة. مفصولة عن
+ * sendPushToUsers لأن تلك تحتاج قائمة معرّفات، والبث بطبيعته لا يعرف
+ * جمهوره مسبقًا.
+ */
+export const sendPushToAll = async (c: any, payload: PushPayload): Promise<PushResult> => {
+  const empty: PushResult = { sent: 0, failed: 0, pruned: 0 }
+
+  try {
+    if (!isPushConfigured(c)) {
+      console.log('[push] تم تخطّي البث: FIREBASE_VAPID_KEY غير مُهيّأ.')
+      return { ...empty, skipped: 'push not configured' }
+    }
+
+    const db = getFirestore(c)
+    const snap = await db
+      .collection('push_tokens')
+      .where('is_active', '==', true)
+      .limit(BROADCAST_TOKEN_CAP)
+      .get()
+      .catch((e: any) => {
+        console.error('[push] تعذّر جلب توكنات البث:', e?.message || e)
+        return { docs: [] }
+      })
+
+    const tokens = [...new Set((snap.docs || []).map((d: any) => d.id as string))]
+    if (!tokens.length) return { ...empty, skipped: 'no registered devices' }
+
+    return await deliverToTokens(c, db, tokens, payload)
+  } catch (e: any) {
+    console.error('[push] فشل البث العام:', e?.message || e)
+    return { ...empty, skipped: e?.message || 'unknown error' }
+  }
+}
+
 export const sendPushToUsers = async (
   c: any,
   userIds: string[],
@@ -217,35 +307,7 @@ export const sendPushToUsers = async (
     const tokens = await fetchTokens(db, userIds)
     if (!tokens.length) return { ...empty, skipped: 'no registered devices' }
 
-    const messaging = getMessaging(c)
-    const message = buildMessage(payload, siteOrigin(c))
-
-    let sent = 0
-    let failed = 0
-    const dead: string[] = []
-
-    for (let i = 0; i < tokens.length; i += FCM_BATCH_LIMIT) {
-      const batch = tokens.slice(i, i + FCM_BATCH_LIMIT)
-      try {
-        const res = await messaging.sendEachForMulticast({ ...message, tokens: batch })
-        sent += res.successCount
-        failed += res.failureCount
-
-        res.responses.forEach((r: any, idx: number) => {
-          if (!r.success) {
-            const code = r.error?.code || ''
-            if (DEAD_TOKEN_CODES.has(code)) dead.push(batch[idx])
-            else console.error('[push] فشل إرسال لتوكن:', code || r.error?.message)
-          }
-        })
-      } catch (e: any) {
-        failed += batch.length
-        console.error('[push] فشل إرسال دفعة:', e?.message || e)
-      }
-    }
-
-    const pruned = await pruneDeadTokens(db, dead)
-    return { sent, failed, pruned }
+    return await deliverToTokens(c, db, tokens, payload)
   } catch (e: any) {
     console.error('[push] تعذّر الإرسال:', e?.message || e)
     return { ...empty, skipped: e?.message || 'unknown error' }

@@ -101,7 +101,16 @@ export const isQuietHour = (cfg: NotifyConfig, now: Date = new Date()): boolean 
 
 export type NotificationCategory = 'financial' | 'volunteers' | 'content' | 'system' | 'account'
 export type NotificationPriority = 'low' | 'normal' | 'high'
-export type NotificationAudience = 'user' | 'admins'
+/**
+ * 'user'   — سجل واحد لمستخدم بعينه، حالة القراءة داخل السجل نفسه.
+ * 'admins' — سجل واحد يراه كل المشرفين، حالة القراءة في notification_reads.
+ * 'all'    — بث عام لكل مستخدم مسجَّل، حالة القراءة في notification_reads.
+ *
+ * 'all' لا يُنسخ لكل مستخدم بشكل مقصود: نشر خبر واحد في موقع بألف مستخدم
+ * كان سيكتب ألف مستند لكل خبر — تكلفة كتابة ضخمة وتنظيف مستحيل. سجل واحد
+ * + مستند قراءة لمن قرأ فعلًا هو الحل الأرخص والأدق.
+ */
+export type NotificationAudience = 'user' | 'admins' | 'all'
 
 export interface NotificationTypeDef {
   /** التصنيف — يستخدمه المستخدم لإيقاف نوع كامل من الإشعارات. */
@@ -289,7 +298,9 @@ export const buildNotification = (input: NotifyInput): NotificationRecord => {
   const audience: NotificationAudience = input.audience || (input.user_id ? 'user' : 'admins')
 
   return {
-    user_id: audience === 'admins' ? null : input.user_id || null,
+    // كلا الجمهورين المشتركين بلا مالك: وجود user_id فيهما كان سيجعل السجل
+    // يظهر مرتين في التدفّق (مرة من استعلام المستخدم ومرة من استعلام البث).
+    user_id: audience === 'admins' || audience === 'all' ? null : input.user_id || null,
     audience,
     type: input.type,
     category: def.category,
@@ -460,6 +471,60 @@ export const notifyAdmins = async (
     return { created: true, id: ref.id, pushed }
   } catch (e: any) {
     console.error('[notify] تعذّر إشعار المشرفين:', e?.message || e)
+    return { created: false, skipped: e?.message || 'unknown error' }
+  }
+}
+
+/**
+ * بث إشعار لكل مستخدمي الموقع بسجل واحد.
+ *
+ * قاعدة الـ Push هنا أضيق من نظيرتها في notifyAdmins: البث لا يُرسل Push
+ * إلا للأولوية normal أو high. السبب مباشر — نشر خبر (أولوية low) يحدث
+ * عدة مرات أسبوعيًا، ولو رنّ على تليفون كل مستخدم كان الناس هتقفل
+ * الإشعارات فنخسر تنبيه «تم تأكيد تبرعك» وهو التنبيه اللي بيهم فعلًا.
+ * الخبر يظهر في مركز الإشعارات، والـ Push للأهم فقط.
+ */
+export const notifyAll = async (
+  c: any,
+  input: Omit<NotifyInput, 'user_id' | 'audience'>
+): Promise<NotifyResult> => {
+  try {
+    if (!input?.type || !input?.title) return { created: false, skipped: 'missing type/title' }
+
+    const db = getFirestore(c)
+    const record = buildNotification({ ...input, audience: 'all' })
+    const ref = await db.collection('notifications').add(record)
+
+    const def = typeDef(input.type)
+    let pushed = 0
+
+    const pushWorthy = record.priority === 'high' || record.priority === 'normal'
+
+    if (!def.silent && pushWorthy) {
+      const cfg = getNotifyConfig(c)
+      const muted = record.priority !== 'high' && isQuietHour(cfg)
+      if (!muted) {
+        try {
+          const { sendPushToAll } = await import('./push')
+          const res = await sendPushToAll(c, {
+            title: record.title,
+            body: record.body,
+            link: record.link || '/notifications',
+            tag: `${record.type}:${ref.id}`
+          })
+          pushed = res.sent
+          if (res.sent > 0) {
+            await ref.update({ push_sent: true }).catch(() => {})
+          }
+        } catch (e: any) {
+          console.error('[notify] فشل البث العام:', e?.message || e)
+        }
+      }
+    }
+
+    return { created: true, id: ref.id, pushed }
+  } catch (e: any) {
+    console.error('[notify] تعذّر بث الإشعار:', e?.message || e)
     return { created: false, skipped: e?.message || 'unknown error' }
   }
 }
