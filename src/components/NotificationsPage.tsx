@@ -21,8 +21,8 @@ export function NotificationsPage({ user, pushAvailable = false }: { user: UserS
       text="تأكيد تبرّعاتك، حالة تطوّعك، ترقياتك، وردود الإدارة على رسائلك."
     />
 
-    <section class="section notif-page-wrap">
-      <div class="container" style="display:grid; gap:26px">
+    <section class="section-pad notif-page-wrap">
+      <div class="notif-page-inner">
         {/* isAdmin=false دائمًا هنا: زر الإشعار التجريبي أداة تشخيص إداري،
             ونقطة /api/notifications/test محمية بـ adminMiddleware أصلًا،
             فإظهار الزر لغير المشرف يعني زرًا يفشل بـ 403. */}

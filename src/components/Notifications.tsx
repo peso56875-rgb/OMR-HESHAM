@@ -87,16 +87,16 @@ export function DashNotifications({ pushAvailable = false, isAdmin = false }: { 
             بدون هذا الشرط كان المستخدم يضغط زرًا لا يفعل شيئًا لأن
             FIREBASE_VAPID_KEY غير موجود — والفشل صامت في المتصفح. */}
         {pushAvailable && (
-          <button type="button" class="btn-ghost" data-notif-push-toggle>
+          <button type="button" class="outline-btn notif-act" data-notif-push-toggle>
             {icon('fa-bell')} <span data-notif-push-label>تفعيل إشعارات الجهاز</span>
           </button>
         )}
         {isAdmin && (
-          <button type="button" class="btn-ghost" data-notif-test>
+          <button type="button" class="outline-btn notif-act" data-notif-test>
             {icon('fa-paper-plane')} إشعار تجريبي
           </button>
         )}
-        <button type="button" class="btn-ghost" data-notif-read-all>
+        <button type="button" class="outline-btn notif-act" data-notif-read-all>
           {icon('fa-check-double')} تعليم الكل كمقروء
         </button>
       </div>
@@ -180,7 +180,7 @@ export function NotificationPrefsCard({ pushAvailable = false }: { pushAvailable
     </div>
 
     <footer>
-      <button type="button" class="btn-primary" data-notif-prefs-save>حفظ التفضيلات</button>
+      <button type="button" class="primary-btn" data-notif-prefs-save>حفظ التفضيلات</button>
       <span class="notif-prefs-status" data-notif-prefs-status aria-live="polite"></span>
     </footer>
   </section>

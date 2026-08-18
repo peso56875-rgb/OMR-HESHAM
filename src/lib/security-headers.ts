@@ -91,6 +91,13 @@ export const securityHeaders = () =>
       workerSrc: ["'self'"],
       childSrc: ["'self'", 'blob:'],
 
+      // manifest-src is declared explicitly rather than relying on the
+      // default-src fallback: some Chromium versions fetch the manifest with a
+      // different request initiator and reject it under default-src, and a
+      // blocked manifest silently disables web push on iOS 16.4+ (which
+      // requires an installed PWA) with no visible error anywhere.
+      manifestSrc: ["'self'"],
+
       // The Google/Firebase sign-in flow renders a helper iframe on the
       // project's authDomain, so frames must be allowed from those origins —
       // but from nowhere else.
