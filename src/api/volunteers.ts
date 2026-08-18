@@ -3,7 +3,23 @@ import { getFirestore, getAuth } from '../lib/firebase-admin'
 import { getCookie } from 'hono/cookie'
 import { adminMiddleware, authMiddleware, rateLimiter } from './middleware'
 import { normalizeMediaUrl, storeMediaFile } from '../lib/storage'
-import { getEmailConfig, sendInBackground, volunteerAlert, volunteerAck } from '../lib/email'
+import {
+  getEmailConfig,
+  sendInBackground,
+  volunteerAlert,
+  volunteerAck,
+  volunteerDecision,
+  volunteerRankPromoted,
+  volunteerCardStatus
+} from '../lib/email'
+import {
+  notify,
+  notifyAdmins,
+  notifyInBackground,
+  detectRankChange,
+  rankChangeBody,
+  dashLink
+} from '../lib/notifications'
 
 export const volunteers = new Hono()
 
@@ -101,6 +117,212 @@ const syncProfile = async (
 
 const VALID_STATUSES = ['approved', 'pending', 'rejected', 'revoked']
 const MAX_PHOTO_DOWNLOAD_BYTES = 15 * 1024 * 1024
+
+/**
+ * المُرسل الموحّد لإشعارات المتطوعين.
+ *
+ * لماذا دالة واحدة بدل كود مكرر في كل handler؟
+ * حقل `rank` قابل للتعديل من **ثلاث** نقاط مختلفة (/status، /update،
+ * /update-hours)، وحقل `status` من نقطتين (/status، /validity، /update).
+ * لو كل handler كتب إشعاراته بنفسه، أي تعديل مستقبلي في منطق الإشعار
+ * لازم يتكرر في مكانين أو تلاتة، وده بالضبط اللي يخلق إشعارات مكرّرة
+ * أو ناقصة. الدالة دي هي المصدر الوحيد للحقيقة.
+ *
+ * أهم قاعدة فيها: **الإشعار يُرسل على التغيّر، لا على الحفظ.**
+ * نموذج «تحديث الساعات» في اللوحة يبعت الرتبة مع الساعات في كل مرة،
+ * فلو أرسلنا إشعار ترقية على كل حفظ كان المتطوع هيستلم رسالة «تمت ترقيتك»
+ * ثلاث مرات لمجرد أن المشرف عدّل الساعات ثلاث مرات. المقارنة بين
+ * before و patch عبر detectRankChange() هي اللي تمنع ده.
+ *
+ * كمان: isFirstAssignment تمنع إشعار الترقية عند إصدار البطاقة أول مرة،
+ * لأن «متطوع مبادر» رتبة افتراضية تُمنح تلقائيًا مع الاعتماد — وإشعار
+ * القبول بيغطيها بالفعل، فإشعار ترقية إضافي هيبقى ضجيج.
+ *
+ * لا ترمي استثناءً مطلقًا: الإشعار أثر جانبي، وفشله لا يجوز أن يُفشل
+ * عملية إدارية نجحت بالفعل في قاعدة البيانات.
+ */
+const notifyVolunteerChanges = async (
+  c: any,
+  args: { id: string; before: Record<string, any>; patch: Record<string, any> }
+): Promise<void> => {
+  try {
+    const { id, before, patch } = args
+    const after = { ...before, ...patch }
+
+    const targetId: string | null = before.profile_id || after.profile_id || null
+    const targetEmail = String(after.email || before.email || '')
+    const fullName = String(after.full_name || before.full_name || 'المتطوع')
+
+    const actor = (c as any).get?.('user') || null
+    const actorName = actor?.name || actor?.email || 'إدارة المؤسسة'
+    const actorRef = { id: actor?.id || null, name: actorName }
+
+    const oldStatus = String(before.status || '')
+    const newStatus = String(after.status || '')
+    const statusChanged = patch.status !== undefined && oldStatus !== newStatus
+
+    const rankChange = detectRankChange(before.rank, patch.rank)
+
+    const oldExpiry = String(before.expires_at || '')
+    const newExpiry = String(after.expires_at || '')
+    const expiryChanged = patch.expires_at !== undefined && oldExpiry !== newExpiry
+
+    const oldHours = Number(before.hours_count || 0)
+    const newHours = Number(after.hours_count || 0)
+    const hoursChanged = patch.hours_count !== undefined && oldHours !== newHours
+
+    const cfg = getEmailConfig(c)
+    const jobs: Array<Promise<unknown>> = []
+
+    // V1 — قبول طلب التطوّع
+    if (statusChanged && newStatus === 'approved' && oldStatus !== 'approved') {
+      jobs.push(
+        notify(c, {
+          user_id: targetId,
+          type: 'volunteer_approved',
+          title: 'تم قبول طلب تطوّعك',
+          body: after.volunteer_code
+            ? `أهلًا بك في فريق المتطوعين. كود المتطوع الخاص بك: ${after.volunteer_code}`
+            : 'أهلًا بك في فريق متطوعي المؤسسة.',
+          link: '/profile',
+          actor: actorRef,
+          meta: { volunteer_id: id, volunteer_code: after.volunteer_code || '' }
+        }),
+        volunteerDecision(cfg, {
+          email: targetEmail,
+          full_name: fullName,
+          status: 'approved',
+          volunteer_code: after.volunteer_code || '',
+          expires_at: newExpiry
+        })
+      )
+    }
+
+    // V2 — رفض طلب التطوّع
+    if (statusChanged && newStatus === 'rejected') {
+      jobs.push(
+        notify(c, {
+          user_id: targetId,
+          type: 'volunteer_rejected',
+          title: 'بخصوص طلب تطوّعك',
+          body: 'راجعت اللجنة طلبك ولم يتم قبوله حاليًا. يمكنك التقدّم مرة أخرى لاحقًا.',
+          link: '/volunteers',
+          actor: actorRef,
+          meta: { volunteer_id: id }
+        }),
+        volunteerDecision(cfg, {
+          email: targetEmail,
+          full_name: fullName,
+          status: 'rejected',
+          reason: String(patch.rejection_reason || after.rejection_reason || '')
+        })
+      )
+    }
+
+    // V6 — تجميد / إلغاء البطاقة
+    if (statusChanged && newStatus === 'revoked') {
+      jobs.push(
+        notify(c, {
+          user_id: targetId,
+          type: 'volunteer_card_frozen',
+          title: 'تم تجميد كارنيه التطوّع',
+          body: 'بطاقتك أصبحت موقوفة مؤقتًا ولا تصلح للاستخدام في أنشطة المؤسسة.',
+          link: '/profile',
+          actor: actorRef,
+          meta: { volunteer_id: id }
+        }),
+        volunteerCardStatus(cfg, {
+          email: targetEmail,
+          full_name: fullName,
+          status: 'revoked',
+          actor: actorName
+        })
+      )
+    }
+
+    // V3 — الترقية في الرتبة (الحدث الثاني المطلوب صراحةً).
+    // isFirstAssignment مستثناة: الرتبة الافتراضية مع الاعتماد ليست ترقية.
+    if (rankChange.changed && !rankChange.isFirstAssignment) {
+      jobs.push(
+        notify(c, {
+          user_id: targetId,
+          type: 'volunteer_rank_promoted',
+          title: `مبارك — تمت ترقيتك إلى ${rankChange.to}`,
+          body: rankChangeBody(fullName, rankChange.from, rankChange.to),
+          link: '/profile',
+          actor: actorRef,
+          meta: { volunteer_id: id, from: rankChange.from, to: rankChange.to }
+        }),
+        notifyAdmins(c, {
+          type: 'volunteer_rank_promoted',
+          title: `ترقية متطوع: ${fullName}`,
+          body: `من «${rankChange.from || 'بدون رتبة'}» إلى «${rankChange.to}» — بواسطة ${actorName}.`,
+          link: dashLink('volunteers'),
+          actor: actorRef,
+          meta: { volunteer_id: id, from: rankChange.from, to: rankChange.to }
+        }),
+        volunteerRankPromoted(cfg, {
+          email: targetEmail,
+          full_name: fullName,
+          from: rankChange.from,
+          to: rankChange.to,
+          hours: newHours || undefined,
+          actor: actorName
+        })
+      )
+    }
+
+    // V7 — تجديد / تمديد صلاحية البطاقة.
+    // الشرط !statusChanged مهم: لو الحالة اتغيّرت لـ approved في نفس الطلب
+    // فإشعار القبول (V1) بيحمل تاريخ الصلاحية بالفعل، وإشعار تجديد إضافي تكرار.
+    if (expiryChanged && !statusChanged && newStatus === 'approved') {
+      jobs.push(
+        notify(c, {
+          user_id: targetId,
+          type: 'volunteer_card_renewed',
+          title: 'تم تجديد كارنيه التطوّع',
+          body: newExpiry
+            ? `بطاقتك صالحة حتى ${new Date(newExpiry).toLocaleDateString('ar-EG')}.`
+            : 'بطاقتك أصبحت بصلاحية مفتوحة بدون تاريخ انتهاء.',
+          link: '/profile',
+          actor: actorRef,
+          meta: { volunteer_id: id, expires_at: newExpiry }
+        }),
+        volunteerCardStatus(cfg, {
+          email: targetEmail,
+          full_name: fullName,
+          status: 'approved',
+          expires_at: newExpiry,
+          actor: actorName
+        })
+      )
+    }
+
+    // V8 — تحديث ساعات التطوّع (نوع صامت: يظهر في مركز الإشعارات بلا بوش/بريد).
+    // نتخطاه لو فيه ترقية في نفس الطلب، لأن إشعار الترقية بيذكر الساعات.
+    if (hoursChanged && !rankChange.changed) {
+      jobs.push(
+        notify(c, {
+          user_id: targetId,
+          type: 'volunteer_hours_updated',
+          title: 'تم تحديث ساعات تطوّعك',
+          body: `إجمالي ساعاتك المسجّلة الآن: ${newHours.toLocaleString('ar-EG')} ساعة.`,
+          link: '/profile',
+          actor: actorRef,
+          meta: { volunteer_id: id, from: oldHours, to: newHours }
+        })
+      )
+    }
+
+    if (!jobs.length) return
+
+    await notifyInBackground(c, async () => {
+      await Promise.allSettled(jobs)
+    })
+  } catch (e: any) {
+    console.error('[volunteers] notification dispatch failed:', e?.message || e)
+  }
+}
 
 /** Blocks obvious local/private targets before proxying an admin-only photo download. */
 const isSafePhotoUrl = (url: URL, requestOrigin: string): boolean => {
@@ -305,6 +527,18 @@ volunteers.post('/', rateLimiter(5, 60000, 'volunteer-apply'), async (c) => {
       await Promise.allSettled(jobs)
     })
 
+    // A2 — إشعار المشرفين بطلب تطوّع جديد داخل مركز الإشعارات.
+    // البريد وحده لا يكفي: صاحب الموقع طلب أن «أي حاجة جديدة» تظهر كإشعار.
+    await notifyInBackground(c, async () => {
+      await notifyAdmins(c, {
+        type: 'volunteer_new',
+        title: `طلب تطوّع جديد: ${full_name}`,
+        body: [city, preferred_role].filter(Boolean).join(' — ') || 'طلب جديد بانتظار المراجعة.',
+        link: dashLink('volunteers'),
+        meta: { volunteer_id: ref.id, phone, city: city || '', preferred_role: preferred_role || '' }
+      })
+    })
+
     if (!contentType.includes('application/json')) {
       return c.redirect('/volunteers?success=1#volForm')
     }
@@ -441,6 +675,7 @@ volunteers.post('/status/:id', adminMiddleware, async (c) => {
     }
 
     await volRef.update(updateData)
+    await notifyVolunteerChanges(c, { id, before: currentVol, patch: updateData })
     return ok(c, message, { status, volunteer_code: updateData.volunteer_code })
   } catch (error: any) {
     console.error('Error updating volunteer status:', error.message)
@@ -528,6 +763,7 @@ volunteers.post('/validity/:id', adminMiddleware, async (c) => {
     }
 
     await volRef.update(updateData)
+    await notifyVolunteerChanges(c, { id, before: currentVol, patch: updateData })
     return ok(c, message, { expires_at: updateData.expires_at, status: updateData.status })
   } catch (error: any) {
     console.error('Error updating volunteer validity:', error.message)
@@ -634,6 +870,10 @@ volunteers.post('/update/:id', adminMiddleware, async (c) => {
       avatar_url: updateData.avatar_url
     })
 
+    // نموذج التعديل الشامل يقدر يغيّر الحالة والرتبة والساعات والصلاحية في طلب
+    // واحد، فنمرّر الـ patch كامل والدالة تحدّد أي إشعار يستحق الإرسال فعلًا.
+    await notifyVolunteerChanges(c, { id, before: currentVol, patch: updateData })
+
     return ok(c, 'تم تحديث بيانات المتطوع بنجاح.', { avatar_url: updateData.avatar_url })
   } catch (error: any) {
     console.error('Error editing volunteer details:', error.message)
@@ -656,6 +896,11 @@ volunteers.post('/update-hours/:id', adminMiddleware, async (c) => {
       return fail(c, 'لم يتم العثور على هذا المتطوع.', 404, 'not_found')
     }
 
+    // نقرأ البيانات الحالية عشان نعرف الرتبة والساعات **قبل** التعديل.
+    // بدون ده مش هنقدر نفرّق بين ترقية حقيقية ومجرد إعادة حفظ نفس الرتبة،
+    // وده كان هيبعت للمتطوع إشعار «تمت ترقيتك» مع كل تحديث للساعات.
+    const currentVol = volDoc.data() || {}
+
     const updateData = pruneUndefined({
       hours_count: hoursRaw === undefined ? undefined : (parseInt(hoursRaw, 10) || 0),
       rank: rank || undefined
@@ -666,6 +911,7 @@ volunteers.post('/update-hours/:id', adminMiddleware, async (c) => {
     }
 
     await volRef.update(updateData)
+    await notifyVolunteerChanges(c, { id, before: currentVol, patch: updateData })
     return ok(c, 'تم تحديث ساعات الخدمة والرتبة.', updateData)
   } catch (error: any) {
     console.error('Error updating volunteer hours:', error.message)
