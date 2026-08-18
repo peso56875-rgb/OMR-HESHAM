@@ -17,6 +17,8 @@ export const cssBackground = (url?: string): string => {
   return `background-image:url("${safe}");background-size:cover;background-position:center;`
 }
 
+import { NotificationBell } from './Notifications'
+
 export function Header({ user }: { user?: UserSession }) {
   return <>
     <header class="site-header" id="site-header">
@@ -36,6 +38,9 @@ export function Header({ user }: { user?: UserSession }) {
         )}
       </nav>
       <div class="header-actions">
+        {/* الجرس للمسجّلين فقط: الزائر لا يملك إشعارات، وإظهار جرس فارغ
+            له يعني نقرة تؤدي إلى لوحة فاضية بلا تفسير. */}
+        {user && <NotificationBell />}
         <button class="icon-btn" id="theme-toggle" aria-label="تغيير المظهر">{icon('fa-moon')}</button>
         <button class="icon-btn menu-toggle" id="menu-toggle" aria-label="فتح القائمة">{icon('fa-bars-staggered')}</button>
         <a class="donate-pill magnetic" href="/donate"><span>تبرّع الآن</span>{icon('fa-heart')}</a>
@@ -109,6 +114,9 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
     <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Manrope:wght@400;600;700;800&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/png" href="/static/foundation-logo.png" />
+    {/* الـ manifest شرط إلزامي لعمل إشعارات الويب على iOS 16.4+ — بدونه
+        لا يظهر طلب الإذن أصلًا حتى بعد إضافة الموقع للشاشة الرئيسية. */}
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="/static/style.css" />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
@@ -145,6 +153,9 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
       <div class="confirm-modal" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true"><div class="confirm-card"><span class="confirm-icon">{icon('fa-triangle-exclamation')}</span><h2 id="confirm-title">تأكيد الإجراء</h2><p id="confirm-message">هل أنت متأكد من تنفيذ هذا الإجراء؟</p><div><button type="button" class="confirm-cancel">إلغاء</button><button type="button" class="confirm-accept">تأكيد</button></div></div></div>
       {pageType === 'public' && <nav class="mobile-bottom" aria-label="تنقل سريع"><a href="/">{icon('fa-house')}<span>الرئيسية</span></a><a href="/campaigns">{icon('fa-seedling')}<span>الحملات</span></a><a class="bottom-donate" href="/donate">{icon('fa-heart')}<span>تبرّع</span></a><a href="/volunteers">{icon('fa-hand-holding-hand')}<span>تطوع</span></a><a href="/contact">{icon('fa-comment-dots')}<span>تواصل</span></a></nav>}
       <script src="/static/app.js"></script>
+      {/* محرّك الإشعارات يُحمَّل للمسجّلين فقط — لا داعي لتحميل كود
+          يستقصي /api/notifications على صفحات عامة يزورها غير مسجّل. */}
+      {user && <script src="/static/notifications.js"></script>}
     </body></html>
 }
 
