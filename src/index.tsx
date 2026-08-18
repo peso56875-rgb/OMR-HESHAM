@@ -19,6 +19,8 @@ import { api } from './api'
 import { rateLimiter } from './api/middleware'
 import { securityHeaders } from './lib/security-headers'
 import { verifyReceiptToken } from './lib/receipts'
+import { isPushConfigured } from './lib/push'
+import { NotificationsPage } from './components/NotificationsPage'
 import { SITE_ORIGIN } from './lib/seo'
 import { contextStorage } from 'hono/context-storage'
 
@@ -267,6 +269,23 @@ app.get('/profile', async (c) => {
   return c.html(<Profile user={user} donations={donations} volunteer={volunteer} />)
 })
 
+/**
+ * صفحة الإشعارات — /notifications
+ *
+ * موجودة كصفحة مستقلة لا داخل لوحة التحكم فقط، لأن المتطوّع والمتبرّع
+ * ممنوعان من دخول اللوحة (تحويل إلى /profile) وهما أهم مستقبِلَي
+ * الإشعارات: قبول التطوّع، الترقية، تأكيد التبرّع. لو كان مركز
+ * الإشعارات حصرًا للمشرفين لانتفى نصف الغرض من النظام.
+ */
+app.get('/notifications', async (c) => {
+  const user = (c as any).get('user')
+  if (!user) return c.redirect('/login?error=unauthorized&next=/notifications')
+
+  return c.html(
+    <NotificationsPage user={user} pushAvailable={isPushConfigured(c)} />
+  )
+})
+
 app.get('/dashboard', async (c) => {
   const user = (c as any).get('user')
   if (!user) {
@@ -436,6 +455,11 @@ app.get('/dashboard', async (c) => {
           total_beneficiaries: totalBeneficiaries
         }
       }
+    } else if (view === 'notifications') {
+      // لا استعلام هنا: صفحة الإشعارات تجلب تدفّقها من /api/notifications
+      // على العميل (مع فلترة وترقيم)، فأي جلب هنا سيكون استعلامًا مكرّرًا
+      // يُرمى فورًا بمجرّد أن يعمل السكربت.
+      viewData = { pushAvailable: isPushConfigured(c) }
     } else if (view === 'audit') {
       // سجل التدقيق: أحدث 100 سطر فقط. السجل ينمو مع كل عملية إدارية،
       // وتحميله كاملًا سيبطئ الصفحة تدريجيًا حتى تتوقف عن العمل.
@@ -446,7 +470,7 @@ app.get('/dashboard', async (c) => {
     }
   } catch (error: any) {
     console.error(`Error loading dashboard view ${view}:`, error.message)
-    viewData = { list: [], stats: {}, recentDonations: [] }
+    viewData = { list: [], stats: {}, recentDonations: [], pushAvailable: isPushConfigured(c) }
   }
 
   return c.html(<Dashboard view={view} data={viewData} user={user} />)

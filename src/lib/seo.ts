@@ -17,7 +17,7 @@ import { tryGetContext } from 'hono/context-storage'
 export const SITE_ORIGIN = 'https://omarhesham.org'
 
 /** Paths that must never be indexed or advertised as canonical. */
-const NOINDEX_PREFIXES = ['/dashboard', '/login', '/profile']
+const NOINDEX_PREFIXES = ['/dashboard', '/login', '/profile', '/notifications']
 
 export type PageSeo = {
   /** Absolute canonical URL for the current page. */

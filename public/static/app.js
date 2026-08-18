@@ -327,6 +327,16 @@
     // 0. Upload widgets (dashboard views are injected dynamically)
     window.initUploadWidgets?.()
 
+    // 0.b Notification centre.
+    // loadDashboardView() replaces `.dash-main` innerHTML wholesale, which
+    // destroys the bell's listeners and leaves its 60s poller ticking against
+    // a node no longer in the document — a leak that compounds with every
+    // navigation. Re-initialising here rebinds the bell and, critically,
+    // clears the previous interval (handled inside initNotificationBell).
+    window.initNotificationBell?.()
+    window.initNotificationPage?.()
+    window.initNotificationPrefs?.()
+
     // 1. Empty table placeholders
     $$('.dash-table tbody').forEach(body => {
       if (body.children.length) return

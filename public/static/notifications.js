@@ -132,6 +132,7 @@
   // وإلا تراكمت المؤقّتات مع كل تنقّل داخل لوحة التحكم.
   let pollTimer = null
   let bellLoaded = false
+  let globalsBound = false
 
   const paintCount = (unread, capped) => {
     $$('[data-notif-count]').forEach((badge) => {
@@ -219,21 +220,22 @@
       $('[data-notif-read-all]', panel)?.addEventListener('click', () => {
         markAllRead(() => loadBellFeed(true))
       })
-
-      // النقر خارج اللوحة أو Escape يغلقها — سلوك متوقّع لأي منسدلة.
-      document.addEventListener('click', (e) => {
-        if (!panel.hidden && !wrap.contains(e.target)) closePanel()
-      })
-      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel() })
     }
 
-    // الجرس قد يُعاد بناؤه داخل اللوحة، فنعيد الربط دائمًا.
-    if (wrap.dataset.notifBound === '1' && panel) {
-      const readAll = $('[data-notif-read-all]', panel)
-      if (readAll && readAll.dataset.notifBound !== '1') {
-        readAll.dataset.notifBound = '1'
-        readAll.addEventListener('click', () => markAllRead(() => loadBellFeed(true)))
-      }
+    // مستمعو المستند يُربطون مرة واحدة فقط طوال عمر الصفحة.
+    // لو ربطناهم داخل الشرط أعلاه لأضفنا نسخة جديدة مع كل تنقّل في
+    // لوحة التحكم (لأن العقدة تُعاد بناؤها فيفقد الحرس أثره)، فينتهي
+    // الأمر بعشرات المستمعين على نفس الحدث.
+    if (!globalsBound) {
+      globalsBound = true
+      // النقر خارج اللوحة أو Escape يغلقها — سلوك متوقّع لأي منسدلة.
+      // نستعلم عن العقدة وقت الحدث لا وقت الربط، لأن العقدة المحفوظة
+      // تصبح منفصلة عن المستند بعد أول تنقّل داخل اللوحة.
+      document.addEventListener('click', (e) => {
+        const w = $('[data-notif-bell]')
+        if (w && !w.contains(e.target)) closePanel()
+      })
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel() })
     }
 
     refreshCount()

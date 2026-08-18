@@ -1,9 +1,11 @@
 import { icon, Layout } from './shared'
+import { NotificationBell, DashNotifications } from './Notifications'
 import type { UserSession } from '../types'
 
 export function Dashboard({ view, data, user }: { view: string, data: any, user: UserSession }) {
   const sideMenu = [
     ['fa-chart-pie', 'نظرة عامة', 'overview'],
+    ['fa-bell', 'الإشعارات', 'notifications'],
     ['fa-vault', 'الخزنة المالية', 'treasury'],
     ['fa-arrow-down', 'الإيرادات (الوارد)', 'income'],
     ['fa-arrow-up', 'المصروفات (المنصرف)', 'expenses'],
@@ -42,6 +44,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
               <span style="color:var(--muted)">{icon('fa-magnifying-glass')}</span>
               <input type="text" id="dash-search-input" placeholder="بحث في الجدول..." style="border:none; background:transparent; outline:none; font-size:.88rem; width:140px; color:var(--text)" />
             </div>
+            <NotificationBell />
             <button id="theme-toggle" type="button" aria-label="تغيير المظهر">{icon('fa-moon')}</button>
             <span>{icon('fa-user-shield')}</span>
             <b>{user.name}</b>
@@ -66,6 +69,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
         {view === 'users' && <DashUsers list={data.list} currentUserId={user.id} />}
         {view === 'cases' && <DashCases groups={data.groups || []} stats={data.stats || {}} user={user} />}
         {view === 'audit' && <DashAudit list={data.list || []} />}
+        {view === 'notifications' && <DashNotifications pushAvailable={data.pushAvailable === true} isAdmin={user.role === 'admin'} />}
       </div>
     </section>
 
