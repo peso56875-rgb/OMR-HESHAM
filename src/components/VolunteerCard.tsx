@@ -367,6 +367,24 @@ export function VolunteerCardView({
 
         <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
         <script dangerouslySetInnerHTML={{ __html: `
+          async function fetchImageAsDataUrl(url) {
+            if (!url) return null;
+            if (url.startsWith('data:')) return url;
+            try {
+              const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+              if (!res.ok) return null;
+              const blob = await res.blob();
+              return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(blob);
+              });
+            } catch (_) {
+              return null;
+            }
+          }
+
           async function downloadCardPNG() {
             const btn = document.getElementById('btn-download-card-png');
             const card = document.getElementById('volunteer-id-card-target');
@@ -379,9 +397,19 @@ export function VolunteerCardView({
             }
 
             try {
+              // Convert images to base64 before snapshot
+              const images = card.querySelectorAll('img');
+              for (const img of images) {
+                if (img.src && !img.src.startsWith('data:')) {
+                  const b64 = await fetchImageAsDataUrl(img.src);
+                  if (b64) img.src = b64;
+                }
+              }
+
               if (document.fonts && document.fonts.ready) {
                 await document.fonts.ready;
               }
+              await new Promise(r => setTimeout(r, 200));
 
               const canvas = await html2canvas(card, {
                 scale: 3,
@@ -396,12 +424,17 @@ export function VolunteerCardView({
               const safeName = rawName.replace(/[\\\\/:*?"<>|\\r\\n]+/g, '-').trim() || 'volunteer';
               const filename = 'كارنيه-متطوع-' + safeName + '.png';
 
+              const blob = await new Promise(r => canvas.toBlob(r, 'image/png', 1.0));
+              if (!blob) throw new Error('فشل إنشاء ملف الصورة');
+
+              const blobUrl = URL.createObjectURL(blob);
               const link = document.createElement('a');
               link.download = filename;
-              link.href = canvas.toDataURL('image/png', 1.0);
+              link.href = blobUrl;
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
+              setTimeout(() => URL.revokeObjectURL(blobUrl), 3000);
 
               if (btn) {
                 btn.innerHTML = '<i class="fa-solid fa-check"></i> تم التحميل!';

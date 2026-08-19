@@ -754,11 +754,14 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                   class="vol-avatar-trigger"
                   aria-label={`عرض صورة ${v.full_name}`}
                   title={v.avatar_url ? "اضغط لعرض وتكبير الصورة بالكامل" : "لا توجد صورة مرفوعة"}
+                  data-vol-id={v.id}
                   data-vol-img={v.avatar_url || ''}
+                  data-vol-avatar={v.avatar_url || ''}
                   data-vol-download={v.avatar_url ? `/api/volunteers/photo/${v.id}/download` : ''}
                   data-vol-name={v.full_name || ''}
                   data-vol-code={v.volunteer_code || ''}
                   data-vol-role={v.preferred_role || 'عام'}
+                  data-vol-team={v.team || ''}
                   data-vol-status={statusText}
                   data-vol-status-color={statusColor}
                   data-vol-status-bg={statusBg}
@@ -913,11 +916,14 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                           class="vol-avatar-trigger in-modal"
                           aria-label={`عرض صورة ${v.full_name}`}
                           title={v.avatar_url ? "اضغط لعرض وتكبير الصورة بالكامل" : "لا توجد صورة مرفوعة"}
+                          data-vol-id={v.id}
                           data-vol-img={v.avatar_url || ''}
+                          data-vol-avatar={v.avatar_url || ''}
                           data-vol-download={v.avatar_url ? `/api/volunteers/photo/${v.id}/download` : ''}
                           data-vol-name={v.full_name || ''}
                           data-vol-code={v.volunteer_code || ''}
                           data-vol-role={v.preferred_role || 'عام'}
+                          data-vol-team={v.team || ''}
                           data-vol-status={statusText}
                           data-vol-status-color={statusColor}
                           data-vol-status-bg={statusBg}
@@ -1218,13 +1224,13 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
               </button>
             </div>
             <div class="vol-lightbox-divider"></div>
-            <button type="button" class="vol-lb-btn vol-lb-btn-gold" id="vol-lb-download-id-card" title="تحميل بطاقة هوية المتطوع (الكارنيه) كصورة PNG">
-              {icon('fa-id-badge')} <span>تحميل الكارنيه</span>
+            <button type="button" class="vol-lb-btn vol-lb-btn-gold" id="vol-lb-download-id-card" title="تحميل بطاقة هوية المتطوع (الكارنيه) كصورة PNG فائقة الجودة">
+              {icon('fa-id-badge')} <span>تحميل الكارنيه (ID)</span>
             </button>
             <a id="vol-lb-download" href="#" download="volunteer-photo.jpg" class="vol-lb-btn vol-lb-btn-primary" title="تحميل الصورة الشخصية بالجودة الكاملة">
               {icon('fa-download')} <span>تحميل الصورة</span>
             </a>
-            <a id="vol-lb-open-tab" href="#" target="_blank" rel="noopener noreferrer" class="vol-lb-btn" title="فتح الرابط في علامة تبويب جديدة">
+            <a id="vol-lb-open-tab" href="#" target="_blank" rel="noopener noreferrer" class="vol-lb-btn" title="فتح الصورة الأصلية في علامة تبويب جديدة">
               {icon('fa-arrow-up-right-from-square')}
             </a>
             <button type="button" class="vol-lb-btn vol-lb-btn-close" id="vol-lb-close" title="إغلاق (Esc)">

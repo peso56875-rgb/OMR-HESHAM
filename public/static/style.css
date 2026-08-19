@@ -2677,24 +2677,27 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
 }
 
 .vol-lb-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   border: none;
   background: transparent;
   color: var(--text);
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: .92rem;
   cursor: pointer;
-  transition: background .18s, color .18s, transform .18s;
+  transition: all .18s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .vol-lb-btn:hover {
   background: var(--surface-2);
   color: var(--emerald);
-  transform: scale(1.06);
+  transform: translateY(-1px);
 }
 
 .vol-lb-btn:active {
@@ -2702,27 +2705,59 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
 }
 
 .vol-lb-btn-primary {
-  width: auto;
-  padding: 0 12px;
-  gap: 6px;
+  width: auto !important;
+  height: 38px;
+  padding: 0 16px;
+  gap: 8px;
   display: inline-flex;
   align-items: center;
-  background: var(--emerald-600);
+  justify-content: center;
+  background: linear-gradient(135deg, #0c4a3f, #147a68);
   color: #ffffff !important;
-  font-size: .8rem;
+  font-size: .82rem;
   font-weight: 800;
+  border-radius: 10px;
+  border: 1px solid rgba(22, 138, 112, 0.4);
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(12, 74, 63, 0.25);
 }
 
 .vol-lb-btn-primary:hover {
-  background: var(--emerald-700, #0d5f4e);
+  background: linear-gradient(135deg, #105a4d, #19947f);
   color: #ffffff !important;
   transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(12, 74, 63, 0.4);
+}
+
+.vol-lb-btn-gold {
+  width: auto !important;
+  height: 38px;
+  padding: 0 16px;
+  gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #c59b27, #8c6d15);
+  color: #ffffff !important;
+  font-size: .82rem;
+  font-weight: 800;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(197, 155, 39, 0.3);
+}
+
+.vol-lb-btn-gold:hover {
+  background: linear-gradient(135deg, #dfb338, #a38019);
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(197, 155, 39, 0.45);
 }
 
 .vol-lb-btn-close {
-  background: rgba(220, 38, 38, 0.1);
-  color: #dc2626;
-  border: 1px solid rgba(220, 38, 38, 0.2);
+  background: rgba(220, 38, 38, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(220, 38, 38, 0.25);
 }
 
 .vol-lb-btn-close:hover {
@@ -2734,7 +2769,7 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
   width: 1px;
   height: 24px;
   background: var(--border);
-  margin: 0 2px;
+  margin: 0 4px;
 }
 
 /* Photo Viewport */
@@ -2989,10 +3024,21 @@ body.vol-lightbox-open {
 .vol-lb-meta { color: #94a3b8; }
 .vol-lightbox-thumb { border-color: rgba(255, 255, 255, .18); background: #10231f; }
 
-.vol-lightbox-actions { margin-inline-start: auto; }
+.vol-lightbox-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+  flex-wrap: wrap;
+}
 .vol-lightbox-controls {
-  border-color: rgba(255, 255, 255, .12);
-  background: rgba(255, 255, 255, .06);
+  border-color: rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .07);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 12px;
 }
 .vol-lightbox-actions .vol-lb-btn {
   color: #dbe7e4;
@@ -3003,19 +3049,58 @@ body.vol-lightbox-open {
 }
 .vol-lightbox-actions .vol-lb-btn-gold {
   background: linear-gradient(135deg, #c59b27, #8c6d15);
-  color: #ffffff;
+  color: #ffffff !important;
   font-weight: 800;
-  border: 1px solid rgba(255, 215, 0, .3);
-  padding: 0 14px;
+  border: 1px solid rgba(255, 215, 0, .4);
+  padding: 0 16px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(197, 155, 39, .35);
 }
 .vol-lightbox-actions .vol-lb-btn-gold:hover {
   background: linear-gradient(135deg, #dfb338, #a38019);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(197, 155, 39, .4);
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(197, 155, 39, .5);
+  transform: translateY(-1px);
 }
-.vol-lightbox-actions .vol-lb-btn-close { color: #fca5a5; }
-.vol-lightbox-actions .vol-lb-btn-close:hover { color: #fff; background: #dc2626; }
-.vol-lightbox-divider { background: rgba(255, 255, 255, .14); }
+.vol-lightbox-actions .vol-lb-btn-primary {
+  background: linear-gradient(135deg, #0c4a3f, #147a68);
+  color: #ffffff !important;
+  font-weight: 800;
+  border: 1px solid rgba(22, 138, 112, .45);
+  padding: 0 16px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(12, 74, 63, .35);
+}
+.vol-lightbox-actions .vol-lb-btn-primary:hover {
+  background: linear-gradient(135deg, #105a4d, #19947f);
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(12, 74, 63, .5);
+  transform: translateY(-1px);
+}
+.vol-lightbox-actions .vol-lb-btn-close {
+  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+.vol-lightbox-actions .vol-lb-btn-close:hover {
+  color: #fff;
+  background: #dc2626;
+  border-color: #dc2626;
+}
+.vol-lightbox-divider {
+  background: rgba(255, 255, 255, .16);
+  margin: 0 4px;
+}
 
 .vol-lightbox-viewport {
   flex: 1 1 auto;
@@ -3164,18 +3249,29 @@ body.vol-lightbox-open {
   .vol-lb-meta { font-size: .7rem; }
   .vol-lightbox-actions {
     width: 100%;
+    display: flex;
+    align-items: center;
     justify-content: space-between;
-    gap: 5px;
+    gap: 6px;
+    flex-wrap: wrap;
   }
   .vol-lightbox-controls {
-    display: flex;
-    flex: 1;
+    display: inline-flex;
     justify-content: center;
     gap: 2px;
   }
   .vol-lb-btn { width: 34px; height: 34px; }
-  .vol-lb-btn-primary { width: auto; min-width: 88px; padding: 0 10px; }
-  .vol-lb-btn-primary span { font-size: .72rem; }
+  .vol-lb-btn-gold,
+  .vol-lb-btn-primary {
+    width: auto !important;
+    min-width: auto;
+    padding: 0 10px;
+    height: 34px;
+    gap: 5px;
+    font-size: .74rem;
+  }
+  .vol-lb-btn-gold span,
+  .vol-lb-btn-primary span { font-size: .74rem; }
   .vol-lightbox-divider { display: none; }
   .vol-lightbox-viewport { min-height: 0; }
   .vol-lb-main-img {
@@ -3190,7 +3286,7 @@ body.vol-lightbox-open {
     padding: 10px;
   }
   .vol-lightbox-infogrid { grid-template-columns: 1fr 1fr; padding: 9px; }
-  .vol-lightbox-bottom-actions { flex-wrap: nowrap; }
+  .vol-lightbox-bottom-actions { flex-wrap: wrap; gap: 8px; }
   .vol-lb-copy-link-btn,
   .vol-lb-close-bottom-btn { padding: 8px 10px; font-size: .72rem; }
 }

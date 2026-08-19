@@ -598,6 +598,7 @@
   }
 
   /* ─── Volunteer ID Card Generator & Downloader ─── */
+  /* ─── Volunteer ID Card Generator & Downloader ─── */
   async function loadHtml2CanvasLib() {
     if (window.html2canvas) return window.html2canvas
     return new Promise((resolve, reject) => {
@@ -615,82 +616,140 @@
     })
   }
 
+  async function fetchImageAsDataUrl(url) {
+    if (!url) return null
+    if (url.startsWith('data:')) return url
+    try {
+      const res = await fetch(url, { mode: 'cors', credentials: 'omit' })
+      if (!res.ok) return null
+      const blob = await res.blob()
+      return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result)
+        reader.onerror = () => resolve(null)
+        reader.readAsDataURL(blob)
+      })
+    } catch (_) {
+      return null
+    }
+  }
+
   async function downloadVolunteerIdCard(data, buttonEl) {
     const originalHtml = buttonEl ? buttonEl.innerHTML : ''
     if (buttonEl) {
       buttonEl.disabled = true
       buttonEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ التجهيز...'
     }
-    toast('جارٍ إنشاء وتحميل بطاقة هوية المتطوع بدقة فائقة...', 'success')
+    toast('جارٍ إنشاء وتحميل كارنيه المتطوع المعتمد بدقة فائقة...', 'success')
 
     try {
       const html2canvas = await loadHtml2CanvasLib()
 
-      const stage = document.createElement('div')
-      stage.style.cssText = 'position:fixed; left:-9999px; top:-9999px; width:420px; background:#0f172a; border-radius:24px; overflow:hidden; font-family:"Cairo","Tajawal",sans-serif; direction:rtl; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:2px solid #c59b27; z-index:-100;'
+      const rawName = (data.name || 'متطوع').trim()
+      const safeName = rawName.replace(/[\\/:*?"<>|\r\n]+/g, '-').trim() || 'متطوع'
+      const code = data.code || `VOL-${(data.id || '').slice(0, 6).toUpperCase() || '2026'}`
+      const rank = data.rank || 'متطوع مبادر'
+      const team = data.team || data.role || 'الفريق الميداني'
+      const city = data.city || 'الدقهلية'
+      const hours = data.hours || '0'
+      const createdDate = data.created || '2026'
+      const expiryDate = data.expiry || 'صلاحية مفتوحة'
+      const isExpired = expiryDate.includes('منتهي') || expiryDate.includes('ملغاة') || expiryDate.includes('مجمّدة')
+      const initials = (rawName.split(' ')[0] || 'م').charAt(0) || 'م'
 
-      const initials = (data.name || 'م').trim().charAt(0) || 'م'
-      const avatarHtml = data.avatar || data.img
-        ? `<img src="${data.avatar || data.img}" crossorigin="anonymous" style="width:100%; height:100%; object-fit:cover;" />`
-        : `<div style="width:100%; height:100%; display:grid; place-items:center; background:linear-gradient(135deg,#0c4a3f,#168a70); color:#fff; font-size:38px; font-weight:900;">${initials}</div>`
+      // Pre-convert avatar and logo to Base64 Data URL to prevent CORS/taint issues in canvas
+      const avatarSrc = data.avatar || data.img || ''
+      const [avatarDataUrl, logoDataUrl] = await Promise.all([
+        fetchImageAsDataUrl(avatarSrc),
+        fetchImageAsDataUrl('/static/foundation-logo.png')
+      ])
+
+      const container = document.createElement('div')
+      container.style.cssText = 'position:fixed; left:0; top:0; width:500px; height:850px; z-index:-99999; opacity:0.001; pointer-events:none; overflow:hidden; background:transparent;'
+
+      const stage = document.createElement('div')
+      stage.style.cssText = 'width:440px; background:linear-gradient(145deg, #072722, #0d4a3e 70%, #051e1a); color:#ffffff; border-radius:28px; padding:26px 24px; box-shadow:0 20px 50px rgba(7, 39, 34, 0.4); position:relative; overflow:hidden; border:2px solid rgba(197, 155, 39, 0.45); font-family:"Tajawal","Cairo",sans-serif; direction:rtl; text-align:right; box-sizing:border-box;'
+
+      const logoImgSrc = logoDataUrl || '/static/foundation-logo.png'
+      const avatarHtml = avatarDataUrl
+        ? `<img src="${avatarDataUrl}" alt="${rawName}" style="width:96px; height:96px; border-radius:50%; border:4px solid #c59b27; box-shadow:0 6px 20px rgba(0,0,0,0.35); object-fit:cover; background:#ffffff; display:block;" />`
+        : `<div style="width:96px; height:96px; border-radius:50%; border:4px solid #c59b27; box-shadow:0 6px 20px rgba(0,0,0,0.35); display:grid; place-items:center; font-size:2.4rem; font-weight:900; background:#0d4a3e; color:#c59b27;">${initials}</div>`
 
       stage.innerHTML = `
-        <div style="background:linear-gradient(135deg, #0c4a3f 0%, #062e26 100%); padding:22px 20px 18px; text-align:center; border-bottom:2px solid #c59b27; position:relative;">
-          <div style="position:absolute; top:12px; right:16px; background:rgba(197,155,39,0.15); border:1px solid #c59b27; color:#c59b27; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">بطاقة تطوع رسمية</div>
-          <div style="font-size:11px; color:#c59b27; font-weight:800; letter-spacing:0.5px; margin-bottom:3px;">جمهورية مصر العربية</div>
-          <div style="font-size:17px; color:#ffffff; font-weight:900;">مؤسسة د. عمر هشام الخيرية</div>
-          <div style="font-size:10px; color:rgba(255,255,255,0.7); margin-top:2px;">مشهرة برقم 1002 لسنة 2026 | وزارة التضامن الاجتماعي</div>
+        <div style="position:absolute; top:0; left:0; right:0; height:6px; background:linear-gradient(90deg, #c59b27, #f5d77f, #c59b27);"></div>
+        <img src="${logoImgSrc}" alt="" style="position:absolute; width:260px; opacity:0.04; pointer-events:none; top:50%; left:50%; transform:translate(-50%, -50%);" />
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <img src="${logoImgSrc}" alt="الشعار" style="width:44px; height:44px; display:block;" />
+            <div>
+              <h4 style="font-size:0.95rem; font-weight:900; color:#ffffff; margin:0; line-height:1.2;">مؤسسة د. عمر هشام</h4>
+              <p style="font-size:0.65rem; color:#94a3b8; margin:2px 0 0; line-height:1.2;">إدارة العمل التطوعي الميداني</p>
+            </div>
+          </div>
+          <span style="font-size:0.68rem; font-weight:800; color:#f5d77f; border:1px solid #c59b27; padding:3px 9px; border-radius:999px; background:rgba(197, 155, 39, 0.15);">بطاقة هوية رسمية</span>
         </div>
 
-        <div style="padding:24px 20px 20px; text-align:center; background:#ffffff;">
-          <div style="width:100px; height:100px; margin:-10px auto 14px; border-radius:50%; border:3px solid #c59b27; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.15); background:#f8fafc;">
-            ${avatarHtml}
+        <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:16px; position:relative;">
+          ${avatarHtml}
+          <h3 style="font-size:1.35rem; font-weight:900; margin:10px 0 4px; color:#ffffff; text-align:center;">${rawName}</h3>
+          <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.78rem; font-weight:800; color:#f5d77f; background:rgba(197, 155, 39, 0.2); border:1px solid rgba(197, 155, 39, 0.35); padding:4px 14px; border-radius:999px;">
+            <i class="fa-solid fa-medal"></i> ${rank}
+          </span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:rgba(255, 255, 255, 0.07); border:1px solid rgba(255, 255, 255, 0.12); padding:12px 14px; border-radius:16px; margin-bottom:16px;">
+          <div>
+            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">كود المتطوع:</span>
+            <b style="font-family:monospace; color:#f5d77f; font-size:0.92rem; display:block;">${code}</b>
+          </div>
+          <div>
+            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">فريق العمل:</span>
+            <b style="font-size:0.84rem; color:#ffffff; display:block;">${team}</b>
+          </div>
+          <div>
+            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">المحافظة:</span>
+            <b style="font-size:0.84rem; color:#ffffff; display:block;">${city}</b>
+          </div>
+          <div>
+            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">ساعات الخدمة:</span>
+            <b style="color:#10b981; font-size:0.84rem; display:block;">${hours} ساعة موثقة</b>
+          </div>
+          <div>
+            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">تاريخ الانضمام:</span>
+            <b style="font-size:0.84rem; color:#ffffff; display:block;">${createdDate}</b>
+          </div>
+          <div>
+            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">صلاحية البطاقة:</span>
+            <b style="font-size:0.84rem; color:${isExpired ? '#ef4444' : '#10b981'}; display:block;">${expiryDate}</b>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px dashed rgba(197, 155, 39, 0.3);">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:44px; height:44px; background:#ffffff; border-radius:8px; display:grid; place-items:center; font-size:1.5rem; color:#0d4a3e;">
+              <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <div style="font-size:0.7rem; color:#94a3b8; text-align:right;">
+              <span style="display:block; color:#ffffff; font-weight:700;">توثيق رقمي معتمد</span>
+              <span style="font-family:monospace; font-size:0.65rem; color:#cbd5e1;">${code}</span>
+            </div>
           </div>
 
-          <div style="font-size:18px; font-weight:900; color:#0c4a3f; margin-bottom:4px;">${data.name || 'متطوع متميز'}</div>
-          <div style="display:inline-block; background:rgba(197,155,39,0.12); color:#8c6d15; font-size:12px; font-weight:800; padding:3px 12px; border-radius:12px; border:1px solid rgba(197,155,39,0.25); margin-bottom:16px;">
-            ${data.rank || 'متطوع مبادر'}
-          </div>
-
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; text-align:right; background:#f8fafc; padding:12px; border-radius:14px; border:1px solid #e2e8f0; margin-bottom:16px; font-size:12px;">
-            <div>
-              <div style="color:#64748b; font-size:10px; font-weight:700;">كود المتطوع</div>
-              <div style="font-weight:900; color:#0c4a3f; font-family:monospace; font-size:13px;">${data.code || 'VOL-2026'}</div>
-            </div>
-            <div>
-              <div style="color:#64748b; font-size:10px; font-weight:700;">المجال المعتمد</div>
-              <div style="font-weight:800; color:#1e293b;">${data.role || 'عام'}</div>
-            </div>
-            <div>
-              <div style="color:#64748b; font-size:10px; font-weight:700;">المحافظة / المدينة</div>
-              <div style="font-weight:800; color:#1e293b;">${data.city || 'الدقهلية'}</div>
-            </div>
-            <div>
-              <div style="color:#64748b; font-size:10px; font-weight:700;">ساعات التطوع</div>
-              <div style="font-weight:800; color:#168a70;">${data.hours || 0} ساعة</div>
-            </div>
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#0c4a3f; border-radius:12px; color:#ffffff; font-size:11px;">
-            <div style="text-align:right;">
-              <div style="opacity:0.75; font-size:9px;">تاريخ التحرير</div>
-              <div style="font-weight:700;">${data.created || '2026/01/01'}</div>
-            </div>
-            <div style="text-align:left;">
-              <div style="opacity:0.75; font-size:9px;">صلاحية البطاقة</div>
-              <div style="font-weight:700; color:#f59e0b;">${data.expiry || 'سارية'}</div>
-            </div>
-          </div>
-
-          <div style="margin-top:14px; padding-top:12px; border-top:1px dashed #cbd5e1; display:flex; align-items:center; justify-content:space-between; font-size:10px; color:#64748b;">
-            <div>www.omarhesham.org</div>
-            <div style="font-weight:800; color:#0c4a3f;">الختم الرقمي الرسمي ✓</div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; text-align:left; color:#94a3b8; font-size:0.65rem;">
+            <strong style="color:#f5d77f; font-size:0.72rem;">مشهرة برقم 3115 / 2026</strong>
+            <span>وزارة التضامن الاجتماعي</span>
           </div>
         </div>
       `
 
-      document.body.appendChild(stage)
-      await new Promise(r => setTimeout(r, 450))
+      container.appendChild(stage)
+      document.body.appendChild(container)
+
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready
+      }
+      await new Promise(r => setTimeout(r, 300))
 
       const canvas = await html2canvas(stage, {
         scale: 3,
@@ -700,27 +759,34 @@
         logging: false
       })
 
-      document.body.removeChild(stage)
+      container.remove()
 
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'))
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png', 1.0))
+      if (!blob) throw new Error('فشل إنشاء ملف الصورة')
+
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
-      const cleanName = (data.name || 'متطوع').replace(/\s+/g, '_')
-      a.download = `كارنيه_متطوع_${cleanName}.png`
+      a.download = `كارنيه-متطوع-${safeName}.png`
       a.href = url
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      setTimeout(() => URL.revokeObjectURL(url), 2000)
+      setTimeout(() => URL.revokeObjectURL(url), 3000)
 
-      toast('تم تنزيل بطاقة الهوية (الكارنيه) بنجاح كصورة فائقة الدقة', 'success')
+      toast('تم تنزيل كارنيه المتطوع المعتمد بنجاح بجودة فائقة', 'success')
+      if (buttonEl) {
+        buttonEl.innerHTML = '<i class="fa-solid fa-check"></i> تم التحميل!'
+        setTimeout(() => {
+          buttonEl.innerHTML = originalHtml
+          buttonEl.disabled = false
+        }, 2000)
+      }
     } catch (err) {
       console.error('ID Card generation error:', err)
-      toast('تعذر تنزيل الكارنيه كصورة مباشرة — يمكنك فتحه من الزر ومعاينته', 'error')
-    } finally {
+      toast('تعذر تنزيل الكارنيه كصورة مباشرة — يمكنك استخدام زر عرض الكارنيه للطباعة', 'error')
       if (buttonEl) {
-        buttonEl.disabled = false
         buttonEl.innerHTML = originalHtml
+        buttonEl.disabled = false
       }
     }
   }
@@ -1372,11 +1438,14 @@
       e.stopPropagation()
 
       const data = {
+        id: trigger.getAttribute('data-vol-id') || '',
         img: trigger.getAttribute('data-vol-img') || '',
+        avatar: trigger.getAttribute('data-vol-avatar') || trigger.getAttribute('data-vol-img') || '',
         download: trigger.getAttribute('data-vol-download') || '',
         name: trigger.getAttribute('data-vol-name') || '',
         code: trigger.getAttribute('data-vol-code') || '',
         role: trigger.getAttribute('data-vol-role') || '',
+        team: trigger.getAttribute('data-vol-team') || trigger.getAttribute('data-vol-role') || '',
         status: trigger.getAttribute('data-vol-status') || '',
         statusColor: trigger.getAttribute('data-vol-status-color') || '',
         statusBg: trigger.getAttribute('data-vol-status-bg') || '',

@@ -97,8 +97,27 @@ export function VolunteerPortal({
                   </div>
 
                     <div class="id-card-footer" style="display: flex; flex-direction: column; gap: 6px;">
+                      <button
+                        type="button"
+                        class="vol-download-id-card-btn"
+                        data-vol-id={volunteer.id}
+                        data-vol-name={volunteer.full_name || user.name}
+                        data-vol-code={code}
+                        data-vol-role={volunteer.preferred_role || 'عام'}
+                        data-vol-team={volunteer.team || 'الفريق الميداني'}
+                        data-vol-city={volunteer.city || 'الدقهلية'}
+                        data-vol-rank={rank}
+                        data-vol-hours={hours}
+                        data-vol-avatar={volunteer.avatar_url || user.avatar || ''}
+                        data-vol-created={volunteer.approved_at ? new Date(volunteer.approved_at).toLocaleDateString('ar-EG') : '2026'}
+                        data-vol-expiry={volunteer.expires_at ? new Date(volunteer.expires_at).toLocaleDateString('ar-EG') : 'صلاحية مفتوحة'}
+                        style="width: 100%; background: #0c4a3f; color: #fff; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 14px rgba(12, 74, 63, 0.25);"
+                        title="تحميل بطاقة هويتك التطوعية كصورة PNG عالية الدقة على جهازك"
+                      >
+                        {icon('fa-download')} تحميل الكارنيه (PNG)
+                      </button>
                       <a href={`/volunteers/card/${volunteer.id}`} class="outline-btn mini-btn" target="_blank" style="width: 100%; text-align: center; justify-content: center;">
-                        {icon('fa-id-badge')} عرض البطاقة الكاملة
+                        {icon('fa-arrow-up-right-from-square')} عرض الكارنيه الكامل
                       </a>
                       <button
                         type="button"
