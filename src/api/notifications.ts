@@ -31,11 +31,13 @@ import {
   DEFAULT_PREFS,
   getPrefs,
   notify,
+  notifyAdmins,
   typeDef,
   type NotificationCategory,
+  type NotificationPriority,
   type NotificationPrefsDoc
 } from '../lib/notifications'
-import { registerToken, unregisterToken, isPushConfigured, getVapidKey } from '../lib/push'
+import { registerToken, unregisterToken, isPushConfigured, getVapidKey, sendPushToUsers } from '../lib/push'
 
 export const notifications = new Hono()
 
@@ -532,4 +534,299 @@ notifications.get('/vapid', (c) =>
     configured: isPushConfigured(c)
   })
 )
+
+/**
+ * POST /api/notifications/send-custom
+ * إرسال إشعار مخصص أو بث عام لكافة المستخدمين أو فئة محددة
+ */
+notifications.post('/send-custom', adminMiddleware, rateLimiter(15, 60000, 'notif-send-custom'), async (c) => {
+  const user = currentUser(c)
+  const db = getFirestore(c)
+
+  try {
+    const contentType = c.req.header('content-type') || ''
+    const body: any = contentType.includes('application/json')
+      ? await c.req.json().catch(() => ({}))
+      : await c.req.parseBody()
+
+    const title = String(body.title || '').trim()
+    const textBody = String(body.body || '').trim()
+    const category = String(body.category || 'content').trim() as NotificationCategory
+    const priority = (String(body.priority || 'normal').trim() === 'high' ? 'high' : 'normal') as NotificationPriority
+    const link = String(body.link || '').trim() || '/notifications'
+    const audience = String(body.audience || 'all').trim() // 'all' | 'volunteers' | 'donors' | 'admins' | 'single'
+    const targetUser = String(body.target_user || '').trim() // uid or email if single
+    const sendInApp = body.send_in_app === undefined ? true : (body.send_in_app === true || body.send_in_app === 'on' || body.send_in_app === '1' || body.send_in_app === 1 || body.send_in_app === 'true')
+    const sendPush = body.send_push === undefined ? true : (body.send_push === true || body.send_push === 'on' || body.send_push === '1' || body.send_push === 1 || body.send_push === 'true')
+
+    if (!title) {
+      if (!contentType.includes('application/json')) return c.redirect('/dashboard?view=notifications&error=title_required')
+      return c.json({ error: 'عنوان الإشعار مطلوب' }, 400)
+    }
+
+    let recipientUserIds: string[] = []
+    let inAppCreated = 0
+
+    if (audience === 'admins') {
+      // إشعار موجه لكل المشرفين
+      if (sendInApp) {
+        await notifyAdmins(c, {
+          type: 'custom_broadcast',
+          title,
+          body: textBody,
+          link,
+          priority,
+          actor: { id: user.id, name: user.name || 'المشرف' },
+          meta: { broadcast: true, audience: 'admins' }
+        })
+        inAppCreated++
+      }
+
+      if (sendPush) {
+        const adminProfiles = await db.collection('profiles').where('role', '==', 'admin').get().catch(() => ({ docs: [] }))
+        recipientUserIds = adminProfiles.docs.map((d: any) => d.id)
+      }
+    } else if (audience === 'volunteers') {
+      // جلب معرفات المتطوعين المعتمدين
+      const volSnap = await db.collection('volunteers').where('status', '==', 'approved').get().catch(() => ({ docs: [] }))
+      const profileIds = new Set<string>()
+      volSnap.docs.forEach((d: any) => {
+        const pId = d.data()?.profile_id
+        if (pId) profileIds.add(pId)
+      })
+      recipientUserIds = Array.from(profileIds)
+
+      if (sendInApp && recipientUserIds.length) {
+        const batch = db.batch()
+        const now = new Date().toISOString()
+        for (const uid of recipientUserIds.slice(0, 500)) {
+          const ref = db.collection('notifications').doc()
+          batch.set(ref, {
+            user_id: uid,
+            audience: 'user',
+            type: 'custom_broadcast',
+            category: 'volunteers',
+            priority,
+            title,
+            body: textBody,
+            link,
+            icon: 'fa-bullhorn',
+            actor_id: user.id || null,
+            actor_name: user.name || 'إدارة المؤسسة',
+            meta: { audience: 'volunteers', broadcast: true },
+            created_at: now,
+            is_read: false,
+            read_at: null
+          })
+          inAppCreated++
+        }
+        await batch.commit()
+      }
+    } else if (audience === 'donors') {
+      // جلب معرفات المتبرعين
+      const donorProfiles = await db.collection('profiles').where('role', '==', 'donor').limit(500).get().catch(() => ({ docs: [] }))
+      recipientUserIds = donorProfiles.docs.map((d: any) => d.id)
+
+      if (sendInApp && recipientUserIds.length) {
+        const batch = db.batch()
+        const now = new Date().toISOString()
+        for (const uid of recipientUserIds.slice(0, 500)) {
+          const ref = db.collection('notifications').doc()
+          batch.set(ref, {
+            user_id: uid,
+            audience: 'user',
+            type: 'custom_broadcast',
+            category: 'financial',
+            priority,
+            title,
+            body: textBody,
+            link,
+            icon: 'fa-bullhorn',
+            actor_id: user.id || null,
+            actor_name: user.name || 'إدارة المؤسسة',
+            meta: { audience: 'donors', broadcast: true },
+            created_at: now,
+            is_read: false,
+            read_at: null
+          })
+          inAppCreated++
+        }
+        await batch.commit()
+      }
+    } else if (audience === 'single') {
+      // مستخدم محدد
+      if (!targetUser) {
+        if (!contentType.includes('application/json')) return c.redirect('/dashboard?view=notifications&error=target_required')
+        return c.json({ error: 'يرجى تحديد المعرف أو البريد للمستخدم المستهدف' }, 400)
+      }
+
+      let uid = targetUser
+      if (targetUser.includes('@')) {
+        const profSnap = await db.collection('profiles').where('email', '==', targetUser.toLowerCase()).limit(1).get().catch(() => ({ empty: true, docs: [] }))
+        if (profSnap.empty) {
+          if (!contentType.includes('application/json')) return c.redirect('/dashboard?view=notifications&error=user_not_found')
+          return c.json({ error: 'لم يتم العثور على مستخدم بهذا البريد الإلكتروني' }, 404)
+        }
+        uid = profSnap.docs[0].id
+      }
+
+      recipientUserIds = [uid]
+
+      if (sendInApp) {
+        await notify(c, {
+          user_id: uid,
+          type: 'custom_direct',
+          category,
+          priority,
+          title,
+          body: textBody,
+          link,
+          actor: { id: user.id, name: user.name || 'إدارة المؤسسة' },
+          meta: { direct: true }
+        })
+        inAppCreated++
+      }
+    } else {
+      // audience === 'all' (البث الشامل لكافة المستخدمين والأجهزة)
+      const profSnap = await db.collection('profiles').limit(500).get().catch(() => ({ docs: [] }))
+      recipientUserIds = profSnap.docs.map((d: any) => d.id)
+
+      if (sendInApp) {
+        await notifyAdmins(c, {
+          type: 'custom_broadcast',
+          title,
+          body: textBody,
+          link,
+          priority,
+          actor: { id: user.id, name: user.name || 'إدارة المؤسسة' },
+          meta: { broadcast: true, audience: 'all' }
+        })
+        inAppCreated++
+
+        if (recipientUserIds.length) {
+          const batch = db.batch()
+          const now = new Date().toISOString()
+          for (const uid of recipientUserIds.slice(0, 500)) {
+            const ref = db.collection('notifications').doc()
+            batch.set(ref, {
+              user_id: uid,
+              audience: 'user',
+              type: 'custom_broadcast',
+              category: 'content',
+              priority,
+              title,
+              body: textBody,
+              link,
+              icon: 'fa-bullhorn',
+              actor_id: user.id || null,
+              actor_name: user.name || 'إدارة المؤسسة',
+              meta: { audience: 'all', broadcast: true },
+              created_at: now,
+              is_read: false,
+              read_at: null
+            })
+            inAppCreated++
+          }
+          await batch.commit()
+        }
+      }
+    }
+
+    // إرسال Push Notification
+    let pushResult = { sent: 0, failed: 0, pruned: 0 }
+    if (sendPush && isPushConfigured(c)) {
+      if (audience === 'all') {
+        const allTokensSnap = await db.collection('push_tokens').where('is_active', '==', true).get().catch(() => ({ docs: [] }))
+        const allUserIds = [...new Set(allTokensSnap.docs.map((d: any) => d.data()?.user_id).filter(Boolean))]
+        pushResult = await sendPushToUsers(c, allUserIds.length ? allUserIds : recipientUserIds, {
+          title,
+          body: textBody,
+          link,
+          tag: 'admin-broadcast'
+        })
+      } else if (recipientUserIds.length) {
+        pushResult = await sendPushToUsers(c, recipientUserIds, {
+          title,
+          body: textBody,
+          link,
+          tag: `custom-${audience}`
+        })
+      }
+    }
+
+    if (!contentType.includes('application/json')) {
+      return c.redirect('/dashboard?view=notifications&success=broadcast_sent')
+    }
+
+    return c.json({
+      ok: true,
+      message: `تم إرسال الإشعار بنجاح (تم التدوين داخلياً: ${inAppCreated}، وإشعارات الشاشة Push المرسلة: ${pushResult.sent})`,
+      inAppCreated,
+      push: pushResult
+    })
+  } catch (error: any) {
+    console.error('[notifications] فشل إرسال الإشعار المخصص:', error?.message || error)
+    if (!c.req.header('content-type')?.includes('application/json')) {
+      return c.redirect('/dashboard?view=notifications&error=send_failed')
+    }
+    return c.json({ error: error?.message || 'تعذّر إرسال الإشعار' }, 500)
+  }
+})
+
+/**
+ * POST /api/notifications/delete/:id
+ * حذف إشعار فردي
+ */
+notifications.post('/delete/:id', adminMiddleware, async (c) => {
+  const id = String(c.req.param('id') || '').trim()
+  if (!id) return c.json({ error: 'معرّف الإشعار مطلوب' }, 400)
+  const db = getFirestore(c)
+
+  try {
+    const ref = db.collection('notifications').doc(id)
+    const snap = await ref.get()
+    if (!snap.exists) return c.json({ error: 'الإشعار غير موجود' }, 404)
+
+    await ref.delete()
+
+    if (snap.data()?.audience === 'admins') {
+      const readsSnap = await db.collection('notification_reads').where('notification_id', '==', id).get().catch(() => ({ docs: [] }))
+      if (readsSnap.docs.length) {
+        const batch = db.batch()
+        readsSnap.docs.forEach((d: any) => batch.delete(d.ref))
+        await batch.commit()
+      }
+    }
+
+    const contentType = c.req.header('content-type') || ''
+    if (!contentType.includes('application/json')) {
+      return c.redirect('/dashboard?view=notifications&success=deleted')
+    }
+    return c.json({ ok: true })
+  } catch (error: any) {
+    console.error('[notifications] فشل حذف الإشعار:', error?.message || error)
+    return c.json({ error: 'تعذّر حذف الإشعار' }, 500)
+  }
+})
+
+/**
+ * POST /api/notifications/clear-all-admin
+ * تفريغ الإشعارات المقروءة للإدارة
+ */
+notifications.post('/clear-all-admin', adminMiddleware, async (c) => {
+  const db = getFirestore(c)
+  try {
+    const snap = await db.collection('notifications').where('is_read', '==', true).limit(200).get().catch(() => ({ docs: [] }))
+    if (snap.docs.length) {
+      const batch = db.batch()
+      snap.docs.forEach((d: any) => batch.delete(d.ref))
+      await batch.commit()
+    }
+    return c.json({ ok: true, deleted: snap.docs.length })
+  } catch (error: any) {
+    console.error('[notifications] فشل تنظيف الإشعارات:', error?.message || error)
+    return c.json({ error: 'تعذّر تفريغ الإشعارات' }, 500)
+  }
+})
+
 

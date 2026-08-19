@@ -326,6 +326,53 @@
       dashMarkAll.onclick = function () { markAllAsRead(); };
     }
 
+    // لوحة التحكم: زر تفريغ الإشعارات المقروءة القديمة
+    var dashClearReadBtn = document.getElementById('dashClearReadNotifsBtn');
+    if (dashClearReadBtn) {
+      dashClearReadBtn.onclick = async function () {
+        if (!confirm('هل أنت متأكد من رغبتك في تفريغ الإشعارات المقروءة؟')) return;
+        try {
+          var res = await fetch('/api/notifications/clear-all-admin', { method: 'POST' });
+          var data = await res.json();
+          if (data.ok) {
+            if (window.showToast) window.showToast('تم تنظيف ' + (data.deleted || 0) + ' إشعار مقروء بنجاح', 'success');
+            setTimeout(function () { window.location.reload(); }, 900);
+          }
+        } catch (e) {
+          if (window.showToast) window.showToast('تعذر تنظيف الإشعارات', 'error');
+        }
+      };
+    }
+
+    // لوحة التحكم: حذف إشعار فردي
+    document.querySelectorAll('.dash-single-delete-btn').forEach(function (btn) {
+      btn.onclick = async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = btn.getAttribute('data-id');
+        if (!id) return;
+        if (!confirm('هل تريد حذف هذا الإشعار نهائياً من السجل؟')) return;
+
+        try {
+          var res = await fetch('/api/notifications/delete/' + id, { method: 'POST' });
+          var data = await res.json();
+          if (data.ok) {
+            var row = btn.closest('tr');
+            if (row) {
+              row.style.transition = 'opacity 0.3s, transform 0.3s';
+              row.style.opacity = '0';
+              row.style.transform = 'translateX(20px)';
+              setTimeout(function () { row.remove(); }, 300);
+            }
+            if (window.showToast) window.showToast('تم حذف الإشعار بنجاح', 'success');
+            updateUnreadCount();
+          }
+        } catch (err) {
+          if (window.showToast) window.showToast('تعذر حذف الإشعار', 'error');
+        }
+      };
+    });
+
     // لوحة التحكم: زر إرسال إشعار تجريبي
     var testBtn = document.getElementById('dashSendTestNotifBtn');
     if (testBtn) {
@@ -349,10 +396,259 @@
           if (window.showToast) window.showToast('حدث خطأ أثناء إرسال الإشعار', 'error');
         } finally {
           testBtn.disabled = false;
-          testBtn.innerHTML = '<i class="fa-solid fa-flask"></i> إرسال إشعار تجريبي';
+          testBtn.innerHTML = '<i class="fa-solid fa-flask"></i> <span>إشعار تجريبي</span>';
         }
       };
     }
+
+    // ────────────────────────── نافذة إنشاء وبث الإشعارات المخصصة (Modal) ──────────────────────────
+    var sendModal = document.getElementById('sendNotificationModal');
+    var openSendBtn = document.getElementById('dashOpenSendModalBtn');
+    var closeSendBtn = document.getElementById('dashCloseSendModalBtn');
+    var cancelSendBtn = document.getElementById('dashCancelSendModalBtn');
+    var modalBackdrop = document.getElementById('dashModalBackdrop');
+    var sendForm = document.getElementById('sendCustomNotificationForm');
+
+    if (sendModal && openSendBtn) {
+      function openModal() {
+        sendModal.style.display = 'flex';
+        sendModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal() {
+        sendModal.style.display = 'none';
+        sendModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+
+      openSendBtn.onclick = openModal;
+      if (closeSendBtn) closeSendBtn.onclick = closeModal;
+      if (cancelSendBtn) cancelSendBtn.onclick = closeModal;
+      if (modalBackdrop) modalBackdrop.onclick = closeModal;
+
+      // إغلاق بـ Escape
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && sendModal.style.display === 'flex') {
+          closeModal();
+        }
+      });
+
+      // القوالب الجاهزة السريعة (Presets)
+      var presetSelect = document.getElementById('notifPresetSelect');
+      var titleInput = document.getElementById('notifCustomTitle');
+      var bodyInput = document.getElementById('notifCustomBody');
+      var catSelect = document.getElementById('notifCustomCategory');
+      var prioSelect = document.getElementById('notifCustomPriority');
+      var linkInput = document.getElementById('notifCustomLink');
+      var audienceSelect = document.getElementById('notifAudienceSelect');
+      var targetWrap = document.getElementById('targetUserWrap');
+
+      var PRESETS = {
+        urgent_campaign: {
+          title: 'حملة خيرية عاجلة تحتاج دعمكم الآن 🚨',
+          body: 'ندعو أهل الخير للمساهمة في توفير العلاج والمساعدات الطبية الطارئة للأسر الأكثر احتياجاً.',
+          category: 'financial',
+          priority: 'high',
+          link: '/campaigns',
+          audience: 'all'
+        },
+        volunteer_thanks: {
+          title: 'شكر وتقدير لفريق أبطال التطوع 🤝💚',
+          body: 'تتوجه إدارة المؤسسة بالشكر الجزيل لكافة المتطوعين على جهودهم المشرفة في الفعاليات الميدانية الأخيرة.',
+          category: 'volunteers',
+          priority: 'normal',
+          link: '/dashboard?view=volunteers',
+          audience: 'volunteers'
+        },
+        new_event: {
+          title: 'فعالية جديدة: قافلة الخير الطبية 📅',
+          body: 'يسرنا دعوتكم لحضور والمشاركة في فعاليات القافلة الخيرية يوم الجمعة القادم بمقر المؤسسة.',
+          category: 'content',
+          priority: 'normal',
+          link: '/events',
+          audience: 'all'
+        },
+        management_update: {
+          title: 'تحديث هام من مجلس إدارة المؤسسة 📢',
+          body: 'تم اعتماد التقرير المالي والإداري للربع السنوي بنجاح. شكراً لثقتكم ومساهماتكم المستمرة.',
+          category: 'content',
+          priority: 'normal',
+          link: '/news',
+          audience: 'all'
+        },
+        donation_drive: {
+          title: 'نداء مساهمة: مشروع إطعام الأسر المتعففة 🍲',
+          body: 'ساهم معنا اليوم في توفير وجبات وكراتين المواد الغذائية الشهرية للعائلات المستحقة.',
+          category: 'financial',
+          priority: 'high',
+          link: '/campaigns',
+          audience: 'donors'
+        }
+      };
+
+      if (presetSelect) {
+        presetSelect.onchange = function () {
+          var val = presetSelect.value;
+          if (val && PRESETS[val]) {
+            var p = PRESETS[val];
+            if (titleInput) titleInput.value = p.title;
+            if (bodyInput) bodyInput.value = p.body;
+            if (catSelect) catSelect.value = p.category;
+            if (prioSelect) prioSelect.value = p.priority;
+            if (linkInput) linkInput.value = p.link;
+            if (audienceSelect) audienceSelect.value = p.audience;
+            if (targetWrap) targetWrap.style.display = p.audience === 'single' ? 'block' : 'none';
+            updateLivePreview();
+          }
+        };
+      }
+
+      // إظهار حقل المستخدم المستهدف عند اختيار single
+      if (audienceSelect && targetWrap) {
+        audienceSelect.onchange = function () {
+          targetWrap.style.display = audienceSelect.value === 'single' ? 'block' : 'none';
+        };
+      }
+
+      // المعاينة الحية (Live Real-time Preview)
+      var prevTitle = document.getElementById('previewTitle');
+      var prevBody = document.getElementById('previewBody');
+      var prevBadge = document.getElementById('previewPriorityBadge');
+      var prevLink = document.getElementById('previewLink');
+      var prevBellTitle = document.getElementById('previewBellTitle');
+      var prevBellBody = document.getElementById('previewBellBody');
+
+      function updateLivePreview() {
+        var t = titleInput ? titleInput.value.trim() : '';
+        var b = bodyInput ? bodyInput.value.trim() : '';
+        var p = prioSelect ? prioSelect.value : 'normal';
+        var l = linkInput ? linkInput.value.trim() : '/notifications';
+
+        if (prevTitle) prevTitle.textContent = t || 'عنوان الإشعار يظهر هنا';
+        if (prevBellTitle) prevBellTitle.textContent = t || 'عنوان الإشعار';
+
+        if (prevBody) prevBody.textContent = b || 'تفاصيل ونص الرسالة ستظهر هنا مباشرة للمستخدم في شاشة القفل وإشعارات النظام.';
+        if (prevBellBody) prevBellBody.textContent = b || 'تفاصيل الإشعار في القائمة...';
+
+        if (prevBadge) {
+          prevBadge.textContent = p === 'high' ? 'عاجل' : 'عادي';
+          prevBadge.style.background = p === 'high' ? 'rgba(244,63,94,.18)' : 'rgba(16,185,129,.18)';
+          prevBadge.style.color = p === 'high' ? '#f43f5e' : '#10b981';
+        }
+
+        if (prevLink) prevLink.textContent = 'اضغط لفتح: ' + (l || '/notifications');
+      }
+
+      [titleInput, bodyInput, prioSelect, linkInput].forEach(function (el) {
+        if (el) el.addEventListener('input', updateLivePreview);
+      });
+
+      // إرسال النموذج عبر AJAX
+      if (sendForm) {
+        sendForm.onsubmit = async function (e) {
+          e.preventDefault();
+          var submitBtn = document.getElementById('submitBroadcastBtn');
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جارٍ الإرسال...';
+          }
+
+          try {
+            var formData = new FormData(sendForm);
+            var payload = {
+              title: formData.get('title'),
+              body: formData.get('body'),
+              category: formData.get('category'),
+              priority: formData.get('priority'),
+              link: formData.get('link'),
+              audience: formData.get('audience'),
+              target_user: formData.get('target_user'),
+              send_in_app: formData.get('send_in_app') === '1',
+              send_push: formData.get('send_push') === '1'
+            };
+
+            var res = await fetch('/api/notifications/send-custom', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify(payload)
+            });
+
+            var data = await res.json();
+            if (data.ok) {
+              if (window.showToast) window.showToast(data.message || 'تم إرسال الإشعار بنجاح 🚀', 'success');
+              closeModal();
+              sendForm.reset();
+              updateUnreadCount();
+              setTimeout(function () { window.location.reload(); }, 1200);
+            } else {
+              if (window.showToast) window.showToast(data.error || 'تعذر إرسال الإشعار', 'error');
+            }
+          } catch (err) {
+            if (window.showToast) window.showToast('حدث خطأ أثناء الإرسال', 'error');
+          } finally {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> إرسال الإشعار الآن';
+            }
+          }
+        };
+      }
+    }
+
+    // ────────────────────────── فلترة وبحث جدول الإشعارات في لوحة التحكم ──────────────────────────
+    var searchInput = document.getElementById('notifDashSearchInput');
+    var tabBtns = document.querySelectorAll('#dashNotifTabs .dash-tab-btn');
+    var rows = document.querySelectorAll('#dashNotificationsTable tbody tr.notif-row');
+    var emptyRow = document.getElementById('noNotifsRow');
+
+    var currentFilter = 'all';
+    var currentQuery = '';
+
+    function applyTableFilters() {
+      var visibleCount = 0;
+      rows.forEach(function (row) {
+        var cat = row.getAttribute('data-category');
+        var readStatus = row.getAttribute('data-read');
+        var searchIndex = (row.getAttribute('data-search') || '').toLowerCase();
+
+        var matchCategory = true;
+        if (currentFilter === 'unread') matchCategory = (readStatus === 'unread');
+        else if (currentFilter !== 'all') matchCategory = (cat === currentFilter);
+
+        var matchSearch = !currentQuery || searchIndex.indexOf(currentQuery) !== -1;
+
+        if (matchCategory && matchSearch) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      if (emptyRow) {
+        emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+      }
+    }
+
+    if (searchInput) {
+      searchInput.oninput = function () {
+        currentQuery = searchInput.value.trim().toLowerCase();
+        applyTableFilters();
+      };
+    }
+
+    tabBtns.forEach(function (btn) {
+      btn.onclick = function () {
+        tabBtns.forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter') || 'all';
+        applyTableFilters();
+      };
+    });
 
     // تفعيل إشعارات الـ Push من زر الصفحة
     var pushBtn = document.getElementById('notifEnablePushBtn');

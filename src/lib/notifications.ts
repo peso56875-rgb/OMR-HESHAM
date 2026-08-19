@@ -150,6 +150,10 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeDef> = {
   volunteer_card_expiring: { category: 'volunteers', icon: 'fa-hourglass-half', priority: 'normal', label: 'اقتراب انتهاء الكارنيه' },
   volunteer_card_renewed: { category: 'volunteers', icon: 'fa-arrows-rotate', priority: 'normal', label: 'تجديد الكارنيه' },
 
+  /* ── إشعارات مخصصة وبث عام (Custom & Broadcast) ── */
+  custom_broadcast: { category: 'content', icon: 'fa-bullhorn', priority: 'normal', label: 'إشعار وبث عام من الإدارة' },
+  custom_direct: { category: 'account', icon: 'fa-paper-plane', priority: 'normal', label: 'رسالة خاصة من الإدارة' },
+
   /* ── إشعار اختبار ── */
   test: { category: 'system', icon: 'fa-flask', priority: 'normal', label: 'إشعار تجريبي' }
 }
@@ -235,9 +239,10 @@ export interface NotifyInput {
   actor?: { id?: string | null; name?: string | null } | null
   /** بيانات إضافية للعرض أو التتبع. لا تضع فيها أسرارًا. */
   meta?: Record<string, unknown>
-  /** تجاوز الأيقونة/الأولوية المستنبطة من النوع (نادر). */
+  /** تجاوز الأيقونة/الأولوية/التصنيف المستنبطة من النوع (نادر). */
   icon?: string
   priority?: NotificationPriority
+  category?: NotificationCategory
 }
 
 export interface NotificationRecord {

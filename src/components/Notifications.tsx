@@ -295,163 +295,463 @@ export function DashNotifications({
 }) {
   const total = list.length
   const unread = list.filter((i) => !i.is_read).length
+  const devices = stats.devices || 0
 
   return (
-    <>
-      <div class="dash-section-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem">
-        <div>
-          <h2 style="font-size:1.6rem; font-weight:900; color:var(--text); display:flex; align-items:center; gap:10px">
-            {icon('fa-bell')} مركز إدارة الإشعارات والتنبيهات
-          </h2>
-          <p style="color:var(--muted); font-size:.86rem; margin-top:4px">
-            مراقبة التدفق الإداري، تشخيص الإرسال الفوري (Web Push)، واختبار إشعارات النظام.
+    <div class="dash-notifications-wrapper">
+      {/* رأس الصفحة مع الإحصائيات والأزرار السريعة */}
+      <div class="dash-notif-hero-card">
+        <div class="dash-notif-hero-content">
+          <div class="dash-notif-badge">
+            {icon('fa-tower-broadcast')} مركز البث والتنبيهات المباشرة
+          </div>
+          <h2>إدارة الإشعارات وبث التنبيهات الفورية</h2>
+          <p>
+            أرسل إشعارات مخصصة وبث عام لكافة المستخدمين أو المتطوعين أو المتبرعين، مع إمكانية الإرسال الفوري كإشعارات شاشة (Web Push) والتسجيل في مركز الإشعارات الداخلي.
           </p>
         </div>
 
-        <div style="display:flex; gap:.8rem; flex-wrap:wrap">
+        <div class="dash-notif-hero-actions">
+          <button
+            type="button"
+            id="dashOpenSendModalBtn"
+            class="dash-notif-action-btn primary-broadcast-btn"
+          >
+            {icon('fa-paper-plane')} <span>+ إرسال إشعار جديد</span>
+          </button>
           <button
             type="button"
             id="dashSendTestNotifBtn"
-            class="primary-btn"
-            style="background:var(--emerald-600); font-size:.85rem; padding:8px 16px"
+            class="dash-notif-action-btn test-btn"
+            title="فحص عمل إشعارات الشاشة والنظام"
           >
-            {icon('fa-flask')} إرسال إشعار تجريبي
+            {icon('fa-flask')} <span>إشعار تجريبي</span>
           </button>
           <button
             type="button"
             id="dashMarkAllNotifRead"
-            class="primary-btn"
-            style="background:var(--surface-2); color:var(--text); border:1px solid var(--border); font-size:.85rem; padding:8px 16px"
+            class="dash-notif-action-btn neutral-btn"
           >
-            {icon('fa-check-double')} قراءة كل الإشعارات
+            {icon('fa-check-double')} <span>قراءة الكل</span>
+          </button>
+          <button
+            type="button"
+            id="dashClearReadNotifsBtn"
+            class="dash-notif-action-btn clean-btn"
+            title="تفريغ الإشعارات المقروءة القديمة"
+          >
+            {icon('fa-trash-can')} <span>تفريغ المقروء</span>
           </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.5rem">
-        <article style="background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:1.2rem">
-          <div style="display:flex; align-items:center; justify-content:space-between">
-            <span style="font-size:1.4rem; color:var(--gold-600)">{icon('fa-bell')}</span>
-            <small style="color:var(--muted); font-size:.78rem; font-weight:700">إجمالي الإشعارات المسجلة</small>
+      {/* بطاقات المؤشرات (KPIs) */}
+      <div class="dash-notif-kpis-grid">
+        <article class="dash-notif-kpi-card gold-kpi">
+          <div class="kpi-icon-wrap">
+            {icon('fa-bell')}
           </div>
-          <b style="font-size:1.6rem; margin-top:.8rem; display:block; color:var(--gold-600)">{total.toLocaleString('ar-EG')}</b>
+          <div class="kpi-info">
+            <span class="kpi-label">إجمالي الإشعارات المسجلة</span>
+            <b class="kpi-val">{total.toLocaleString('ar-EG')}</b>
+          </div>
         </article>
 
-        <article style="background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:1.2rem">
-          <div style="display:flex; align-items:center; justify-content:space-between">
-            <span style="font-size:1.4rem; color:#f43f5e">{icon('fa-circle-dot')}</span>
-            <small style="color:var(--muted); font-size:.78rem; font-weight:700">غير المقروءة</small>
+        <article class="dash-notif-kpi-card rose-kpi">
+          <div class="kpi-icon-wrap">
+            {icon('fa-circle-dot')}
           </div>
-          <b style="font-size:1.6rem; margin-top:.8rem; display:block; color:#f43f5e">{unread.toLocaleString('ar-EG')}</b>
+          <div class="kpi-info">
+            <span class="kpi-label">غير المقروءة بالإدارة</span>
+            <b class="kpi-val">{unread.toLocaleString('ar-EG')}</b>
+          </div>
         </article>
 
-        <article style="background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:1.2rem">
-          <div style="display:flex; align-items:center; justify-content:space-between">
-            <span style="font-size:1.4rem; color:var(--emerald-600)">{icon('fa-mobile-screen')}</span>
-            <small style="color:var(--muted); font-size:.78rem; font-weight:700">حالة Web Push (FCM)</small>
+        <article class="dash-notif-kpi-card emerald-kpi">
+          <div class="kpi-icon-wrap">
+            {icon('fa-mobile-screen-button')}
           </div>
-          <b style={`font-size:1.1rem; margin-top:.8rem; display:block; color:${pushConfigured ? 'var(--emerald-600)' : '#f59e0b'}`}>
-            {pushConfigured ? 'مفعّل وجاهز ✅' : 'يحتاج مفتاح VAPID ⚠️'}
-          </b>
+          <div class="kpi-info">
+            <span class="kpi-label">أجهزة الـ Web Push المشتركة</span>
+            <b class="kpi-val">{devices.toLocaleString('ar-EG')} جهاز</b>
+          </div>
+        </article>
+
+        <article class="dash-notif-kpi-card blue-kpi">
+          <div class="kpi-icon-wrap">
+            {icon('fa-shield-halved')}
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">حالة خدمة FCM Push</span>
+            <b class="kpi-val" style={`color:${pushConfigured ? 'var(--emerald-600)' : '#f59e0b'}`}>
+              {pushConfigured ? 'مفعّل وجاهز ✅' : 'يحتاج ضبط ⚠️'}
+            </b>
+          </div>
         </article>
       </div>
 
-      {/* تنبيه حالة Push إذا كانت غير مهيأة */}
-      {!pushConfigured && (
-        <div style="background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.3); padding:1rem 1.4rem; border-radius:14px; margin-bottom:1.5rem; display:flex; align-items:center; gap:12px">
-          <i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b; font-size:1.4rem"></i>
-          <div style="font-size:.88rem; color:var(--text)">
-            <b>إشعارات Push غير مهيأة بعد:</b> المركز الداخلي والبريد يعملان بالكامل. لتفعيل إشعارات شاشة الجوال/الديسكتوب، يرجى إضافة <code>FIREBASE_VAPID_KEY</code> في متغيرات البيئة من Firebase Console.
+      {/* نافذة الإرسال المنبثقة (Custom Broadcast & Notification Modal) */}
+      <div id="sendNotificationModal" class="dash-notif-modal" aria-hidden="true" style="display:none">
+        <div class="dash-notif-modal-backdrop" id="dashModalBackdrop"></div>
+        <div class="dash-notif-modal-dialog">
+          <div class="dash-notif-modal-header">
+            <div class="modal-title-box">
+              <span class="modal-header-icon">{icon('fa-bullhorn')}</span>
+              <div>
+                <h3>إنشاء وبث إشعار جديد</h3>
+                <p>صياغة وتوجيه إشعار مخصص لفئة معينة أو لكافة مستخدمي المنصة</p>
+              </div>
+            </div>
+            <button type="button" class="dash-notif-modal-close" id="dashCloseSendModalBtn">
+              {icon('fa-xmark')}
+            </button>
+          </div>
+
+          <form id="sendCustomNotificationForm" action="/api/notifications/send-custom" method="post" class="dash-notif-modal-form">
+            <div class="modal-body-layout">
+              {/* القسم الأيمن: حقول النموذج */}
+              <div class="modal-form-fields">
+                {/* القوالب السريعة */}
+                <div class="form-group-notif">
+                  <label for="notifPresetSelect">
+                    {icon('fa-wand-magic-sparkles')} اختر قالباً جاهزاً (اختياري):
+                  </label>
+                  <select id="notifPresetSelect" class="form-select-notif">
+                    <option value="">-- صياغة إشعار مخصص --</option>
+                    <option value="urgent_campaign">تذكير بحملة خيرية عاجلة 🚨</option>
+                    <option value="volunteer_thanks">شكر وتقدير لفريق المتطوعين 🤝</option>
+                    <option value="new_event">إعلان فعالية ميدانية جديدة 📅</option>
+                    <option value="management_update">تحديث وتصريح من مجلس الإدارة 📢</option>
+                    <option value="donation_drive">نداء مساهمة في مشاريع الإطعام والكساء 🍲</option>
+                  </select>
+                </div>
+
+                {/* الفئة المستهدفة */}
+                <div class="form-group-notif">
+                  <label for="notifAudienceSelect">
+                    {icon('fa-users')} الفئة المستهدفة (الجمهور):
+                  </label>
+                  <select id="notifAudienceSelect" name="audience" class="form-select-notif">
+                    <option value="all">👥 جميع المستخدمين والزوار المشتركين (بث عام)</option>
+                    <option value="volunteers">🤝 فريق المتطوعين المعتمدين فقط</option>
+                    <option value="donors">💚 المتبرعون والداعمون المسجلون</option>
+                    <option value="admins">👑 المشرفون وفريق الإدارة فقط</option>
+                    <option value="single">👤 مستخدم محدد (بالبريد أو المعرف)</option>
+                  </select>
+                </div>
+
+                {/* حقل تحديد المستخدم الفردي */}
+                <div id="targetUserWrap" class="form-group-notif" style="display:none">
+                  <label for="targetUserInput">
+                    {icon('fa-user')} البريد الإلكتروني أو معرّف المستخدم (UID):
+                  </label>
+                  <input
+                    type="text"
+                    id="targetUserInput"
+                    name="target_user"
+                    placeholder="مثال: user@example.com أو المعرف"
+                    class="form-input-notif"
+                  />
+                </div>
+
+                {/* عنوان الإشعار */}
+                <div class="form-group-notif">
+                  <label for="notifCustomTitle">
+                    {icon('fa-heading')} عنوان الإشعار <span style="color:#f43f5e">*</span>:
+                  </label>
+                  <input
+                    type="text"
+                    id="notifCustomTitle"
+                    name="title"
+                    required
+                    placeholder="مثال: إطلاق قافلة الخير في قرى الصعيد..."
+                    class="form-input-notif"
+                    maxlength={150}
+                  />
+                </div>
+
+                {/* نص الرسالة */}
+                <div class="form-group-notif">
+                  <label for="notifCustomBody">
+                    {icon('fa-align-right')} نص الإشعار وتفاصيل الرسالة:
+                  </label>
+                  <textarea
+                    id="notifCustomBody"
+                    name="body"
+                    rows={3}
+                    placeholder="اكتب نص الإشعار الموجز والمباشر هنا..."
+                    class="form-textarea-notif"
+                    maxlength={400}
+                  ></textarea>
+                </div>
+
+                {/* خيارات التصنيف والأولوية والرابط في صف واحد */}
+                <div class="form-row-notif">
+                  <div class="form-group-notif flex-1">
+                    <label for="notifCustomCategory">
+                      {icon('fa-tag')} التصنيف:
+                    </label>
+                    <select id="notifCustomCategory" name="category" class="form-select-notif">
+                      <option value="content">محتوى وأخبار</option>
+                      <option value="financial">تبرعات ومالية</option>
+                      <option value="volunteers">شؤون المتطوعين</option>
+                      <option value="account">الحسابات والأعضاء</option>
+                      <option value="system">تنبيهات النظام</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group-notif flex-1">
+                    <label for="notifCustomPriority">
+                      {icon('fa-flag')} الأولوية:
+                    </label>
+                    <select id="notifCustomPriority" name="priority" class="form-select-notif">
+                      <option value="normal">عادي (Normal)</option>
+                      <option value="high">عاجل وهام (High)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* رابط التحويل عند النقر */}
+                <div class="form-group-notif">
+                  <label for="notifCustomLink">
+                    {icon('fa-link')} رابط التحويل عند النقر (مسار الموقع أو رابط خارجي):
+                  </label>
+                  <input
+                    type="text"
+                    id="notifCustomLink"
+                    name="link"
+                    placeholder="مثال: /campaigns أو /events أو /volunteer"
+                    value="/notifications"
+                    class="form-input-notif"
+                  />
+                </div>
+
+                {/* قنوات الإرسال المحددة */}
+                <div class="form-group-notif channels-group">
+                  <label>{icon('fa-satellite-dish')} قنوات الإرسال والتوصيل:</label>
+                  <div class="channels-checkboxes">
+                    <label class="channel-check-label">
+                      <input type="checkbox" name="send_in_app" value="1" checked />
+                      <span>{icon('fa-bell')} مركز إشعارات الموقع</span>
+                    </label>
+                    <label class="channel-check-label">
+                      <input type="checkbox" name="send_push" value="1" checked />
+                      <span>{icon('fa-mobile-screen-button')} إشعار الشاشة الفوري (Web Push)</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* القسم الأيسر: المعاينة الحية (Live Real-time Preview) */}
+              <div class="modal-preview-panel">
+                <h4>{icon('fa-eye')} معاينة حية للإشعار:</h4>
+                <div class="phone-preview-frame">
+                  <div class="phone-preview-header">
+                    <span class="phone-time">الآن</span>
+                    <span class="phone-brand">مؤسسة د. عمر هشام الخيرية</span>
+                  </div>
+                  <div class="phone-notification-card" id="previewPhoneCard">
+                    <div class="phone-notif-icon">
+                      <i class="fa-solid fa-bullhorn" id="previewIcon"></i>
+                    </div>
+                    <div class="phone-notif-text">
+                      <div class="phone-notif-top">
+                        <strong id="previewTitle">عنوان الإشعار يظهر هنا</strong>
+                        <span class="phone-notif-badge" id="previewPriorityBadge">عاجل</span>
+                      </div>
+                      <p id="previewBody">تفاصيل ونص الرسالة ستظهر هنا مباشرة للمستخدم في شاشة القفل وإشعارات النظام.</p>
+                      <small class="phone-notif-link" id="previewLink">اضغط لفتح: /notifications</small>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="preview-bell-box">
+                  <small style="color:var(--muted); font-weight:700; display:block; margin-bottom:6px">
+                    معاينة داخل جرس الموقع:
+                  </small>
+                  <div class="bell-item-preview">
+                    <div class="bell-item-preview-icon">
+                      <i class="fa-solid fa-bullhorn"></i>
+                    </div>
+                    <div>
+                      <strong id="previewBellTitle" style="display:block; font-size:.85rem; color:var(--text)">عنوان الإشعار</strong>
+                      <small id="previewBellBody" style="color:var(--muted); font-size:.75rem">تفاصيل الإشعار في القائمة...</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="dash-notif-modal-footer">
+              <button type="button" class="cancel-modal-btn" id="dashCancelSendModalBtn">
+                إلغاء
+              </button>
+              <button type="submit" class="submit-broadcast-btn" id="submitBroadcastBtn">
+                {icon('fa-paper-plane')} إرسال الإشعار الآن
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* قسم جدول الإشعارات مع الفلاتر والبحث */}
+      <div class="dash-notif-table-card">
+        <div class="dash-notif-table-header">
+          <div class="table-header-title">
+            <h3>{icon('fa-list-ul')} سجل الإشعارات والتنبيهات الموجهة</h3>
+            <span class="records-count">{total.toLocaleString('ar-EG')} سجل</span>
+          </div>
+
+          <div class="table-header-filters">
+            {/* شريط البحث المباشر */}
+            <div class="notif-search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input
+                type="text"
+                id="notifDashSearchInput"
+                placeholder="ابحث في العنوان، النص، المشرف..."
+              />
+            </div>
+
+            {/* فلاتر التبويبات السريعة */}
+            <div class="dash-notif-tabs" id="dashNotifTabs">
+              <button type="button" class="dash-tab-btn active" data-filter="all">الكل</button>
+              <button type="button" class="dash-tab-btn" data-filter="unread">غير المقروءة</button>
+              <button type="button" class="dash-tab-btn" data-filter="financial">المالية</button>
+              <button type="button" class="dash-tab-btn" data-filter="volunteers">التطوع</button>
+              <button type="button" class="dash-tab-btn" data-filter="content">المحتوى</button>
+              <button type="button" class="dash-tab-btn" data-filter="system">النظام</button>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* جدول الإشعارات الإدارية */}
-      <section class="dash-table">
-        <header style="display:flex; justify-content:space-between; align-items:center">
-          <h3>سجل الإشعارات والتنبيهات الواردة</h3>
-        </header>
-        <table>
-          <thead>
-            <tr>
-              <th>النوع</th>
-              <th>العنوان والبيان</th>
-              <th>التصنيف</th>
-              <th>الأولوية</th>
-              <th>المرسل/المشرف</th>
-              <th>التاريخ</th>
-              <th>الحالة</th>
-              <th>الإجراء</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((n: any) => {
-              const isRead = Boolean(n.is_read)
-              const def = NOTIFICATION_TYPES[n.type] || { label: n.type, icon: 'fa-bell', category: 'system' }
-              return (
-                <tr style={!isRead ? 'background:rgba(214,166,75,0.06)' : ''}>
-                  <td>
-                    <span style="display:inline-flex; align-items:center; gap:6px; font-weight:700">
-                      <i class={`fa-solid ${n.icon || def.icon}`} style="color:var(--gold-600)"></i>
-                      <span>{def.label || n.type}</span>
-                    </span>
-                  </td>
-                  <td>
-                    <div style="font-weight:700; color:var(--text)">{n.title}</div>
-                    {n.body && <small style="color:var(--muted); display:block; max-width:280px; white-space:pre-wrap">{n.body}</small>}
-                  </td>
-                  <td>
-                    <span style="background:var(--surface-2); padding:3px 8px; border-radius:6px; font-size:.78rem; font-weight:700">
-                      {CATEGORY_LABELS[n.category as NotificationCategory] || n.category}
-                    </span>
-                  </td>
-                  <td>
-                    <span style={`padding:2px 8px; border-radius:4px; font-size:.75rem; font-weight:800; ${n.priority === 'high' ? 'background:rgba(244,63,94,.15); color:#f43f5e' : 'background:rgba(16,185,129,.1); color:var(--emerald-600)'}`}>
-                      {n.priority === 'high' ? 'عالي' : 'عادي'}
-                    </span>
-                  </td>
-                  <td>{n.actor_name || 'النظام'}</td>
-                  <td><small>{timeAgo(n.created_at)}</small></td>
-                  <td>
-                    <span style={`padding:2px 8px; border-radius:4px; font-size:.75rem; font-weight:700; ${isRead ? 'color:var(--muted)' : 'color:var(--gold-600); background:rgba(214,166,75,.15)'}`}>
-                      {isRead ? 'مقروء' : 'جديد ✦'}
-                    </span>
-                  </td>
-                  <td>
-                    <div style="display:flex; gap:6px">
-                      {n.link && (
-                        <a href={n.link} class="dash-edit-btn" style="text-decoration:none">
-                          {icon('fa-arrow-up-right-from-square')} فتح
-                        </a>
-                      )}
-                      {!isRead && (
+        <div class="dash-table-responsive">
+          <table class="dash-custom-table" id="dashNotificationsTable">
+            <thead>
+              <tr>
+                <th style="width: 140px">النوع والتصنيف</th>
+                <th>العنوان والبيان</th>
+                <th style="width: 100px">الأولوية</th>
+                <th style="width: 130px">المرسل / المشرف</th>
+                <th style="width: 120px">التاريخ</th>
+                <th style="width: 90px">الحالة</th>
+                <th style="width: 130px; text-align:center">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((n: any) => {
+                const isRead = Boolean(n.is_read)
+                const def = NOTIFICATION_TYPES[n.type] || { label: n.type, icon: 'fa-bell', category: 'system' }
+                const catKey = (n.category || def.category || 'system')
+                const catLabel = CATEGORY_LABELS[catKey as NotificationCategory] || catKey
+
+                return (
+                  <tr
+                    class={`notif-row ${!isRead ? 'is-unread-row' : ''}`}
+                    data-category={catKey}
+                    data-read={isRead ? 'read' : 'unread'}
+                    data-search={`${n.title} ${n.body || ''} ${n.actor_name || ''} ${catLabel}`.toLowerCase()}
+                  >
+                    <td>
+                      <div class="notif-type-tag">
+                        <span class="notif-type-icon-box">
+                          <i class={`fa-solid ${n.icon || def.icon}`}></i>
+                        </span>
+                        <div class="notif-type-text">
+                          <strong>{def.label || n.type}</strong>
+                          <small>{catLabel}</small>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div class="notif-content-cell">
+                        <span class="notif-row-title">{n.title}</span>
+                        {n.body && <p class="notif-row-body">{n.body}</p>}
+                        {n.meta?.broadcast && (
+                          <span class="broadcast-tag">
+                            {icon('fa-bullhorn')} بث عام: {n.meta.audience === 'admins' ? 'المشرفين' : n.meta.audience === 'volunteers' ? 'المتطوعين' : 'الجميع'}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    <td>
+                      <span class={`prio-pill prio-${n.priority || 'normal'}`}>
+                        {n.priority === 'high' ? 'عاجل ✦' : 'عادي'}
+                      </span>
+                    </td>
+
+                    <td>
+                      <div class="actor-cell">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span>{n.actor_name || 'النظام التلقائي'}</span>
+                      </div>
+                    </td>
+
+                    <td>
+                      <time class="notif-time-cell" datetime={n.created_at}>
+                        {timeAgo(n.created_at)}
+                      </time>
+                    </td>
+
+                    <td>
+                      <span class={`status-pill ${isRead ? 'status-read' : 'status-unread'}`}>
+                        {isRead ? 'مقروء' : 'جديد'}
+                      </span>
+                    </td>
+
+                    <td>
+                      <div class="notif-row-actions">
+                        {n.link && (
+                          <a
+                            href={n.link}
+                            class="row-action-btn view-btn"
+                            title="فتح الرابط المستهدف"
+                            target="_blank"
+                          >
+                            {icon('fa-arrow-up-right-from-square')}
+                          </a>
+                        )}
+                        {!isRead && (
+                          <button
+                            type="button"
+                            class="row-action-btn read-btn dash-single-read-btn"
+                            data-id={n.id}
+                            title="تحديد كمقروء"
+                          >
+                            {icon('fa-check')}
+                          </button>
+                        )}
                         <button
                           type="button"
-                          class="dash-single-read-btn"
+                          class="row-action-btn delete-btn dash-single-delete-btn"
                           data-id={n.id}
-                          style="background:none; border:1px solid var(--border); border-radius:6px; padding:4px 8px; cursor:pointer; font-size:.78rem"
-                          title="تحديد كمقروء"
+                          title="حذف هذا الإشعار"
                         >
-                          {icon('fa-check')}
+                          {icon('fa-trash-can')}
                         </button>
-                      )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+              {list.length === 0 && (
+                <tr id="noNotifsRow">
+                  <td colSpan={7} class="table-empty-td">
+                    <div class="table-empty-wrap">
+                      <i class="fa-solid fa-bell-slash"></i>
+                      <h4>سجل الإشعارات فارغ حالياً</h4>
+                      <p>لم يتم تسجيل أو إرسال أي إشعارات حتى الآن.</p>
                     </div>
                   </td>
                 </tr>
-              )
-            })}
-            {list.length === 0 && (
-              <tr>
-                <td colSpan={8} style="text-align:center; color:var(--muted); padding:2.5rem 0">
-                  لا توجد أي إشعارات في السجل حتى الآن
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </section>
-    </>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   )
 }
 
