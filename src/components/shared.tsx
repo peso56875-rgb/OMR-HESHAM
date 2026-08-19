@@ -2,6 +2,7 @@ import { routeNames } from '../defaults'
 import type { UserSession } from '../types'
 import { pageSeo, SITE_ORIGIN } from '../lib/seo'
 import { NotificationBell } from './Notifications'
+import { SearchModal } from './SearchModal'
 
 export const icon = (name: string) => <i class={`fa-solid ${name}`} aria-hidden="true"></i>
 
@@ -26,7 +27,14 @@ export function Header({ user }: { user?: UserSession }) {
         <span><b>مؤسسة الدكتور</b><strong>عمر هشام الخيرية</strong></span>
       </a>
       <nav class="desktop-nav" aria-label="التنقل الرئيسي">
-        <a href="/">الرئيسية</a><a href="/about">من نحن</a><a href="/campaigns">الحملات</a><a href="/achievements">أثرنا</a><a href="/news">الأخبار</a><a href="/contact">تواصل</a>
+        <a href="/">الرئيسية</a>
+        <a href="/about">من نحن</a>
+        <a href="/campaigns">الحملات</a>
+        <a href="/cases">الحالات</a>
+        <a href="/zakat-calculator" style="color:var(--emerald);font-weight:700">{icon('fa-scale-balanced')} حاسبة الزكاة</a>
+        <a href="/achievements">أثرنا</a>
+        <a href="/news">الأخبار</a>
+        <a href="/contact">تواصل</a>
         {user ? (
           <>
             <a href="/profile" class="profile-link" style="color:var(--blue-600);font-weight:bold"><i class="fa-solid fa-user"></i> حسابي</a>
@@ -37,6 +45,9 @@ export function Header({ user }: { user?: UserSession }) {
         )}
       </nav>
       <div class="header-actions">
+        <button class="icon-btn open-search-trigger" id="header-search-btn" aria-label="بحث فوري في الموقع (Ctrl+K)" title="بحث فوري (Ctrl+K)">
+          {icon('fa-magnifying-glass')}
+        </button>
         {user && <NotificationBell user={user} />}
         <button class="icon-btn" id="theme-toggle" aria-label="تغيير المظهر">{icon('fa-moon')}</button>
         <button class="icon-btn menu-toggle" id="menu-toggle" aria-label="فتح القائمة">{icon('fa-bars-staggered')}</button>
@@ -46,11 +57,24 @@ export function Header({ user }: { user?: UserSession }) {
     <aside class="mobile-drawer" id="mobile-drawer" aria-hidden="true">
       <button id="menu-close" class="drawer-close" aria-label="إغلاق">{icon('fa-xmark')}</button>
       <p class="eyebrow">اصنع أثرًا يبقى</p>
+      <div style="padding: 0 16px 12px">
+        <button type="button" class="open-search-trigger mobile-search-banner">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>بحث فوري في الموقع...</span>
+          <kbd>Ctrl+K</kbd>
+        </button>
+      </div>
       <nav>
-        {Object.entries(routeNames).slice(0, 13).map(([href, label]) => <a href={href}>{label}<i class="fa-solid fa-arrow-left"></i></a>)}
+        <a href="/">{icon('fa-house')} الرئيسية <i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/campaigns">{icon('fa-seedling')} حملات الخير <i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/cases">{icon('fa-hand-holding-heart')} الحالات الإنسانية <i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/zakat-calculator" style="color:var(--emerald);font-weight:bold">{icon('fa-scale-balanced')} حاسبة الزكاة الذكية <i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/volunteer-portal">{icon('fa-id-card-clip')} بوابة المتطوعين <i class="fa-solid fa-arrow-left"></i></a>
+        {Object.entries(routeNames).filter(([h]) => !['/campaigns', '/cases', '/zakat-calculator', '/volunteer-portal', '/login', '/profile', '/dashboard'].includes(h)).slice(0, 8).map(([href, label]) => <a href={href}>{label}<i class="fa-solid fa-arrow-left"></i></a>)}
         <div style="border-top:1px solid var(--border); margin:1rem 0; padding-top:1rem"></div>
         {user ? (
           <>
+            <a href="/volunteer-portal" style="color:var(--emerald);font-weight:bold"><i class="fa-solid fa-id-card-clip"></i> بوابة المتطوع</a>
             <a href="/notifications" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-bell"></i> مركز الإشعارات</a>
             <a href="/profile" style="color:var(--blue-600);font-weight:bold"><i class="fa-solid fa-user"></i> حسابي ({user.name})</a>
             {user.role === 'admin' && <a href="/dashboard" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>}
@@ -147,6 +171,7 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
       {pageType !== 'dashboard' && <button class="scroll-top" id="scroll-top" aria-label="إلى أعلى">{icon('fa-arrow-up')}</button>}
       <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"><span class="toast-icon"><i class="fa-solid fa-check"></i></span><span class="toast-content"><strong>تم بنجاح</strong><span class="toast-message"></span></span><button class="toast-close" type="button" aria-label="إغلاق الإشعار">{icon('fa-xmark')}</button><span class="toast-progress" aria-hidden="true"></span></div>
       <div class="confirm-modal" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true"><div class="confirm-card"><span class="confirm-icon">{icon('fa-triangle-exclamation')}</span><h2 id="confirm-title">تأكيد الإجراء</h2><p id="confirm-message">هل أنت متأكد من تنفيذ هذا الإجراء؟</p><div><button type="button" class="confirm-cancel">إلغاء</button><button type="button" class="confirm-accept">تأكيد</button></div></div></div>
+      <SearchModal />
       {pageType === 'public' && <nav class="mobile-bottom" aria-label="تنقل سريع"><a href="/">{icon('fa-house')}<span>الرئيسية</span></a><a href="/campaigns">{icon('fa-seedling')}<span>الحملات</span></a><a class="bottom-donate" href="/donate">{icon('fa-heart')}<span>تبرّع</span></a><a href="/volunteers">{icon('fa-hand-holding-hand')}<span>تطوع</span></a><a href="/contact">{icon('fa-comment-dots')}<span>تواصل</span></a></nav>}
       <script src="/static/app.js"></script>
       <script src="/static/notifications.js"></script>

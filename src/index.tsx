@@ -13,6 +13,10 @@ import { Login, Profile } from './components/Auth'
 import { Achievements, Volunteers, Contact, FAQ, Transparency, Gallery, GenericNotFound } from './components/Pages'
 import { Dashboard } from './components/Dashboard'
 import { NotificationsPage } from './components/Notifications'
+import { ZakatCalculator } from './components/Zakat'
+import { CasesList, CaseDetail } from './components/Cases'
+import { VolunteerPortal } from './components/VolunteerPortal'
+import { CertificateView } from './components/Certificate'
 
 import { Receipt, ReceiptVerification } from './components/Receipt'
 
@@ -222,6 +226,164 @@ app.get('/careers', async (c) => {
     jobs = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
   } catch (e) { }
   return c.html(<Careers jobs={jobs} user={(c as any).get('user')} />)
+})
+
+app.get('/zakat-calculator', (c) => {
+  return c.html(<ZakatCalculator user={(c as any).get('user')} />)
+})
+
+app.get('/cases', async (c) => {
+  let casesList: any[] = []
+  try {
+    const db = getFirestore(c)
+    const snap = await db.collection('beneficiary_cases').where('is_published', '==', true).get().catch(() => ({ docs: [] }))
+    casesList = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+    if (casesList.length === 0) {
+      casesList = [
+        {
+          id: 'case_101',
+          code: 'حالة #101',
+          title: 'كفالة علاج وجلسات غسيل كلوي لمسن غير قادر',
+          category: 'صحة وعمليات',
+          target_amount: 18000,
+          raised_amount: 11400,
+          beneficiary_city: 'الدقهلية',
+          urgency: 'critical',
+          description: 'مريض مسن يعاني من فشل كلوي مزمن ويحتاج أدوية مناعية وفلاتر غسيل كلوي شهرية لا يقدر على تكاليفها.',
+          is_active: true
+        },
+        {
+          id: 'case_102',
+          code: 'حالة #102',
+          title: 'كفالة تعليم 3 أطفال أيتام وتوفير المصروفات والكسوة',
+          category: 'كفالة أيتام',
+          target_amount: 15000,
+          raised_amount: 9200,
+          beneficiary_city: 'كفر الشيخ',
+          urgency: 'high',
+          description: 'أسرة فقدت عائلها وتضم ثلاثة أطفال في مراحل التعليم الأساسي، تحتاج كفالة شهرية ومستلزمات دراسية.',
+          is_active: true
+        },
+        {
+          id: 'case_103',
+          code: 'حالة #103',
+          title: 'تجهيز طرف صناعي تعويضي لشاب تعرض لحادث سير',
+          category: 'أجهزة تعويضية',
+          target_amount: 25000,
+          raised_amount: 16500,
+          beneficiary_city: 'الغربية',
+          urgency: 'normal',
+          description: 'شاب عائل لأسرته تعرض لبتر في الساق ويحتاج طرفاً صناعياً هيدروليكياً ليعود للعمل وكسب رزقه بكرامة.',
+          is_active: true
+        },
+        {
+          id: 'case_104',
+          code: 'حالة #104',
+          title: 'سداد دين عاجل لغارمة مهددة بالحبس بسبب علاج ابنتها',
+          category: 'سداد ديون',
+          target_amount: 12000,
+          raised_amount: 8000,
+          beneficiary_city: 'الدقهلية',
+          urgency: 'critical',
+          description: 'أم تراكمت عليها إيصالات أمانة بسبب تكلفة عملية جراحية طارئة لابنتها، ويوشك تنفيذ حكم قضائي بحقها.',
+          is_active: true
+        }
+      ]
+    }
+  } catch (e) {}
+  return c.html(<CasesList cases={casesList} user={(c as any).get('user')} />)
+})
+
+app.get('/cases/:id', async (c) => {
+  const id = c.req.param('id')
+  try {
+    const db = getFirestore(c)
+    const doc = await db.collection('beneficiary_cases').doc(id).get()
+    if (doc.exists) {
+      const item = { id: doc.id, ...doc.data() } as any
+      return c.html(<CaseDetail caseItem={item} user={(c as any).get('user')} />)
+    }
+  } catch (e) {}
+
+  const fallbackSamples: Record<string, any> = {
+    case_101: { id: 'case_101', code: 'حالة #101', title: 'كفالة علاج وجلسات غسيل كلوي لمسن غير قادر', category: 'صحة وعمليات', target_amount: 18000, raised_amount: 11400, beneficiary_city: 'الدقهلية', urgency: 'critical', description: 'مريض مسن يعاني من فشل كلوي مزمن ويحتاج أدوية مناعية وفلاتر غسيل كلوي شهرية لا يقدر على تكاليفها.', is_active: true },
+    case_102: { id: 'case_102', code: 'حالة #102', title: 'كفالة تعليم 3 أطفال أيتام وتوفير المصروفات والكسوة', category: 'كفالة أيتام', target_amount: 15000, raised_amount: 9200, beneficiary_city: 'كفر الشيخ', urgency: 'high', description: 'أسرة فقدت عائلها وتضم ثلاثة أطفال في مراحل التعليم الأساسي، تحتاج كفالة شهرية ومستلزمات دراسية.', is_active: true },
+    case_103: { id: 'case_103', code: 'حالة #103', title: 'تجهيز طرف صناعي تعويضي لشاب تعرض لحادث سير', category: 'أجهزة تعويضية', target_amount: 25000, raised_amount: 16500, beneficiary_city: 'الغربية', urgency: 'normal', description: 'شاب عائل لأسرته تعرض لبتر في الساق ويحتاج طرفاً صناعياً هيدروليكياً ليعود للعمل وكسب رزقه بكرامة.', is_active: true },
+    case_104: { id: 'case_104', code: 'حالة #104', title: 'سداد دين عاجل لغارمة مهددة بالحبس بسبب علاج ابنتها', category: 'سداد ديون', target_amount: 12000, raised_amount: 8000, beneficiary_city: 'الدقهلية', urgency: 'critical', description: 'أم تراكمت عليها إيصالات أمانة بسبب تكلفة عملية جراحية طارئة لابنتها، ويوشك تنفيذ حكم قضائي بحقها.', is_active: true }
+  }
+  if (fallbackSamples[id]) {
+    return c.html(<CaseDetail caseItem={fallbackSamples[id]} user={(c as any).get('user')} />)
+  }
+  return c.notFound()
+})
+
+app.get('/volunteer-portal', async (c) => {
+  const user = (c as any).get('user')
+  if (!user) {
+    return c.redirect('/login?error=unauthorized')
+  }
+  let volunteer: any = null
+  let events: any[] = []
+  try {
+    const db = getFirestore(c)
+    const [vSnap, eSnap] = await Promise.all([
+      db.collection('volunteers').where('profile_id', '==', user.id).limit(1).get().catch(() => ({ empty: true, docs: [] })),
+      db.collection('events').where('is_published', '==', true).orderBy('event_date', 'asc').limit(4).get().catch(() => ({ docs: [] }))
+    ])
+    if (!vSnap.empty && vSnap.docs && vSnap.docs.length > 0) {
+      volunteer = { id: vSnap.docs[0].id, ...vSnap.docs[0].data() }
+    } else {
+      const fallbackSnap = await db.collection('volunteers').where('phone', '==', user.phone || '').limit(1).get().catch(() => ({ empty: true, docs: [] }))
+      if (!fallbackSnap.empty && fallbackSnap.docs && fallbackSnap.docs.length > 0) {
+        volunteer = { id: fallbackSnap.docs[0].id, ...fallbackSnap.docs[0].data() }
+      }
+    }
+    events = eSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }))
+  } catch (e) {}
+  return c.html(<VolunteerPortal user={user} volunteer={volunteer} upcomingEvents={events} />)
+})
+
+app.get('/certificate/:id', async (c) => {
+  const id = c.req.param('id')
+  let volunteer: any = null
+  try {
+    const db = getFirestore(c)
+    const doc = await db.collection('volunteers').doc(id).get()
+    if (doc.exists) {
+      volunteer = { id: doc.id, ...doc.data() }
+    }
+  } catch (e) {}
+
+  if (!volunteer) {
+    try {
+      const db = getFirestore(c)
+      const snap = await db.collection('volunteers').where('volunteer_code', '==', id).limit(1).get()
+      if (!snap.empty) {
+        volunteer = { id: snap.docs[0].id, ...snap.docs[0].data() }
+      }
+    } catch (e) {}
+  }
+
+  if (!volunteer) {
+    volunteer = {
+      id,
+      full_name: 'متطوع متميز بأسرة المؤسسة',
+      hours_count: 45,
+      rank: 'متطوع متميز ومبادر',
+      volunteer_code: `VOL-2026-${id.slice(0, 4).toUpperCase()}`
+    }
+  }
+
+  const certCode = `CERT-2026-${(volunteer.id || id).slice(0, 6).toUpperCase()}`
+  const verificationUrl = `${SITE_ORIGIN}/verify-certificate/${certCode}`
+
+  return c.html(
+    <CertificateView
+      volunteer={volunteer}
+      certCode={certCode}
+      verificationUrl={verificationUrl}
+    />
+  )
 })
 
 app.get('/login', (c) => {

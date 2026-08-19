@@ -19,6 +19,7 @@ import { treasury } from './treasury'
 import { cases } from './cases'
 import { gallery } from './gallery'
 import { notifications } from './notifications'
+import { searchApi } from './search'
 import { auditMiddleware } from '../lib/audit'
 import { audit } from './audit'
 
@@ -75,6 +76,7 @@ api.route('/treasury', treasury)
 api.route('/cases', cases)
 api.route('/gallery', gallery)
 api.route('/notifications', notifications)
+api.route('/search', searchApi)
 api.route('/audit', audit)
 
 export { api }
