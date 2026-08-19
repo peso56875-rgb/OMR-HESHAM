@@ -131,6 +131,14 @@ const table = (inner: string): string =>
     ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${brand.line};border-radius:10px;margin:18px 0;">${inner}</table>`
     : ''
 
+/** زر دعوة لاتخاذ إجراء (Call to Action) داخل البريد الإلكتروني. */
+const btn = (url: string, label: string, color = brand.emerald): string => `
+  <div style="text-align:center;margin:24px 0;">
+    <a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:${color};color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:10px;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,0.12);">
+      ${esc(label)}
+    </a>
+  </div>`
+
 /**
  * الإرسال الفعلي. لا يرمي استثناءً أبدًا.
  */
@@ -598,39 +606,75 @@ export const volunteerDecision = (
 }
 
 /**
- * 12) ترقية المتطوع في الرتبة.
- *
- * الحدث الثاني الذي طلبه صاحب الموقع بالنص: «او يترقي في المتطوعين».
+ * 12) ترقية المتطوع في الرتبة — رسالة تهنئة واعتزاز فخمة ومتميزة.
  */
 export const volunteerRankPromoted = (
   cfg: EmailConfig,
-  v: { email?: string; full_name?: string; from?: string; to?: string; hours?: unknown; actor?: string }
+  v: { email?: string; full_name?: string; from?: string; to?: string; hours?: unknown; actor?: string; volunteer_code?: string }
 ): Promise<SendResult> => {
   const to = (v?.email || '').trim()
   if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
 
   const name = v?.full_name || 'المتطوع الكريم'
-  const newRank = (v?.to || '').trim() || 'رتبة جديدة'
+  const newRank = (v?.to || '').trim() || 'رتبة متميزة'
+  const oldRank = (v?.from || '').trim() || 'المرحلة السابقة'
 
   const html = shell(
-    'مبارك — تمت ترقيتك',
-    `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة.`)}
-     ${para('تقديرًا لجهدك وانتظامك في العمل التطوعي، تمت ترقيتك إلى رتبة جديدة داخل فريق متطوعي المؤسسة.')}
-     ${banner('رتبتك الجديدة', newRank, brand.emerald, '#f0faf7')}
+    '🎉 تهنئة واعتزاز — مبارك ترقيتك الميدانية',
+    `${para(`السيد/ة المتطوع/ة المتميز/ة <strong>${esc(name)}</strong>، تحية فخر واعتزاز وبعد،`)}
+     ${para('يسرّ مجلس إدارة <strong>مؤسسة الدكتور عمر هشام الخيرية</strong> وفريق العمل الميداني أن يرفعوا إليكم أسمى آيات التهاني والتبريكات بمناسبة ترقيتكم المستحقة.')}
+     ${para('إن ما قدمتموه من ساعات عمل وبذل في القوافل والمبادرات الإنسانية كان له أبلغ الأثر في تفريج الكرب وإسعاد الأسر المستحقة، وتتويجاً لهذا العطاء المخلص يسرنا اعتماد رتبتكم الجديدة:')}
+     ${banner('🌟 الرتبة الجديدة المعتمدة', newRank, brand.emerald, '#f0faf7')}
      ${table(
        rows([
-         ['الرتبة السابقة', v?.from],
-         ['الرتبة الحالية', v?.to],
-         ['إجمالي ساعات التطوّع', v?.hours],
-         ['اعتُمدت بواسطة', v?.actor]
+         ['كود المتطوع', v?.volunteer_code],
+         ['الرتبة السابقة', oldRank],
+         ['الرتبة الجديدة', newRank],
+         ['إجمالي الساعات الموثقة', v?.hours ? `${v?.hours} ساعة معتمدة` : undefined],
+         ['اعتُمدت بواسطة', v?.actor || 'إدارة المؤسسة']
        ])
      )}
-     ${para('هذه الترقية شهادة على أثرٍ حقيقي تركته في عمل المؤسسة. نتمنى لك استمرار العطاء.')}
-     ${para('جزاك الله خيرًا.')}`,
-    'يمكنك عرض رتبتك المحدّثة على كارنيه التطوّع من حسابك.'
+     ${para('نسأل الله أن يبارك في جهودكم ويزيدكم رفعةً وتوفيقاً، وأن يجعل كل خطوة خطوتموها في ميزان حسناتكم.')}
+     ${para('يمكنكم الآن استعراض بطاقة هويتكم المحدّثة من خلال بوابتكم الذاتية.')}`,
+    'شهادة فخر من أسرة مؤسسة د. عمر هشام الخيرية — شكرًا لصناعتك الأثر معنا.'
   )
 
-  return deliver(cfg, to, `مبارك — تمت ترقيتك إلى ${newRank}`, html)
+  return deliver(cfg, to, `🎖️ تهانينا ${name}! تمت ترقيتك رسمياً إلى رتبة «${newRank}»`, html)
+}
+
+/**
+ * 12.1) إتاحة استخراج شهادة التطوع المعتمدة للمتطوع.
+ */
+export const volunteerCertificateGranted = (
+  cfg: EmailConfig,
+  v: { email?: string; full_name?: string; hours?: unknown; rank?: string; cert_url?: string; actor?: string }
+): Promise<SendResult> => {
+  const to = (v?.email || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
+
+  const name = v?.full_name || 'المتطوع الكريم'
+  const hours = v?.hours ? `${v.hours} ساعة` : 'الساعات المعتمدة'
+  const certUrl = v?.cert_url || '/volunteer-portal'
+
+  const html = shell(
+    '📜 اعتماد وإتاحة شهادة التطوع الرسمية',
+    `${para(`السيد/ة <strong>${esc(name)}</strong>، تحية طيبة مفعمة بالتقدير،`)}
+     ${para('يسعدنا إبلاغك بأن إدارة المؤسسة قد <strong>وافقت رسميًا واعتمدت إصدار شهادة خبرتك التطوعية</strong> تقديراً لمشاركتك الفاعلة وتفانيك الملموس.')}
+     ${banner('حالة الشهادة', 'جاهزة للإصدار والتحميل الفوري (PDF / صورة)', brand.gold, '#fdf8e7')}
+     ${table(
+       rows([
+         ['اسم المتطوع', name],
+         ['الرتبة المعتمدة', v?.rank || 'متطوع متميز'],
+         ['ساعات العمل التطوعي', hours],
+         ['اعتمدت بواسطة', v?.actor || 'إدارة شؤون المتطوعين']
+       ])
+     )}
+     ${para('يمكنك الآن الدخول إلى بوابة المتطوعين لاستعراض الشهادة، أو طباعتها، أو تحميلها كصورة عالية الدقة على جهازك لاستخدامها في سيرتك الذاتية وتوثيق مسيرتك المهنية.')}
+     ${btn(certUrl, 'عرض وتحميل الشهادة الآن')}`,
+    'وثيقة معتمدة ومسجلة برقم كودي موثق لدى مؤسسة الدكتور عمر هشام الخيرية.'
+  )
+
+  return deliver(cfg, to, `📜 تهانينا ${name}! شهادة تطوعك المعتمدة أصبحت جاهزة للتحميل`, html)
 }
 
 /** 13) تغيّر حالة كارنيه التطوّع — تجميد أو تجديد. */

@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getFirestore, getAuth } from './lib/firebase-admin'
 
+import { Layout } from './components/shared'
 import { Home } from './components/Home'
 import { About } from './components/About'
 import { Campaigns, CampaignDetail } from './components/Campaigns'
@@ -17,6 +18,7 @@ import { ZakatCalculator } from './components/Zakat'
 import { CasesList, CaseDetail } from './components/Cases'
 import { VolunteerPortal } from './components/VolunteerPortal'
 import { CertificateView } from './components/Certificate'
+import { VolunteerCardView } from './components/VolunteerCard'
 
 import { Receipt, ReceiptVerification } from './components/Receipt'
 
@@ -374,6 +376,35 @@ app.get('/certificate/:id', async (c) => {
     }
   }
 
+  const user = (c as any).get('user')
+  const isAdmin = user?.role === 'admin'
+  const isAllowed = Boolean(volunteer.certificate_allowed) || isAdmin
+
+  if (!isAllowed) {
+    return c.html(
+      <Layout user={user} title="شهادة التطوع قيد الاعتماد | مؤسسة د. عمر هشام">
+        <section class="section-pad" style="text-align: center; min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 60px 15px;">
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 44px 32px; max-width: 560px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.06);">
+            <div style="width: 76px; height: 76px; border-radius: 50%; background: rgba(245,158,11,0.12); color: #d97706; display: grid; place-items: center; font-size: 2.2rem; margin: 0 auto 20px;">
+              <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2 style="font-weight: 900; color: var(--heading); margin-bottom: 12px; font-size: 1.4rem;">إصدار الشهادة يتطلب موافقة الإدارة</h2>
+            <p style="color: var(--muted); font-size: 0.95rem; line-height: 1.7; margin-bottom: 26px;">
+              عذراً، شهادة التطوع الخاصة بالمتطوع <strong>{volunteer.full_name}</strong> لم يتم اعتماد إتاحتها من قِبل إدارة المؤسسة بعد. سيتمكن المتطوع من استعراضها وطباعتها وتحميلها فور قيام الإدارة بالموافقة.
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+              <a href="/volunteer-portal" class="primary-btn">
+                <span>العودة لبوابة المتطوعين</span>
+                <i class="fa-solid fa-arrow-left"></i>
+              </a>
+              <a href="/" class="outline-btn">الصفحة الرئيسية</a>
+            </div>
+          </div>
+        </section>
+      </Layout>
+    )
+  }
+
   const certCode = `CERT-2026-${(volunteer.id || id).slice(0, 6).toUpperCase()}`
   const verificationUrl = `${SITE_ORIGIN}/verify-certificate/${certCode}`
 
@@ -384,6 +415,34 @@ app.get('/certificate/:id', async (c) => {
       verificationUrl={verificationUrl}
     />
   )
+})
+
+app.get('/volunteers/card/:id', async (c) => {
+  const id = c.req.param('id')
+  let volunteer: any = null
+  try {
+    const db = getFirestore(c)
+    const doc = await db.collection('volunteers').doc(id).get()
+    if (doc.exists) {
+      volunteer = { id: doc.id, ...doc.data() }
+    }
+  } catch (e) {}
+
+  if (!volunteer) {
+    try {
+      const db = getFirestore(c)
+      const snap = await db.collection('volunteers').where('volunteer_code', '==', id).limit(1).get()
+      if (!snap.empty) {
+        volunteer = { id: snap.docs[0].id, ...snap.docs[0].data() }
+      }
+    } catch (e) {}
+  }
+
+  if (!volunteer) {
+    return c.redirect('/volunteer-portal')
+  }
+
+  return c.html(<VolunteerCardView volunteer={volunteer} />)
 })
 
 app.get('/login', (c) => {

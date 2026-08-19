@@ -96,51 +96,99 @@ export function VolunteerPortal({
                     </div>
                   </div>
 
-                  <div class="id-card-footer">
-                    <a href={`/volunteers/card/${volunteer.id}`} class="outline-btn mini-btn" target="_blank">
-                      {icon('fa-id-badge')} عرض البطاقة الكاملة
-                    </a>
+                    <div class="id-card-footer" style="display: flex; flex-direction: column; gap: 6px;">
+                      <a href={`/volunteers/card/${volunteer.id}`} class="outline-btn mini-btn" target="_blank" style="width: 100%; text-align: center; justify-content: center;">
+                        {icon('fa-id-badge')} عرض البطاقة الكاملة
+                      </a>
+                      <button
+                        type="button"
+                        class="btn-trigger-celebration"
+                        data-vol-id={volunteer.id}
+                        data-vol-name={volunteer.full_name || user.name}
+                        data-vol-rank={rank}
+                        data-vol-hours={hours}
+                        data-vol-code={code}
+                        data-vol-avatar={volunteer.avatar_url || user.avatar || ''}
+                        data-vol-cert={volunteer.certificate_allowed ? `/certificate/${volunteer.id}` : ''}
+                        data-vol-card={`/volunteers/card/${volunteer.id}`}
+                        style="width: 100%; background: linear-gradient(135deg, #c59b27, #8c6d15); color: #fff; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 14px rgba(197, 155, 39, 0.25);"
+                        title="عرض نافذة التهنئة الاحتفالية بالرتبة والألعاب النارية"
+                      >
+                        {icon('fa-wand-magic-sparkles')} احتفل برتبتك وإنجازك 🎉
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Hidden Celebration Trigger */}
+                  <div
+                    id="volunteer-celebration-trigger"
+                    data-vol-id={volunteer.id}
+                    data-vol-name={volunteer.full_name || user.name}
+                    data-vol-rank={rank}
+                    data-vol-hours={hours}
+                    data-vol-code={code}
+                    data-vol-avatar={volunteer.avatar_url || user.avatar || ''}
+                    data-vol-cert={volunteer.certificate_allowed ? `/certificate/${volunteer.id}` : ''}
+                    data-vol-card={`/volunteers/card/${volunteer.id}`}
+                    style="display:none"
+                  ></div>
+
+                  {/* Certificate Generator Card */}
+                  {volunteer.certificate_allowed ? (
+                    <div class="portal-certificate-card" style="border: 2px solid var(--emerald); background: linear-gradient(145deg, var(--surface), rgba(16,185,129,0.06)); position: relative;">
+                      <div style="position: absolute; top: 12px; left: 12px; background: rgba(16,185,129,0.15); color: #10b981; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;">
+                        {icon('fa-circle-check')} معتمدة ومتاحة
+                      </div>
+                      <div class="cert-card-icon" style="color: var(--gold-600);">{icon('fa-award')}</div>
+                      <h4 style="color: var(--heading); margin-top: 6px;">شهادة التطوع المعتمدة</h4>
+                      <p style="color: var(--muted); font-size: 0.85rem; line-height: 1.6;">تم اعتماد وتوثيق ساعات تطوعك رسميًا من إدارة المؤسسة. يمكنك الآن إصدار الشهادة، أو طباعتها، أو تحميلها كصورة فائقة الجودة.</p>
+                      <a href={`/certificate/${volunteer.id}`} class="primary-btn cert-download-btn" target="_blank" style="background: linear-gradient(135deg, #0c4a3f, #147a68); margin-top: 10px;">
+                        <span>{icon('fa-file-certificate')} استعراض وطباعة وتحميل الشهادة</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                      </a>
+                    </div>
+                  ) : (
+                    <div class="portal-certificate-card" style="opacity: 0.9; background: var(--surface); border: 1px dashed var(--border); position: relative;">
+                      <div style="position: absolute; top: 12px; left: 12px; background: rgba(245,158,11,0.12); color: #d97706; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;">
+                        {icon('fa-lock')} تتطلب اعتماد الإدارة
+                      </div>
+                      <div class="cert-card-icon" style="color: var(--muted); opacity: 0.6;">{icon('fa-lock')}</div>
+                      <h4 style="color: var(--heading); margin-top: 6px;">شهادة التطوع المعتمدة</h4>
+                      <p style="color: var(--muted); font-size: 0.84rem; line-height: 1.6;">شهادة رسمية موثقة تثبت ساعات خدمتك المجتمعية. يتطلب استخراج الشهادة موافقة واعتماد إدارة شؤون المتطوعين أولاً.</p>
+                      <div style="background: var(--surface-2); padding: 10px 12px; border-radius: 10px; font-size: 0.78rem; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-top: 12px; border: 1px solid var(--border);">
+                        <span style="color: #d97706;">{icon('fa-circle-info')}</span>
+                        <span>سيصلك إشعار فوري وتنبيه ببريدك فور تفعيل الإدارة لإصدار شهادتك.</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Certificate Generator Card */}
-                <div class="portal-certificate-card">
-                  <div class="cert-card-icon">{icon('fa-award')}</div>
-                  <h4>شهادة التطوع المعتمدة</h4>
-                  <p>شهادة رسمية موثقة برقم كودي و QR Code تثبت ساعات تطوعك بالمؤسسة صالحة للجامعات والـ CV.</p>
-                  <a href={`/certificate/${volunteer.id}`} class="primary-btn cert-download-btn" target="_blank">
-                    <span>{icon('fa-file-certificate')} إصدار وطباعة الشهادة</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                  </a>
-                </div>
-              </div>
-
-              {/* Right Column: Hours, Progression, Assigned Tasks */}
-              <div class="portal-col-main">
-                {/* Stats Row */}
-                <div class="portal-kpis-grid">
-                  <div class="portal-kpi-card">
-                    <div class="kpi-icon-wrap bg-green">{icon('fa-stopwatch')}</div>
-                    <div>
-                      <span class="kpi-sub">إجمالي ساعات التطوع:</span>
-                      <b class="kpi-num">{hours} <small>ساعة معتمدة</small></b>
+                {/* Right Column: Hours, Progression, Assigned Tasks */}
+                <div class="portal-col-main">
+                  {/* Stats Row */}
+                  <div class="portal-kpis-grid">
+                    <div class="portal-kpi-card">
+                      <div class="kpi-icon-wrap bg-green">{icon('fa-stopwatch')}</div>
+                      <div>
+                        <span class="kpi-sub">إجمالي ساعات التطوع:</span>
+                        <b class="kpi-num">{hours} <small>ساعة معتمدة</small></b>
+                      </div>
+                    </div>
+                    <div class="portal-kpi-card">
+                      <div class="kpi-icon-wrap bg-gold">{icon('fa-calendar-check')}</div>
+                      <div>
+                        <span class="kpi-sub">الفعاليات المنجزة:</span>
+                        <b class="kpi-num">{Math.max(1, Math.floor(hours / 4))} <small>فعالية ميدانية</small></b>
+                      </div>
+                    </div>
+                    <div class="portal-kpi-card btn-trigger-celebration" style="cursor: pointer;" data-vol-id={volunteer.id} data-vol-name={volunteer.full_name || user.name} data-vol-rank={rank} data-vol-hours={hours} data-vol-code={code} data-vol-avatar={volunteer.avatar_url || user.avatar || ''} data-vol-cert={volunteer.certificate_allowed ? `/certificate/${volunteer.id}` : ''} data-vol-card={`/volunteers/card/${volunteer.id}`} title="اضغط للاحتفال برتبتك!">
+                      <div class="kpi-icon-wrap bg-purple">{icon('fa-trophy')}</div>
+                      <div>
+                        <span class="kpi-sub">الرتبة الميدانية (احتفل 🎉):</span>
+                        <b class="kpi-num">{rank}</b>
+                      </div>
                     </div>
                   </div>
-                  <div class="portal-kpi-card">
-                    <div class="kpi-icon-wrap bg-gold">{icon('fa-calendar-check')}</div>
-                    <div>
-                      <span class="kpi-sub">الفعاليات المنجزة:</span>
-                      <b class="kpi-num">{Math.max(1, Math.floor(hours / 4))} <small>فعالية ميدانية</small></b>
-                    </div>
-                  </div>
-                  <div class="portal-kpi-card">
-                    <div class="kpi-icon-wrap bg-purple">{icon('fa-trophy')}</div>
-                    <div>
-                      <span class="kpi-sub">الرتبة الميدانية:</span>
-                      <b class="kpi-num">{rank}</b>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Progression Bar to Next Rank */}
                 <div class="portal-progression-card">

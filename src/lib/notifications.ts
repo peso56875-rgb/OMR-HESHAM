@@ -144,11 +144,12 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeDef> = {
   /* ── إشعارات المتطوعين (V) ── */
   volunteer_approved: { category: 'volunteers', icon: 'fa-id-badge', priority: 'high', label: 'قبول طلب التطوع' },
   volunteer_rejected: { category: 'volunteers', icon: 'fa-circle-xmark', priority: 'high', label: 'رفض طلب التطوع' },
-  volunteer_rank_promoted: { category: 'volunteers', icon: 'fa-medal', priority: 'high', label: 'ترقية رتبة التطوع' },
+  volunteer_rank_promoted: { category: 'volunteers', icon: 'fa-award', priority: 'high', label: 'ترقية رتبة التطوع وتهنئة' },
   volunteer_hours_updated: { category: 'volunteers', icon: 'fa-clock', priority: 'low', silent: true, label: 'تحديث ساعات التطوع' },
   volunteer_card_frozen: { category: 'volunteers', icon: 'fa-ban', priority: 'high', label: 'إيقاف كارنيه التطوع' },
   volunteer_card_expiring: { category: 'volunteers', icon: 'fa-hourglass-half', priority: 'normal', label: 'اقتراب انتهاء الكارنيه' },
   volunteer_card_renewed: { category: 'volunteers', icon: 'fa-arrows-rotate', priority: 'normal', label: 'تجديد الكارنيه' },
+  volunteer_certificate_granted: { category: 'volunteers', icon: 'fa-file-certificate', priority: 'high', label: 'إتاحة إصدار شهادة التطوع المعتمدة' },
 
   /* ── إشعارات مخصصة وبث عام (Custom & Broadcast) ── */
   custom_broadcast: { category: 'content', icon: 'fa-bullhorn', priority: 'normal', label: 'إشعار وبث عام من الإدارة' },
@@ -492,11 +493,11 @@ export const detectRankChange = (
   return { changed, from, to, isFirstAssignment: changed && !from }
 }
 
-/** يبني نص "من رتبة → إلى رتبة" للإشعار. */
+/** يبني نص "من رتبة → إلى رتبة" للإشعار مع تهنئة راقية. */
 export const rankChangeBody = (name: string, from: string, to: string): string =>
   from
-    ? `تهانينا ${name}! تمت ترقيتك من "${from}" إلى "${to}".`
-    : `تهانينا ${name}! أصبحت رتبتك "${to}".`
+    ? `تهانينا القلبية يا ${name}! تقديراً لبذلك وجهودك الميدانية الاستثنائية، تمت ترقيتك رسمياً من «${from}» إلى رتبة «${to}». فخورون بصناعتك للأثر!`
+    : `تهانينا الحارة يا ${name}! يسر المؤسسة منحك رتبة «${to}» تكريماً لعطائك المستمر وتفانيك في خدمة المجتمع.`
 
 /** يصيغ مبلغًا بالعربية لعرضه داخل نص الإشعار. */
 export const notifyMoney = (amount: unknown): string => {

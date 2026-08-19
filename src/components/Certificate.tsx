@@ -89,6 +89,15 @@ export function CertificateView({
           .cert-btn-primary:hover {
             background: var(--cert-ink);
           }
+          .cert-btn-gold {
+            background: linear-gradient(135deg, #c59b27, #8c6d15);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(197, 155, 39, 0.35);
+          }
+          .cert-btn-gold:hover {
+            background: linear-gradient(135deg, #a67f1b, #6b530c);
+            transform: translateY(-1px);
+          }
           .cert-btn-outline {
             background: #f1f5f9;
             color: #334155;
@@ -317,6 +326,9 @@ export function CertificateView({
             <span>شهادة تطوع رقمية موثقة ومعتمدة من مجلس إدارة المؤسسة</span>
           </div>
           <div class="toolbar-actions">
+            <button type="button" class="cert-btn cert-btn-gold" id="btn-download-cert-img" onclick="downloadCertImage()">
+              <i class="fa-solid fa-file-image"></i> تحميل كصورة (PNG)
+            </button>
             <button type="button" class="cert-btn cert-btn-primary" onclick="window.print()">
               <i class="fa-solid fa-print"></i> طباعة / حفظ كـ PDF
             </button>
@@ -326,7 +338,7 @@ export function CertificateView({
           </div>
         </div>
 
-        <div class="certificate-sheet">
+        <div class="certificate-sheet" id="certificate-target">
           <div class="cert-border-outer">
             <div class="corner-dec corner-tl"></div>
             <div class="corner-dec corner-tr"></div>
@@ -398,6 +410,63 @@ export function CertificateView({
             </div>
           </div>
         </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+        <script dangerouslySetInnerHTML={{ __html: `
+          async function downloadCertImage() {
+            const btn = document.getElementById('btn-download-cert-img');
+            const sheet = document.getElementById('certificate-target') || document.querySelector('.certificate-sheet');
+            if (!sheet) return;
+
+            const originalHTML = btn ? btn.innerHTML : '';
+            if (btn) {
+              btn.disabled = true;
+              btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التوليد...';
+            }
+
+            try {
+              // Ensure fonts are loaded
+              if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+              }
+
+              const canvas = await html2canvas(sheet, {
+                scale: 2.5,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#fcfbf7',
+                logging: false,
+                imageTimeout: 15000
+              });
+
+              const rawName = ${JSON.stringify(volunteer.full_name || 'volunteer')};
+              const safeName = rawName.replace(/[\\\\/:*?"<>|\\r\\n]+/g, '-').trim() || 'volunteer';
+              const filename = 'شهادة-تطوع-' + safeName + '.png';
+
+              const link = document.createElement('a');
+              link.download = filename;
+              link.href = canvas.toDataURL('image/png', 1.0);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+
+              if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> تم التحميل!';
+                setTimeout(() => {
+                  btn.innerHTML = originalHTML;
+                  btn.disabled = false;
+                }, 2500);
+              }
+            } catch (err) {
+              console.error('Error generating certificate image:', err);
+              alert('تعذر تحميل الشهادة كصورة مباشرة، يمكنك استخدام زر "طباعة / حفظ كـ PDF".');
+              if (btn) {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+              }
+            }
+          }
+        `}} />
       </body>
     </html>
   )

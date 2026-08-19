@@ -783,7 +783,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                 </button>
                 <div style="flex:1; min-width:0">
                   <h4 style="margin:0; font-size:1.05rem; font-weight:900; color:var(--heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{v.full_name}</h4>
-                  <div style="display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap">
+                  <div style="display:flex; align-items:center; gap:6px; margin-top:4px; flex-wrap:wrap">
                     {v.volunteer_code && (
                       <span style="font-family:monospace; font-size:.78rem; font-weight:900; color:var(--emerald); background:rgba(22,138,112,.1); padding:3px 10px; border-radius:6px; border:1px solid rgba(22,138,112,.18); letter-spacing:.04em">
                         {v.volunteer_code}
@@ -791,6 +791,9 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                     )}
                     <span style={`font-size:.72rem; font-weight:800; padding:3px 8px; border-radius:6px; color:${statusColor}; background:${statusBg}; border:1px solid ${statusColor}22; display:inline-flex; align-items:center; gap:4px`}>
                       {icon(statusIcon)} {statusText}
+                    </span>
+                    <span style={`font-size:.72rem; font-weight:800; padding:3px 8px; border-radius:6px; color:${v.certificate_allowed ? '#10b981' : '#d97706'}; background:${v.certificate_allowed ? 'rgba(16,185,129,.1)' : 'rgba(245,158,11,.1)'}; border:1px solid ${v.certificate_allowed ? 'rgba(16,185,129,.2)' : 'rgba(245,158,11,.2)'}; display:inline-flex; align-items:center; gap:4px`} title={v.certificate_allowed ? 'شهادة التطوع معتمدة ومسموح بإصدارها' : 'شهادة التطوع مقفلة ولم يتم تفعيلها للمتطوع بعد'}>
+                      {icon(v.certificate_allowed ? 'fa-award' : 'fa-lock')} {v.certificate_allowed ? 'الشهادة متاحة' : 'الشهادة معلقة'}
                     </span>
                   </div>
                 </div>
@@ -844,6 +847,54 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                     </button>
                   </form>
                 </>}
+
+                {/* Quick Certificate Permission Toggle */}
+                {isApproved && (
+                  <form action={`/api/volunteers/certificate-permission/${v.id}`} method="post" style="display:inline">
+                    <input type="hidden" name="action" value={v.certificate_allowed ? 'revoke' : 'grant'} />
+                    <button
+                      type="submit"
+                      style={`border:none; padding:7px 12px; border-radius:10px; cursor:pointer; font-size:.78rem; font-weight:800; display:inline-flex; align-items:center; gap:5px; ${v.certificate_allowed ? 'background:rgba(220,38,38,.1); color:#dc2626; border:1px solid rgba(220,38,38,.2)' : 'background:linear-gradient(135deg, #c59b27, #8c6d15); color:#fff'}`}
+                      title={v.certificate_allowed ? 'إيقاف إمكانية استخراج الشهادة للمتطوع' : 'السماح للمتطوع بإصدار الشهادة وإرسال إشعار فوري له'}
+                    >
+                      {icon(v.certificate_allowed ? 'fa-lock' : 'fa-award')}
+                      {v.certificate_allowed ? 'إيقاف الشهادة' : 'إتاحة الشهادة'}
+                    </button>
+                  </form>
+                )}
+
+                {/* Quick Download Volunteer ID Card (PNG) */}
+                <button
+                  type="button"
+                  class="vol-download-id-card-btn"
+                  data-vol-id={v.id}
+                  data-vol-name={v.full_name}
+                  data-vol-code={v.volunteer_code || ''}
+                  data-vol-role={v.preferred_role || 'عام'}
+                  data-vol-team={v.team || ''}
+                  data-vol-city={v.city || 'الدقهلية'}
+                  data-vol-rank={v.rank || (isApproved ? 'متطوع مبادر' : '—')}
+                  data-vol-hours={v.hours_count || 0}
+                  data-vol-avatar={v.avatar_url || ''}
+                  data-vol-created={createdDate}
+                  data-vol-expiry={expiryDate}
+                  style="background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:7px 12px; border-radius:10px; cursor:pointer; font-size:.78rem; font-weight:800; display:inline-flex; align-items:center; gap:5px"
+                  title="تحميل بطاقة هوية المتطوع (الكارنيه) كصورة PNG مباشرة على جهازك"
+                >
+                  {icon('fa-id-badge')} تنزيل الكارنيه (ID)
+                </button>
+
+                {/* Quick Download Avatar Photo */}
+                {v.avatar_url && (
+                  <a
+                    href={`/api/volunteers/photo/${v.id}/download`}
+                    download
+                    style="background:var(--surface-2); border:1px solid var(--border); color:var(--muted); padding:7px 10px; border-radius:10px; font-size:.78rem; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; gap:4px"
+                    title="تنزيل الصورة الشخصية الأصلية"
+                  >
+                    {icon('fa-image')} الصورة
+                  </a>
+                )}
 
                 {/* Details & Admin Modal */}
                 <details style="position:relative; flex:1">
@@ -924,6 +975,84 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                           </div>
                         )}
 
+                        {/* ── Certificate & ID Badge Controls ── */}
+                        <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:16px; padding:18px; margin-bottom:20px">
+                          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px">
+                            <h4 style="margin:0; font-size:.95rem; font-weight:900; display:flex; align-items:center; gap:8px; color:var(--heading)">
+                              {icon('fa-award')} إدارة شهادة التطوع والكارنيه الرسمي
+                            </h4>
+                            <span style={`font-size:.75rem; font-weight:800; padding:4px 10px; border-radius:8px; color:${v.certificate_allowed ? '#10b981' : '#d97706'}; background:${v.certificate_allowed ? 'rgba(16,185,129,.1)' : 'rgba(245,158,11,.1)'}; border:1px solid ${v.certificate_allowed ? 'rgba(16,185,129,.2)' : 'rgba(245,158,11,.2)'}; display:inline-flex; align-items:center; gap:4px`}>
+                              {icon(v.certificate_allowed ? 'fa-circle-check' : 'fa-lock')} {v.certificate_allowed ? 'الشهادة مسموح بها' : 'الشهادة معلقة ومقفلة'}
+                            </span>
+                          </div>
+
+                          <p style="margin:0 0 14px; font-size:.84rem; color:var(--muted); line-height:1.6">
+                            {v.certificate_allowed
+                              ? 'المتطوع لديه تصريح معتمد لاستخراج وطباعة وتحميل شهادة التطوع المعتمدة. يمكنك إيقاف الصلاحية في أي وقت.'
+                              : 'لا يستطيع المتطوع إصدار أو استعراض الشهادة حتى تضغط على زر "السماح بإصدار الشهادة" أدناه (سيتم إرسال إشعار فوري له).'}
+                          </p>
+
+                          <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center">
+                            <form action={`/api/volunteers/certificate-permission/${v.id}`} method="post" style="display:inline">
+                              <input type="hidden" name="action" value={v.certificate_allowed ? 'revoke' : 'grant'} />
+                              <button
+                                type="submit"
+                                style={`border:none; padding:8px 16px; border-radius:10px; font-weight:800; font-size:.82rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; ${v.certificate_allowed ? 'background:rgba(220,38,38,.1); color:#dc2626; border:1px solid rgba(220,38,38,.2)' : 'background:linear-gradient(135deg, #c59b27, #8c6d15); color:#fff'}`}
+                              >
+                                {icon(v.certificate_allowed ? 'fa-lock' : 'fa-award')}
+                                {v.certificate_allowed ? 'إيقاف إمكانية إصدار الشهادة' : 'السماح بإصدار الشهادة وإشعار المتطوع'}
+                              </button>
+                            </form>
+
+                            <button
+                              type="button"
+                              class="vol-download-id-card-btn"
+                              data-vol-id={v.id}
+                              data-vol-name={v.full_name}
+                              data-vol-code={v.volunteer_code || ''}
+                              data-vol-role={v.preferred_role || 'عام'}
+                              data-vol-team={v.team || ''}
+                              data-vol-city={v.city || 'الدقهلية'}
+                              data-vol-rank={v.rank || (isApproved ? 'متطوع مبادر' : '—')}
+                              data-vol-hours={v.hours_count || 0}
+                              data-vol-avatar={v.avatar_url || ''}
+                              data-vol-created={createdDate}
+                              data-vol-expiry={expiryDate}
+                              style="background:#0c4a3f; color:#fff; border:none; padding:8px 16px; border-radius:10px; font-weight:800; font-size:.82rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px"
+                              title="تنزيل الكارنيه الرسمي للمتطوع كصورة PNG عالية الدقة على جهازك"
+                            >
+                              {icon('fa-id-badge')} تنزيل الكارنيه (PNG)
+                            </button>
+
+                            {v.avatar_url && (
+                              <a
+                                href={`/api/volunteers/photo/${v.id}/download`}
+                                download
+                                style="background:var(--surface); border:1px solid var(--border); color:var(--text); padding:8px 14px; border-radius:10px; font-weight:800; font-size:.82rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px"
+                                title="تحميل الصورة الشخصية الأصلية"
+                              >
+                                {icon('fa-image')} تنزيل الصورة الشخصية
+                              </a>
+                            )}
+
+                            <a
+                              href={`/volunteers/card/${v.id}`}
+                              target="_blank"
+                              style="background:var(--surface); border:1px solid var(--border); color:var(--text); padding:8px 14px; border-radius:10px; font-weight:800; font-size:.82rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px"
+                            >
+                              {icon('fa-arrow-up-right-from-square')} عرض الكارنيه الكامل
+                            </a>
+
+                            <a
+                              href={`/certificate/${v.id}`}
+                              target="_blank"
+                              style="background:var(--surface); border:1px solid var(--border); color:var(--text); padding:8px 14px; border-radius:10px; font-weight:800; font-size:.82rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px"
+                            >
+                              {icon('fa-file-certificate')} معاينة الشهادة
+                            </a>
+                          </div>
+                        </div>
+
                         {/* ── Validity Controls ── */}
                         <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:16px; padding:18px; margin-bottom:20px">
                           <h4 style="margin:0 0 14px; font-size:.95rem; font-weight:900; display:flex; align-items:center; gap:8px; color:var(--heading)">
@@ -996,6 +1125,12 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                                 <option value="pending" selected={v.status === 'pending'}>قيد المراجعة</option>
                                 <option value="rejected" selected={v.status === 'rejected'}>مرفوض</option>
                                 <option value="revoked" selected={v.status === 'revoked'}>ملغاة / مجمّدة</option>
+                              </select>
+                            </label>
+                            <label style="font-size:.78rem; font-weight:700; color:var(--muted)">إتاحة إصدار الشهادة
+                              <select name="certificate_allowed" style="width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; background:var(--surface); color:var(--text); margin-top:4px">
+                                <option value="false" selected={!v.certificate_allowed}>غير مسموح / معلقة</option>
+                                <option value="true" selected={v.certificate_allowed}>مسموح بإصدار وتحميل الشهادة</option>
                               </select>
                             </label>
                             <label style="font-size:.78rem; font-weight:700; color:var(--muted); grid-column:1/-1">تاريخ انتهاء البطاقة <small style="font-weight:600; opacity:.75">(اتركه فارغاً لصلاحية مفتوحة)</small>
@@ -1083,8 +1218,11 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
               </button>
             </div>
             <div class="vol-lightbox-divider"></div>
-            <a id="vol-lb-download" href="#" download="volunteer-photo.jpg" class="vol-lb-btn vol-lb-btn-primary" title="تحميل الصورة بالجودة الكاملة">
-              {icon('fa-download')} <span>تحميل</span>
+            <button type="button" class="vol-lb-btn vol-lb-btn-gold" id="vol-lb-download-id-card" title="تحميل بطاقة هوية المتطوع (الكارنيه) كصورة PNG">
+              {icon('fa-id-badge')} <span>تحميل الكارنيه</span>
+            </button>
+            <a id="vol-lb-download" href="#" download="volunteer-photo.jpg" class="vol-lb-btn vol-lb-btn-primary" title="تحميل الصورة الشخصية بالجودة الكاملة">
+              {icon('fa-download')} <span>تحميل الصورة</span>
             </a>
             <a id="vol-lb-open-tab" href="#" target="_blank" rel="noopener noreferrer" class="vol-lb-btn" title="فتح الرابط في علامة تبويب جديدة">
               {icon('fa-arrow-up-right-from-square')}

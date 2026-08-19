@@ -597,6 +597,135 @@
     }
   }
 
+  /* ─── Volunteer ID Card Generator & Downloader ─── */
+  async function loadHtml2CanvasLib() {
+    if (window.html2canvas) return window.html2canvas
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[src*="html2canvas"]')
+      if (existing) {
+        existing.addEventListener('load', () => resolve(window.html2canvas))
+        existing.addEventListener('error', () => reject(new Error('تعذر تحميل مكتبة معالجة الصور')))
+        return
+      }
+      const s = document.createElement('script')
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
+      s.onload = () => resolve(window.html2canvas)
+      s.onerror = () => reject(new Error('تعذر تحميل مكتبة معالجة الصور'))
+      document.head.appendChild(s)
+    })
+  }
+
+  async function downloadVolunteerIdCard(data, buttonEl) {
+    const originalHtml = buttonEl ? buttonEl.innerHTML : ''
+    if (buttonEl) {
+      buttonEl.disabled = true
+      buttonEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ التجهيز...'
+    }
+    toast('جارٍ إنشاء وتحميل بطاقة هوية المتطوع بدقة فائقة...', 'success')
+
+    try {
+      const html2canvas = await loadHtml2CanvasLib()
+
+      const stage = document.createElement('div')
+      stage.style.cssText = 'position:fixed; left:-9999px; top:-9999px; width:420px; background:#0f172a; border-radius:24px; overflow:hidden; font-family:"Cairo","Tajawal",sans-serif; direction:rtl; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:2px solid #c59b27; z-index:-100;'
+
+      const initials = (data.name || 'م').trim().charAt(0) || 'م'
+      const avatarHtml = data.avatar || data.img
+        ? `<img src="${data.avatar || data.img}" crossorigin="anonymous" style="width:100%; height:100%; object-fit:cover;" />`
+        : `<div style="width:100%; height:100%; display:grid; place-items:center; background:linear-gradient(135deg,#0c4a3f,#168a70); color:#fff; font-size:38px; font-weight:900;">${initials}</div>`
+
+      stage.innerHTML = `
+        <div style="background:linear-gradient(135deg, #0c4a3f 0%, #062e26 100%); padding:22px 20px 18px; text-align:center; border-bottom:2px solid #c59b27; position:relative;">
+          <div style="position:absolute; top:12px; right:16px; background:rgba(197,155,39,0.15); border:1px solid #c59b27; color:#c59b27; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">بطاقة تطوع رسمية</div>
+          <div style="font-size:11px; color:#c59b27; font-weight:800; letter-spacing:0.5px; margin-bottom:3px;">جمهورية مصر العربية</div>
+          <div style="font-size:17px; color:#ffffff; font-weight:900;">مؤسسة د. عمر هشام الخيرية</div>
+          <div style="font-size:10px; color:rgba(255,255,255,0.7); margin-top:2px;">مشهرة برقم 1002 لسنة 2026 | وزارة التضامن الاجتماعي</div>
+        </div>
+
+        <div style="padding:24px 20px 20px; text-align:center; background:#ffffff;">
+          <div style="width:100px; height:100px; margin:-10px auto 14px; border-radius:50%; border:3px solid #c59b27; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.15); background:#f8fafc;">
+            ${avatarHtml}
+          </div>
+
+          <div style="font-size:18px; font-weight:900; color:#0c4a3f; margin-bottom:4px;">${data.name || 'متطوع متميز'}</div>
+          <div style="display:inline-block; background:rgba(197,155,39,0.12); color:#8c6d15; font-size:12px; font-weight:800; padding:3px 12px; border-radius:12px; border:1px solid rgba(197,155,39,0.25); margin-bottom:16px;">
+            ${data.rank || 'متطوع مبادر'}
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; text-align:right; background:#f8fafc; padding:12px; border-radius:14px; border:1px solid #e2e8f0; margin-bottom:16px; font-size:12px;">
+            <div>
+              <div style="color:#64748b; font-size:10px; font-weight:700;">كود المتطوع</div>
+              <div style="font-weight:900; color:#0c4a3f; font-family:monospace; font-size:13px;">${data.code || 'VOL-2026'}</div>
+            </div>
+            <div>
+              <div style="color:#64748b; font-size:10px; font-weight:700;">المجال المعتمد</div>
+              <div style="font-weight:800; color:#1e293b;">${data.role || 'عام'}</div>
+            </div>
+            <div>
+              <div style="color:#64748b; font-size:10px; font-weight:700;">المحافظة / المدينة</div>
+              <div style="font-weight:800; color:#1e293b;">${data.city || 'الدقهلية'}</div>
+            </div>
+            <div>
+              <div style="color:#64748b; font-size:10px; font-weight:700;">ساعات التطوع</div>
+              <div style="font-weight:800; color:#168a70;">${data.hours || 0} ساعة</div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#0c4a3f; border-radius:12px; color:#ffffff; font-size:11px;">
+            <div style="text-align:right;">
+              <div style="opacity:0.75; font-size:9px;">تاريخ التحرير</div>
+              <div style="font-weight:700;">${data.created || '2026/01/01'}</div>
+            </div>
+            <div style="text-align:left;">
+              <div style="opacity:0.75; font-size:9px;">صلاحية البطاقة</div>
+              <div style="font-weight:700; color:#f59e0b;">${data.expiry || 'سارية'}</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px; padding-top:12px; border-top:1px dashed #cbd5e1; display:flex; align-items:center; justify-content:space-between; font-size:10px; color:#64748b;">
+            <div>www.omarhesham.org</div>
+            <div style="font-weight:800; color:#0c4a3f;">الختم الرقمي الرسمي ✓</div>
+          </div>
+        </div>
+      `
+
+      document.body.appendChild(stage)
+      await new Promise(r => setTimeout(r, 450))
+
+      const canvas = await html2canvas(stage, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        logging: false
+      })
+
+      document.body.removeChild(stage)
+
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'))
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const cleanName = (data.name || 'متطوع').replace(/\s+/g, '_')
+      a.download = `كارنيه_متطوع_${cleanName}.png`
+      a.href = url
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      setTimeout(() => URL.revokeObjectURL(url), 2000)
+
+      toast('تم تنزيل بطاقة الهوية (الكارنيه) بنجاح كصورة فائقة الدقة', 'success')
+    } catch (err) {
+      console.error('ID Card generation error:', err)
+      toast('تعذر تنزيل الكارنيه كصورة مباشرة — يمكنك فتحه من الزر ومعاينته', 'error')
+    } finally {
+      if (buttonEl) {
+        buttonEl.disabled = false
+        buttonEl.innerHTML = originalHtml
+      }
+    }
+  }
+  window.downloadVolunteerIdCard = downloadVolunteerIdCard
+
   /* ─── Volunteer Photo Lightbox Modal System ─── */
   function initVolunteerImageModal() {
     let modal = document.getElementById('vol-photo-lightbox')
@@ -644,8 +773,11 @@
                 </button>
               </div>
               <div class="vol-lightbox-divider"></div>
-              <a id="vol-lb-download" href="#" download="volunteer-photo.jpg" class="vol-lb-btn vol-lb-btn-primary" title="تحميل الصورة">
-                <i class="fa-solid fa-download"></i> <span>تحميل</span>
+              <button type="button" class="vol-lb-btn vol-lb-btn-gold" id="vol-lb-download-id-card" title="تحميل بطاقة هوية المتطوع كصورة">
+                <i class="fa-solid fa-id-badge"></i> <span>تحميل الكارنيه</span>
+              </button>
+              <a id="vol-lb-download" href="#" download="volunteer-photo.jpg" class="vol-lb-btn vol-lb-btn-primary" title="تحميل الصورة الشخصية">
+                <i class="fa-solid fa-download"></i> <span>تحميل الصورة</span>
               </a>
               <a id="vol-lb-open-tab" href="#" target="_blank" rel="noopener noreferrer" class="vol-lb-btn" title="فتح الصورة الأصلية">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
@@ -721,6 +853,7 @@
     let currentDownloadUrl = ''
     let currentImageUrl = ''
     let currentFileName = 'volunteer-photo.jpg'
+    let currentModalData = null
     let previousActiveElement = null
     const pointers = new Map()
 
@@ -741,6 +874,7 @@
     const thumbImg = $('#vol-lb-thumb-img', modal)
     const thumbInitials = $('#vol-lb-thumb-initials', modal)
     const downloadBtn = $('#vol-lb-download', modal)
+    const downloadCardBtn = $('#vol-lb-download-id-card', modal)
     const openTabBtn = $('#vol-lb-open-tab', modal)
     const copyLinkBtn = $('#vol-lb-copy-link', modal)
     const closeBtn = $('#vol-lb-close', modal)
@@ -826,6 +960,7 @@
     function openModal(data) {
       resetTransform()
       previousActiveElement = document.activeElement
+      currentModalData = data
       const hasImg = Boolean(data.img && data.img.trim())
       currentImageUrl = hasImg ? data.img : ''
       currentDownloadUrl = hasImg ? (data.download || data.img) : ''
@@ -966,6 +1101,11 @@
       closeBottomBtn?.addEventListener('click', closeModal)
       backdrop?.addEventListener('click', closeModal)
       downloadBtn?.addEventListener('click', downloadCurrentImage)
+      downloadCardBtn?.addEventListener('click', () => {
+        if (currentModalData) {
+          downloadVolunteerIdCard(currentModalData, downloadCardBtn)
+        }
+      })
 
       mainImg?.addEventListener('load', () => {
         setLoading(false)
@@ -1253,6 +1393,29 @@
         initVolunteerImageModal()
       }
       window.openVolunteerPhotoModal?.(data)
+    }
+  })
+
+  // Intercept volunteer ID card download button click
+  document.addEventListener('click', e => {
+    const cardBtn = e.target.closest('.vol-download-id-card-btn')
+    if (cardBtn) {
+      e.preventDefault()
+      e.stopPropagation()
+      const data = {
+        id: cardBtn.getAttribute('data-vol-id') || '',
+        name: cardBtn.getAttribute('data-vol-name') || '',
+        code: cardBtn.getAttribute('data-vol-code') || '',
+        role: cardBtn.getAttribute('data-vol-role') || '',
+        team: cardBtn.getAttribute('data-vol-team') || '',
+        city: cardBtn.getAttribute('data-vol-city') || '',
+        rank: cardBtn.getAttribute('data-vol-rank') || '',
+        hours: cardBtn.getAttribute('data-vol-hours') || '0',
+        avatar: cardBtn.getAttribute('data-vol-avatar') || '',
+        created: cardBtn.getAttribute('data-vol-created') || '',
+        expiry: cardBtn.getAttribute('data-vol-expiry') || ''
+      }
+      downloadVolunteerIdCard(data, cardBtn)
     }
   })
 
@@ -2365,6 +2528,468 @@
       }
     })
   }
+
+  /* ═══════════════════════════════════════════════════════════════════════════════
+     Celebration Fireworks, Confetti & Audio Synthesizer Engine
+     ═══════════════════════════════════════════════════════════════════════════════ */
+
+  class CelebrationAudio {
+    constructor() {
+      this.ctx = null
+      this.muted = false
+    }
+
+    init() {
+      if (!this.ctx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext
+        if (AudioCtx) this.ctx = new AudioCtx()
+      }
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {})
+      }
+    }
+
+    toggleMute() {
+      this.muted = !this.muted
+      return this.muted
+    }
+
+    playTone(freq, startTime, duration, type = 'sine', gainVal = 0.15) {
+      if (this.muted || !this.ctx) return
+      try {
+        const osc = this.ctx.createOscillator()
+        const gain = this.ctx.createGain()
+        osc.type = type
+        osc.frequency.setValueAtTime(freq, startTime)
+        
+        gain.gain.setValueAtTime(0.0001, startTime)
+        gain.gain.exponentialRampToValueAtTime(gainVal, startTime + 0.03)
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration)
+        
+        osc.connect(gain)
+        gain.connect(this.ctx.destination)
+        
+        osc.start(startTime)
+        osc.stop(startTime + duration)
+      } catch (e) {}
+    }
+
+    playPop() {
+      if (this.muted || !this.ctx) return
+      try {
+        const t = this.ctx.currentTime
+        const osc = this.ctx.createOscillator()
+        const gain = this.ctx.createGain()
+        osc.type = 'triangle'
+        osc.frequency.setValueAtTime(160, t)
+        osc.frequency.exponentialRampToValueAtTime(35, t + 0.16)
+        
+        gain.gain.setValueAtTime(0.2, t)
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18)
+        
+        osc.connect(gain)
+        gain.connect(this.ctx.destination)
+        osc.start(t)
+        osc.stop(t + 0.18)
+      } catch (e) {}
+    }
+
+    playFanfare() {
+      this.init()
+      if (this.muted || !this.ctx) return
+      const now = this.ctx.currentTime + 0.04
+      const notes = [
+        { f: 261.63, t: 0.00, d: 0.22, type: 'triangle', g: 0.18 },
+        { f: 329.63, t: 0.16, d: 0.22, type: 'triangle', g: 0.20 },
+        { f: 392.00, t: 0.32, d: 0.24, type: 'triangle', g: 0.24 },
+        { f: 523.25, t: 0.50, d: 0.65, type: 'triangle', g: 0.28 },
+        { f: 659.25, t: 0.68, d: 0.85, type: 'sine', g: 0.22 },
+        { f: 783.99, t: 0.85, d: 1.10, type: 'sine', g: 0.25 },
+        { f: 1046.50, t: 1.02, d: 1.40, type: 'sine', g: 0.22 }
+      ]
+      notes.forEach(n => this.playTone(n.f, now + n.t, n.d, n.type, n.g))
+
+      setTimeout(() => this.playPop(), 400)
+      setTimeout(() => this.playPop(), 900)
+      setTimeout(() => this.playPop(), 1400)
+      setTimeout(() => this.playPop(), 1900)
+    }
+  }
+
+  const celebrationAudio = new CelebrationAudio()
+
+  class CelebrationParticles {
+    constructor() {
+      this.canvas = null
+      this.ctx = null
+      this.rockets = []
+      this.particles = []
+      this.confetti = []
+      this.animId = null
+      this.active = false
+      this.colors = ['#ffd700', '#10b981', '#06b6d4', '#f43f5e', '#a855f7', '#f59e0b', '#ffffff', '#eab308']
+    }
+
+    init() {
+      if (!this.canvas) {
+        this.canvas = document.createElement('canvas')
+        this.canvas.id = 'celebration-fireworks-canvas'
+        document.body.appendChild(this.canvas)
+        this.ctx = this.canvas.getContext('2d')
+        
+        window.addEventListener('resize', () => this.resize())
+      }
+      this.resize()
+    }
+
+    resize() {
+      if (!this.canvas) return
+      this.canvas.width = window.innerWidth
+      this.canvas.height = window.innerHeight
+    }
+
+    start() {
+      this.init()
+      this.active = true
+      this.rockets = []
+      this.particles = []
+      this.confetti = []
+      
+      for (let i = 0; i < 90; i++) {
+        this.confetti.push(this.createConfettiPiece())
+      }
+
+      this.launchWave()
+      setTimeout(() => { if (this.active) this.launchWave() }, 700)
+      setTimeout(() => { if (this.active) this.launchWave() }, 1500)
+      setTimeout(() => { if (this.active) this.launchWave() }, 2400)
+
+      if (!this.animId) {
+        this.loop()
+      }
+    }
+
+    stop() {
+      this.active = false
+      if (this.animId) {
+        cancelAnimationFrame(this.animId)
+        this.animId = null
+      }
+      if (this.ctx && this.canvas) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+      }
+    }
+
+    createConfettiPiece() {
+      return {
+        x: Math.random() * (this.canvas ? this.canvas.width : window.innerWidth),
+        y: Math.random() * -400,
+        size: Math.random() * 8 + 6,
+        color: this.colors[Math.floor(Math.random() * this.colors.length)],
+        vx: (Math.random() - 0.5) * 2,
+        vy: Math.random() * 3 + 2.5,
+        rotation: Math.random() * 360,
+        vRot: (Math.random() - 0.5) * 6,
+        wobble: Math.random() * 10,
+        wobbleSpeed: Math.random() * 0.08 + 0.04
+      }
+    }
+
+    launchWave() {
+      const count = Math.floor(Math.random() * 3) + 3
+      const W = this.canvas ? this.canvas.width : window.innerWidth
+      const H = this.canvas ? this.canvas.height : window.innerHeight
+
+      for (let i = 0; i < count; i++) {
+        const startX = W * 0.15 + Math.random() * (W * 0.7)
+        const targetY = H * 0.12 + Math.random() * (H * 0.38)
+        this.rockets.push({
+          x: startX,
+          y: H + 20,
+          targetY,
+          vx: (Math.random() - 0.5) * 2.8,
+          vy: -(Math.random() * 4 + 13),
+          color: this.colors[Math.floor(Math.random() * this.colors.length)],
+          trail: []
+        })
+      }
+    }
+
+    explode(x, y, color) {
+      celebrationAudio.playPop()
+      const particleCount = 70 + Math.floor(Math.random() * 30)
+      for (let i = 0; i < particleCount; i++) {
+        const angle = Math.random() * Math.PI * 2
+        const speed = Math.random() * 7 + 1.5
+        this.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color,
+          alpha: 1,
+          decay: Math.random() * 0.015 + 0.012,
+          gravity: 0.18,
+          size: Math.random() * 3 + 1.5
+        })
+      }
+    }
+
+    loop() {
+      if (!this.ctx || !this.canvas) return
+
+      this.ctx.globalCompositeOperation = 'destination-out'
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.18)'
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+      this.ctx.globalCompositeOperation = 'lighter'
+
+      for (let i = this.rockets.length - 1; i >= 0; i--) {
+        const r = this.rockets[i]
+        r.trail.push({ x: r.x, y: r.y, alpha: 1 })
+        if (r.trail.length > 8) r.trail.shift()
+
+        r.x += r.vx
+        r.y += r.vy
+        r.vy += 0.15
+
+        for (let t of r.trail) {
+          this.ctx.beginPath()
+          this.ctx.arc(t.x, t.y, 2, 0, Math.PI * 2)
+          this.ctx.fillStyle = r.color
+          this.ctx.fill()
+        }
+
+        this.ctx.beginPath()
+        this.ctx.arc(r.x, r.y, 3, 0, Math.PI * 2)
+        this.ctx.fillStyle = '#ffffff'
+        this.ctx.fill()
+
+        if (r.y <= r.targetY || r.vy >= -1) {
+          this.explode(r.x, r.y, r.color)
+          this.rockets.splice(i, 1)
+        }
+      }
+
+      for (let i = this.particles.length - 1; i >= 0; i--) {
+        const p = this.particles[i]
+        p.x += p.vx
+        p.y += p.vy
+        p.vy += p.gravity
+        p.vx *= 0.97
+        p.vy *= 0.97
+        p.alpha -= p.decay
+
+        if (p.alpha <= 0) {
+          this.particles.splice(i, 1)
+          continue
+        }
+
+        this.ctx.save()
+        this.ctx.globalAlpha = p.alpha
+        this.ctx.beginPath()
+        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+        this.ctx.fillStyle = p.color
+        this.ctx.shadowBlur = 8
+        this.ctx.shadowColor = p.color
+        this.ctx.fill()
+        this.ctx.restore()
+      }
+
+      for (let i = this.confetti.length - 1; i >= 0; i--) {
+        const c = this.confetti[i]
+        c.x += c.vx + Math.sin(c.wobble) * 1.5
+        c.y += c.vy
+        c.wobble += c.wobbleSpeed
+        c.rotation += c.vRot
+
+        this.ctx.save()
+        this.ctx.translate(c.x, c.y)
+        this.ctx.rotate((c.rotation * Math.PI) / 180)
+        this.ctx.fillStyle = c.color
+        this.ctx.fillRect(-c.size / 2, -c.size / 4, c.size, c.size / 2)
+        this.ctx.restore()
+
+        if (c.y > this.canvas.height + 20) {
+          if (this.active) {
+            this.confetti[i] = this.createConfettiPiece()
+          } else {
+            this.confetti.splice(i, 1)
+          }
+        }
+      }
+
+      if (this.active || this.rockets.length > 0 || this.particles.length > 0 || this.confetti.length > 0) {
+        this.animId = requestAnimationFrame(() => this.loop())
+      } else {
+        this.stop()
+      }
+    }
+  }
+
+  const celebrationParticles = new CelebrationParticles()
+  window.launchCelebrationFireworks = () => celebrationParticles.start()
+
+  /* ─── Show Celebration Modal Function ─── */
+  function showVolunteerCelebrationModal(data) {
+    let overlay = document.getElementById('volunteer-celebration-modal')
+    if (!overlay) {
+      overlay = document.createElement('div')
+      overlay.id = 'volunteer-celebration-modal'
+      overlay.className = 'vol-celeb-overlay'
+      document.body.appendChild(overlay)
+    }
+
+    const name = data.name || 'بطل العطاء'
+    const rank = data.rank || 'متطوع متميز'
+    const hours = data.hours || 0
+    const code = data.code || 'VOL-2026'
+    const certUrl = data.cert || ''
+
+    overlay.innerHTML = `
+      <div class="vol-celeb-card">
+        <button type="button" class="vol-celeb-close-btn" id="vol-celeb-close-x" title="إغلاق">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <button type="button" class="vol-celeb-audio-btn" id="vol-celeb-audio-toggle" title="كتم / تشغيل المؤثرات الصوتية">
+          <i class="fa-solid fa-volume-high"></i> <span id="vol-celeb-sound-text">صوت التهنئة</span>
+        </button>
+
+        <div class="vol-celeb-trophy-wrap">
+          <div class="vol-celeb-trophy-aura"></div>
+          <i class="fa-solid fa-crown vol-celeb-trophy-icon"></i>
+        </div>
+
+        <h2 class="vol-celeb-title">مبارك الترقية والتكريم يا بطل العطاء! 🎉</h2>
+        <p class="vol-celeb-subtitle">تقدير واعتزاز من إدارة مؤسسة الدكتور عمر هشام الخيرية</p>
+
+        <div class="vol-celeb-member-tag">المتطوع المتميز: <strong>${name}</strong></div>
+
+        <div class="vol-celeb-rank-banner">
+          <i class="fa-solid fa-medal"></i>
+          <span>الرتبة الميدانية المعتمدة: <strong>${rank}</strong></span>
+        </div>
+
+        <p class="vol-celeb-quote">
+          «صناع الأثر هم نبض المؤسسة وسواعدها في الميدان. بعطائك المستمر وتفانيك المخلص تُفرّج الكرب وتُصنع البسمات في قلوب آلاف المستحقين. شكراً لبذلك الصادق ودُمت فخراً لمجتمعك.»
+        </p>
+
+        <div class="vol-celeb-stats-row">
+          <div class="vol-celeb-stat-pill">
+            <small><i class="fa-solid fa-stopwatch"></i> ساعات التطوع</small>
+            <b>${hours} ساعة معتمدة</b>
+          </div>
+          <div class="vol-celeb-stat-pill">
+            <small><i class="fa-solid fa-fingerprint"></i> كود الهوية</small>
+            <b>${code}</b>
+          </div>
+          <div class="vol-celeb-stat-pill">
+            <small><i class="fa-solid fa-shield-halved"></i> البطاقة الرسمية</small>
+            <b style="color:#10b981">سارية وموثقة ✓</b>
+          </div>
+        </div>
+
+        <div class="vol-celeb-actions-grid">
+          <button type="button" class="vol-celeb-btn-primary vol-download-id-card-btn" data-vol-id="${data.id || ''}" data-vol-name="${name}" data-vol-code="${code}" data-vol-rank="${rank}" data-vol-hours="${hours}" data-vol-avatar="${data.avatar || ''}">
+            <i class="fa-solid fa-id-badge"></i> <span>تحميل الكارنيه المحدّث كصورة PNG</span>
+          </button>
+          
+          <div class="vol-celeb-subactions">
+            <button type="button" class="vol-celeb-btn-fireworks" id="vol-celeb-extra-fireworks">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> <span>إطلاق المزيد من الصواريخ 🎆</span>
+            </button>
+            ${certUrl ? `
+              <a href="${certUrl}" target="_blank" class="vol-celeb-btn-dismiss" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+                <i class="fa-solid fa-file-certificate"></i> الشهادة
+              </a>
+            ` : ''}
+            <button type="button" class="vol-celeb-btn-dismiss" id="vol-celeb-dismiss-btn">
+              متابعة إلى بوابتي
+            </button>
+          </div>
+        </div>
+      </div>
+    `
+
+    overlay.classList.add('active')
+    celebrationParticles.start()
+    celebrationAudio.playFanfare()
+
+    const close = () => {
+      overlay.classList.remove('active')
+      celebrationParticles.stop()
+    }
+
+    $('#vol-celeb-close-x', overlay)?.addEventListener('click', close)
+    $('#vol-celeb-dismiss-btn', overlay)?.addEventListener('click', close)
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) close()
+    })
+
+    $('#vol-celeb-extra-fireworks', overlay)?.addEventListener('click', () => {
+      celebrationParticles.launchWave()
+      celebrationParticles.launchWave()
+      celebrationAudio.playFanfare()
+    })
+
+    const audioToggle = $('#vol-celeb-audio-toggle', overlay)
+    audioToggle?.addEventListener('click', () => {
+      const isMuted = celebrationAudio.toggleMute()
+      if (isMuted) {
+        audioToggle.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> <span>صوت مكتوم</span>'
+      } else {
+        audioToggle.innerHTML = '<i class="fa-solid fa-volume-high"></i> <span>صوت التهنئة</span>'
+        celebrationAudio.playFanfare()
+      }
+    })
+  }
+  window.showVolunteerCelebrationModal = showVolunteerCelebrationModal
+
+  function checkVolunteerCelebrationTrigger() {
+    const trigger = document.getElementById('volunteer-celebration-trigger')
+    if (trigger) {
+      const data = {
+        id: trigger.getAttribute('data-vol-id') || '',
+        name: trigger.getAttribute('data-vol-name') || '',
+        rank: trigger.getAttribute('data-vol-rank') || '',
+        hours: trigger.getAttribute('data-vol-hours') || '0',
+        code: trigger.getAttribute('data-vol-code') || '',
+        avatar: trigger.getAttribute('data-vol-avatar') || '',
+        cert: trigger.getAttribute('data-vol-cert') || '',
+        card: trigger.getAttribute('data-vol-card') || ''
+      }
+      
+      const storageKey = `dr_omar_vol_seen_promo_${data.id}_${data.rank}`
+      const hasSeen = localStorage.getItem(storageKey)
+      const forceCelebrate = location.search.includes('celebrate=1')
+
+      if (!hasSeen || forceCelebrate) {
+        setTimeout(() => {
+          showVolunteerCelebrationModal(data)
+          localStorage.setItem(storageKey, 'true')
+        }, 600)
+      }
+    }
+  }
+
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-trigger-celebration')
+    if (btn) {
+      e.preventDefault()
+      const data = {
+        id: btn.getAttribute('data-vol-id') || '',
+        name: btn.getAttribute('data-vol-name') || '',
+        rank: btn.getAttribute('data-vol-rank') || '',
+        hours: btn.getAttribute('data-vol-hours') || '0',
+        code: btn.getAttribute('data-vol-code') || '',
+        avatar: btn.getAttribute('data-vol-avatar') || '',
+        cert: btn.getAttribute('data-vol-cert') || '',
+        card: btn.getAttribute('data-vol-card') || ''
+      }
+      showVolunteerCelebrationModal(data)
+    }
+  })
+
+  checkVolunteerCelebrationTrigger()
 
   initVolCardDownload()
 

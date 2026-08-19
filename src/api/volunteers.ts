@@ -10,7 +10,8 @@ import {
   volunteerAck,
   volunteerDecision,
   volunteerRankPromoted,
-  volunteerCardStatus
+  volunteerCardStatus,
+  volunteerCertificateGranted
 } from '../lib/email'
 import {
   notify,
@@ -240,16 +241,16 @@ const notifyVolunteerChanges = async (
       )
     }
 
-    // V3 — الترقية في الرتبة (الحدث الثاني المطلوب صراحةً).
+    // V3 — الترقية في الرتبة وتهنئة المتطوع واعتزاز المؤسسة
     // isFirstAssignment مستثناة: الرتبة الافتراضية مع الاعتماد ليست ترقية.
     if (rankChange.changed && !rankChange.isFirstAssignment) {
       jobs.push(
         notify(c, {
           user_id: targetId,
           type: 'volunteer_rank_promoted',
-          title: `مبارك — تمت ترقيتك إلى ${rankChange.to}`,
+          title: `🎉 تهانينا ${fullName}! تمت ترقيتك إلى ${rankChange.to}`,
           body: rankChangeBody(fullName, rankChange.from, rankChange.to),
-          link: '/profile',
+          link: '/volunteer-portal?celebrate=1',
           actor: actorRef,
           meta: { volunteer_id: id, from: rankChange.from, to: rankChange.to }
         }),
@@ -267,6 +268,41 @@ const notifyVolunteerChanges = async (
           from: rankChange.from,
           to: rankChange.to,
           hours: newHours || undefined,
+          volunteer_code: after.volunteer_code || before.volunteer_code || '',
+          actor: actorName
+        })
+      )
+    }
+
+    // V4 — إتاحة إصدار شهادة التطوع المعتمدة
+    const certAllowedNow = patch.certificate_allowed === true && !before.certificate_allowed
+    if (certAllowedNow) {
+      const origin = new URL(c.req.url).origin
+      const certUrl = `${origin}/certificate/${id}`
+      jobs.push(
+        notify(c, {
+          user_id: targetId,
+          type: 'volunteer_certificate_granted',
+          title: '📜 اعتماد وإتاحة شهادة التطوع المعتمدة',
+          body: `تهانينا يا ${fullName}! وافقت إدارة المؤسسة على منحك شهادة التطوع المعتمدة تقديراً لجهودك. يمكنك الآن استعراضها وطباعتها أو تحميلها كصورة فائقة الجودة.`,
+          link: `/certificate/${id}`,
+          actor: actorRef,
+          meta: { volunteer_id: id, hours: newHours, rank: after.rank || before.rank }
+        }),
+        notifyAdmins(c, {
+          type: 'volunteer_certificate_granted',
+          title: `اعتماد شهادة متطوع: ${fullName}`,
+          body: `تم تفعيل إمكانية استخراج الشهادة لـ ${fullName} (${after.volunteer_code || before.volunteer_code || ''}) — بواسطة ${actorName}.`,
+          link: dashLink('volunteers'),
+          actor: actorRef,
+          meta: { volunteer_id: id }
+        }),
+        volunteerCertificateGranted(cfg, {
+          email: targetEmail,
+          full_name: fullName,
+          hours: newHours || undefined,
+          rank: after.rank || before.rank || 'متطوع متميز',
+          cert_url: certUrl,
           actor: actorName
         })
       )
@@ -284,7 +320,7 @@ const notifyVolunteerChanges = async (
           body: newExpiry
             ? `بطاقتك صالحة حتى ${new Date(newExpiry).toLocaleDateString('ar-EG')}.`
             : 'بطاقتك أصبحت بصلاحية مفتوحة بدون تاريخ انتهاء.',
-          link: '/profile',
+          link: '/volunteer-portal',
           actor: actorRef,
           meta: { volunteer_id: id, expires_at: newExpiry }
         }),
@@ -307,7 +343,7 @@ const notifyVolunteerChanges = async (
           type: 'volunteer_hours_updated',
           title: 'تم تحديث ساعات تطوّعك',
           body: `إجمالي ساعاتك المسجّلة الآن: ${newHours.toLocaleString('ar-EG')} ساعة.`,
-          link: '/profile',
+          link: '/volunteer-portal',
           actor: actorRef,
           meta: { volunteer_id: id, from: oldHours, to: newHours }
         })
@@ -771,6 +807,60 @@ volunteers.post('/validity/:id', adminMiddleware, async (c) => {
   }
 })
 
+// Manage certificate generation permission (Admin only)
+volunteers.post('/certificate-permission/:id', adminMiddleware, async (c) => {
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
+  const body = await c.req.parseBody()
+  const action = field(body, 'action') // 'grant' | 'revoke' | 'toggle'
+  const certAllowedRaw = field(body, 'certificate_allowed')
+
+  try {
+    const volRef = db.collection('volunteers').doc(id)
+    const volDoc = await volRef.get()
+    if (!volDoc.exists) {
+      return fail(c, 'لم يتم العثور على هذا المتطوع.', 404, 'not_found')
+    }
+
+    const currentVol = volDoc.data() || {}
+    let newAllowed = false
+
+    if (action === 'grant') {
+      newAllowed = true
+    } else if (action === 'revoke') {
+      newAllowed = false
+    } else if (action === 'toggle') {
+      newAllowed = !Boolean(currentVol.certificate_allowed)
+    } else if (certAllowedRaw !== undefined) {
+      newAllowed = certAllowedRaw === 'true' || certAllowedRaw === '1' || certAllowedRaw === 'on'
+    } else {
+      newAllowed = true
+    }
+
+    const actor = (c as any).get?.('user') || null
+    const updateData: Record<string, any> = {
+      certificate_allowed: newAllowed
+    }
+
+    if (newAllowed) {
+      updateData.certificate_allowed_at = new Date().toISOString()
+      updateData.certificate_allowed_by = actor?.id || null
+    }
+
+    await volRef.update(updateData)
+    await notifyVolunteerChanges(c, { id, before: currentVol, patch: updateData })
+
+    const message = newAllowed
+      ? `تم تفعيل إمكانية استخراج وتحميل الشهادة للمتطوع "${currentVol.full_name}" بنجاح وإشعاره بذلك.`
+      : `تم إيقاف صلاحية استخراج الشهادة للمتطوع "${currentVol.full_name}".`
+
+    return ok(c, message, { certificate_allowed: newAllowed })
+  } catch (error: any) {
+    console.error('Error updating certificate permission:', error.message)
+    return fail(c, `تعذر تحديث إذن الشهادة: ${error.message}`, 500)
+  }
+})
+
 // Full update volunteer details (Admin only)
 volunteers.post('/update/:id', adminMiddleware, async (c) => {
   const db = getFirestore(c)
@@ -835,6 +925,17 @@ volunteers.post('/update/:id', adminMiddleware, async (c) => {
     const expiresAtRaw = field(body, 'expires_at')
     if (expiresAtRaw !== undefined) {
       updateData.expires_at = toIsoDate(expiresAtRaw)
+    }
+
+    // Handle certificate permission if explicitly submitted
+    const certAllowedRaw = field(body, 'certificate_allowed')
+    if (certAllowedRaw !== undefined) {
+      updateData.certificate_allowed = certAllowedRaw === 'true' || certAllowedRaw === '1' || certAllowedRaw === 'on'
+      if (updateData.certificate_allowed && !currentVol.certificate_allowed) {
+        updateData.certificate_allowed_at = new Date().toISOString()
+        const actor = (c as any).get?.('user') || null
+        updateData.certificate_allowed_by = actor?.id || null
+      }
     }
 
     // A pasted URL, or an intentionally emptied field to remove the photo.

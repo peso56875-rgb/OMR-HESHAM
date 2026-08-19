@@ -50,7 +50,7 @@ export interface Volunteer {
   city?: string
   preferred_role?: string
   skills?: string
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'approved' | 'rejected' | 'revoked'
   volunteer_code?: string
   rank?: string
   hours_count?: number
@@ -58,6 +58,9 @@ export interface Volunteer {
   avatar_url?: string
   approved_at?: string
   expires_at?: string
+  certificate_allowed?: boolean
+  certificate_allowed_at?: string
+  certificate_allowed_by?: string
   created_at?: string
 }
 
