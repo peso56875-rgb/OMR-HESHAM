@@ -404,36 +404,50 @@
     }
   }
 
+  function urlBase64ToUint8Array(base64String) {
+    var padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var rawData = window.atob(base64);
+    var outputArray = new Uint8Array(rawData.length);
+    for (var i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
   async function subscribeDevice() {
     try {
       var reg = await registerServiceWorker();
       if (!reg) return;
 
-      // نحاول تسجيل التوكن مع الخادم
+      var vapidRes = await fetch('/api/notifications/vapid').catch(() => null);
+      var vapidData = vapidRes && vapidRes.ok ? await vapidRes.json() : null;
+      var vapidKey = (vapidData && vapidData.vapidKey) || 'BCFKta5Azzt7VNaDKC-yJtfuPxzK5hHZAeRkocJuyzxt4L4KBxZPQe8gl60Sf8S1XgW2HxxejxiggtfHF0dprkY';
+
       var sub = await reg.pushManager.getSubscription();
-      if (!sub) {
-        // إذا كان هناك مفتاح VAPID في المتصفح أو تم توفيره
-        var subOptions = {
-          userVisibleOnly: true
-        };
-        // محاولة جلب الاشتراك
+      if (!sub && vapidKey) {
         try {
-          sub = await reg.pushManager.subscribe(subOptions);
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey)
+          });
         } catch (subErr) {
-          console.log('[Push] Subscribe without VAPID fallback info:', subErr);
+          console.warn('[Push] Subscribe with VAPID failed:', subErr);
         }
       }
 
       if (sub) {
         var token = JSON.stringify(sub);
-        await fetch('/api/notifications/subscribe', {
+        var res = await fetch('/api/notifications/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: btoa(token) })
         });
-        if (window.showToast) window.showToast('تم تفعيل التنبيهات الفورية على هذا الجهاز بنجاح 🔔', 'success');
+        if (res.ok) {
+          if (window.showToast) window.showToast('تم تفعيل التنبيهات الفورية على هذا الجهاز بنجاح 🔔', 'success');
+        }
       } else {
-        if (window.showToast) window.showToast('تم تفعيل الإذن بنجاح.', 'success');
+        if (window.showToast) window.showToast('تم حفظ إذن الإشعارات بنجاح.', 'success');
       }
     } catch (e) {
       console.warn('[Push] Error subscribing device:', e);

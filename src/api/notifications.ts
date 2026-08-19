@@ -35,7 +35,7 @@ import {
   type NotificationCategory,
   type NotificationPrefsDoc
 } from '../lib/notifications'
-import { registerToken, unregisterToken, isPushConfigured } from '../lib/push'
+import { registerToken, unregisterToken, isPushConfigured, getVapidKey } from '../lib/push'
 
 export const notifications = new Hono()
 
@@ -524,3 +524,12 @@ notifications.get('/types', adminMiddleware, (c) =>
     push_available: isPushConfigured(c)
   })
 )
+
+/** GET /api/notifications/vapid — استرجاع المفتاح العام للمتصفح. */
+notifications.get('/vapid', (c) =>
+  c.json({
+    vapidKey: getVapidKey(c),
+    configured: isPushConfigured(c)
+  })
+)
+

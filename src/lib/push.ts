@@ -38,11 +38,15 @@ const DEAD_TOKEN_CODES = new Set([
   'messaging/invalid-argument'
 ])
 
-/** يقرأ مفتاح VAPID من البيئة. غيابه = الـ Push غير مُهيّأة. */
+/** يقرأ مفتاح VAPID من البيئة. */
 export const getVapidKey = (c?: any): string => {
   const env = c?.env || {}
   const procEnv = typeof glob.process !== 'undefined' ? glob.process.env || {} : {}
-  return String(env.FIREBASE_VAPID_KEY || procEnv.FIREBASE_VAPID_KEY || '')
+  return String(
+    env.FIREBASE_VAPID_KEY ||
+    procEnv.FIREBASE_VAPID_KEY ||
+    'BCFKta5Azzt7VNaDKC-yJtfuPxzK5hHZAeRkocJuyzxt4L4KBxZPQe8gl60Sf8S1XgW2HxxejxiggtfHF0dprkY'
+  )
 }
 
 export const isPushConfigured = (c?: any): boolean => Boolean(getVapidKey(c))
