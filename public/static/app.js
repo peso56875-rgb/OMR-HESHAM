@@ -597,41 +597,310 @@
     }
   }
 
-  /* ─── Volunteer ID Card Generator & Downloader ─── */
-  /* ─── Volunteer ID Card Generator & Downloader ─── */
-  async function loadHtml2CanvasLib() {
-    if (window.html2canvas) return window.html2canvas
-    return new Promise((resolve, reject) => {
-      const existing = document.querySelector('script[src*="html2canvas"]')
-      if (existing) {
-        existing.addEventListener('load', () => resolve(window.html2canvas))
-        existing.addEventListener('error', () => reject(new Error('تعذر تحميل مكتبة معالجة الصور')))
-        return
+  /* ─── Ultra-Reliable Native Canvas ID Card Generator & Downloader ─── */
+  function roundRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath()
+    ctx.moveTo(x + radius, y)
+    ctx.lineTo(x + width - radius, y)
+    ctx.arcTo(x + width, y, x + width, y + radius, radius)
+    ctx.lineTo(x + width, y + height - radius)
+    ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius)
+    ctx.lineTo(x + radius, y + height)
+    ctx.arcTo(x, y + height, x, y + height - radius, radius)
+    ctx.lineTo(x, y + radius)
+    ctx.arcTo(x, y, x + radius, y, radius)
+    ctx.closePath()
+  }
+
+  function loadImageWithTimeout(url, timeoutMs = 2000) {
+    return new Promise((resolve) => {
+      if (!url || typeof url !== 'string' || !url.trim()) return resolve(null)
+      try {
+        const img = new Image()
+        // Only set crossOrigin for absolute URLs (cross-origin)
+        // Same-origin paths like /static/... don't need it and it can cause issues
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          img.crossOrigin = 'anonymous'
+        }
+        const timer = setTimeout(() => { console.warn('[ID Card] Image load timeout:', url); resolve(null) }, timeoutMs)
+        img.onload = () => { clearTimeout(timer); resolve(img) }
+        img.onerror = () => { clearTimeout(timer); console.warn('[ID Card] Image load error:', url); resolve(null) }
+        img.src = url
+      } catch (e) {
+        console.warn('[ID Card] Image load exception:', e)
+        resolve(null)
       }
-      const s = document.createElement('script')
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
-      s.onload = () => resolve(window.html2canvas)
-      s.onerror = () => reject(new Error('تعذر تحميل مكتبة معالجة الصور'))
-      document.head.appendChild(s)
     })
   }
 
-  async function fetchImageAsDataUrl(url) {
-    if (!url) return null
-    if (url.startsWith('data:')) return url
-    try {
-      const res = await fetch(url, { mode: 'cors', credentials: 'omit' })
-      if (!res.ok) return null
-      const blob = await res.blob()
-      return new Promise((resolve) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result)
-        reader.onerror = () => resolve(null)
-        reader.readAsDataURL(blob)
-      })
-    } catch (_) {
-      return null
+  async function generateCardCanvas2D(data) {
+    const W = 880
+    const H = 1240
+    const canvas = document.createElement('canvas')
+    canvas.width = W
+    canvas.height = H
+    const ctx = canvas.getContext('2d')
+
+    const rawName = (data.name || 'متطوع').trim()
+    const code = data.code || `VOL-${(data.id || '').slice(0, 6).toUpperCase() || '2026'}`
+    const rank = data.rank || 'متطوع مبادر'
+    const team = data.team || data.role || 'الفريق الميداني'
+    const city = data.city || 'الدقهلية'
+    const hours = String(data.hours || '0')
+    const createdDate = data.created || '2026'
+    const expiryDate = data.expiry || 'صلاحية مفتوحة'
+    const isExpired = expiryDate.includes('منتهي') || expiryDate.includes('ملغاة') || expiryDate.includes('مجمّدة')
+    const initials = (rawName.split(' ')[0] || 'م').charAt(0) || 'م'
+
+    // 1. Background Rounded Card
+    ctx.save()
+    roundRect(ctx, 16, 16, W - 32, H - 32, 44)
+    ctx.clip()
+
+    const bgGrad = ctx.createLinearGradient(16, 16, W - 16, H - 16)
+    bgGrad.addColorStop(0, '#072722')
+    bgGrad.addColorStop(0.7, '#0d4a3e')
+    bgGrad.addColorStop(1, '#051e1a')
+    ctx.fillStyle = bgGrad
+    ctx.fillRect(16, 16, W - 32, H - 32)
+
+    // Gold Top Accent
+    const goldTop = ctx.createLinearGradient(16, 0, W - 16, 0)
+    goldTop.addColorStop(0, '#c59b27')
+    goldTop.addColorStop(0.5, '#f5d77f')
+    goldTop.addColorStop(1, '#c59b27')
+    ctx.fillStyle = goldTop
+    ctx.fillRect(16, 16, W - 32, 12)
+
+    // Load Images (Logo & Avatar) in parallel with safe 1.2s timeout
+    const avatarSrc = data.avatar || data.img || ''
+    const [logoImg, avatarImg] = await Promise.all([
+      loadImageWithTimeout('/static/foundation-logo.png', 1000),
+      loadImageWithTimeout(avatarSrc, 1200)
+    ])
+
+    // Watermark in center background
+    if (logoImg) {
+      ctx.save()
+      ctx.globalAlpha = 0.045
+      ctx.drawImage(logoImg, W / 2 - 250, H / 2 - 250, 500, 500)
+      ctx.restore()
     }
+
+    // 2. Top Header Bar
+    if (logoImg) {
+      ctx.drawImage(logoImg, W - 120, 50, 68, 68)
+    }
+    ctx.textAlign = 'right'
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 30px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('مؤسسة د. عمر هشام', W - 136, 82)
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = 'bold 18px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('إدارة العمل التطوعي الميداني', W - 136, 110)
+
+    // Official Tag (Left side)
+    ctx.save()
+    roundRect(ctx, 50, 60, 200, 48, 24)
+    ctx.fillStyle = 'rgba(197, 155, 39, 0.18)'
+    ctx.fill()
+    ctx.strokeStyle = '#c59b27'
+    ctx.lineWidth = 2
+    ctx.stroke()
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#f5d77f'
+    ctx.font = 'bold 20px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('بطاقة هوية رسمية', 150, 92)
+    ctx.restore()
+
+    // 3. Center Avatar
+    const avatarCenterX = W / 2
+    const avatarCenterY = 240
+    const avatarRadius = 75
+
+    // Outer Gold Ring
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(avatarCenterX, avatarCenterY, avatarRadius + 4, 0, Math.PI * 2)
+    ctx.strokeStyle = '#c59b27'
+    ctx.lineWidth = 6
+    ctx.stroke()
+    ctx.restore()
+
+    // Avatar Fill / Image
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(avatarCenterX, avatarCenterY, avatarRadius, 0, Math.PI * 2)
+    ctx.clip()
+
+    if (avatarImg) {
+      ctx.drawImage(avatarImg, avatarCenterX - avatarRadius, avatarCenterY - avatarRadius, avatarRadius * 2, avatarRadius * 2)
+    } else {
+      ctx.fillStyle = '#0d4a3e'
+      ctx.fillRect(avatarCenterX - avatarRadius, avatarCenterY - avatarRadius, avatarRadius * 2, avatarRadius * 2)
+      ctx.textAlign = 'center'
+      ctx.fillStyle = '#c59b27'
+      ctx.font = 'bold 68px "Tajawal", "Cairo", sans-serif'
+      ctx.fillText(initials, avatarCenterX, avatarCenterY + 24)
+    }
+    ctx.restore()
+
+    // 4. Volunteer Full Name
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#ffffff'
+    ctx.font = '900 38px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText(rawName, W / 2, 365)
+
+    // 5. Rank Badge Pill
+    ctx.save()
+    const rankPillW = Math.max(240, rank.length * 20 + 70)
+    roundRect(ctx, W / 2 - rankPillW / 2, 395, rankPillW, 46, 23)
+    ctx.fillStyle = 'rgba(197, 155, 39, 0.22)'
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(197, 155, 39, 0.45)'
+    ctx.lineWidth = 2
+    ctx.stroke()
+    ctx.fillStyle = '#f5d77f'
+    ctx.font = 'bold 22px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText(`🏅  ${rank}`, W / 2, 426)
+    ctx.restore()
+
+    // 6. Information Grid (2 Columns, 3 Rows)
+    const gridX = 50
+    const gridY = 475
+    const gridW = W - 100
+    const gridH = 430
+
+    ctx.save()
+    roundRect(ctx, gridX, gridY, gridW, gridH, 28)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)'
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)'
+    ctx.lineWidth = 2
+    ctx.stroke()
+    ctx.restore()
+
+    // Column positions (RTL: Col 1 is on right, Col 2 on left)
+    const col1X = gridX + gridW - 30
+    const col2X = gridX + gridW / 2 - 20
+
+    const row1Y = gridY + 60
+    const row2Y = gridY + 200
+    const row3Y = gridY + 340
+
+    // Cell 1: Volunteer Code
+    ctx.textAlign = 'right'
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = 'bold 18px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('كود المتطوع:', col1X, row1Y)
+    ctx.fillStyle = '#f5d77f'
+    ctx.font = '900 26px monospace'
+    ctx.fillText(code, col1X, row1Y + 38)
+
+    // Cell 2: Team / Role
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = 'bold 18px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('فريق العمل:', col2X, row1Y)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 24px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText(team, col2X, row1Y + 38)
+
+    // Cell 3: City
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = 'bold 18px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('المحافظة:', col1X, row2Y)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 24px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText(city, col1X, row2Y + 38)
+
+    // Cell 4: Hours
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = 'bold 18px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('ساعات الخدمة:', col2X, row2Y)
+    ctx.fillStyle = '#10b981'
+    ctx.font = 'bold 24px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText(`${hours} ساعة موثقة`, col2X, row2Y + 38)
+
+    // Cell 5: Join Date
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = 'bold 18px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('تاريخ الانضمام:', col1X, row3Y)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 24px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText(createdDate, col1X, row3Y + 38)
+
+    // Cell 6: Expiry Date
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = 'bold 18px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('صلاحية البطاقة:', col2X, row3Y)
+    ctx.fillStyle = isExpired ? '#ef4444' : '#10b981'
+    ctx.font = 'bold 24px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText(expiryDate, col2X, row3Y + 38)
+
+    // 7. Footer Divider (Dashed Line)
+    const footerY = 945
+    ctx.save()
+    ctx.setLineDash([8, 6])
+    ctx.beginPath()
+    ctx.moveTo(gridX, footerY)
+    ctx.lineTo(gridX + gridW, footerY)
+    ctx.strokeStyle = 'rgba(197, 155, 39, 0.4)'
+    ctx.lineWidth = 2
+    ctx.stroke()
+    ctx.restore()
+
+    // 8. Footer Section
+    // QR Code Box (Right)
+    const qrX = W - 140
+    const qrY = 980
+    ctx.save()
+    roundRect(ctx, qrX, qrY, 80, 80, 16)
+    ctx.fillStyle = '#ffffff'
+    ctx.fill()
+
+    // Draw stylized QR mini pattern
+    ctx.fillStyle = '#0d4a3e'
+    ctx.fillRect(qrX + 12, qrY + 12, 20, 20)
+    ctx.fillRect(qrX + 48, qrY + 12, 20, 20)
+    ctx.fillRect(qrX + 12, qrY + 48, 20, 20)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(qrX + 17, qrY + 17, 10, 10)
+    ctx.fillRect(qrX + 53, qrY + 17, 10, 10)
+    ctx.fillRect(qrX + 17, qrY + 53, 10, 10)
+    ctx.fillStyle = '#0d4a3e'
+    ctx.fillRect(qrX + 44, qrY + 44, 8, 8)
+    ctx.fillRect(qrX + 58, qrY + 58, 10, 10)
+    ctx.fillRect(qrX + 36, qrY + 36, 8, 8)
+    ctx.restore()
+
+    // Text next to QR
+    ctx.textAlign = 'right'
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 22px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('توثيق رقمي معتمد', qrX - 16, qrY + 34)
+    ctx.fillStyle = '#f5d77f'
+    ctx.font = '900 18px monospace'
+    ctx.fillText(code, qrX - 16, qrY + 64)
+
+    // Registration Seal (Left)
+    ctx.textAlign = 'left'
+    ctx.fillStyle = '#f5d77f'
+    ctx.font = 'bold 23px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('مشهرة برقم 3115 / 2026', 50, qrY + 34)
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = 'bold 18px "Tajawal", "Cairo", sans-serif'
+    ctx.fillText('وزارة التضامن الاجتماعي', 50, qrY + 64)
+
+    // Outer Gold Card Border
+    ctx.restore() // unclip
+    ctx.save()
+    roundRect(ctx, 16, 16, W - 32, H - 32, 44)
+    ctx.strokeStyle = 'rgba(197, 155, 39, 0.6)'
+    ctx.lineWidth = 4
+    ctx.stroke()
+    ctx.restore()
+
+    return canvas
   }
 
   async function downloadVolunteerIdCard(data, buttonEl) {
@@ -643,137 +912,76 @@
     toast('جارٍ إنشاء وتحميل كارنيه المتطوع المعتمد بدقة فائقة...', 'success')
 
     try {
-      const html2canvas = await loadHtml2CanvasLib()
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await Promise.race([
+            document.fonts.ready,
+            new Promise(r => setTimeout(r, 600))
+          ])
+        } catch (_) {}
+      }
+
+      let canvas = await generateCardCanvas2D(data)
 
       const rawName = (data.name || 'متطوع').trim()
       const safeName = rawName.replace(/[\\/:*?"<>|\r\n]+/g, '-').trim() || 'متطوع'
-      const code = data.code || `VOL-${(data.id || '').slice(0, 6).toUpperCase() || '2026'}`
-      const rank = data.rank || 'متطوع مبادر'
-      const team = data.team || data.role || 'الفريق الميداني'
-      const city = data.city || 'الدقهلية'
-      const hours = data.hours || '0'
-      const createdDate = data.created || '2026'
-      const expiryDate = data.expiry || 'صلاحية مفتوحة'
-      const isExpired = expiryDate.includes('منتهي') || expiryDate.includes('ملغاة') || expiryDate.includes('مجمّدة')
-      const initials = (rawName.split(' ')[0] || 'م').charAt(0) || 'م'
+      const filename = `كارنيه-متطوع-${safeName}.png`
 
-      // Pre-convert avatar and logo to Base64 Data URL to prevent CORS/taint issues in canvas
-      const avatarSrc = data.avatar || data.img || ''
-      const [avatarDataUrl, logoDataUrl] = await Promise.all([
-        fetchImageAsDataUrl(avatarSrc),
-        fetchImageAsDataUrl('/static/foundation-logo.png')
-      ])
-
-      const container = document.createElement('div')
-      container.style.cssText = 'position:fixed; left:0; top:0; width:500px; height:850px; z-index:-99999; opacity:0.001; pointer-events:none; overflow:hidden; background:transparent;'
-
-      const stage = document.createElement('div')
-      stage.style.cssText = 'width:440px; background:linear-gradient(145deg, #072722, #0d4a3e 70%, #051e1a); color:#ffffff; border-radius:28px; padding:26px 24px; box-shadow:0 20px 50px rgba(7, 39, 34, 0.4); position:relative; overflow:hidden; border:2px solid rgba(197, 155, 39, 0.45); font-family:"Tajawal","Cairo",sans-serif; direction:rtl; text-align:right; box-sizing:border-box;'
-
-      const logoImgSrc = logoDataUrl || '/static/foundation-logo.png'
-      const avatarHtml = avatarDataUrl
-        ? `<img src="${avatarDataUrl}" alt="${rawName}" style="width:96px; height:96px; border-radius:50%; border:4px solid #c59b27; box-shadow:0 6px 20px rgba(0,0,0,0.35); object-fit:cover; background:#ffffff; display:block;" />`
-        : `<div style="width:96px; height:96px; border-radius:50%; border:4px solid #c59b27; box-shadow:0 6px 20px rgba(0,0,0,0.35); display:grid; place-items:center; font-size:2.4rem; font-weight:900; background:#0d4a3e; color:#c59b27;">${initials}</div>`
-
-      stage.innerHTML = `
-        <div style="position:absolute; top:0; left:0; right:0; height:6px; background:linear-gradient(90deg, #c59b27, #f5d77f, #c59b27);"></div>
-        <img src="${logoImgSrc}" alt="" style="position:absolute; width:260px; opacity:0.04; pointer-events:none; top:50%; left:50%; transform:translate(-50%, -50%);" />
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <img src="${logoImgSrc}" alt="الشعار" style="width:44px; height:44px; display:block;" />
-            <div>
-              <h4 style="font-size:0.95rem; font-weight:900; color:#ffffff; margin:0; line-height:1.2;">مؤسسة د. عمر هشام</h4>
-              <p style="font-size:0.65rem; color:#94a3b8; margin:2px 0 0; line-height:1.2;">إدارة العمل التطوعي الميداني</p>
-            </div>
-          </div>
-          <span style="font-size:0.68rem; font-weight:800; color:#f5d77f; border:1px solid #c59b27; padding:3px 9px; border-radius:999px; background:rgba(197, 155, 39, 0.15);">بطاقة هوية رسمية</span>
-        </div>
-
-        <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:16px; position:relative;">
-          ${avatarHtml}
-          <h3 style="font-size:1.35rem; font-weight:900; margin:10px 0 4px; color:#ffffff; text-align:center;">${rawName}</h3>
-          <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.78rem; font-weight:800; color:#f5d77f; background:rgba(197, 155, 39, 0.2); border:1px solid rgba(197, 155, 39, 0.35); padding:4px 14px; border-radius:999px;">
-            <i class="fa-solid fa-medal"></i> ${rank}
-          </span>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:rgba(255, 255, 255, 0.07); border:1px solid rgba(255, 255, 255, 0.12); padding:12px 14px; border-radius:16px; margin-bottom:16px;">
-          <div>
-            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">كود المتطوع:</span>
-            <b style="font-family:monospace; color:#f5d77f; font-size:0.92rem; display:block;">${code}</b>
-          </div>
-          <div>
-            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">فريق العمل:</span>
-            <b style="font-size:0.84rem; color:#ffffff; display:block;">${team}</b>
-          </div>
-          <div>
-            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">المحافظة:</span>
-            <b style="font-size:0.84rem; color:#ffffff; display:block;">${city}</b>
-          </div>
-          <div>
-            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">ساعات الخدمة:</span>
-            <b style="color:#10b981; font-size:0.84rem; display:block;">${hours} ساعة موثقة</b>
-          </div>
-          <div>
-            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">تاريخ الانضمام:</span>
-            <b style="font-size:0.84rem; color:#ffffff; display:block;">${createdDate}</b>
-          </div>
-          <div>
-            <span style="font-size:0.68rem; color:#94a3b8; display:block; margin-bottom:2px;">صلاحية البطاقة:</span>
-            <b style="font-size:0.84rem; color:${isExpired ? '#ef4444' : '#10b981'}; display:block;">${expiryDate}</b>
-          </div>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px dashed rgba(197, 155, 39, 0.3);">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <div style="width:44px; height:44px; background:#ffffff; border-radius:8px; display:grid; place-items:center; font-size:1.5rem; color:#0d4a3e;">
-              <i class="fa-solid fa-qrcode"></i>
-            </div>
-            <div style="font-size:0.7rem; color:#94a3b8; text-align:right;">
-              <span style="display:block; color:#ffffff; font-weight:700;">توثيق رقمي معتمد</span>
-              <span style="font-family:monospace; font-size:0.65rem; color:#cbd5e1;">${code}</span>
-            </div>
-          </div>
-
-          <div style="display:flex; flex-direction:column; align-items:flex-end; text-align:left; color:#94a3b8; font-size:0.65rem;">
-            <strong style="color:#f5d77f; font-size:0.72rem;">مشهرة برقم 3115 / 2026</strong>
-            <span>وزارة التضامن الاجتماعي</span>
-          </div>
-        </div>
-      `
-
-      container.appendChild(stage)
-      document.body.appendChild(container)
-
-      if (document.fonts && document.fonts.ready) {
-        await document.fonts.ready
+      let blob = null
+      try {
+        blob = await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('toBlob timeout')), 3000)
+          try {
+            canvas.toBlob((b) => {
+              clearTimeout(timeout)
+              if (b) resolve(b)
+              else reject(new Error('toBlob returned null'))
+            }, 'image/png', 1.0)
+          } catch (e) {
+            clearTimeout(timeout)
+            reject(e)
+          }
+        })
+      } catch (taintErr) {
+        console.warn('[ID Card] Canvas may be tainted by remote avatar, generating clean fallback...', taintErr)
+        const safeData = { ...data, avatar: '', img: '' }
+        canvas = await generateCardCanvas2D(safeData)
+        blob = await new Promise((resolve, reject) => {
+          try {
+            canvas.toBlob((b) => {
+              if (b) resolve(b)
+              else reject(new Error('Fallback toBlob returned null'))
+            }, 'image/png', 1.0)
+          } catch (e) {
+            reject(e)
+          }
+        })
       }
-      await new Promise(r => setTimeout(r, 300))
 
-      const canvas = await html2canvas(stage, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false
-      })
+      if (!blob) {
+        // Ultimate fallback to dataURL
+        const dataUrl = canvas.toDataURL('image/png')
+        const link = document.createElement('a')
+        link.download = filename
+        link.href = dataUrl
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      } else {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.download = filename
+        a.href = url
+        document.body.appendChild(a)
+        a.click()
+        setTimeout(() => {
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+        }, 2500)
+      }
 
-      container.remove()
-
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/png', 1.0))
-      if (!blob) throw new Error('فشل إنشاء ملف الصورة')
-
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.download = `كارنيه-متطوع-${safeName}.png`
-      a.href = url
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      setTimeout(() => URL.revokeObjectURL(url), 3000)
-
-      toast('تم تنزيل كارنيه المتطوع المعتمد بنجاح بجودة فائقة', 'success')
+      toast('تم تنزيل كارنيه المتطوع المعتمد بنجاح بجودة فائقة 🎉', 'success')
       if (buttonEl) {
         buttonEl.innerHTML = '<i class="fa-solid fa-check"></i> تم التحميل!'
         setTimeout(() => {
@@ -783,11 +991,19 @@
       }
     } catch (err) {
       console.error('ID Card generation error:', err)
-      toast('تعذر تنزيل الكارنيه كصورة مباشرة — يمكنك استخدام زر عرض الكارنيه للطباعة', 'error')
+      toast('تعذر إنشاء الكارنيه كصورة مباشرة — يمكنك استخدام زر عرض الكارنيه للطباعة', 'error')
       if (buttonEl) {
         buttonEl.innerHTML = originalHtml
         buttonEl.disabled = false
       }
+    } finally {
+      // Safety timeout: ensure button is never permanently stuck
+      setTimeout(() => {
+        if (buttonEl && buttonEl.disabled) {
+          buttonEl.innerHTML = originalHtml
+          buttonEl.disabled = false
+        }
+      }, 4000)
     }
   }
   window.downloadVolunteerIdCard = downloadVolunteerIdCard
