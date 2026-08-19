@@ -75,6 +75,22 @@
   backdrop?.addEventListener('click', () => setDrawer(false))
   addEventListener('keydown', e => e.key === 'Escape' && setDrawer(false))
 
+  // Mobile Dashboard Sidebar Drawer
+  const dashSidebar = $('.dash-sidebar')
+  const dashBackdrop = $('.dash-backdrop')
+  const setDashSidebar = (open) => {
+    dashSidebar?.classList.toggle('open', open)
+    dashBackdrop?.classList.toggle('open', open)
+    dashSidebar?.setAttribute('aria-hidden', String(!open))
+    $('#dash-menu-toggle')?.setAttribute('aria-expanded', String(open))
+    document.body.style.overflow = open ? 'hidden' : ''
+  }
+  $('#dash-menu-toggle')?.addEventListener('click', () => setDashSidebar(true))
+  $('#dash-menu-close')?.addEventListener('click', () => setDashSidebar(false))
+  dashBackdrop?.addEventListener('click', () => setDashSidebar(false))
+  $$('.dash-sidebar nav a').forEach(a => a.addEventListener('click', () => setDashSidebar(false)))
+  addEventListener('keydown', e => e.key === 'Escape' && setDashSidebar(false))
+
   const savedTheme = localStorage.getItem('omar-theme')
   if (savedTheme === 'dark') document.body.classList.add('dark')
   const updateThemeIcon = () => {
