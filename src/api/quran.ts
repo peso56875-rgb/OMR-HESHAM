@@ -307,6 +307,37 @@ const RADIO_STREAM_MAP: Record<string, string[]> = {
 quranApi.get('/radio/:id', async (c) => {
   const radioId = c.req.param('id')
   const streamUrls = RADIO_STREAM_MAP[radioId] || RADIO_STREAM_MAP.cairo
+
+  for (const streamUrl of streamUrls) {
+    const controller = new AbortController()
+    const connectTimer = setTimeout(() => controller.abort(), 4000)
+    try {
+      const res = await fetch(streamUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)',
+          'Accept': '*/*'
+        },
+        signal: controller.signal
+      })
+      clearTimeout(connectTimer)
+
+      if (res.ok && res.body) {
+        return new Response(res.body, {
+          status: 200,
+          headers: {
+            'Content-Type': 'audio/mpeg',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Access-Control-Allow-Origin': '*'
+          }
+        })
+      }
+    } catch (_) {
+      clearTimeout(connectTimer)
+    }
+  }
+
   return c.redirect(streamUrls[0], 302)
 })
 
