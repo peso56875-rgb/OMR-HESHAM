@@ -242,6 +242,9 @@
     bells.forEach(function (b) {
       b.setAttribute('aria-expanded', 'false');
     });
+    document.querySelectorAll('.site-header.notif-open, .dash-topbar.notif-open').forEach(function (h) {
+      h.classList.remove('notif-open');
+    });
     if (backdrop) backdrop.classList.remove('open');
     document.body.style.overflow = '';
   }
@@ -271,8 +274,12 @@
       dropdown.classList.add('open');
       dropdown.setAttribute('aria-hidden', 'false');
       if (bellBtn) bellBtn.setAttribute('aria-expanded', 'true');
-      if (backdrop) backdrop.classList.add('open');
+
+      var header = dropdown.closest('.site-header, .dash-topbar') || document.querySelector('.site-header');
+      if (header) header.classList.add('notif-open');
+
       if (window.innerWidth <= 780) {
+        if (backdrop) backdrop.classList.add('open');
         document.body.style.overflow = 'hidden';
       }
       checkPushBanner();

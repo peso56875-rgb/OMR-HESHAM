@@ -146,6 +146,57 @@ const fetchFeed = async (
     }
   }
 
+  if (!rows.length) {
+    const now = new Date()
+    return [
+      {
+        id: 'welcome-quran',
+        type: 'content',
+        category: 'content',
+        title: 'مصحف ومحراب المؤسسة المطور 📖',
+        body: 'استمع للتلاوات الخاشعة بمختلف المقامات، وتصفح السور بالرسم العثماني، وتابع أذكارك ووردك اليومي.',
+        link: '/quran',
+        icon: 'fa-book-quran',
+        priority: 'normal',
+        audience: 'all',
+        actor_name: 'مؤسسة د. عمر هشام',
+        created_at: new Date(now.getTime() - 15 * 60000).toISOString(),
+        is_read: false,
+        read_at: null
+      },
+      {
+        id: 'welcome-zakat',
+        type: 'financial',
+        category: 'financial',
+        title: 'حاسبة الزكاة الذكية ✨',
+        body: 'احسب زكاة مالك وذهبك وتجارتك بدقة وفق الضوابط الشرعية المعتمدة.',
+        link: '/zakat-calculator',
+        icon: 'fa-scale-balanced',
+        priority: 'normal',
+        audience: 'all',
+        actor_name: 'إدارة الزكاة والصدقات',
+        created_at: new Date(now.getTime() - 60 * 60000).toISOString(),
+        is_read: false,
+        read_at: null
+      },
+      {
+        id: 'welcome-foundation',
+        type: 'welcome',
+        category: 'general',
+        title: 'أهلاً بك في منصة مؤسسة د. عمر هشام الخيرية 🤝',
+        body: 'نسعد بزيارتكم ونسأل الله أن يتقبل منا ومنكم صالح الأعمال والدعاء للمرحوم د. عمر هشام.',
+        link: '/about',
+        icon: 'fa-heart',
+        priority: 'normal',
+        audience: 'all',
+        actor_name: 'مجلس الإدارة',
+        created_at: new Date(now.getTime() - 120 * 60000).toISOString(),
+        is_read: true,
+        read_at: new Date().toISOString()
+      }
+    ].slice(0, limit)
+  }
+
   rows.sort((a, b) =>
     String(b.data.created_at || '').localeCompare(String(a.data.created_at || ''))
   )
