@@ -562,8 +562,8 @@
       name: 'إذاعة الشيخ مشاري راشد العفاسي',
       tagline: 'تلاوات خاشعة وعذبة بصوت العفاسي',
       urls: [
-        'https://backup.qurango.net/radio/mishary_alafasi',
         'https://qurango.net/radio/mishary_alafasi',
+        'https://backup.qurango.net/radio/mishary_alafasi',
         '/api/quran/radio/afs_radio'
       ],
       icon: 'fa-headphones'
@@ -595,8 +595,8 @@
       name: 'إذاعة تراتيل وتلاوات خاشعة',
       tagline: 'مختارات من روائع التلاوات لكبار القراء',
       urls: [
-        'https://backup.qurango.net/radio/tarateel',
         'https://qurango.net/radio/tarateel',
+        'https://backup.qurango.net/radio/tarateel',
         '/api/quran/radio/tarateel'
       ],
       icon: 'fa-headphones'
@@ -2574,6 +2574,8 @@
   var radioWatchdogTimer = null;
   var lastRadioCurrentTime = -1;
   var radioStallCount = 0;
+  var radioReconnecting = false;
+  var radioToastShown = false;
 
   function stopRadio() {
     if (radioWatchdogTimer) {
@@ -2582,6 +2584,9 @@
     }
     radioStallCount = 0;
     lastRadioCurrentTime = -1;
+    radioReconnecting = false;
+    radioToastShown = false;
+    document.removeEventListener('visibilitychange', radioVisibilityHandler);
 
     try {
       if (state.radioAudio) {
@@ -2589,6 +2594,8 @@
         state.radioAudio.onerror = null;
         state.radioAudio.onstalled = null;
         state.radioAudio.onended = null;
+        state.radioAudio.onwaiting = null;
+        state.radioAudio.onpause = null;
         state.radioAudio.pause();
         state.radioAudio.src = '';
         state.radioAudio.removeAttribute('src');
@@ -2602,6 +2609,163 @@
       var btn = c.querySelector('.radio-play-btn');
       if (btn) btn.innerHTML = '<i class="fa-solid fa-play"></i> <span>تشغيل الإذاعة</span>';
     });
+  }
+
+  /**
+   * إعادة اتصال سلسة بدون أي فجوة صمت (Seamless Dual-Audio Handover)
+   * ───────────────────────────────────────────────────────────────────
+   * بدلاً من تغيير src على نفس عنصر الصوت (الذي يقطع الصوت فوراً ويسبب
+   * 3-5 ثواني صمت أثناء DNS+TCP+TLS+Buffering)، ننشئ عنصر صوت جديد
+   * في الخلفية ونبدأ تحميل البث عليه. فقط عندما يبدأ الصوت الجديد فعلاً
+   * في التشغيل (event: playing)، نستبدل القديم بالجديد بدون أي انقطاع.
+   */
+  function seamlessReconnect(radio, urlIdx) {
+    if (radioReconnecting) return;
+    radioReconnecting = true;
+
+    var urls = radio.urls || [radio.url];
+    urlIdx = urlIdx || 0;
+    var streamUrl = urls[urlIdx % urls.length];
+    var freshUrl = streamUrl + (streamUrl.indexOf('?') === -1 ? '?' : '&') + '_ts=' + Date.now();
+
+    var nextAudio = new Audio();
+    nextAudio.preload = 'auto';
+    nextAudio.src = freshUrl;
+
+    var swapTimeout = null;
+    var settled = false;
+
+    function doSwap() {
+      if (settled) return;
+      settled = true;
+      if (swapTimeout) clearTimeout(swapTimeout);
+
+      // إيقاف العنصر القديم بهدوء
+      try {
+        if (state.radioAudio && state.radioAudio !== nextAudio) {
+          state.radioAudio.onplaying = null;
+          state.radioAudio.onerror = null;
+          state.radioAudio.onstalled = null;
+          state.radioAudio.onended = null;
+          state.radioAudio.onwaiting = null;
+          state.radioAudio.onpause = null;
+          state.radioAudio.pause();
+          state.radioAudio.src = '';
+          state.radioAudio.removeAttribute('src');
+        }
+      } catch (_) {}
+
+      state.radioAudio = nextAudio;
+      radioStallCount = 0;
+      lastRadioCurrentTime = -1;
+      radioReconnecting = false;
+      currentRadioUrlIndex = urlIdx;
+
+      // ربط أحداث الاستقرار على العنصر الجديد
+      bindRadioEvents(radio, urlIdx);
+    }
+
+    function doFail() {
+      if (settled) return;
+      settled = true;
+      if (swapTimeout) clearTimeout(swapTimeout);
+
+      // تنظيف العنصر الفاشل
+      try {
+        nextAudio.pause();
+        nextAudio.src = '';
+        nextAudio.removeAttribute('src');
+      } catch (_) {}
+
+      radioReconnecting = false;
+
+      // جرب الرابط التالي أو أعد المحاولة من البداية
+      if (state.isPlayingRadio && state.activeRadioId === radio.id) {
+        if (urlIdx + 1 < urls.length) {
+          setTimeout(function () {
+            seamlessReconnect(radio, urlIdx + 1);
+          }, 300);
+        } else {
+          setTimeout(function () {
+            if (state.isPlayingRadio && state.activeRadioId === radio.id) {
+              seamlessReconnect(radio, 0);
+            }
+          }, 1000);
+        }
+      }
+    }
+
+    nextAudio.onplaying = function () {
+      doSwap();
+    };
+
+    nextAudio.onerror = function () {
+      doFail();
+    };
+
+    // حد أقصى 6 ثواني للانتظار — لو ما اشتغلش البديل، نجرب رابط تاني
+    swapTimeout = setTimeout(function () {
+      if (!settled) {
+        doFail();
+      }
+    }, 6000);
+
+    var playPromise = nextAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        doFail();
+      });
+    }
+  }
+
+  function bindRadioEvents(radio, urlIdx) {
+    var urls = radio.urls || [radio.url];
+    var card = document.getElementById('radio-card-' + radio.id);
+
+    state.radioAudio.onplaying = function () {
+      radioStallCount = 0;
+      radioReconnecting = false;
+      if (card) {
+        var btn = card.querySelector('.radio-play-btn');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>إيقاف البث</span>';
+      }
+      if (!radioToastShown) {
+        radioToastShown = true;
+        if (window.showToast) window.showToast('أنت الآن تستمع إلى: ' + radio.name + ' 📻', 'info');
+      }
+    };
+
+    state.radioAudio.onerror = function () {
+      if (state.isPlayingRadio && state.activeRadioId === radio.id) {
+        if (urlIdx + 1 < urls.length) {
+          seamlessReconnect(radio, urlIdx + 1);
+        } else {
+          seamlessReconnect(radio, 0);
+        }
+      }
+    };
+
+    // عند انتهاء البث (بعض السيرفرات تقطع الاتصال)
+    state.radioAudio.onended = function () {
+      if (state.isPlayingRadio && state.activeRadioId === radio.id) {
+        seamlessReconnect(radio, 0);
+      }
+    };
+
+    // عند توقف مؤقت غير متوقع (مثلاً من نظام التشغيل أو المتصفح)
+    state.radioAudio.onpause = function () {
+      if (state.isPlayingRadio && state.activeRadioId === radio.id) {
+        // انتظر لحظة — ربما المستخدم هو من ضغط إيقاف
+        setTimeout(function () {
+          if (state.isPlayingRadio && state.activeRadioId === radio.id && state.radioAudio.paused) {
+            state.radioAudio.play().catch(function () {
+              seamlessReconnect(radio, 0);
+            });
+          }
+        }, 500);
+      }
+    };
   }
 
   function playRadioStation(radio, urlIdx) {
@@ -2622,16 +2786,15 @@
 
     stopRadio();
 
-    // استخدام كائن صوت موحد
-    if (!state.radioAudio) {
-      state.radioAudio = new Audio();
-    }
+    // إنشاء كائن صوت جديد نظيف
+    state.radioAudio = new Audio();
 
     var urls = radio.urls || [radio.url];
     var streamUrl = urls[urlIdx % urls.length];
 
     state.isPlayingRadio = true;
     state.activeRadioId = radio.id;
+    radioToastShown = false;
     var card = document.getElementById('radio-card-' + radio.id);
     if (card) {
       card.classList.add('is-playing');
@@ -2639,75 +2802,69 @@
       if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري الاتصال بالبث...</span>';
     }
 
-    // تجهيز مسار البث مع بارامتر زمني لمنع تخزين الكاش القديم
+    // تجهيز مسار البث
     var liveUrl = streamUrl.startsWith('http')
       ? streamUrl + (streamUrl.indexOf('?') === -1 ? '?' : '&') + '_ts=' + Date.now()
       : streamUrl;
 
-    state.radioAudio.removeAttribute('crossorigin');
     state.radioAudio.src = liveUrl;
 
-    state.radioAudio.onplaying = function () {
-      radioStallCount = 0;
-      if (card) {
-        var btn = card.querySelector('.radio-play-btn');
-        if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>إيقاف البث</span>';
-      }
-      if (window.showToast) window.showToast('أنت الآن تستمع إلى: ' + radio.name + ' 📻', 'info');
-    };
-
-    state.radioAudio.onerror = function (e) {
-      console.warn('Radio stream error on:', liveUrl, e);
-      if (state.isPlayingRadio && state.activeRadioId === radio.id) {
-        if (urlIdx + 1 < urls.length) {
-          console.log('Switching to alternative live stream server:', urlIdx + 1);
-          playRadioStation(radio, urlIdx + 1);
-        } else {
-          // محاولة استئناف الاتصال تلقائياً بعد ثانية ونصف
-          setTimeout(function () {
-            if (state.isPlayingRadio && state.activeRadioId === radio.id) {
-              playRadioStation(radio, 0);
-            }
-          }, 1500);
-        }
-      }
-    };
+    // ربط الأحداث
+    bindRadioEvents(radio, urlIdx);
 
     var playPromise = state.radioAudio.play();
     if (playPromise !== undefined) {
       playPromise.catch(function (err) {
         if (err && err.name === 'AbortError') return;
-        console.warn('Radio play promise error:', err);
         if (state.isPlayingRadio && state.activeRadioId === radio.id && urlIdx + 1 < urls.length) {
-          playRadioStation(radio, urlIdx + 1);
+          seamlessReconnect(radio, urlIdx + 1);
         }
       });
     }
 
-    // مراقب استمرارية البث المباشر (Watchdog): يضمن عدم انقطاع البث أبداً
+    // ─── مراقب استمرارية البث (Watchdog v2) ───
+    // كل ثانيتين: يفحص تقدم currentTime
+    // لو توقف التقدم لمدة 4 ثواني (تيكتين) → إعادة اتصال سلسة بدون صمت
     radioWatchdogTimer = setInterval(function () {
       if (!state.isPlayingRadio || state.activeRadioId !== radio.id) {
         clearInterval(radioWatchdogTimer);
+        radioWatchdogTimer = null;
         return;
       }
+
       var cur = state.radioAudio.currentTime;
-      if (state.radioAudio.paused) {
-        console.log('Watchdog detected paused radio stream, resuming...');
-        state.radioAudio.play().catch(function () {});
-      } else if (cur > 0 && cur === lastRadioCurrentTime) {
+
+      if (state.radioAudio.paused && !radioReconnecting) {
+        // المتصفح أوقف الصوت — نحاول استئنافه فوراً
+        state.radioAudio.play().catch(function () {
+          if (!radioReconnecting) {
+            seamlessReconnect(radio, currentRadioUrlIndex);
+          }
+        });
+      } else if (cur > 0 && cur === lastRadioCurrentTime && !radioReconnecting) {
         radioStallCount++;
-        if (radioStallCount >= 3) {
-          console.log('Watchdog detected stalled live stream, refreshing socket...');
+        if (radioStallCount >= 2) {
+          // البث متوقف لأكثر من 4 ثواني — إعادة اتصال سلسة
           radioStallCount = 0;
-          var freshUrl = streamUrl + (streamUrl.indexOf('?') === -1 ? '?' : '&') + '_ts=' + Date.now();
-          state.radioAudio.src = freshUrl;
-          state.radioAudio.play().catch(function () {});
+          seamlessReconnect(radio, currentRadioUrlIndex);
         }
-      } else {
+      } else if (!radioReconnecting) {
         radioStallCount = 0;
       }
+
       lastRadioCurrentTime = cur;
-    }, 4000);
+    }, 2000);
+
+    // حماية من إيقاف المتصفح للصوت عند تحويل التبويبة للخلفية
+    document.addEventListener('visibilitychange', radioVisibilityHandler);
+  }
+
+  function radioVisibilityHandler() {
+    if (!document.hidden && state.isPlayingRadio && state.radioAudio) {
+      if (state.radioAudio.paused) {
+        state.radioAudio.play().catch(function () {});
+      }
+    }
   }
 
   function initRadiosSection() {
