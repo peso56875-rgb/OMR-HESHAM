@@ -1604,6 +1604,10 @@
 
         const targetViewParam = new URL(url, location.origin).searchParams.get('view') || 'overview'
 
+        if (window.markDashboardSectionSeen) {
+          window.markDashboardSectionSeen(targetViewParam)
+        }
+
         $$('.dash-sidebar nav a').forEach(link => {
           const linkViewParam = new URL(link.href, location.origin).searchParams.get('view') || 'overview'
           const isTarget = linkViewParam === targetViewParam

@@ -280,6 +280,52 @@ notifications.get('/', rateLimiter(60, 60000, 'notif-list'), async (c) => {
   }
 })
 
+// خريطة ربط أنواع الإشعارات بأقسام لوحة التحكم (Admin Dashboard Sections)
+const NOTIFICATION_SECTION_MAP: Record<string, string> = {
+  // المتطوعون
+  volunteer_new: 'volunteers',
+  volunteer_approved: 'volunteers',
+  volunteer_rejected: 'volunteers',
+  volunteer_rank_promoted: 'volunteers',
+  volunteer_hours_updated: 'volunteers',
+  volunteer_card_frozen: 'volunteers',
+  volunteer_card_expiring: 'volunteers',
+  volunteer_card_renewed: 'volunteers',
+  volunteer_card_expiring_admin: 'volunteers',
+  volunteer_certificate_granted: 'volunteers',
+
+  // المستخدمون
+  user_registered: 'users',
+  role_promoted_admin: 'users',
+  role_admin_removed: 'users',
+
+  // التبرعات والخزنة المالية
+  donation_new: 'donations',
+  donation_confirmed: 'donations',
+  donation_cancelled: 'donations',
+  treasury_large: 'treasury',
+
+  // الحملات
+  campaign_goal_reached: 'campaigns',
+
+  // الرسائل والتواصل
+  contact_new: 'contacts',
+  contact_replied: 'contacts',
+
+  // الوظائف
+  job_application_new: 'job_applications',
+
+  // النشرة البريدية
+  newsletter_new: 'newsletter',
+
+  // الأخبار والفعاليات
+  content_published: 'news',
+  event_upcoming: 'events',
+
+  // سجل التدقيق والنظام
+  system_error: 'audit'
+}
+
 /**
  * GET /api/notifications/count
  * نقطة خفيفة يستدعيها الجرس كل دقيقة. حدّ معدّل مرتفع لأنها تُستدعى
@@ -296,16 +342,35 @@ notifications.get('/count', rateLimiter(120, 60000, 'notif-count'), async (c) =>
     const unread = items.filter((i) => !i.is_read).length
     const latest = items.find((i) => !i.is_read)
 
+    // تجميع التنبيهات غير المقروءة لأقسام لوحة التحكم
+    const sectionAlerts: Record<string, { count: number; latest_id: string; latest_at: string }> = {}
+    if (isAdmin) {
+      for (const item of items) {
+        if (!item.is_read) {
+          const sec = NOTIFICATION_SECTION_MAP[item.type] || (item.category === 'financial' ? 'treasury' : (item.category === 'volunteers' ? 'volunteers' : 'notifications'))
+          if (!sectionAlerts[sec]) {
+            sectionAlerts[sec] = { count: 0, latest_id: item.id, latest_at: item.created_at }
+          }
+          sectionAlerts[sec].count++
+          if (item.created_at > sectionAlerts[sec].latest_at) {
+            sectionAlerts[sec].latest_at = item.created_at
+            sectionAlerts[sec].latest_id = item.id
+          }
+        }
+      }
+    }
+
     return c.json({
       unread,
       capped: unread >= COUNT_CAP,
       latest: latest
         ? { id: latest.id, title: latest.title, icon: latest.icon, link: latest.link }
-        : null
+        : null,
+      section_alerts: sectionAlerts
     })
   } catch (error: any) {
     console.error('[notifications] فشل حساب العدّاد:', error?.message || error)
-    return c.json({ unread: 0, capped: false, latest: null })
+    return c.json({ unread: 0, capped: false, latest: null, section_alerts: {} })
   }
 })
 
@@ -345,6 +410,53 @@ notifications.post('/read/:id', authMiddleware, async (c) => {
   } catch (error: any) {
     console.error('[notifications] فشل تعليم الإشعار كمقروء:', error?.message || error)
     return c.json({ error: 'تعذّر تحديث حالة الإشعار' }, 500)
+  }
+})
+
+/**
+ * POST /api/notifications/read-section/:section
+ * تعليم جميع إشعارات قسم معين كمقروءة للمشرف عند فتحه
+ */
+notifications.post('/read-section/:section', authMiddleware, async (c) => {
+  const user = currentUser(c)
+  const uid = user.id || ''
+  const isAdmin = user.role === 'admin'
+  const section = c.req.param('section') as string
+
+  if (!isAdmin) return c.json({ ok: false, error: 'غير مصرّح' }, 403)
+
+  try {
+    const db = getFirestore(c)
+    const items = await fetchFeed(db, uid, isAdmin, COUNT_CAP)
+    const unreadInSec = items.filter(
+      (item) => !item.is_read && (NOTIFICATION_SECTION_MAP[item.type] === section || (section === 'notifications'))
+    )
+
+    if (!unreadInSec.length) return c.json({ ok: true, updated: 0 })
+
+    const now = new Date().toISOString()
+    const batch = db.batch()
+
+    for (const item of unreadInSec) {
+      if (item.audience === 'admins') {
+        batch.set(db.collection('notification_reads').doc(readId(item.id, uid)), {
+          notification_id: item.id,
+          user_id: uid,
+          read_at: now
+        })
+      } else {
+        batch.update(db.collection('notifications').doc(item.id), {
+          is_read: true,
+          read_at: now
+        })
+      }
+    }
+
+    await batch.commit()
+    return c.json({ ok: true, updated: unreadInSec.length })
+  } catch (error: any) {
+    console.error('[notifications] فشل تعليم إشعارات القسم كمقروءة:', error?.message || error)
+    return c.json({ error: 'تعذّر تحديث إشعارات القسم' }, 500)
   }
 })
 

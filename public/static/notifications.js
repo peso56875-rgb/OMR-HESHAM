@@ -12,9 +12,36 @@
   'use strict';
 
   var pollTimer = null;
-  var lastUnreadCount = 0;
+  var lastUnreadCount = -1;
+  try {
+    var storedLastCount = sessionStorage.getItem('omar_last_unread_count');
+    if (storedLastCount !== null) {
+      lastUnreadCount = parseInt(storedLastCount, 10);
+    }
+  } catch (_) {}
   var isFetchingFeed = false;
   var currentTab = 'all';
+
+  // دالة لتعليم قسم لوحة التحكم كمقروء وإخفاء النقطة الحمراء
+  function markDashboardSectionSeen(section) {
+    if (!section) return;
+    try {
+      localStorage.setItem('omar_dash_seen_' + section, new Date().toISOString());
+    } catch (_) {}
+
+    var dot = document.querySelector('.dash-alert-dot[data-dot-for="' + section + '"]');
+    if (dot) {
+      dot.style.display = 'none';
+    }
+
+    // إرسال طلب في الخلفية لتعليم إشعارات هذا القسم كمقروءة للمشرف
+    fetch('/api/notifications/read-section/' + section, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' }
+    }).then(function () {
+      updateUnreadCount();
+    }).catch(function () {});
+  }
 
   function timeAgo(dateString) {
     if (!dateString) return 'منذ قليل';
@@ -92,15 +119,67 @@
         pageUnreadTotal.textContent = String(count);
       }
 
-      // إذا زادت الإشعارات أثناء تصفح المستخدم، نُصدر صوتًا خفيفًا وتوست
-      if (count > lastUnreadCount && lastUnreadCount >= 0 && data.latest) {
-        playNotificationSound();
-        if (window.showToast) {
-          window.showToast(data.latest.title, 'subscribe');
+      // ────────────────── التحكم الذكي في ظهور التوست (فقط عند أول فتح أو عند وصول جديد فعلياً) ──────────────────
+      var sessionVisited = sessionStorage.getItem('omar_session_visited');
+      var lastToastId = localStorage.getItem('omar_last_toast_id');
+
+      if (!sessionVisited) {
+        // أول فتح للموقع في هذه الجلسة
+        sessionStorage.setItem('omar_session_visited', '1');
+        if (count > 0 && data.latest && data.latest.id && lastToastId !== data.latest.id) {
+          localStorage.setItem('omar_last_toast_id', data.latest.id);
+          playNotificationSound();
+          if (window.showToast) {
+            window.showToast(data.latest.title, 'subscribe');
+          }
+        }
+      } else if (lastUnreadCount >= 0 && count > lastUnreadCount && data.latest && data.latest.id) {
+        // وصل إشعار جديد فعلياً أثناء تصفح المستخدم
+        if (lastToastId !== data.latest.id) {
+          localStorage.setItem('omar_last_toast_id', data.latest.id);
+          playNotificationSound();
+          if (window.showToast) {
+            window.showToast(data.latest.title, 'subscribe');
+          }
         }
       }
 
       lastUnreadCount = count;
+      try {
+        sessionStorage.setItem('omar_last_unread_count', String(count));
+      } catch (_) {}
+
+      // ────────────────── تحديث النقاط الحمراء التنبيهية في لوحة التحكم (Section Alert Dots) ──────────────────
+      if (data.section_alerts) {
+        var isDashboard = window.location.pathname.startsWith('/dashboard');
+        var currentView = (new URL(location.href)).searchParams.get('view') || 'overview';
+
+        var allDots = document.querySelectorAll('.dash-alert-dot');
+        allDots.forEach(function (dot) {
+          var sec = dot.getAttribute('data-dot-for');
+          if (!sec) return;
+
+          var alertInfo = data.section_alerts[sec];
+          var seenAt = null;
+          try {
+            seenAt = localStorage.getItem('omar_dash_seen_' + sec);
+          } catch (_) {}
+
+          if (isDashboard && currentView === sec) {
+            // القسم المفتوح حالياً تختفي نقطته فوراً ويُعتبر تمت مشاهدته
+            dot.style.display = 'none';
+            if (alertInfo && alertInfo.latest_at) {
+              try { localStorage.setItem('omar_dash_seen_' + sec, alertInfo.latest_at); } catch (_) {}
+            }
+          } else if (alertInfo && alertInfo.count > 0) {
+            // حدث جديد لم يشاهده المشرف بعد في هذا القسم
+            var isNewer = !seenAt || (alertInfo.latest_at && alertInfo.latest_at > seenAt);
+            dot.style.display = isNewer ? 'inline-block' : 'none';
+          } else {
+            dot.style.display = 'none';
+          }
+        });
+      }
     } catch (e) {
       // فشل صامت
     }
@@ -870,16 +949,33 @@
       }
     });
 
+    // مراقبة نقرات أقسام لوحة التحكم لتعليمها كمقروءة وإزالة النقطة الحمراء فوراً
+    if (window.location.pathname.startsWith('/dashboard')) {
+      var currentView = (new URL(location.href)).searchParams.get('view') || 'overview';
+      markDashboardSectionSeen(currentView);
+
+      document.querySelectorAll('.dash-sidebar nav a[data-dash-view]').forEach(function (link) {
+        link.addEventListener('click', function () {
+          var viewName = link.getAttribute('data-dash-view');
+          if (viewName) {
+            markDashboardSectionSeen(viewName);
+          }
+        });
+      });
+    }
+
     // تسجيل الـ Service Worker في الخلفية إذا كان مدعومًا
     if ('serviceWorker' in navigator) {
       registerServiceWorker();
     }
   }
 
-  // تصدير الدالة العامة ليتسنى استدعاؤها من SPA / Dashboard
+  // تصدير الدوال العامة ليتسنى استدعاؤها من SPA / Dashboard
   window.initNotificationBell = init;
   window.requestPushPermission = requestPushPermission;
   window.closeNotificationDropdowns = closeAllDropdowns;
+  window.markDashboardSectionSeen = markDashboardSectionSeen;
+  window.updateNotificationCount = updateUnreadCount;
 
   // تشغيل عند تحميل الصفحة
   if (document.readyState === 'loading') {

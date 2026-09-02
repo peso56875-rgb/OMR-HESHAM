@@ -31,7 +31,20 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
     <section class="dashboard-wrap">
       <aside class="dash-sidebar" aria-label="تنقل لوحة التحكم">
         <div class="dash-brand"><a href="/" style="display:flex;align-items:center;gap:15px;color:inherit;text-decoration:none"><img src="/static/foundation-logo.png" alt="" /><span><small>مؤسسة الدكتور عمر هشام</small>لوحة التحكم</span></a><button id="dash-menu-close" type="button" aria-label="إغلاق القائمة">{icon('fa-xmark')}</button></div>
-        <nav>{sideMenu.map((n) => <a class={view === n[2] ? 'active' : ''} href={`/dashboard?view=${n[2]}`} aria-current={view === n[2] ? 'page' : undefined}>{icon(n[0])}<span>{n[1]}</span></a>)}</nav>
+        <nav>
+          {sideMenu.map((n) => (
+            <a
+              class={view === n[2] ? 'active' : ''}
+              href={`/dashboard?view=${n[2]}`}
+              data-dash-view={n[2]}
+              aria-current={view === n[2] ? 'page' : undefined}
+            >
+              {icon(n[0])}
+              <span>{n[1]}</span>
+              <span class="dash-alert-dot" data-dot-for={n[2]} style="display:none" title="تحديثات وتنبيهات جديدة"></span>
+            </a>
+          ))}
+        </nav>
         <div class="dash-sidebar-footer"><a href="/">{icon('fa-arrow-up-right-from-square')}<span>عرض الموقع</span></a><a href="/api/auth/logout">{icon('fa-right-from-bracket')}<span>تسجيل الخروج</span></a></div>
       </aside>
       <button class="dash-backdrop" type="button" aria-label="إغلاق القائمة"></button>
