@@ -2586,6 +2586,7 @@
     lastRadioCurrentTime = -1;
     radioReconnecting = false;
     radioToastShown = false;
+    radioMarkedPlaying = false;
     document.removeEventListener('visibilitychange', radioVisibilityHandler);
 
     try {
@@ -2659,6 +2660,7 @@
       radioStallCount = 0;
       lastRadioCurrentTime = -1;
       radioReconnecting = false;
+      radioMarkedPlaying = false;
       currentRadioUrlIndex = urlIdx;
 
       // ربط أحداث الاستقرار على العنصر الجديد
@@ -2719,20 +2721,35 @@
     }
   }
 
+  var radioMarkedPlaying = false;
+
+  function markRadioAsPlaying(radio) {
+    if (radioMarkedPlaying) return;
+    radioMarkedPlaying = true;
+    radioStallCount = 0;
+    radioReconnecting = false;
+    var card = document.getElementById('radio-card-' + radio.id);
+    if (card) {
+      var btn = card.querySelector('.radio-play-btn');
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>إيقاف البث</span>';
+    }
+    if (!radioToastShown) {
+      radioToastShown = true;
+      if (window.showToast) window.showToast('أنت الآن تستمع إلى: ' + radio.name + ' 📻', 'info');
+    }
+  }
+
   function bindRadioEvents(radio, urlIdx) {
     var urls = radio.urls || [radio.url];
-    var card = document.getElementById('radio-card-' + radio.id);
 
     state.radioAudio.onplaying = function () {
-      radioStallCount = 0;
-      radioReconnecting = false;
-      if (card) {
-        var btn = card.querySelector('.radio-play-btn');
-        if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>إيقاف البث</span>';
-      }
-      if (!radioToastShown) {
-        radioToastShown = true;
-        if (window.showToast) window.showToast('أنت الآن تستمع إلى: ' + radio.name + ' 📻', 'info');
+      markRadioAsPlaying(radio);
+    };
+
+    // fallback: بعض بثوث Icecast لا تطلق playing أبداً، لكن timeupdate بيشتغل دايماً
+    state.radioAudio.ontimeupdate = function () {
+      if (state.radioAudio.currentTime > 0) {
+        markRadioAsPlaying(radio);
       }
     };
 
@@ -2795,6 +2812,7 @@
     state.isPlayingRadio = true;
     state.activeRadioId = radio.id;
     radioToastShown = false;
+    radioMarkedPlaying = false;
     var card = document.getElementById('radio-card-' + radio.id);
     if (card) {
       card.classList.add('is-playing');
@@ -2814,7 +2832,10 @@
 
     var playPromise = state.radioAudio.play();
     if (playPromise !== undefined) {
-      playPromise.catch(function (err) {
+      playPromise.then(function () {
+        // play() نجحت — نحدث الزرار فوراً (fallback لو playing event ما اشتغلش)
+        markRadioAsPlaying(radio);
+      }).catch(function (err) {
         if (err && err.name === 'AbortError') return;
         if (state.isPlayingRadio && state.activeRadioId === radio.id && urlIdx + 1 < urls.length) {
           seamlessReconnect(radio, urlIdx + 1);
