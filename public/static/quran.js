@@ -130,77 +130,88 @@
       name: 'الشيخ محمد صديق المنشاوي (مرتل)',
       urls: [
         'https://server10.mp3quran.net/minsh/',
-        'https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/'
+        'https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/',
+        '/api/quran/audio/minshawi/'
       ]
     },
     minshawi_mujawwad: {
       name: 'الشيخ محمد صديق المنشاوي (مجود)',
       urls: [
         'https://server10.mp3quran.net/minsh/Almusshaf-Al-Mojawwad/',
-        'https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee_mujawwad/'
+        'https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee_mujawwad/',
+        '/api/quran/audio/minshawi_mujawwad/'
       ]
     },
     abdulbasit: {
       name: 'الشيخ عبد الباسط عبد الصمد (مرتل)',
       urls: [
         'https://server7.mp3quran.net/basit/',
-        'https://everyayah.com/data/AbdulSamad_64kbps_QuranExplorer.Com/'
+        'https://download.quranicaudio.com/quran/abdul_basit_murattal/',
+        '/api/quran/audio/abdulbasit/'
       ]
     },
     abdulbasit_mujawwad: {
       name: 'الشيخ عبد الباسط عبد الصمد (مجود)',
       urls: [
         'https://server7.mp3quran.net/basit/Almusshaf-Al-Mojawwad/',
-        'https://download.quranicaudio.com/quran/abdul_basit_mujawwad/'
+        'https://download.quranicaudio.com/quran/abdulbaset_mujawwad/',
+        '/api/quran/audio/abdulbasit_mujawwad/'
       ]
     },
     husary: {
       name: 'الشيخ محمود خليل الحصري',
       urls: [
         'https://server13.mp3quran.net/husr/',
-        'https://download.quranicaudio.com/quran/mahmood_khaleel_al-husaree/'
+        'https://download.quranicaudio.com/quran/mahmood_khaleel_al-husaree/',
+        '/api/quran/audio/husary/'
       ]
     },
     afs: {
       name: 'الشيخ مشاري راشد العفاسي',
       urls: [
         'https://server8.mp3quran.net/afs/',
-        'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/'
+        'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/',
+        '/api/quran/audio/afs/'
       ]
     },
     ghamadi: {
       name: 'الشيخ سعد الغامدي',
       urls: [
         'https://server7.mp3quran.net/s_gmd/',
-        'https://download.quranicaudio.com/quran/sa3d_al-ghaamidee/complete/'
+        'https://download.quranicaudio.com/quran/sa3d_al-ghaamidee/complete/',
+        '/api/quran/audio/ghamadi/'
       ]
     },
     maher: {
       name: 'الشيخ ماهر المعيقلي',
       urls: [
         'https://server12.mp3quran.net/maher/',
-        'https://download.quranicaudio.com/quran/maher_2/'
+        'https://download.quranicaudio.com/quran/maher_2/',
+        '/api/quran/audio/maher/'
       ]
     },
     ajmy: {
       name: 'الشيخ أحمد العجمي',
       urls: [
         'https://server10.mp3quran.net/ajm/',
-        'https://download.quranicaudio.com/quran/ahmed_ibn_3ali_al-3ajamy/'
+        'https://download.quranicaudio.com/quran/ahmed_ibn_3ali_al-3ajamy/',
+        '/api/quran/audio/ajmy/'
       ]
     },
     shuraim: {
       name: 'الشيخ سعود الشريم',
       urls: [
         'https://server7.mp3quran.net/shur/',
-        'https://download.quranicaudio.com/quran/sa3ood_ash-shuraym/'
+        'https://download.quranicaudio.com/quran/sa3ood_ash-shuraym/',
+        '/api/quran/audio/shuraim/'
       ]
     },
     hudhaify: {
       name: 'الشيخ علي الحذيفي',
       urls: [
         'https://server9.mp3quran.net/hthfi/',
-        'https://download.quranicaudio.com/quran/ali_alhuthaify/'
+        'https://download.quranicaudio.com/quran/ali_alhuthaify/',
+        '/api/quran/audio/hudhaify/'
       ]
     }
   };
@@ -485,42 +496,81 @@
       id: 'cairo',
       name: 'إذاعة القرآن الكريم من القاهرة',
       tagline: 'البث الحي والمباشر على مدار ٢٤ ساعة',
-      url: 'https://stream.radiojar.com/8s5u5tpdtwzuv',
+      urls: [
+        'https://stream.radiojar.com/8s5u5tpdtwzuv',
+        'https://n0a.radiojar.com/8s5u5tpdtwzuv',
+        'https://stream.zeno.fm/f3wvbbqmdg8uv'
+      ],
       icon: 'fa-tower-broadcast'
     },
     {
       id: 'minshawi_radio',
       name: 'إذاعة الشيخ محمد صديق المنشاوي',
       tagline: 'المصحف المرتل والمجود بنقاء فائق',
-      url: 'https://qurango.net/radio/mohammed_siddiq_alminshawi',
+      urls: [
+        'https://backup.qurango.net/radio/mohammed_siddiq_alminshawi',
+        'https://qurango.net/radio/mohammed_siddiq_alminshawi'
+      ],
       icon: 'fa-microphone-lines'
     },
     {
       id: 'abdulbasit_radio',
       name: 'إذاعة الشيخ عبد الباسط عبد الصمد',
       tagline: 'تلاوات خاشعة من الزمن الجميل',
-      url: 'https://qurango.net/radio/abdulbasit_abdulsamad_mojawwad',
+      urls: [
+        'https://backup.qurango.net/radio/abdulbasit_abdulsamad_mojawwad',
+        'https://qurango.net/radio/abdulbasit_abdulsamad_mojawwad'
+      ],
       icon: 'fa-volume-high'
     },
     {
       id: 'husary_radio',
       name: 'إذاعة الشيخ محمود خليل الحصري',
       tagline: 'معلم الأجيال والتلاوة المتقنة',
-      url: 'https://qurango.net/radio/mahmoud_khalil_alhussary',
+      urls: [
+        'https://backup.qurango.net/radio/mahmoud_khalil_alhussary',
+        'https://qurango.net/radio/mahmoud_khalil_alhussary'
+      ],
       icon: 'fa-book-quran'
+    },
+    {
+      id: 'afs_radio',
+      name: 'إذاعة الشيخ مشاري راشد العفاسي',
+      tagline: 'تلاوات خاشعة وعذبة بصوت العفاسي',
+      urls: [
+        'https://qurango.net/radio/mishary_alafasi',
+        'https://backup.qurango.net/radio/tarateel'
+      ],
+      icon: 'fa-headphones'
     },
     {
       id: 'tarateel',
       name: 'إذاعة تراتيل وتلاوات خاشعة',
-      tagline: 'مختارات من روائع التلاوات لعدد من القراء',
-      url: 'https://qurango.net/radio/tarateel',
+      tagline: 'مختارات من روائع التلاوات لكبار القراء',
+      urls: [
+        'https://qurango.net/radio/tarateel',
+        'https://backup.qurango.net/radio/tarateel'
+      ],
       icon: 'fa-headphones'
+    },
+    {
+      id: 'tafseer_radio',
+      name: 'إذاعة تفسير القرآن الكريم',
+      tagline: 'بيان معاني الآيات وتدبرها لفضيلة الشيخ الشعراوي',
+      urls: [
+        'https://backup.qurango.net/radio/tafseer',
+        'https://qurango.net/radio/tafseer'
+      ],
+      icon: 'fa-book-open-reader'
     },
     {
       id: 'ruqyah_radio',
       name: 'إذاعة الرقية الشرعية',
       tagline: 'آيات الحفظ والشفاء والسكينة',
-      url: 'https://qurango.net/radio/roqiah',
+      urls: [
+        'https://qurango.net/radio/roqiah',
+        'https://backup.qurango.net/radio/roqiah'
+      ],
       icon: 'fa-shield-halved'
     }
   ];
@@ -1628,6 +1678,33 @@
   var currentAudioCdnIndex = 0;
   var currentAudioSurahNum = 0;
 
+  function updateAllAudioButtons(isPlaying, isBuffering) {
+    var floatingBtn = document.getElementById('floatingPlayPauseBtn');
+    var readerBtn = document.getElementById('readerPlaySurahBtn');
+
+    var iconHtml = isBuffering
+      ? '<i class="fa-solid fa-spinner fa-spin"></i>'
+      : (isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>');
+
+    if (floatingBtn) floatingBtn.innerHTML = iconHtml;
+    if (readerBtn) {
+      var text = isBuffering ? 'جاري التحميل...' : (isPlaying ? 'إيقاف مؤقت' : 'استماع للسورة');
+      readerBtn.innerHTML = iconHtml + ' <span>' + text + '</span>';
+    }
+
+    // تحديث أزرار بطاقات السور في الفهرس
+    document.querySelectorAll('.play-surah-btn').forEach(function (b) {
+      var num = parseInt(b.getAttribute('data-num'), 10);
+      if (num === currentAudioSurahNum && isPlaying) {
+        b.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        b.classList.add('active');
+      } else {
+        b.innerHTML = '<i class="fa-solid fa-play"></i>';
+        b.classList.remove('active');
+      }
+    });
+  }
+
   function playSurahAudio(surahNum, cdnIndex) {
     var surah = SURAHS.find(function (s) { return s.n === surahNum; });
     if (!surah) return;
@@ -1642,32 +1719,30 @@
     var urlsList = reciterObj.urls || [reciterObj.url];
     var baseUrl = urlsList[cdnIndex % urlsList.length];
 
-    // تنسيق رقم السورة إلى ٣ خانات مثل 001.mp3 أو 114.mp3
     var numStr = (surah.n < 10 ? '00' : (surah.n < 100 ? '0' : '')) + surah.n;
-    var audioUrl = baseUrl + numStr + '.mp3';
+    var audioUrl = baseUrl.startsWith('/')
+      ? baseUrl + numStr
+      : baseUrl + numStr + '.mp3';
 
-    // إيقاف الراديو إذا كان يعمل
+    // إيقاف بث الإذاعة إذا كانت تعمل
     stopRadio();
 
     var floatingBar = document.getElementById('quranFloatingPlayer');
     var titleEl = document.getElementById('floatingPlayerSurah');
     var reciterEl = document.getElementById('floatingPlayerReciter');
-    var playPauseBtn = document.getElementById('floatingPlayPauseBtn');
 
     if (titleEl) titleEl.textContent = 'سورة ' + surah.name;
-    if (reciterEl) reciterEl.textContent = reciterObj.name + (cdnIndex > 0 ? ' (خادم احتياطي)' : '');
+    if (reciterEl) reciterEl.textContent = reciterObj.name + (cdnIndex > 0 ? ' (خادم ' + (cdnIndex + 1) + ')' : '');
     if (floatingBar) floatingBar.style.display = 'block';
 
-    if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    updateAllAudioButtons(false, true);
 
-    // إعادة تعيين المشغل وتحميل الملف
     try {
       state.audioElement.pause();
-      state.audioElement.removeAttribute('src');
-      state.audioElement.load();
     } catch (_) {}
 
-    state.audioElement.crossOrigin = 'anonymous';
+    // عدم استخدام crossOrigin لمنع حظر الوسائط من خوادم التلاوات
+    state.audioElement.removeAttribute('crossorigin');
     state.audioElement.src = audioUrl;
 
     state.audioElement.oncanplay = function () {
@@ -1676,36 +1751,35 @@
 
     state.audioElement.onplaying = function () {
       state.isPlayingAudio = true;
-      if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+      updateAllAudioButtons(true, false);
       if (reciterEl) reciterEl.textContent = reciterObj.name;
     };
 
     state.audioElement.onwaiting = function () {
-      if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+      updateAllAudioButtons(state.isPlayingAudio, true);
     };
 
     state.audioElement.onpause = function () {
       state.isPlayingAudio = false;
-      if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+      updateAllAudioButtons(false, false);
     };
 
     state.audioElement.onerror = function () {
       console.warn('Audio play error on source:', audioUrl);
       if (cdnIndex + 1 < urlsList.length) {
-        console.log('Failing over to backup audio CDN:', cdnIndex + 1);
+        console.log('Failing over to next audio CDN:', cdnIndex + 1);
         playSurahAudio(surahNum, cdnIndex + 1);
       } else {
         state.isPlayingAudio = false;
-        if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        updateAllAudioButtons(false, false);
         if (reciterEl) reciterEl.textContent = 'تعذر تشغيل الصوت';
-        if (window.showToast) window.showToast('تعذر تشغيل التلاوة حالياً، يرجى تجربة قارئ آخر', 'warning');
+        if (window.showToast) window.showToast('تعذر تشغيل التلاوة، يرجى اختيار قارئ آخر', 'warning');
       }
     };
 
     state.audioElement.onended = function () {
       state.isPlayingAudio = false;
-      if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-      // تشغيل السورة التالية تلقائياً
+      updateAllAudioButtons(false, false);
       if (surah.n < 114) {
         playSurahAudio(surah.n + 1, 0);
       }
@@ -1715,9 +1789,9 @@
     if (playPromise !== undefined) {
       playPromise.then(function () {
         state.isPlayingAudio = true;
-        if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        updateAllAudioButtons(true, false);
       }).catch(function (e) {
-        console.warn('Audio play promise rejected:', e);
+        console.warn('Audio play promise error:', e);
         if (cdnIndex + 1 < urlsList.length) {
           playSurahAudio(surahNum, cdnIndex + 1);
         }
@@ -1739,17 +1813,18 @@
       playPauseBtn.onclick = function () {
         if (state.isPlayingAudio) {
           state.audioElement.pause();
-          state.isPlayingAudio = false;
-          playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
         } else {
-          state.audioElement.play().then(function () {
-            state.isPlayingAudio = true;
-            playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-          }).catch(function () {
-            if (currentAudioSurahNum) {
-              playSurahAudio(currentAudioSurahNum, currentAudioCdnIndex);
-            }
-          });
+          if (state.audioElement.src) {
+            state.audioElement.play().catch(function () {
+              if (currentAudioSurahNum) {
+                playSurahAudio(currentAudioSurahNum, currentAudioCdnIndex);
+              }
+            });
+          } else if (currentAudioSurahNum) {
+            playSurahAudio(currentAudioSurahNum, 0);
+          } else {
+            playSurahAudio(1, 0);
+          }
         }
       };
     }
@@ -1778,28 +1853,29 @@
       };
     }
 
-    if (closeBtn) {
-      closeBtn.onclick = function () {
-        try { state.audioElement.pause(); } catch (_) {}
-        state.isPlayingAudio = false;
-        var floatingBar = document.getElementById('quranFloatingPlayer');
-        if (floatingBar) floatingBar.style.display = 'none';
-      };
-    }
-
     if (prevBtn) {
       prevBtn.onclick = function () {
-        if (state.currentSurah && state.currentSurah.n > 1) {
-          playSurahAudio(state.currentSurah.n - 1, 0);
+        if (currentAudioSurahNum > 1) {
+          playSurahAudio(currentAudioSurahNum - 1, 0);
         }
       };
     }
 
     if (nextBtn) {
       nextBtn.onclick = function () {
-        if (state.currentSurah && state.currentSurah.n < 114) {
-          playSurahAudio(state.currentSurah.n + 1, 0);
+        if (currentAudioSurahNum < 114) {
+          playSurahAudio(currentAudioSurahNum + 1, 0);
         }
+      };
+    }
+
+    if (closeBtn) {
+      closeBtn.onclick = function () {
+        try { state.audioElement.pause(); } catch (_) {}
+        state.isPlayingAudio = false;
+        updateAllAudioButtons(false, false);
+        var floatingBar = document.getElementById('quranFloatingPlayer');
+        if (floatingBar) floatingBar.style.display = 'none';
       };
     }
   }
@@ -2258,8 +2334,13 @@
   }
 
   // ────────────────────────── 9. إذاعات القرآن الكريم ──────────────────────────
+  var currentRadioUrlIndex = 0;
+
   function stopRadio() {
-    state.radioAudio.pause();
+    try {
+      state.radioAudio.pause();
+      state.radioAudio.removeAttribute('src');
+    } catch (_) {}
     state.isPlayingRadio = false;
     state.activeRadioId = null;
 
@@ -2270,35 +2351,67 @@
     });
   }
 
-  function playRadioStation(radio) {
-    if (state.isPlayingRadio && state.activeRadioId === radio.id) {
+  function playRadioStation(radio, urlIdx) {
+    urlIdx = urlIdx || 0;
+    currentRadioUrlIndex = urlIdx;
+
+    if (state.isPlayingRadio && state.activeRadioId === radio.id && urlIdx === 0) {
       stopRadio();
       return;
     }
 
     // إيقاف أي تلاوة مسجلة
-    state.audioElement.pause();
-    state.isPlayingAudio = false;
+    try {
+      state.audioElement.pause();
+      state.isPlayingAudio = false;
+      updateAllAudioButtons(false, false);
+    } catch (_) {}
 
     stopRadio();
 
-    state.radioAudio.src = radio.url;
-    state.radioAudio.play().then(function () {
-      state.isPlayingRadio = true;
-      state.activeRadioId = radio.id;
+    var urls = radio.urls || [radio.url];
+    var streamUrl = urls[urlIdx % urls.length];
 
-      var card = document.getElementById('radio-card-' + radio.id);
+    state.activeRadioId = radio.id;
+    var card = document.getElementById('radio-card-' + radio.id);
+    if (card) {
+      card.classList.add('is-playing');
+      var btn = card.querySelector('.radio-play-btn');
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري الاتصال بالبث...</span>';
+    }
+
+    state.radioAudio.removeAttribute('crossorigin');
+    state.radioAudio.src = streamUrl;
+
+    state.radioAudio.onplaying = function () {
+      state.isPlayingRadio = true;
       if (card) {
-        card.classList.add('is-playing');
         var btn = card.querySelector('.radio-play-btn');
         if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>إيقاف البث</span>';
       }
+      if (window.showToast) window.showToast('أنت الآن تستمع إلى: ' + radio.name + ' 📻', 'info');
+    };
 
-      if (window.showToast) window.showToast('جاري الاستماع إلى: ' + radio.name + ' 📻', 'info');
-    }).catch(function (err) {
-      console.warn('Radio stream error:', err);
-      if (window.showToast) window.showToast('تعذر تشغيل بث الإذاعة في الوقت الحالي', 'warning');
-    });
+    state.radioAudio.onerror = function () {
+      console.warn('Radio stream error on source:', streamUrl);
+      if (urlIdx + 1 < urls.length) {
+        console.log('Failing over to next radio stream URL:', urlIdx + 1);
+        playRadioStation(radio, urlIdx + 1);
+      } else {
+        stopRadio();
+        if (window.showToast) window.showToast('تعذر تشغيل بث الإذاعة في الوقت الحالي', 'warning');
+      }
+    };
+
+    var playPromise = state.radioAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(function (err) {
+        console.warn('Radio play promise error:', err);
+        if (urlIdx + 1 < urls.length) {
+          playRadioStation(radio, urlIdx + 1);
+        }
+      });
+    }
   }
 
   function initRadiosSection() {
@@ -2326,7 +2439,7 @@
         var rid = btn.getAttribute('data-id');
         var rObj = RADIOS_DATA.find(function (r) { return r.id === rid; });
         if (rObj) {
-          playRadioStation(rObj);
+          playRadioStation(rObj, 0);
         }
       });
     });

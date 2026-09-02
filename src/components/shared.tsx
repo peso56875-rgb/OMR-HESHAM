@@ -139,7 +139,7 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
     <link rel="icon" type="image/png" href="/static/foundation-logo.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
-    <link rel="stylesheet" href="/static/style.css?v=2.8" />
+    <link rel="stylesheet" href="/static/style.css?v=2.9" />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'NGO',

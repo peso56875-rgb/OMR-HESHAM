@@ -126,4 +126,85 @@ quranApi.get('/tafsir/:surah/:ayah', async (c) => {
   return c.json({ success: false, error: 'تعذر جلب التفسير حالياً' }, 502)
 })
 
+// 3. Endpoint to stream or proxy Surah Audio with multi-CDN fallback
+const RECITER_AUDIO_MAP: Record<string, string[]> = {
+  minshawi: [
+    'https://server10.mp3quran.net/minsh/',
+    'https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/'
+  ],
+  minshawi_mujawwad: [
+    'https://server10.mp3quran.net/minsh/Almusshaf-Al-Mojawwad/',
+    'https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee_mujawwad/'
+  ],
+  abdulbasit: [
+    'https://server7.mp3quran.net/basit/',
+    'https://download.quranicaudio.com/quran/abdul_basit_murattal/'
+  ],
+  abdulbasit_mujawwad: [
+    'https://server7.mp3quran.net/basit/Almusshaf-Al-Mojawwad/',
+    'https://download.quranicaudio.com/quran/abdulbaset_mujawwad/'
+  ],
+  husary: [
+    'https://server13.mp3quran.net/husr/',
+    'https://download.quranicaudio.com/quran/mahmood_khaleel_al-husaree/'
+  ],
+  afs: [
+    'https://server8.mp3quran.net/afs/',
+    'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/'
+  ],
+  ghamadi: [
+    'https://server7.mp3quran.net/s_gmd/',
+    'https://download.quranicaudio.com/quran/sa3d_al-ghaamidee/complete/'
+  ],
+  maher: [
+    'https://server12.mp3quran.net/maher/',
+    'https://download.quranicaudio.com/quran/maher_2/'
+  ],
+  ajmy: [
+    'https://server10.mp3quran.net/ajm/',
+    'https://download.quranicaudio.com/quran/ahmed_ibn_3ali_al-3ajamy/'
+  ],
+  shuraim: [
+    'https://server7.mp3quran.net/shur/',
+    'https://download.quranicaudio.com/quran/sa3ood_ash-shuraym/'
+  ],
+  hudhaify: [
+    'https://server9.mp3quran.net/hthfi/',
+    'https://download.quranicaudio.com/quran/ali_alhuthaify/'
+  ]
+}
+
+quranApi.get('/audio/:reciter/:surah', async (c) => {
+  const reciter = c.req.param('reciter')
+  let surah = c.req.param('surah').replace('.mp3', '')
+  const surahNum = parseInt(surah, 10)
+  if (isNaN(surahNum) || surahNum < 1 || surahNum > 114) {
+    return c.text('Invalid Surah Number', 400)
+  }
+
+  const numStr = (surahNum < 10 ? '00' : (surahNum < 100 ? '0' : '')) + surahNum
+  const baseUrls = RECITER_AUDIO_MAP[reciter] || RECITER_AUDIO_MAP.minshawi
+
+  for (const base of baseUrls) {
+    try {
+      const audioUrl = `${base}${numStr}.mp3`
+      const res = await fetch(audioUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+        signal: AbortSignal.timeout(5000)
+      })
+      if (res.ok && res.body) {
+        return new Response(res.body, {
+          headers: {
+            'Content-Type': 'audio/mpeg',
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'public, max-age=604800, s-maxage=2592000'
+          }
+        })
+      }
+    } catch (_) {}
+  }
+
+  return c.redirect(`${baseUrls[0]}${numStr}.mp3`, 302)
+})
+
 export { quranApi }
