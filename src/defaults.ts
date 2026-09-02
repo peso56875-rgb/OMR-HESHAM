@@ -23,7 +23,8 @@ export const defaultNews = [
 ]
 
 export const routeNames: Record<string, string> = {
-  '/about': 'من نحن', '/campaigns': 'الحملات', '/achievements': 'الإنجازات', '/success-stories': 'قصص النجاح',
+  '/about': 'من نحن', '/campaigns': 'الحملات', '/cases': 'الحالات الإنسانية', '/zakat-calculator': 'حاسبة الزكاة',
+  '/quran': 'القرآن الكريم والأذكار', '/achievements': 'الإنجازات', '/success-stories': 'قصص النجاح',
   '/events': 'الفعاليات', '/gallery': 'معرض الصور', '/donate': 'تبرّع الآن', '/volunteers': 'التطوع', '/careers': 'الوظائف',
   '/news': 'الأخبار', '/transparency': 'الشفافية المالية', '/faq': 'الأسئلة الشائعة', '/contact': 'تواصل معنا',
   '/login': 'تسجيل الدخول', '/profile': 'حسابي', '/dashboard': 'لوحة التحكم'

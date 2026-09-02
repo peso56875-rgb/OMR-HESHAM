@@ -31,7 +31,8 @@ export function Header({ user }: { user?: UserSession }) {
         <a href="/about">من نحن</a>
         <a href="/campaigns">الحملات</a>
         <a href="/cases">الحالات</a>
-        <a href="/zakat-calculator" style="color:var(--emerald);font-weight:700">{icon('fa-scale-balanced')} حاسبة الزكاة</a>
+        <a href="/quran" style="color:var(--emerald);font-weight:700">{icon('fa-book-quran')} القرآن والأذكار</a>
+        <a href="/zakat-calculator" style="color:var(--gold-600);font-weight:700">{icon('fa-scale-balanced')} حاسبة الزكاة</a>
         <a href="/achievements">أثرنا</a>
         <a href="/news">الأخبار</a>
         <a href="/contact">تواصل</a>
@@ -48,7 +49,7 @@ export function Header({ user }: { user?: UserSession }) {
         <button class="icon-btn open-search-trigger" id="header-search-btn" aria-label="بحث فوري في الموقع (Ctrl+K)" title="بحث فوري (Ctrl+K)">
           {icon('fa-magnifying-glass')}
         </button>
-        {user && <NotificationBell user={user} />}
+        <NotificationBell user={user} />
         <button class="icon-btn" id="theme-toggle" aria-label="تغيير المظهر">{icon('fa-moon')}</button>
         <button class="icon-btn menu-toggle" id="menu-toggle" aria-label="فتح القائمة">{icon('fa-bars-staggered')}</button>
         <a class="donate-pill magnetic" href="/donate"><span>تبرّع الآن</span>{icon('fa-heart')}</a>
@@ -66,16 +67,17 @@ export function Header({ user }: { user?: UserSession }) {
       </div>
       <nav>
         <a href="/">{icon('fa-house')} الرئيسية <i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/quran" style="color:var(--emerald);font-weight:bold">{icon('fa-book-quran')} القرآن الكريم والأذكار <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/campaigns">{icon('fa-seedling')} حملات الخير <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/cases">{icon('fa-hand-holding-heart')} الحالات الإنسانية <i class="fa-solid fa-arrow-left"></i></a>
-        <a href="/zakat-calculator" style="color:var(--emerald);font-weight:bold">{icon('fa-scale-balanced')} حاسبة الزكاة الذكية <i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/zakat-calculator" style="color:var(--gold-600);font-weight:bold">{icon('fa-scale-balanced')} حاسبة الزكاة الذكية <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/volunteer-portal">{icon('fa-id-card-clip')} بوابة المتطوعين <i class="fa-solid fa-arrow-left"></i></a>
-        {Object.entries(routeNames).filter(([h]) => !['/campaigns', '/cases', '/zakat-calculator', '/volunteer-portal', '/login', '/profile', '/dashboard'].includes(h)).slice(0, 8).map(([href, label]) => <a href={href}>{label}<i class="fa-solid fa-arrow-left"></i></a>)}
+        <a href="/notifications" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-bell"></i> مركز الإشعارات <i class="fa-solid fa-arrow-left"></i></a>
+        {Object.entries(routeNames).filter(([h]) => !['/campaigns', '/cases', '/quran', '/zakat-calculator', '/volunteer-portal', '/notifications', '/login', '/profile', '/dashboard'].includes(h)).slice(0, 8).map(([href, label]) => <a href={href}>{label}<i class="fa-solid fa-arrow-left"></i></a>)}
         <div style="border-top:1px solid var(--border); margin:1rem 0; padding-top:1rem"></div>
         {user ? (
           <>
             <a href="/volunteer-portal" style="color:var(--emerald);font-weight:bold"><i class="fa-solid fa-id-card-clip"></i> بوابة المتطوع</a>
-            <a href="/notifications" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-bell"></i> مركز الإشعارات</a>
             <a href="/profile" style="color:var(--blue-600);font-weight:bold"><i class="fa-solid fa-user"></i> حسابي ({user.name})</a>
             {user.role === 'admin' && <a href="/dashboard" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>}
           </>
@@ -85,6 +87,7 @@ export function Header({ user }: { user?: UserSession }) {
       </nav>
     </aside>
     <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <div class="notif-backdrop" id="notifBackdrop" aria-hidden="true"></div>
   </>
 }
 
@@ -101,7 +104,7 @@ export function Footer() {
           <span class="reg-number">{icon('fa-file-contract')} رقم التشهير: <b>3115</b> لسنة <b>2026</b></span>
         </div>
       </article>
-      <nav class="footer-links"><h3>اكتشف</h3><a href="/about">قصة عمر</a><a href="/campaigns">الحملات</a><a href="/achievements">الإنجازات</a><a href="/gallery">معرض الصور</a><a href="/faq">الأسئلة الشائعة</a></nav>
+      <nav class="footer-links"><h3>اكتشف</h3><a href="/about">قصة عمر</a><a href="/quran">القرآن والأذكار</a><a href="/campaigns">الحملات</a><a href="/zakat-calculator">حاسبة الزكاة</a><a href="/achievements">الإنجازات</a><a href="/gallery">معرض الصور</a><a href="/faq">الأسئلة الشائعة</a></nav>
       <nav class="footer-links"><h3>شاركنا</h3><a href="/donate">تبرّع الآن</a><a href="/volunteers">كن متطوعًا</a><a href="/careers">الوظائف</a><a href="/transparency">الشفافية</a><a href="/contact">تواصل معنا</a></nav>
       <article class="newsletter"><p class="eyebrow">رسالة أثر</p><h3>خيرٌ صغير في بريدك،<br />كل شهر.</h3><form class="ajax-form" data-endpoint="/api/newsletter"><label class="sr-only" for="newsletter-email">البريد الإلكتروني</label><div class="input-action"><input id="newsletter-email" name="email" type="email" placeholder="بريدك الإلكتروني" required /><button aria-label="اشتراك">{icon('fa-arrow-left')}</button></div></form><div class="socials"><a href="https://www.facebook.com/share/1Dj3HrELjY/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="صفحة المؤسسة على فيسبوك"><i class="fa-brands fa-facebook-f"></i></a><a href="https://www.instagram.com/dr.omarheshamfoundation?igsh=MWZiMXRjOTh2bm4zZA==" target="_blank" rel="noopener noreferrer" aria-label="حساب المؤسسة على إنستجرام"><i class="fa-brands fa-instagram"></i></a><a href="https://www.tiktok.com/@dr.omarfoundation?_r=1&_t=ZS-98FEn5WIdE4" target="_blank" rel="noopener noreferrer" aria-label="حساب المؤسسة على تيك توك"><i class="fa-brands fa-tiktok"></i></a></div></article>
     </section>
@@ -120,7 +123,7 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
   const ogImage = rawImage.startsWith('http') ? rawImage : SITE_ORIGIN + rawImage
 
   return <html lang="ar" dir="rtl"><head>
-    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <meta name="description" content={description} /><meta name="theme-color" content="#f9f6ee" /><meta name="color-scheme" content="light dark" />
     <link rel="canonical" href={canonical} />
     {/* The dashboard, login and profile pages hold private or duplicate content
@@ -138,7 +141,7 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
     <link rel="icon" type="image/png" href="/static/foundation-logo.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
-    <link rel="stylesheet" href="/static/style.css?v=2.2" />
+    <link rel="stylesheet" href="/static/style.css?v=2.5" />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'NGO',
@@ -173,8 +176,8 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
       <div class="confirm-modal" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true"><div class="confirm-card"><span class="confirm-icon">{icon('fa-triangle-exclamation')}</span><h2 id="confirm-title">تأكيد الإجراء</h2><p id="confirm-message">هل أنت متأكد من تنفيذ هذا الإجراء؟</p><div><button type="button" class="confirm-cancel">إلغاء</button><button type="button" class="confirm-accept">تأكيد</button></div></div></div>
       <SearchModal />
       {pageType === 'public' && <nav class="mobile-bottom" aria-label="تنقل سريع"><a href="/">{icon('fa-house')}<span>الرئيسية</span></a><a href="/campaigns">{icon('fa-seedling')}<span>الحملات</span></a><a class="bottom-donate" href="/donate">{icon('fa-heart')}<span>تبرّع</span></a><a href="/volunteers">{icon('fa-hand-holding-hand')}<span>تطوع</span></a><a href="/contact">{icon('fa-comment-dots')}<span>تواصل</span></a></nav>}
-      <script src="/static/app.js?v=2.2"></script>
-      <script src="/static/notifications.js"></script>
+      <script src="/static/app.js?v=2.5"></script>
+      <script src="/static/notifications.js?v=2.5"></script>
     </body></html>
 }
 

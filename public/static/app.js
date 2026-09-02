@@ -2052,13 +2052,6 @@
     }
   })
 
-  // Open modal automatically when user selects InstaPay, Vodafone or Bank radio if explicitly clicked
-  document.addEventListener('change', e => {
-    if (e.target.name === 'method' && ['instapay', 'vodafone', 'bank'].includes(e.target.value)) {
-      openPaymentDetailsModal(e.target.value)
-    }
-  })
-
   $$('[data-filter-group] button').forEach(button => button.addEventListener('click', () => {
     const value = button.dataset.filter
     $$('[data-filter-group] button').forEach(item => item.classList.remove('active'))

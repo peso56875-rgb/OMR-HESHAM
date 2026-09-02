@@ -1,0 +1,1787 @@
+/**
+ * واحة القرآن الكريم والأذكار والسبحة الإلكترونية ومتابع الورد والختمات
+ * مؤسسة الدكتور عمر هشام الخيرية
+ */
+
+(function () {
+  'use strict';
+
+  // ────────────────────────── بيانات السور الـ ١١٤ كاملة ──────────────────────────
+  var SURAHS = [
+    { n: 1, name: 'الفاتحة', en: 'Al-Fatihah', verses: 7, type: 'مكية', juz: 1, page: 1 },
+    { n: 2, name: 'البقرة', en: 'Al-Baqarah', verses: 286, type: 'مدنية', juz: 1, page: 2 },
+    { n: 3, name: 'آل عمران', en: 'Ali \'Imran', verses: 200, type: 'مدنية', juz: 3, page: 50 },
+    { n: 4, name: 'النساء', en: 'An-Nisa', verses: 176, type: 'مدنية', juz: 4, page: 77 },
+    { n: 5, name: 'المائدة', en: 'Al-Ma\'idah', verses: 120, type: 'مدنية', juz: 6, page: 106 },
+    { n: 6, name: 'الأنعام', en: 'Al-An\'am', verses: 165, type: 'مكية', juz: 7, page: 128 },
+    { n: 7, name: 'الأعراف', en: 'Al-A\'raf', verses: 206, type: 'مكية', juz: 8, page: 151 },
+    { n: 8, name: 'الأنفال', en: 'Al-Anfal', verses: 75, type: 'مدنية', juz: 9, page: 177 },
+    { n: 9, name: 'التوبة', en: 'At-Tawbah', verses: 129, type: 'مدنية', juz: 10, page: 187 },
+    { n: 10, name: 'يونس', en: 'Yunus', verses: 109, type: 'مكية', juz: 11, page: 208 },
+    { n: 11, name: 'هود', en: 'Hud', verses: 123, type: 'مكية', juz: 11, page: 221 },
+    { n: 12, name: 'يوسف', en: 'Yusuf', verses: 111, type: 'مكية', juz: 12, page: 235 },
+    { n: 13, name: 'الرعد', en: 'Ar-Ra\'d', verses: 43, type: 'مدنية', juz: 13, page: 249 },
+    { n: 14, name: 'إبراهيم', en: 'Ibrahim', verses: 52, type: 'مكية', juz: 13, page: 255 },
+    { n: 15, name: 'الحجر', en: 'Al-Hijr', verses: 99, type: 'مكية', juz: 14, page: 262 },
+    { n: 16, name: 'النحل', en: 'An-Nahl', verses: 128, type: 'مكية', juz: 14, page: 267 },
+    { n: 17, name: 'الإسراء', en: 'Al-Isra', verses: 111, type: 'مكية', juz: 15, page: 282 },
+    { n: 18, name: 'الكهف', en: 'Al-Kahf', verses: 110, type: 'مكية', juz: 15, page: 293 },
+    { n: 19, name: 'مريم', en: 'Maryam', verses: 98, type: 'مكية', juz: 16, page: 305 },
+    { n: 20, name: 'طه', en: 'Taha', verses: 135, type: 'مكية', juz: 16, page: 312 },
+    { n: 21, name: 'الأنبياء', en: 'Al-Anbiya', verses: 112, type: 'مكية', juz: 17, page: 322 },
+    { n: 22, name: 'الحج', en: 'Al-Hajj', verses: 78, type: 'مدنية', juz: 17, page: 332 },
+    { n: 23, name: 'المؤمنون', en: 'Al-Mu\'minun', verses: 118, type: 'مكية', juz: 18, page: 342 },
+    { n: 24, name: 'النور', en: 'An-Nur', verses: 64, type: 'مدنية', juz: 18, page: 350 },
+    { n: 25, name: 'الفرقان', en: 'Al-Furqan', verses: 77, type: 'مكية', juz: 18, page: 359 },
+    { n: 26, name: 'الشعراء', en: 'Ash-Shu\'ara', verses: 227, type: 'مكية', juz: 19, page: 367 },
+    { n: 27, name: 'النمل', en: 'An-Naml', verses: 93, type: 'مكية', juz: 19, page: 377 },
+    { n: 28, name: 'القصص', en: 'Al-Qasas', verses: 88, type: 'مكية', juz: 20, page: 385 },
+    { n: 29, name: 'العنكبوت', en: 'Al-\'Ankabut', verses: 69, type: 'مكية', juz: 20, page: 396 },
+    { n: 30, name: 'الروم', en: 'Ar-Rum', verses: 60, type: 'مكية', juz: 21, page: 404 },
+    { n: 31, name: 'لقمان', en: 'Luqman', verses: 34, type: 'مكية', juz: 21, page: 411 },
+    { n: 32, name: 'السجدة', en: 'As-Sajdah', verses: 30, type: 'مكية', juz: 21, page: 415 },
+    { n: 33, name: 'الأحزاب', en: 'Al-Ahzab', verses: 73, type: 'مدنية', juz: 21, page: 418 },
+    { n: 34, name: 'سبأ', en: 'Saba', verses: 54, type: 'مكية', juz: 22, page: 428 },
+    { n: 35, name: 'فاطر', en: 'Fatir', verses: 45, type: 'مكية', juz: 22, page: 434 },
+    { n: 36, name: 'يس', en: 'Ya-Sin', verses: 83, type: 'مكية', juz: 22, page: 440 },
+    { n: 37, name: 'الصافات', en: 'As-Saffat', verses: 182, type: 'مكية', juz: 23, page: 446 },
+    { n: 38, name: 'ص', en: 'Sad', verses: 88, type: 'مكية', juz: 23, page: 453 },
+    { n: 39, name: 'الزمر', en: 'Az-Zumar', verses: 75, type: 'مكية', juz: 23, page: 458 },
+    { n: 40, name: 'غافر', en: 'Ghafir', verses: 85, type: 'مكية', juz: 24, page: 467 },
+    { n: 41, name: 'فصلت', en: 'Fussilat', verses: 54, type: 'مكية', juz: 24, page: 477 },
+    { n: 42, name: 'الشورى', en: 'Ash-Shura', verses: 53, type: 'مكية', juz: 25, page: 483 },
+    { n: 43, name: 'الزخرف', en: 'Az-Zukhruf', verses: 89, type: 'مكية', juz: 25, page: 489 },
+    { n: 44, name: 'الدخان', en: 'Ad-Dukhan', verses: 59, type: 'مكية', juz: 25, page: 496 },
+    { n: 45, name: 'الجاثية', en: 'Al-Jathiyah', verses: 37, type: 'مكية', juz: 25, page: 499 },
+    { n: 46, name: 'الأحقاف', en: 'Al-Ahqaf', verses: 35, type: 'مكية', juz: 26, page: 502 },
+    { n: 47, name: 'محمد', en: 'Muhammad', verses: 38, type: 'مدنية', juz: 26, page: 507 },
+    { n: 48, name: 'الفتح', en: 'Al-Fath', verses: 29, type: 'مدنية', juz: 26, page: 511 },
+    { n: 49, name: 'الحجرات', en: 'Al-Hujurat', verses: 18, type: 'مدنية', juz: 26, page: 515 },
+    { n: 50, name: 'ق', en: 'Qaf', verses: 45, type: 'مكية', juz: 26, page: 518 },
+    { n: 51, name: 'الذاريات', en: 'Adh-Dhariyat', verses: 60, type: 'مكية', juz: 26, page: 520 },
+    { n: 52, name: 'الطور', en: 'At-Tur', verses: 49, type: 'مكية', juz: 27, page: 523 },
+    { n: 53, name: 'النجم', en: 'An-Najm', verses: 62, type: 'مكية', juz: 27, page: 526 },
+    { n: 54, name: 'القمر', en: 'Al-Qamar', verses: 55, type: 'مكية', juz: 27, page: 528 },
+    { n: 55, name: 'الرحمن', en: 'Ar-Rahman', verses: 78, type: 'مدنية', juz: 27, page: 531 },
+    { n: 56, name: 'الواقعة', en: 'Al-Waqi\'ah', verses: 96, type: 'مكية', juz: 27, page: 534 },
+    { n: 57, name: 'الحديد', en: 'Al-Hadid', verses: 29, type: 'مدنية', juz: 27, page: 537 },
+    { n: 58, name: 'المجادلة', en: 'Al-Mujadilah', verses: 22, type: 'مدنية', juz: 28, page: 542 },
+    { n: 59, name: 'الحشر', en: 'Al-Hashr', verses: 24, type: 'مدنية', juz: 28, page: 545 },
+    { n: 60, name: 'الممتحنة', en: 'Al-Mumtahanah', verses: 13, type: 'مدنية', juz: 28, page: 549 },
+    { n: 61, name: 'الصف', en: 'As-Saff', verses: 14, type: 'مدنية', juz: 28, page: 551 },
+    { n: 62, name: 'الجمعة', en: 'Al-Jumu\'ah', verses: 11, type: 'مدنية', juz: 28, page: 553 },
+    { n: 63, name: 'المنافقون', en: 'Al-Munafiqun', verses: 11, type: 'مدنية', juz: 28, page: 554 },
+    { n: 64, name: 'التغابن', en: 'At-Taghabun', verses: 18, type: 'مدنية', juz: 28, page: 556 },
+    { n: 65, name: 'الطلاق', en: 'At-Talaq', verses: 12, type: 'مدنية', juz: 28, page: 558 },
+    { n: 66, name: 'التحريم', en: 'At-Tahrim', verses: 12, type: 'مدنية', juz: 28, page: 560 },
+    { n: 67, name: 'الملك', en: 'Al-Mulk', verses: 30, type: 'مكية', juz: 29, page: 562 },
+    { n: 68, name: 'القلم', en: 'Al-Qalam', verses: 52, type: 'مكية', juz: 29, page: 564 },
+    { n: 69, name: 'الحاقة', en: 'Al-Haqqah', verses: 52, type: 'مكية', juz: 29, page: 566 },
+    { n: 70, name: 'المعارج', en: 'Al-Ma\'arij', verses: 44, type: 'مكية', juz: 29, page: 568 },
+    { n: 71, name: 'نوح', en: 'Nuh', verses: 28, type: 'مكية', juz: 29, page: 570 },
+    { n: 72, name: 'الجن', en: 'Al-Jinn', verses: 28, type: 'مكية', juz: 29, page: 572 },
+    { n: 73, name: 'المزمل', en: 'Al-Muzzammil', verses: 20, type: 'مكية', juz: 29, page: 574 },
+    { n: 74, name: 'المدثر', en: 'Al-Muddaththir', verses: 56, type: 'مكية', juz: 29, page: 575 },
+    { n: 75, name: 'القيامة', en: 'Al-Qiyamah', verses: 40, type: 'مكية', juz: 29, page: 577 },
+    { n: 76, name: 'الإنسان', en: 'Al-Insan', verses: 31, type: 'مدنية', juz: 29, page: 578 },
+    { n: 77, name: 'المرسلات', en: 'Al-Mursalat', verses: 50, type: 'مكية', juz: 29, page: 580 },
+    { n: 78, name: 'النبأ', en: 'An-Naba', verses: 40, type: 'مكية', juz: 30, page: 582 },
+    { n: 79, name: 'النازعات', en: 'An-Nazi\'at', verses: 46, type: 'مكية', juz: 30, page: 583 },
+    { n: 80, name: 'عبس', en: '\'Abasa', verses: 42, type: 'مكية', juz: 30, page: 585 },
+    { n: 81, name: 'التكوير', en: 'At-Takwir', verses: 29, type: 'مكية', juz: 30, page: 586 },
+    { n: 82, name: 'الانفطار', en: 'Al-Infitar', verses: 19, type: 'مكية', juz: 30, page: 587 },
+    { n: 83, name: 'المطففين', en: 'Al-Mutaffifin', verses: 36, type: 'مكية', juz: 30, page: 587 },
+    { n: 84, name: 'الانشقاق', en: 'Al-Inshiqaq', verses: 25, type: 'مكية', juz: 30, page: 589 },
+    { n: 85, name: 'البروج', en: 'Al-Buruj', verses: 22, type: 'مكية', juz: 30, page: 590 },
+    { n: 86, name: 'الطارق', en: 'At-Tariq', verses: 17, type: 'مكية', juz: 30, page: 591 },
+    { n: 87, name: 'الأعلى', en: 'Al-A\'la', verses: 19, type: 'مكية', juz: 30, page: 591 },
+    { n: 88, name: 'الغاشية', en: 'Al-Ghashiyah', verses: 26, type: 'مكية', juz: 30, page: 592 },
+    { n: 89, name: 'الفجر', en: 'Al-Fajr', verses: 30, type: 'مكية', juz: 30, page: 593 },
+    { n: 90, name: 'البلد', en: 'Al-Balad', verses: 20, type: 'مكية', juz: 30, page: 594 },
+    { n: 91, name: 'الشمس', en: 'Ash-Shams', verses: 15, type: 'مكية', juz: 30, page: 595 },
+    { n: 92, name: 'الليل', en: 'Al-Layl', verses: 21, type: 'مكية', juz: 30, page: 595 },
+    { n: 93, name: 'الضحى', en: 'Ad-Duha', verses: 11, type: 'مكية', juz: 30, page: 596 },
+    { n: 94, name: 'الشرح', en: 'Ash-Sharh', verses: 8, type: 'مكية', juz: 30, page: 596 },
+    { n: 95, name: 'التين', en: 'At-Tin', verses: 8, type: 'مكية', juz: 30, page: 597 },
+    { n: 96, name: 'العلق', en: 'Al-\'Alaq', verses: 19, type: 'مكية', juz: 30, page: 597 },
+    { n: 97, name: 'القدر', en: 'Al-Qadr', verses: 5, type: 'مكية', juz: 30, page: 598 },
+    { n: 98, name: 'البينة', en: 'Al-Bayyinah', verses: 8, type: 'مدنية', juz: 30, page: 598 },
+    { n: 99, name: 'الزلزلة', en: 'Az-Zalzalah', verses: 8, type: 'مدنية', juz: 30, page: 599 },
+    { n: 100, name: 'العاديات', en: 'Al-\'Adiyat', verses: 11, type: 'مكية', juz: 30, page: 599 },
+    { n: 101, name: 'القارعة', en: 'Al-Qari\'ah', verses: 11, type: 'مكية', juz: 30, page: 600 },
+    { n: 102, name: 'التكاثر', en: 'At-Takathur', verses: 8, type: 'مكية', juz: 30, page: 600 },
+    { n: 103, name: 'العصر', en: 'Al-\'Asr', verses: 3, type: 'مكية', juz: 30, page: 601 },
+    { n: 104, name: 'الهمزة', en: 'Al-Humazah', verses: 9, type: 'مكية', juz: 30, page: 601 },
+    { n: 105, name: 'الفيل', en: 'Al-Fil', verses: 5, type: 'مكية', juz: 30, page: 601 },
+    { n: 106, name: 'قريش', en: 'Quraysh', verses: 4, type: 'مكية', juz: 30, page: 602 },
+    { n: 107, name: 'الماعون', en: 'Al-Ma\'un', verses: 7, type: 'مكية', juz: 30, page: 602 },
+    { n: 108, name: 'الكوثر', en: 'Al-Kawthar', verses: 3, type: 'مكية', juz: 30, page: 602 },
+    { n: 109, name: 'الكافرون', en: 'Al-Kafirun', verses: 6, type: 'مكية', juz: 30, page: 603 },
+    { n: 110, name: 'النصر', en: 'An-Nasr', verses: 3, type: 'مدنية', juz: 30, page: 603 },
+    { n: 111, name: 'المسد', en: 'Al-Masad', verses: 5, type: 'مكية', juz: 30, page: 603 },
+    { n: 112, name: 'الإخلاص', en: 'Al-Ikhlas', verses: 4, type: 'مكية', juz: 30, page: 604 },
+    { n: 113, name: 'الفلق', en: 'Al-Falaq', verses: 5, type: 'مكية', juz: 30, page: 604 },
+    { n: 114, name: 'الناس', en: 'An-Nas', verses: 6, type: 'مكية', juz: 30, page: 604 }
+  ];
+
+  // خوادم تلاوات القراء
+  var RECITERS = {
+    minshawi: { name: 'الشيخ محمد صديق المنشاوي (مرتل)', url: 'https://server10.mp3quran.net/minsh/' },
+    minshawi_mujawwad: { name: 'الشيخ محمد صديق المنشاوي (مجود)', url: 'https://server10.mp3quran.net/minsh/Almusshaf-Al-Mojawwad/' },
+    abdulbasit: { name: 'الشيخ عبد الباسط عبد الصمد (مرتل)', url: 'https://server7.mp3quran.net/basit/' },
+    abdulbasit_mujawwad: { name: 'الشيخ عبد الباسط عبد الصمد (مجود)', url: 'https://server7.mp3quran.net/basit/Almusshaf-Al-Mojawwad/' },
+    husary: { name: 'الشيخ محمود خليل الحصري', url: 'https://server13.mp3quran.net/husr/' },
+    afs: { name: 'الشيخ مشاري راشد العفاسي', url: 'https://server8.mp3quran.net/afs/' },
+    ghamadi: { name: 'الشيخ سعد الغامدي', url: 'https://server7.mp3quran.net/s_gmd/' },
+    maher: { name: 'الشيخ ماهر المعيقلي', url: 'https://server12.mp3quran.net/maher/' },
+    ajmy: { name: 'الشيخ أحمد العجمي', url: 'https://server10.mp3quran.net/ajm/' },
+    shuraim: { name: 'الشيخ سعود الشريم', url: 'https://server7.mp3quran.net/shur/' },
+    hudhaify: { name: 'الشيخ علي الحذيفي', url: 'https://server9.mp3quran.net/hthfi/' }
+  };
+
+  // بيانات الأذكار
+  var ADHKAR_DATA = {
+    morning: [
+      {
+        id: 'm1',
+        text: 'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ.',
+        count: 1,
+        virtue: 'حفظ وبركة طوال اليوم واعتراف بتوحيد الله وفضله.'
+      },
+      {
+        id: 'm2',
+        text: 'اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ.',
+        count: 1,
+        virtue: 'تفويض الأمر لله والتوكل عليه في صباح كل يوم.'
+      },
+      {
+        id: 'm3',
+        text: 'اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ لَكَ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ.',
+        count: 1,
+        virtue: 'سيد الاستغفار: من قالها موقناً بها حين يصبح فمات من يومه دخل الجنة.'
+      },
+      {
+        id: 'm4',
+        text: 'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ.',
+        count: 3,
+        virtue: 'لم يضره شيء حتى يمسي.'
+      },
+      {
+        id: 'm5',
+        text: 'رَضِيتُ بِاللَّهِ رَبّاً، وَبِالْإِسْلَامِ دِيناً، وَبِمُحَمَّدٍ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ نَبِيّاً.',
+        count: 3,
+        virtue: 'كان حقاً على الله أن يرضيه يوم القيامة.'
+      },
+      {
+        id: 'm6',
+        text: 'يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ، أَصْلِحْ لِي شَأْنِي كُلَّهُ، وَلَا تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ.',
+        count: 3,
+        virtue: 'طلب الرعاية الإلهية في جميع شؤون الحياة.'
+      },
+      {
+        id: 'm7',
+        text: 'حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ.',
+        count: 7,
+        virtue: 'كفاه الله ما أهمه من أمر دنياه وآخرته.'
+      },
+      {
+        id: 'm8',
+        text: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ: عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ.',
+        count: 3,
+        virtue: 'تعدل عبادة ساعات طويلة في الثواب والأجر.'
+      },
+      {
+        id: 'm9',
+        text: 'اللَّهُمَّ عَافِنِي فِي بَدَنِي، اللَّهُمَّ عَافِنِي فِي سَمْعِي، اللَّهُمَّ عَافِنِي فِي بَصَرِي، لَا إِلَهَ إِلَّا أَنْتَ. اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْكُفْرِ وَالْفَقْرِ، وَأَعُوذُ بِكَ مِنْ عَذَابِ الْقَبْرِ، لَا إِلَهَ إِلَّا أَنْتَ.',
+        count: 3,
+        virtue: 'سؤال العافية والسلامة في الجسد والحواس والدين.'
+      },
+      {
+        id: 'm10',
+        text: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ.',
+        count: 100,
+        virtue: 'حُطت خطاياه وإن كانت مثل زبد البحر، ولم يأتِ أحد يوم القيامة بأفضل مما جاء به.'
+      }
+    ],
+    evening: [
+      {
+        id: 'e1',
+        text: 'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ.',
+        count: 1,
+        virtue: 'حفظ وأمان وتسليم لله في المساء.'
+      },
+      {
+        id: 'e2',
+        text: 'اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ الْمَصِيرُ.',
+        count: 1,
+        virtue: 'استحضار عظمة الخالق مع غياب شمس كل يوم.'
+      },
+      {
+        id: 'e3',
+        text: 'اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ لَكَ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ.',
+        count: 1,
+        virtue: 'سيد الاستغفار: من قالها حين يمسي فمات دخل الجنة.'
+      },
+      {
+        id: 'e4',
+        text: 'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ.',
+        count: 3,
+        virtue: 'لم يضره شيء ولدغة حشرة أو دابة في ليلته.'
+      },
+      {
+        id: 'e5',
+        text: 'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ.',
+        count: 3,
+        virtue: 'حفظ من كل سوء وفجأة بلاء.'
+      },
+      {
+        id: 'e6',
+        text: 'رَضِيتُ بِاللَّهِ رَبّاً، وَبِالْإِسْلَامِ دِيناً، وَبِمُحَمَّدٍ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ نَبِيّاً.',
+        count: 3,
+        virtue: 'رضوان الله عز وجل.'
+      },
+      {
+        id: 'e7',
+        text: 'حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ.',
+        count: 7,
+        virtue: 'كفاية الله من الهموم والغموم.'
+      }
+    ],
+    after_prayer: [
+      {
+        id: 'p1',
+        text: 'أَسْتَغْفِرُ اللَّهَ، أَسْتَغْفِرُ اللَّهَ، أَسْتَغْفِرُ اللَّهَ. اللَّهُمَّ أَنْتَ السَّلَامُ وَمِنْكَ السَّلَامُ، تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ.',
+        count: 1,
+        virtue: 'سنة النبي ﷺ عقب التسليم من كل فريضة.'
+      },
+      {
+        id: 'p2',
+        text: 'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ، اللَّهُمَّ لَا مَانِعَ لِمَا أَعْطَيْتَ، وَلَا مُعْطِيَ لِمَا مَنَعْتَ، وَلَا يَنْفَعُ ذَا الْجَدِّ مِنْكَ الْجَدُّ.',
+        count: 1,
+        virtue: 'توحيد الخالق وتفويض الأمر له وحده.'
+      },
+      {
+        id: 'p3',
+        text: 'سُبْحَانَ اللَّهِ (٣٣)، الْحَمْدُ لِلَّهِ (٣٣)، اللَّهُ أَكْبَرُ (٣٣)، ثُمَّ تَمَامَ الْمِائَةِ: لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ.',
+        count: 1,
+        virtue: 'غُفرت خطاياه وإن كانت مثل زبد البحر.'
+      },
+      {
+        id: 'p4',
+        text: 'قراءة آية الكرسي: ﴿اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ...﴾',
+        count: 1,
+        virtue: 'من قرأها دبر كل صلاة لم يمنعه من دخول الجنة إلا أن يموت.'
+      }
+    ],
+    sleep: [
+      {
+        id: 's1',
+        text: 'بِاسْمِكَ رَبِّي وَضَعْتُ جَنْبِي، وَبِكَ أَرْفَعُهُ، فَإِنْ أَمْسَكْتَ نَفْسِي فَارْحَمْهَا، وَإِنْ أَرْسَلْتَهَا فَاحْفَظْهَا بِمَا تَحْفَظُ بِهِ عِبَادَكَ الصَّالِحِينَ.',
+        count: 1,
+        virtue: 'حفظ النفس أثناء النوم والتوكل على الله.'
+      },
+      {
+        id: 's2',
+        text: 'اللَّهُمَّ قِنِي عَذَابَكَ يَوْمَ تَبْعَثُ عِبَادَكَ.',
+        count: 3,
+        virtue: 'سنة النبي ﷺ عند وضع اليد اليمنى تحت الخد.'
+      },
+      {
+        id: 's3',
+        text: 'بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا.',
+        count: 1,
+        virtue: 'ذكر النوم النبوي.'
+      }
+    ],
+    waking: [
+      {
+        id: 'w1',
+        text: 'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ.',
+        count: 1,
+        virtue: 'شكر الله على نعمة الحياة واليقظة.'
+      },
+      {
+        id: 'w2',
+        text: 'الْحَمْدُ لِلَّهِ الَّذِي عَافَانِي فِي جَسَدِي، وَرَدَّ عَلَيَّ رُوحِي، وَأَذِنَ لِي بِذِكْرِهِ.',
+        count: 1,
+        virtue: 'حمد الله على العافية ورد الروح.'
+      }
+    ],
+    food_travel: [
+      {
+        id: 'ft1',
+        text: 'سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَٰذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ، وَإِنَّا إِلَىٰ رَبِّنَا لَمُنقَلِبُونَ. اللَّهُمَّ إِنَّا نَسْأَلُكَ فِي سَفَرِنَا هَٰذَا الْبِرَّ وَالتَّقْوَىٰ، وَمِنَ الْعَمَلِ مَا تَرْضَىٰ.',
+        count: 1,
+        virtue: 'دعاء ركوب الدابة والسفر.'
+      },
+      {
+        id: 'ft2',
+        text: 'الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنِي هَٰذَا وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ.',
+        count: 1,
+        virtue: 'غُفر له ما تقدم من ذنبه.'
+      },
+      {
+        id: 'ft3',
+        text: 'بِسْمِ اللَّهِ، تَوَكَّلْتُ عَلَى اللَّهِ، وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ.',
+        count: 1,
+        virtue: 'يُقال له: كُفيت ووُقيت وهُديت وتنحى عنه الشيطان.'
+      }
+    ],
+    ruqyah: [
+      {
+        id: 'rq1',
+        text: 'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّةِ مِنْ كُلِّ شَيْطَانٍ وَهَامَّةٍ، وَمِنْ كُلِّ عَيْنٍ لَامَّةٍ.',
+        count: 3,
+        virtue: 'رقية النبي ﷺ للحسن والحسين عليهما السلام.'
+      },
+      {
+        id: 'rq2',
+        text: 'أَسْأَلُ اللَّهَ الْعَظِيمَ رَبَّ الْعَرْشِ الْعَظِيمِ أَنْ يَشْفِيَكَ.',
+        count: 7,
+        virtue: 'شفاء من كل داء ومرض بإذن الله.'
+      },
+      {
+        id: 'rq3',
+        text: 'بِسْمِ اللَّهِ أَرْقِيكَ، مِنْ كُلِّ شَيْءٍ يُؤْذِيكَ، مِنْ شَرِّ كُلِّ نَفْسٍ أَوْ عَيْنِ حَاسِدٍ، اللَّهُ يَشْفِيكَ، بِسْمِ اللَّهِ أَرْقِيكَ.',
+        count: 3,
+        virtue: 'رقية جبريل عليه السلام للنبي ﷺ.'
+      }
+    ]
+  };
+
+  // بيانات الأدعية المأثورة
+  var DUAS_DATA = [
+    {
+      cat: 'quranic',
+      title: 'دعاء الهداية والرحمة',
+      text: '﴿رَبَّنَا لَا تُزِغْ قُلُوبَنَا بَعْدَ إِذْ هَدَيْتَنَا وَهَبْ لَنَا مِن لَّدُنكَ رَحْمَةً ۚ إِنَّكَ أَنتَ الْوَهَّابُ﴾',
+      source: 'سورة آل عمران — آية ٨'
+    },
+    {
+      cat: 'quranic',
+      title: 'دعاء الصبر والفرج',
+      text: '﴿رَبَّنَا أَفْرِغْ عَلَيْنَا صَبْرًا وَثَبِّتْ أَقْدَامَنَا وَانصُرْنَا عَلَى الْقَوْمِ الْكَافِرِينَ﴾',
+      source: 'سورة البقرة — آية ٢٥٠'
+    },
+    {
+      cat: 'quranic',
+      title: 'دعاء الوالدين والمغفرة',
+      text: '﴿رَّبِّ اغْفِرْ لِي وَلِوَالِدَيَّ وَلِمَن دَخَلَ بَيْتِيَ مُؤْمِنًا وَلِلْمُؤْمِنِينَ وَالْمُؤْمِنَاتِ﴾',
+      source: 'سورة نوح — آية ٢٨'
+    },
+    {
+      cat: 'prophetic',
+      title: 'جوامع الدعاء النبوي',
+      text: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ مِنَ الْخَيْرِ كُلِّهِ عَاجِلِهِ وَآجِلِهِ، مَا عَلِمْتُ مِنْهُ وَمَا لَمْ أَعْلَمْ، وَأَعُوذُ بِكَ مِنَ الشَّرِّ كُلِّهِ عَاجِلِهِ وَآجِلِهِ، مَا عَلِمْتُ مِنْهُ وَمَا لَمْ أَعْلَمْ.',
+      source: 'صحيح ابن ماجه'
+    },
+    {
+      cat: 'relief',
+      title: 'دعاء ذي النون لتفريج الكرب',
+      text: 'لَا إِلَهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ.',
+      source: 'ما دعا بها مسلم في كرب إلا استجاب الله له'
+    },
+    {
+      cat: 'relief',
+      title: 'دعاء إزالة الهم والحزن',
+      text: 'اللَّهُمَّ إِنِّي عَبْدُكَ، ابْنُ عَبْدِكَ، ابْنُ أَمَتِكَ، نَاصِيَتِي بِيَدِكَ، مَاضٍ فِيَّ حُكْمُكَ، عَدْلٌ فِيَّ قَضَاؤُكَ، أَسْأَلُكَ بِكُلِّ اسْمٍ هُوَ لَكَ سَمَّيْتَ بِهِ نَفْسَكَ، أَوْ عَلَّمْتَهُ أَحَدًا مِنْ خَلْقِكَ، أَوْ أَنْزَلْتَهُ فِي كِتَابِكَ، أَوْ اسْتَأْثَرْتَ بِهِ فِي عِلْمِ الْغَيْبِ عِنْدَكَ، أَنْ تَجْعَلَ الْقُرْآنَ رَبِيعَ قَلْبِي، وَنُورَ صَدْرِي، وَجَلَاءَ حُزْنِي، وَذَهَابَ هَمِّي.',
+      source: 'مسند أحمد — أذهب الله همه وبدله مكانه فرحاً'
+    },
+    {
+      cat: 'healing',
+      title: 'دعاء الشفاء للمريض',
+      text: 'اللَّهُمَّ رَبَّ النَّاسِ، أَذْهِبِ الْبَاسَ، اشْفِ أَنْتَ الشَّافِي، لَا شِفَاءَ إِلَّا شِفَاؤُكَ، شِفَاءً لَا يُغَادِرُ سَقَمًا.',
+      source: 'صحيح البخاري ومسلم'
+    },
+    {
+      cat: 'rizq',
+      title: 'دعاء الرزق وسداد الدين',
+      text: 'اللَّهُمَّ اكْفِنِي بِحَلَالِكَ عَنْ حَرَامِكَ، وَأَغْنِنِي بِفَضْلِكَ عَمَّنْ سِوَاكَ.',
+      source: 'سنن الترمذي'
+    },
+    {
+      cat: 'forgiveness',
+      title: 'دعاء الاستغفار العظيم',
+      text: 'اللَّهُمَّ إِنَّكَ عَفُوٌّ كَرِيمٌ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي.',
+      source: 'دعاء ليلة القدر — سنن الترمذي'
+    },
+    {
+      cat: 'khatm',
+      title: 'دعاء ختم القرآن المبارك',
+      text: 'اللَّهُمَّ ارْحَمْنِي بِالْقُرْآنِ، وَاجْعَلْهُ لِي إِمَامًا وَنُورًا وَهُدًى وَرَحْمَةً، اللَّهُمَّ ذَكِّرْنِي مِنْهُ مَا نَسِيتُ، وَعَلِّمْنِي مِنْهُ مَا جَهِلْتُ، وَارْزُقْنِي تِلَاوَتَهُ آنَاءَ اللَّيْلِ وَأَطْرَافَ النَّهَارِ، وَاجْعَلْهُ لِي حُجَّةً يَا رَبَّ الْعَالَمِينَ.',
+      source: 'المأثور في ختم المصحف الشريف'
+    }
+  ];
+
+  // إذاعات القرآن الكريم المباشرة
+  var RADIOS_DATA = [
+    {
+      id: 'cairo',
+      name: 'إذاعة القرآن الكريم من القاهرة',
+      tagline: 'البث الحي والمباشر على مدار ٢٤ ساعة',
+      url: 'https://stream.radiojar.com/8s5u5tpdtwzuv',
+      icon: 'fa-tower-broadcast'
+    },
+    {
+      id: 'minshawi_radio',
+      name: 'إذاعة الشيخ محمد صديق المنشاوي',
+      tagline: 'المصحف المرتل والمجود بنقاء فائق',
+      url: 'https://qurango.net/radio/mohammed_siddiq_alminshawi',
+      icon: 'fa-microphone-lines'
+    },
+    {
+      id: 'abdulbasit_radio',
+      name: 'إذاعة الشيخ عبد الباسط عبد الصمد',
+      tagline: 'تلاوات خاشعة من الزمن الجميل',
+      url: 'https://qurango.net/radio/abdulbasit_abdulsamad_mojawwad',
+      icon: 'fa-volume-high'
+    },
+    {
+      id: 'husary_radio',
+      name: 'إذاعة الشيخ محمود خليل الحصري',
+      tagline: 'معلم الأجيال والتلاوة المتقنة',
+      url: 'https://qurango.net/radio/mahmoud_khalil_alhussary',
+      icon: 'fa-book-quran'
+    },
+    {
+      id: 'tarateel',
+      name: 'إذاعة تراتيل وتلاوات خاشعة',
+      tagline: 'مختارات من روائع التلاوات لعدد من القراء',
+      url: 'https://qurango.net/radio/tarateel',
+      icon: 'fa-headphones'
+    },
+    {
+      id: 'ruqyah_radio',
+      name: 'إذاعة الرقية الشرعية',
+      tagline: 'آيات الحفظ والشفاء والسكينة',
+      url: 'https://qurango.net/radio/roqiah',
+      icon: 'fa-shield-halved'
+    }
+  ];
+
+  // صيغ التسبيح الافتراضية للسبحة الذكية
+  var TASBEEH_PRESETS = [
+    { text: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', target: 33 },
+    { text: 'سُبْحَانَ اللَّهِ الْعَظِيمِ', target: 33 },
+    { text: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ', target: 33 },
+    { text: 'لَا إِلَهَ إِلَّا اللَّهُ', target: 100 },
+    { text: 'اللَّهُ أَكْبَرُ كَبِيرًا', target: 33 },
+    { text: 'أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ', target: 100 },
+    { text: 'اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ', target: 100 },
+    { text: 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ الْعَلِيِّ الْعَظِيمِ', target: 33 },
+    { text: 'لَا إِلَهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ', target: 40 },
+    { text: 'حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ', target: 100 }
+  ];
+
+  // ────────────────────────── الحالة العامة (State) ──────────────────────────
+  var state = {
+    activeTab: 'mushaf',
+    currentSurah: null,
+    currentReciter: 'minshawi',
+    fontSize: 26,
+    theme: 'parchment',
+    audioElement: new Audio(),
+    radioAudio: new Audio(),
+    isPlayingAudio: false,
+    isPlayingRadio: false,
+    activeRadioId: null,
+    // Tasbeeh
+    tasbeehCount: 0,
+    tasbeehTarget: 33,
+    activeZikrText: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
+    hapticEnabled: true,
+    soundEnabled: true,
+    todayTasbeeh: 0,
+    allTimeTasbeeh: 0,
+    targetsDone: 0,
+    // Adhkar
+    currentAdhkarCat: 'morning',
+    adhkarCounters: {},
+    // Khatmah
+    khatmahDays: 30,
+    khatmahJuz: 0,
+    // Favorites
+    favoriteSurahs: []
+  };
+
+  // ────────────────────────── الدوال المساعدة (Helpers) ──────────────────────────
+  function toArabicDigits(num) {
+    if (num === null || num === undefined) return '';
+    var str = String(num);
+    var arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    return str.replace(/[0-9]/g, function (w) {
+      return arabic[+w];
+    });
+  }
+
+  function playClickSound() {
+    if (!state.soundEnabled) return;
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(650, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.06);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.07);
+    } catch (_) {}
+  }
+
+  function triggerHaptic(duration) {
+    if (!state.hapticEnabled || !('vibrate' in navigator)) return;
+    try {
+      navigator.vibrate(duration || 30);
+    } catch (_) {}
+  }
+
+  function formatTime(seconds) {
+    if (isNaN(seconds)) return '00:00';
+    var mins = Math.floor(seconds / 60);
+    var secs = Math.floor(seconds % 60);
+    return (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+  }
+
+  // ────────────────────────── تخزين واسترجاع البيانات ──────────────────────────
+  function loadPersistedState() {
+    try {
+      var savedTasbeeh = localStorage.getItem('omar_quran_tasbeeh');
+      if (savedTasbeeh) {
+        var parsed = JSON.parse(savedTasbeeh);
+        state.todayTasbeeh = parsed.today || 0;
+        state.allTimeTasbeeh = parsed.allTime || 0;
+        state.targetsDone = parsed.targetsDone || 0;
+        state.hapticEnabled = parsed.haptic !== false;
+        state.soundEnabled = parsed.sound !== false;
+      }
+
+      var savedKhatmah = localStorage.getItem('omar_quran_khatmah');
+      if (savedKhatmah) {
+        var kParsed = JSON.parse(savedKhatmah);
+        state.khatmahDays = kParsed.days || 30;
+        state.khatmahJuz = kParsed.juz || 0;
+      }
+
+      var savedFavs = localStorage.getItem('omar_quran_favs');
+      if (savedFavs) {
+        state.favoriteSurahs = JSON.parse(savedFavs);
+      }
+
+      var savedTheme = localStorage.getItem('omar_quran_reader_theme');
+      if (savedTheme) state.theme = savedTheme;
+
+      var savedFont = localStorage.getItem('omar_quran_reader_fontsize');
+      if (savedFont) state.fontSize = parseInt(savedFont, 10) || 26;
+    } catch (_) {}
+  }
+
+  function savePersistedTasbeeh() {
+    try {
+      localStorage.setItem('omar_quran_tasbeeh', JSON.stringify({
+        today: state.todayTasbeeh,
+        allTime: state.allTimeTasbeeh,
+        targetsDone: state.targetsDone,
+        haptic: state.hapticEnabled,
+        sound: state.soundEnabled
+      }));
+    } catch (_) {}
+  }
+
+  function savePersistedKhatmah() {
+    try {
+      localStorage.setItem('omar_quran_khatmah', JSON.stringify({
+        days: state.khatmahDays,
+        juz: state.khatmahJuz
+      }));
+    } catch (_) {}
+  }
+
+  // ────────────────────────── 1. تبويبات الواحة الرئيسية ──────────────────────────
+  function initTabNavigation() {
+    var tabs = document.querySelectorAll('.quran-tab-btn');
+    var panes = document.querySelectorAll('.quran-tab-pane');
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var target = tab.getAttribute('data-tab');
+        state.activeTab = target;
+
+        tabs.forEach(function (t) { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+        panes.forEach(function (p) { p.classList.remove('active'); });
+
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+
+        var targetPane = document.getElementById('tab-' + target);
+        if (targetPane) {
+          targetPane.classList.add('active');
+        }
+
+        // تحديث الرابط بدون إعادة تحميل
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', '#tab=' + target);
+        }
+      });
+    });
+
+    // قراءة التبويب من الـ URL hash إن وجد
+    if (window.location.hash) {
+      var match = window.location.hash.match(/tab=([a-z]+)/);
+      if (match && match[1]) {
+        var autoTab = document.querySelector('.quran-tab-btn[data-tab="' + match[1] + '"]');
+        if (autoTab) autoTab.click();
+      }
+    }
+  }
+
+  // ────────────────────────── 2. المصحف الشريف والسور ──────────────────────────
+  function renderSurahsGrid(filter, search) {
+    var grid = document.getElementById('surahsGrid');
+    if (!grid) return;
+
+    var filtered = SURAHS.filter(function (s) {
+      if (filter === 'meccan' && s.type !== 'مكية') return false;
+      if (filter === 'medinan' && s.type !== 'مدنية') return false;
+      if (filter === 'favorites' && state.favoriteSurahs.indexOf(s.n) === -1) return false;
+
+      if (search) {
+        var q = search.trim().toLowerCase();
+        var matchName = s.name.toLowerCase().indexOf(q) !== -1;
+        var matchEn = s.en.toLowerCase().indexOf(q) !== -1;
+        var matchNum = String(s.n) === q;
+        var matchJuz = ('جزء ' + s.juz).indexOf(q) !== -1;
+        return matchName || matchEn || matchNum || matchJuz;
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div class="quran-empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>لا توجد سور مطابقة لبحثك</p></div>';
+      return;
+    }
+
+    var html = '';
+    filtered.forEach(function (s) {
+      var isFav = state.favoriteSurahs.indexOf(s.n) !== -1;
+      html += '<div class="surah-card" data-num="' + s.n + '">';
+      html += '  <div class="surah-number-badge">';
+      html += '    <svg viewBox="0 0 40 40" class="surah-num-frame"><polygon points="20,2 38,20 20,38 2,20" /></svg>';
+      html += '    <span>' + toArabicDigits(s.n) + '</span>';
+      html += '  </div>';
+      html += '  <div class="surah-card-info">';
+      html += '    <h3 class="surah-card-name">' + s.name + '</h3>';
+      html += '    <div class="surah-card-sub">';
+      html += '      <span class="surah-type-badge ' + (s.type === 'مكية' ? 'meccan' : 'medinan') + '">' + s.type + '</span>';
+      html += '      <span class="surah-verses-count">' + toArabicDigits(s.verses) + ' آيات</span>';
+      html += '      <span class="surah-juz-tag">الجزء ' + toArabicDigits(s.juz) + '</span>';
+      html += '    </div>';
+      html += '  </div>';
+      html += '  <div class="surah-card-actions">';
+      html += '    <button type="button" class="surah-act-btn play-surah-btn" data-num="' + s.n + '" title="استماع للسورة">' +
+              '      <i class="fa-solid fa-play"></i>' +
+              '    </button>';
+      html += '    <button type="button" class="surah-act-btn read-surah-btn" data-num="' + s.n + '" title="قراءة وتدبر">' +
+              '      <i class="fa-solid fa-book-open"></i>' +
+              '    </button>';
+      html += '    <button type="button" class="surah-act-btn fav-surah-btn ' + (isFav ? 'is-fav' : '') + '" data-num="' + s.n + '" title="إضافة للمفضلة">' +
+              '      <i class="fa-' + (isFav ? 'solid' : 'regular') + ' fa-heart"></i>' +
+              '    </button>';
+      html += '  </div>';
+      html += '</div>';
+    });
+
+    grid.innerHTML = html;
+
+    // ربط أزرار السور
+    grid.querySelectorAll('.read-surah-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var num = parseInt(btn.getAttribute('data-num'), 10);
+        openQuranReader(num);
+      });
+    });
+
+    grid.querySelectorAll('.play-surah-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var num = parseInt(btn.getAttribute('data-num'), 10);
+        playSurahAudio(num);
+      });
+    });
+
+    grid.querySelectorAll('.fav-surah-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var num = parseInt(btn.getAttribute('data-num'), 10);
+        toggleFavoriteSurah(num, btn);
+      });
+    });
+
+    grid.querySelectorAll('.surah-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        var num = parseInt(card.getAttribute('data-num'), 10);
+        openQuranReader(num);
+      });
+    });
+  }
+
+  function toggleFavoriteSurah(num, btn) {
+    var idx = state.favoriteSurahs.indexOf(num);
+    if (idx === -1) {
+      state.favoriteSurahs.push(num);
+      if (btn) {
+        btn.classList.add('is-fav');
+        btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+      }
+      if (window.showToast) window.showToast('تمت إضافة السورة إلى المفضلة ❤️', 'success');
+    } else {
+      state.favoriteSurahs.splice(idx, 1);
+      if (btn) {
+        btn.classList.remove('is-fav');
+        btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+      }
+      if (window.showToast) window.showToast('تمت إزالة السورة من المفضلة', 'info');
+    }
+    try {
+      localStorage.setItem('omar_quran_favs', JSON.stringify(state.favoriteSurahs));
+    } catch (_) {}
+  }
+
+  function initSurahDirectory() {
+    var searchInput = document.getElementById('surahSearchInput');
+    var clearBtn = document.getElementById('clearSurahSearch');
+    var chips = document.querySelectorAll('.surah-chip');
+    var reciterSelect = document.getElementById('reciterSelect');
+
+    var currentFilter = 'all';
+
+    renderSurahsGrid(currentFilter, '');
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        var val = searchInput.value;
+        if (clearBtn) clearBtn.style.display = val ? 'inline-flex' : 'none';
+        renderSurahsGrid(currentFilter, val);
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (searchInput) {
+          searchInput.value = '';
+          searchInput.focus();
+        }
+        clearBtn.style.display = 'none';
+        renderSurahsGrid(currentFilter, '');
+      });
+    }
+
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chips.forEach(function (c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        currentFilter = chip.getAttribute('data-filter') || 'all';
+        renderSurahsGrid(currentFilter, searchInput ? searchInput.value : '');
+      });
+    });
+
+    if (reciterSelect) {
+      reciterSelect.addEventListener('change', function () {
+        state.currentReciter = reciterSelect.value;
+        var rName = (RECITERS[state.currentReciter] && RECITERS[state.currentReciter].name) || '';
+        var rLabel = document.getElementById('readerReciterName');
+        if (rLabel) rLabel.textContent = 'بصوت ' + rName;
+      });
+    }
+
+    // تحقق من وجود علامة مرجعية محفوظة
+    checkBookmarkDisplay();
+  }
+
+  function checkBookmarkDisplay() {
+    try {
+      var savedBm = localStorage.getItem('omar_quran_bookmark');
+      var resumeBox = document.getElementById('bookmarkResumeBox');
+      var nameEl = document.getElementById('bookmarkSurahName');
+      var ayahEl = document.getElementById('bookmarkAyahNum');
+      var resumeBtn = document.getElementById('resumeReadBtn');
+
+      if (savedBm && resumeBox && nameEl && ayahEl) {
+        var bm = JSON.parse(savedBm);
+        var sObj = SURAHS.find(function (s) { return s.n === bm.surah; });
+        if (sObj) {
+          nameEl.textContent = sObj.name;
+          ayahEl.textContent = toArabicDigits(bm.ayah || 1);
+          resumeBox.style.display = 'inline-flex';
+
+          if (resumeBtn) {
+            resumeBtn.onclick = function () {
+              openQuranReader(bm.surah, bm.ayah);
+            };
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  // ────────────────────────── 3. قارئ المصحف التفاعلي (Quran Reader) ──────────────────────────
+  async function openQuranReader(surahNumber, scrollToAyah) {
+    var modal = document.getElementById('quranReaderModal');
+    var titleEl = document.getElementById('readerSurahTitle');
+    var metaEl = document.getElementById('readerSurahMeta');
+    var streamEl = document.getElementById('ayahsStream');
+    var bismillahEl = document.getElementById('readerBismillah');
+    var rNameEl = document.getElementById('readerReciterName');
+
+    if (!modal || !streamEl) return;
+
+    var surah = SURAHS.find(function (s) { return s.n === surahNumber; });
+    if (!surah) return;
+
+    state.currentSurah = surah;
+
+    if (titleEl) titleEl.textContent = 'سورة ' + surah.name;
+    if (metaEl) metaEl.textContent = surah.type + ' • ' + toArabicDigits(surah.verses) + ' آيات • الجزء ' + toArabicDigits(surah.juz) + ' • الصفحة ' + toArabicDigits(surah.page);
+    if (bismillahEl) {
+      // سورة التوبة لا تبدأ بالبسملة، وسورة الفاتحة البسملة آية منها
+      bismillahEl.style.display = (surah.n === 9 || surah.n === 1) ? 'none' : 'block';
+    }
+
+    var rName = (RECITERS[state.currentReciter] && RECITERS[state.currentReciter].name) || '';
+    if (rNameEl) rNameEl.textContent = 'بصوت ' + rName;
+
+    // تطبيق الثيم وحجم الخط
+    applyReaderStyles();
+
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+
+    // حفظ كآخر سورة تمت قراءتها
+    try {
+      localStorage.setItem('omar_quran_bookmark', JSON.stringify({
+        surah: surah.n,
+        ayah: scrollToAyah || 1,
+        time: Date.now()
+      }));
+      checkBookmarkDisplay();
+    } catch (_) {}
+
+    // تحميل آيات السورة
+    streamEl.innerHTML = '<div class="quran-reader-loading"><i class="fa-solid fa-spinner fa-spin"></i><p>جاري تحميل نص السورة الكريمة...</p></div>';
+
+    try {
+      var ayahs = await fetchSurahAyahs(surah.n);
+      renderAyahs(ayahs, scrollToAyah);
+    } catch (err) {
+      streamEl.innerHTML = '<div class="quran-reader-error"><i class="fa-solid fa-triangle-exclamation"></i><p>تعذر تحميل نص السورة، يرجى التحقق من الاتصال والمحاولة ثانية.</p></div>';
+    }
+  }
+
+  function closeQuranReader() {
+    var modal = document.getElementById('quranReaderModal');
+    if (modal) {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    document.body.style.overflow = '';
+  }
+
+  async function fetchSurahAyahs(surahNum) {
+    // فحص الكاش المحلي في localStorage
+    var cacheKey = 'omar_surah_text_' + surahNum;
+    try {
+      var cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (_) {}
+
+    // طلب الآيات من Al-Quran Cloud API
+    var res = await fetch('https://api.alquran.cloud/v1/surah/' + surahNum + '/quran-uthmani');
+    if (!res.ok) throw new Error('API error');
+    var json = await res.json();
+    var ayahs = (json && json.data && json.data.ayahs) || [];
+
+    // تنظيف البسملة من أول آية إلا في الفاتحة
+    if (surahNum !== 1 && ayahs.length > 0) {
+      var firstText = ayahs[0].text;
+      var bismillahStr = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
+      if (firstText.indexOf(bismillahStr) === 0) {
+        ayahs[0].text = firstText.replace(bismillahStr, '').trim();
+      }
+    }
+
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(ayahs));
+    } catch (_) {}
+
+    return ayahs;
+  }
+
+  function renderAyahs(ayahs, targetAyah) {
+    var streamEl = document.getElementById('ayahsStream');
+    if (!streamEl) return;
+
+    var html = '';
+    ayahs.forEach(function (a) {
+      var numInSurah = a.numberInSurah;
+      html += '<span class="ayah-item" data-ayah-num="' + numInSurah + '" id="ayah-' + numInSurah + '">';
+      html += '  <span class="ayah-text">' + a.text + '</span>';
+      html += '  <span class="ayah-ornament" title="آية ' + toArabicDigits(numInSurah) + '" data-ayah="' + numInSurah + '">';
+      html += '    <i class="ayah-marker-icon">﴿' + toArabicDigits(numInSurah) + '﴾</i>';
+      html += '  </span>';
+      html += '</span> ';
+    });
+
+    streamEl.innerHTML = html;
+
+    // أحداث النقر على الآيات لعرض التفسير أو التلاوة الفردية
+    streamEl.querySelectorAll('.ayah-item').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var aNum = parseInt(el.getAttribute('data-ayah-num'), 10);
+        showAyahTafsir(state.currentSurah.n, aNum, el.querySelector('.ayah-text').textContent);
+      });
+    });
+
+    if (targetAyah) {
+      setTimeout(function () {
+        var targetEl = document.getElementById('ayah-' + targetAyah);
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetEl.classList.add('ayah-highlight');
+        }
+      }, 200);
+    }
+  }
+
+  async function showAyahTafsir(surahNum, ayahNum, ayahText) {
+    var modal = document.getElementById('tafsirModal');
+    var titleEl = document.getElementById('tafsirAyahTitle');
+    var quoteEl = document.getElementById('tafsirAyahText');
+    var expEl = document.getElementById('tafsirExplanationText');
+
+    if (!modal) return;
+
+    if (titleEl) titleEl.textContent = 'تفسير الآية (' + toArabicDigits(ayahNum) + ') من سورة ' + (state.currentSurah ? state.currentSurah.name : '');
+    if (quoteEl) quoteEl.textContent = '﴿' + ayahText + '﴾';
+    if (expEl) expEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري جلب التفسير الميسر...';
+
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+
+    try {
+      // طلب التفسير الميسر عبر API
+      var res = await fetch('https://api.alquran.cloud/v1/ayah/' + surahNum + ':' + ayahNum + '/ar.muyassar');
+      var json = await res.json();
+      var tafsirText = (json && json.data && json.data.text) || 'التفسير الميسر غير متوفر لهذه الآية حالياً.';
+      if (expEl) expEl.innerHTML = '<p class="tafsir-paragraph">' + tafsirText + '</p>';
+    } catch (_) {
+      if (expEl) expEl.innerHTML = '<p class="tafsir-paragraph">تعذر تحميل التفسير في الوقت الحالي، يرجى المحاولة لاحقاً.</p>';
+    }
+  }
+
+  function applyReaderStyles() {
+    var dialog = document.querySelector('.quran-reader-dialog');
+    var fontDisplay = document.getElementById('fontSizeDisplay');
+    var streamEl = document.getElementById('ayahsStream');
+
+    if (fontDisplay) fontDisplay.textContent = state.fontSize + 'px';
+    if (streamEl) streamEl.style.fontSize = state.fontSize + 'px';
+
+    if (dialog) {
+      dialog.classList.remove('theme-parchment', 'theme-dark', 'theme-white');
+      dialog.classList.add('theme-' + state.theme);
+    }
+
+    document.querySelectorAll('.theme-dot').forEach(function (dot) {
+      if (dot.getAttribute('data-theme') === state.theme) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
+  }
+
+  function initReaderControls() {
+    var closeBtn = document.getElementById('closeReaderBtn');
+    var backdrop = document.getElementById('quranReaderBackdrop');
+    var fontDec = document.getElementById('fontDecreaseBtn');
+    var fontInc = document.getElementById('fontIncreaseBtn');
+    var themeDots = document.querySelectorAll('.theme-dot');
+    var prevBtn = document.getElementById('prevSurahBtn');
+    var nextBtn = document.getElementById('nextSurahBtn');
+    var playSurahBtn = document.getElementById('readerPlaySurahBtn');
+    var closeTafsir = document.getElementById('closeTafsirBtn');
+    var tafsirBackdrop = document.getElementById('tafsirBackdrop');
+
+    if (closeBtn) closeBtn.onclick = closeQuranReader;
+    if (backdrop) backdrop.onclick = closeQuranReader;
+
+    if (closeTafsir) {
+      closeTafsir.onclick = function () {
+        var tm = document.getElementById('tafsirModal');
+        if (tm) tm.classList.remove('open');
+      };
+    }
+    if (tafsirBackdrop) {
+      tafsirBackdrop.onclick = function () {
+        var tm = document.getElementById('tafsirModal');
+        if (tm) tm.classList.remove('open');
+      };
+    }
+
+    if (fontDec) {
+      fontDec.onclick = function () {
+        if (state.fontSize > 18) {
+          state.fontSize -= 2;
+          applyReaderStyles();
+          try { localStorage.setItem('omar_quran_reader_fontsize', state.fontSize); } catch (_) {}
+        }
+      };
+    }
+
+    if (fontInc) {
+      fontInc.onclick = function () {
+        if (state.fontSize < 44) {
+          state.fontSize += 2;
+          applyReaderStyles();
+          try { localStorage.setItem('omar_quran_reader_fontsize', state.fontSize); } catch (_) {}
+        }
+      };
+    }
+
+    themeDots.forEach(function (dot) {
+      dot.addEventListener('click', function () {
+        state.theme = dot.getAttribute('data-theme') || 'parchment';
+        applyReaderStyles();
+        try { localStorage.setItem('omar_quran_reader_theme', state.theme); } catch (_) {}
+      });
+    });
+
+    if (prevBtn) {
+      prevBtn.onclick = function () {
+        if (state.currentSurah && state.currentSurah.n > 1) {
+          openQuranReader(state.currentSurah.n - 1);
+        }
+      };
+    }
+
+    if (nextBtn) {
+      nextBtn.onclick = function () {
+        if (state.currentSurah && state.currentSurah.n < 114) {
+          openQuranReader(state.currentSurah.n + 1);
+        }
+      };
+    }
+
+    if (playSurahBtn) {
+      playSurahBtn.onclick = function () {
+        if (state.currentSurah) {
+          playSurahAudio(state.currentSurah.n);
+        }
+      };
+    }
+  }
+
+  // ────────────────────────── 4. مشغل الصوتيات والتلاوة ──────────────────────────
+  function playSurahAudio(surahNum) {
+    var surah = SURAHS.find(function (s) { return s.n === surahNum; });
+    if (!surah) return;
+
+    var reciterKey = state.currentReciter || 'minshawi';
+    var reciterObj = RECITERS[reciterKey] || RECITERS.minshawi;
+
+    // تنسيق رقم السورة إلى ٣ خانات مثل 001.mp3 أو 114.mp3
+    var numStr = (surah.n < 10 ? '00' : (surah.n < 100 ? '0' : '')) + surah.n;
+    var audioUrl = reciterObj.url + numStr + '.mp3';
+
+    // إيقاف الراديو إذا كان يعمل
+    stopRadio();
+
+    var floatingBar = document.getElementById('quranFloatingPlayer');
+    var titleEl = document.getElementById('floatingPlayerSurah');
+    var reciterEl = document.getElementById('floatingPlayerReciter');
+    var playPauseBtn = document.getElementById('floatingPlayPauseBtn');
+
+    if (titleEl) titleEl.textContent = 'سورة ' + surah.name;
+    if (reciterEl) reciterEl.textContent = reciterObj.name;
+    if (floatingBar) floatingBar.style.display = 'block';
+
+    state.audioElement.src = audioUrl;
+    state.audioElement.play().then(function () {
+      state.isPlayingAudio = true;
+      if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+    }).catch(function (e) {
+      console.warn('Audio play error:', e);
+      if (window.showToast) window.showToast('تعذر تشغيل التلاوة، يرجى المحاولة لاحقاً', 'warning');
+    });
+
+    state.audioElement.onended = function () {
+      state.isPlayingAudio = false;
+      if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+      // تشغيل السورة التالية تلقائياً
+      if (surah.n < 114) {
+        playSurahAudio(surah.n + 1);
+      }
+    };
+  }
+
+  function initFloatingPlayer() {
+    var playPauseBtn = document.getElementById('floatingPlayPauseBtn');
+    var scrubber = document.getElementById('floatingScrubber');
+    var curTime = document.getElementById('floatingCurrentTime');
+    var totTime = document.getElementById('floatingTotalTime');
+    var closeBtn = document.getElementById('floatingCloseBtn');
+    var muteBtn = document.getElementById('floatingMuteBtn');
+    var prevBtn = document.getElementById('floatingPrevBtn');
+    var nextBtn = document.getElementById('floatingNextBtn');
+
+    if (playPauseBtn) {
+      playPauseBtn.onclick = function () {
+        if (state.isPlayingAudio) {
+          state.audioElement.pause();
+          state.isPlayingAudio = false;
+          playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        } else {
+          state.audioElement.play();
+          state.isPlayingAudio = true;
+          playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        }
+      };
+    }
+
+    state.audioElement.ontimeupdate = function () {
+      if (state.audioElement.duration) {
+        var pct = (state.audioElement.currentTime / state.audioElement.duration) * 100;
+        if (scrubber) scrubber.value = pct;
+        if (curTime) curTime.textContent = formatTime(state.audioElement.currentTime);
+        if (totTime) totTime.textContent = formatTime(state.audioElement.duration);
+      }
+    };
+
+    if (scrubber) {
+      scrubber.oninput = function () {
+        if (state.audioElement.duration) {
+          state.audioElement.currentTime = (scrubber.value / 100) * state.audioElement.duration;
+        }
+      };
+    }
+
+    if (muteBtn) {
+      muteBtn.onclick = function () {
+        state.audioElement.muted = !state.audioElement.muted;
+        muteBtn.innerHTML = state.audioElement.muted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+      };
+    }
+
+    if (closeBtn) {
+      closeBtn.onclick = function () {
+        state.audioElement.pause();
+        state.isPlayingAudio = false;
+        var floatingBar = document.getElementById('quranFloatingPlayer');
+        if (floatingBar) floatingBar.style.display = 'none';
+      };
+    }
+
+    if (prevBtn) {
+      prevBtn.onclick = function () {
+        if (state.currentSurah && state.currentSurah.n > 1) {
+          playSurahAudio(state.currentSurah.n - 1);
+        }
+      };
+    }
+
+    if (nextBtn) {
+      nextBtn.onclick = function () {
+        if (state.currentSurah && state.currentSurah.n < 114) {
+          playSurahAudio(state.currentSurah.n + 1);
+        }
+      };
+    }
+  }
+
+  // ────────────────────────── 5. الأذكار وحصن المسلم ──────────────────────────
+  function renderAdhkarList() {
+    var container = document.getElementById('adhkarCardsList');
+    var titleEl = document.getElementById('adhkarCurrentTitle');
+    var subtitleEl = document.getElementById('adhkarSubtitle');
+    var doneEl = document.getElementById('adhkarDoneCount');
+    var totalEl = document.getElementById('adhkarTotalCount');
+
+    if (!container) return;
+
+    var list = ADHKAR_DATA[state.currentAdhkarCat] || [];
+    var titles = {
+      morning: 'أذكار الصباح المباركة',
+      evening: 'أذكار المساء وحصن الليل',
+      after_prayer: 'أذكار ما بعد الصلوات المفروضة',
+      sleep: 'أذكار النوم والسكينة',
+      waking: 'أدعية الاستيقاظ من النوم',
+      food_travel: 'أذكار الطعام والشراب والسفر',
+      ruqyah: 'آيات وأدعية الرقية الشرعية'
+    };
+
+    if (titleEl) titleEl.textContent = titles[state.currentAdhkarCat] || 'الأذكار';
+    if (totalEl) totalEl.textContent = toArabicDigits(list.length);
+
+    var doneCount = 0;
+    var html = '';
+
+    list.forEach(function (item) {
+      var currentRem = state.adhkarCounters[item.id] !== undefined ? state.adhkarCounters[item.id] : item.count;
+      var isCompleted = currentRem <= 0;
+      if (isCompleted) doneCount++;
+
+      html += '<div class="adhkar-item-card ' + (isCompleted ? 'completed' : '') + '" id="adhkar-card-' + item.id + '">';
+      html += '  <div class="adhkar-text-box">';
+      html += '    <p class="adhkar-main-text">' + item.text + '</p>';
+      if (item.virtue) {
+        html += '    <div class="adhkar-virtue-tag"><i class="fa-solid fa-star-and-crescent"></i> <span>' + item.virtue + '</span></div>';
+      }
+      html += '  </div>';
+      html += '  <div class="adhkar-action-box">';
+      html += '    <button type="button" class="adhkar-count-btn ' + (isCompleted ? 'done' : '') + '" data-id="' + item.id + '" data-target="' + item.count + '">';
+      html += '      <span class="count-curr">' + toArabicDigits(currentRem) + '</span>';
+      html += '      <span class="count-sub">' + (isCompleted ? 'تم بحمد الله' : 'اضغط للتكرار') + '</span>';
+      html += '    </button>';
+      html += '  </div>';
+      html += '</div>';
+    });
+
+    container.innerHTML = html;
+    if (doneEl) doneEl.textContent = toArabicDigits(doneCount);
+
+    // ربط نقرات عدادات الأذكار
+    container.querySelectorAll('.adhkar-count-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-id');
+        var target = parseInt(btn.getAttribute('data-target'), 10);
+        var rem = state.adhkarCounters[id] !== undefined ? state.adhkarCounters[id] : target;
+
+        if (rem > 0) {
+          rem--;
+          state.adhkarCounters[id] = rem;
+          playClickSound();
+          triggerHaptic(25);
+
+          var currSpan = btn.querySelector('.count-curr');
+          var subSpan = btn.querySelector('.count-sub');
+          var card = document.getElementById('adhkar-card-' + id);
+
+          if (currSpan) currSpan.textContent = toArabicDigits(rem);
+
+          if (rem === 0) {
+            btn.classList.add('done');
+            if (card) card.classList.add('completed');
+            if (subSpan) subSpan.textContent = 'تم بحمد الله';
+            triggerHaptic(100);
+            updateAdhkarDoneSummary();
+          }
+        }
+      });
+    });
+  }
+
+  function updateAdhkarDoneSummary() {
+    var list = ADHKAR_DATA[state.currentAdhkarCat] || [];
+    var doneCount = 0;
+    list.forEach(function (i) {
+      if (state.adhkarCounters[i.id] === 0) doneCount++;
+    });
+    var doneEl = document.getElementById('adhkarDoneCount');
+    if (doneEl) doneEl.textContent = toArabicDigits(doneCount);
+
+    if (doneCount === list.length && list.length > 0) {
+      if (window.showToast) window.showToast('هنيئاً لك! أتممت جميع أذكار هذه القائمة تقبل الله منك 🤲', 'success');
+    }
+  }
+
+  function initAdhkarSection() {
+    var catBtns = document.querySelectorAll('.adhkar-cat-btn');
+    var resetBtn = document.getElementById('resetAdhkarBtn');
+
+    catBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        catBtns.forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        state.currentAdhkarCat = btn.getAttribute('data-cat') || 'morning';
+        renderAdhkarList();
+      });
+    });
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        var list = ADHKAR_DATA[state.currentAdhkarCat] || [];
+        list.forEach(function (i) {
+          state.adhkarCounters[i.id] = i.count;
+        });
+        renderAdhkarList();
+        if (window.showToast) window.showToast('تمت إعادة تعيين عدادات الأذكار', 'info');
+      });
+    }
+
+    renderAdhkarList();
+  }
+
+  // ────────────────────────── 6. السبحة الإلكترونية الذكية ──────────────────────────
+  function updateTasbeehDisplay() {
+    var countEl = document.getElementById('tasbeehCount');
+    var targetEl = document.getElementById('tasbeehTargetDisplay');
+    var activeZikrEl = document.getElementById('activeTasbeehText');
+    var ring = document.getElementById('tasbeehProgressRing');
+    var todayEl = document.getElementById('todayTasbeehTotal');
+    var allTimeEl = document.getElementById('allTimeTasbeehTotal');
+    var targetsEl = document.getElementById('completedTargetsCount');
+
+    if (countEl) countEl.textContent = toArabicDigits(state.tasbeehCount);
+    if (targetEl) targetEl.textContent = state.tasbeehTarget > 0 ? toArabicDigits(state.tasbeehTarget) : 'مفتوح ∞';
+    if (activeZikrEl) activeZikrEl.textContent = state.activeZikrText;
+
+    if (todayEl) todayEl.textContent = toArabicDigits(state.todayTasbeeh);
+    if (allTimeEl) allTimeEl.textContent = toArabicDigits(state.allTimeTasbeeh);
+    if (targetsEl) targetsEl.textContent = toArabicDigits(state.targetsDone);
+
+    // تحديث الدائرة التقدمية SVG
+    if (ring) {
+      var radius = 105;
+      var circumference = 2 * Math.PI * radius;
+      var progress = state.tasbeehTarget > 0 ? (state.tasbeehCount % state.tasbeehTarget) / state.tasbeehTarget : 1;
+      if (state.tasbeehTarget > 0 && state.tasbeehCount > 0 && state.tasbeehCount % state.tasbeehTarget === 0) progress = 1;
+      var offset = circumference - (progress * circumference);
+      ring.style.strokeDasharray = circumference;
+      ring.style.strokeDashoffset = offset;
+    }
+  }
+
+  function incrementTasbeeh() {
+    state.tasbeehCount++;
+    state.todayTasbeeh++;
+    state.allTimeTasbeeh++;
+
+    playClickSound();
+    triggerHaptic(35);
+
+    // التحقق من إتمام الهدف
+    if (state.tasbeehTarget > 0 && state.tasbeehCount % state.tasbeehTarget === 0) {
+      state.targetsDone++;
+      triggerHaptic(150);
+      if (window.showToast) window.showToast('ما شاء الله! أتممت دورة التسبيح (' + toArabicDigits(state.tasbeehTarget) + ') 🌟', 'success');
+    }
+
+    updateTasbeehDisplay();
+    savePersistedTasbeeh();
+  }
+
+  function initTasbeehSection() {
+    var triggerBtn = document.getElementById('tasbeehTriggerBtn');
+    var resetBtn = document.getElementById('tasbeehResetBtn');
+    var hapticBtn = document.getElementById('tasbeehHapticToggle');
+    var soundBtn = document.getElementById('tasbeehSoundToggle');
+    var targetPills = document.querySelectorAll('.target-pill');
+    var presetsList = document.getElementById('tasbeehPresetsList');
+    var addCustomBtn = document.getElementById('addCustomZikrBtn');
+    var customInput = document.getElementById('customZikrInput');
+
+    if (triggerBtn) {
+      triggerBtn.addEventListener('click', incrementTasbeeh);
+      triggerBtn.addEventListener('keydown', function (e) {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          incrementTasbeeh();
+        }
+      });
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        state.tasbeehCount = 0;
+        updateTasbeehDisplay();
+        triggerHaptic(50);
+        if (window.showToast) window.showToast('تم تصفير عداد السبحة', 'info');
+      });
+    }
+
+    if (hapticBtn) {
+      hapticBtn.addEventListener('click', function () {
+        state.hapticEnabled = !state.hapticEnabled;
+        var icon = document.getElementById('hapticIcon');
+        var label = document.getElementById('hapticLabel');
+        if (icon) icon.className = state.hapticEnabled ? 'fa-solid fa-mobile-screen' : 'fa-solid fa-mobile-screen-button';
+        if (label) label.textContent = 'الاهتزاز: ' + (state.hapticEnabled ? 'مفعّل' : 'معطّل');
+        savePersistedTasbeeh();
+      });
+    }
+
+    if (soundBtn) {
+      soundBtn.addEventListener('click', function () {
+        state.soundEnabled = !state.soundEnabled;
+        var icon = document.getElementById('soundIcon');
+        var label = document.getElementById('soundLabel');
+        if (icon) icon.className = state.soundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+        if (label) label.textContent = 'الصوت: ' + (state.soundEnabled ? 'مفعّل' : 'معطّل');
+        savePersistedTasbeeh();
+      });
+    }
+
+    targetPills.forEach(function (pill) {
+      pill.addEventListener('click', function () {
+        targetPills.forEach(function (p) { p.classList.remove('active'); });
+        pill.classList.add('active');
+        state.tasbeehTarget = parseInt(pill.getAttribute('data-target'), 10) || 0;
+        updateTasbeehDisplay();
+      });
+    });
+
+    // توليد قائمة الأذكار الجاهزة
+    if (presetsList) {
+      var html = '';
+      TASBEEH_PRESETS.forEach(function (preset, idx) {
+        html += '<button type="button" class="preset-zikr-item ' + (idx === 0 ? 'active' : '') + '" data-text="' + preset.text + '" data-target="' + preset.target + '">';
+        html += '  <span class="preset-text">' + preset.text + '</span>';
+        html += '  <span class="preset-target-tag">' + toArabicDigits(preset.target) + '</span>';
+        html += '</button>';
+      });
+      presetsList.innerHTML = html;
+
+      presetsList.querySelectorAll('.preset-zikr-item').forEach(function (item) {
+        item.addEventListener('click', function () {
+          presetsList.querySelectorAll('.preset-zikr-item').forEach(function (it) { it.classList.remove('active'); });
+          item.classList.add('active');
+          state.activeZikrText = item.getAttribute('data-text');
+          state.tasbeehTarget = parseInt(item.getAttribute('data-target'), 10) || 33;
+          state.tasbeehCount = 0;
+          updateTasbeehDisplay();
+        });
+      });
+    }
+
+    if (addCustomBtn && customInput) {
+      addCustomBtn.addEventListener('click', function () {
+        var text = customInput.value.trim();
+        if (text) {
+          state.activeZikrText = text;
+          state.tasbeehCount = 0;
+          customInput.value = '';
+          updateTasbeehDisplay();
+          if (window.showToast) window.showToast('تم تعيين الذكر المخصص للسبحة بنجاح', 'success');
+        }
+      });
+    }
+
+    updateTasbeehDisplay();
+  }
+
+  // ────────────────────────── 7. الأدعية المأثورة ومناجاة ──────────────────────────
+  function renderDuasGrid(category) {
+    var grid = document.getElementById('duasGrid');
+    if (!grid) return;
+
+    var filtered = DUAS_DATA.filter(function (d) {
+      if (category && category !== 'all') {
+        return d.cat === category;
+      }
+      return true;
+    });
+
+    var html = '';
+    filtered.forEach(function (d, idx) {
+      html += '<div class="dua-card">';
+      html += '  <div class="dua-card-header">';
+      html += '    <h4>' + d.title + '</h4>';
+      html += '    <span class="dua-src-badge">' + d.source + '</span>';
+      html += '  </div>';
+      html += '  <blockquote class="dua-card-body" id="dua-text-' + idx + '">' + d.text + '</blockquote>';
+      html += '  <div class="dua-card-actions">';
+      html += '    <button type="button" class="dua-action-btn copy-dua-btn" data-target="dua-text-' + idx + '">';
+      html += '      <i class="fa-solid fa-copy"></i> <span>نسخ</span>';
+      html += '    </button>';
+      html += '    <button type="button" class="dua-action-btn share-dua-btn" data-target="dua-text-' + idx + '" data-title="' + d.title + '">';
+      html += '      <i class="fa-solid fa-share-nodes"></i> <span>مشاركة</span>';
+      html += '    </button>';
+      html += '  </div>';
+      html += '</div>';
+    });
+
+    grid.innerHTML = html;
+
+    // أحداث النسخ والمشاركة
+    grid.querySelectorAll('.copy-dua-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var tid = btn.getAttribute('data-target');
+        var el = document.getElementById(tid);
+        if (el) {
+          navigator.clipboard.writeText(el.textContent).then(function () {
+            if (window.showToast) window.showToast('تم نسخ الدعاء إلى الحافظة بنجاح 📋', 'success');
+          });
+        }
+      });
+    });
+
+    grid.querySelectorAll('.share-dua-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var tid = btn.getAttribute('data-target');
+        var title = btn.getAttribute('data-title');
+        var el = document.getElementById(tid);
+        if (el) {
+          var shareText = title + ':\n\n' + el.textContent + '\n\n— واحة القرآن | مؤسسة د. عمر هشام الخيرية\n' + window.location.origin + '/quran';
+          var waUrl = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(shareText);
+          window.open(waUrl, '_blank');
+        }
+      });
+    });
+  }
+
+  function initDuasSection() {
+    var catPills = document.querySelectorAll('.dua-cat-pill');
+
+    catPills.forEach(function (pill) {
+      pill.addEventListener('click', function () {
+        catPills.forEach(function (p) { p.classList.remove('active'); });
+        pill.classList.add('active');
+        var cat = pill.getAttribute('data-cat') || 'all';
+        renderDuasGrid(cat);
+      });
+    });
+
+    // زر نسخ ومشاركة دعاء د. عمر هشام
+    var omarCopyBtn = document.querySelector('.dua-btn.copy-btn[data-copy="omarMemorialDua"]');
+    var omarShareBtn = document.querySelector('.dua-btn.share-btn[data-share="omarMemorialDua"]');
+
+    if (omarCopyBtn) {
+      omarCopyBtn.onclick = function () {
+        var el = document.getElementById('omarMemorialDua');
+        if (el) {
+          navigator.clipboard.writeText(el.textContent).then(function () {
+            if (window.showToast) window.showToast('تم نسخ دعاء المرحوم د. عمر هشام إلى الحافظة 🤲', 'success');
+          });
+        }
+      };
+    }
+
+    if (omarShareBtn) {
+      omarShareBtn.onclick = function () {
+        var el = document.getElementById('omarMemorialDua');
+        if (el) {
+          var text = 'دعاء للمرحوم د. عمر هشام وموتى المسلمين:\n\n' + el.textContent + '\n\n— صدقة جارية | مؤسسة د. عمر هشام الخيرية\n' + window.location.origin + '/quran';
+          window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(text), '_blank');
+        }
+      };
+    }
+
+    renderDuasGrid('all');
+  }
+
+  // ────────────────────────── 8. الورد اليومي ومتابع الختمة ──────────────────────────
+  function updateKhatmahDisplay() {
+    var pctEl = document.getElementById('khatmahPercent');
+    var fillEl = document.getElementById('khatmahProgressFill');
+    var juzEl = document.getElementById('khatmahJuzDone');
+
+    var pct = Math.min(100, Math.round((state.khatmahJuz / 30) * 100));
+
+    if (pctEl) pctEl.textContent = toArabicDigits(pct) + '٪';
+    if (fillEl) fillEl.style.width = pct + '%';
+    if (juzEl) juzEl.textContent = toArabicDigits(state.khatmahJuz);
+  }
+
+  function initKhatmahSection() {
+    var planCards = document.querySelectorAll('.plan-card');
+    var updateBtn = document.getElementById('updateKhatmahProgressBtn');
+    var taskCheckboxes = document.querySelectorAll('.wird-task-item input[type="checkbox"]');
+    var completionBanner = document.getElementById('wirdCompletionBanner');
+
+    planCards.forEach(function (card) {
+      card.addEventListener('click', function () {
+        planCards.forEach(function (c) { c.classList.remove('active'); });
+        card.classList.add('active');
+        state.khatmahDays = parseInt(card.getAttribute('data-days'), 10) || 30;
+        savePersistedKhatmah();
+      });
+    });
+
+    if (updateBtn) {
+      updateBtn.onclick = function () {
+        var input = prompt('أدخل عدد الأجزاء التي أتممت قراءتها من القرآن (من ١ إلى ٣٠):', state.khatmahJuz);
+        if (input !== null) {
+          var val = parseInt(input, 10);
+          if (!isNaN(val) && val >= 0 && val <= 30) {
+            state.khatmahJuz = val;
+            updateKhatmahDisplay();
+            savePersistedKhatmah();
+            if (window.showToast) window.showToast('تم تحديث تقدم الختمة بنجاح 📖', 'success');
+          }
+        }
+      };
+    }
+
+    // استرجاع مهام الورد اليومية المحفوظة
+    var todayKey = 'omar_wird_tasks_' + new Date().toISOString().slice(0, 10);
+    var savedTasks = {};
+    try {
+      savedTasks = JSON.parse(localStorage.getItem(todayKey) || '{}');
+    } catch (_) {}
+
+    function checkAllWirdDone() {
+      var allChecked = true;
+      taskCheckboxes.forEach(function (cb) {
+        if (!cb.checked) allChecked = false;
+      });
+      if (completionBanner) completionBanner.style.display = allChecked ? 'flex' : 'none';
+    }
+
+    taskCheckboxes.forEach(function (cb) {
+      var key = cb.getAttribute('data-task');
+      if (savedTasks[key]) {
+        cb.checked = true;
+      }
+
+      cb.addEventListener('change', function () {
+        savedTasks[key] = cb.checked;
+        try {
+          localStorage.setItem(todayKey, JSON.stringify(savedTasks));
+        } catch (_) {}
+
+        if (cb.checked) {
+          playClickSound();
+          triggerHaptic(30);
+        }
+        checkAllWirdDone();
+      });
+    });
+
+    checkAllWirdDone();
+    updateKhatmahDisplay();
+  }
+
+  // ────────────────────────── 9. إذاعات القرآن الكريم ──────────────────────────
+  function stopRadio() {
+    state.radioAudio.pause();
+    state.isPlayingRadio = false;
+    state.activeRadioId = null;
+
+    document.querySelectorAll('.radio-card').forEach(function (c) {
+      c.classList.remove('is-playing');
+      var btn = c.querySelector('.radio-play-btn');
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-play"></i> <span>تشغيل الإذاعة</span>';
+    });
+  }
+
+  function playRadioStation(radio) {
+    if (state.isPlayingRadio && state.activeRadioId === radio.id) {
+      stopRadio();
+      return;
+    }
+
+    // إيقاف أي تلاوة مسجلة
+    state.audioElement.pause();
+    state.isPlayingAudio = false;
+
+    stopRadio();
+
+    state.radioAudio.src = radio.url;
+    state.radioAudio.play().then(function () {
+      state.isPlayingRadio = true;
+      state.activeRadioId = radio.id;
+
+      var card = document.getElementById('radio-card-' + radio.id);
+      if (card) {
+        card.classList.add('is-playing');
+        var btn = card.querySelector('.radio-play-btn');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>إيقاف البث</span>';
+      }
+
+      if (window.showToast) window.showToast('جاري الاستماع إلى: ' + radio.name + ' 📻', 'info');
+    }).catch(function (err) {
+      console.warn('Radio stream error:', err);
+      if (window.showToast) window.showToast('تعذر تشغيل بث الإذاعة في الوقت الحالي', 'warning');
+    });
+  }
+
+  function initRadiosSection() {
+    var grid = document.getElementById('radiosGrid');
+    if (!grid) return;
+
+    var html = '';
+    RADIOS_DATA.forEach(function (r) {
+      html += '<div class="radio-card" id="radio-card-' + r.id + '">';
+      html += '  <div class="radio-icon-box"><i class="fa-solid ' + r.icon + '"></i></div>';
+      html += '  <div class="radio-info">';
+      html += '    <h4>' + r.name + '</h4>';
+      html += '    <p>' + r.tagline + '</p>';
+      html += '  </div>';
+      html += '  <button type="button" class="radio-play-btn" data-id="' + r.id + '">';
+      html += '    <i class="fa-solid fa-play"></i> <span>تشغيل الإذاعة</span>';
+      html += '  </button>';
+      html += '</div>';
+    });
+
+    grid.innerHTML = html;
+
+    grid.querySelectorAll('.radio-play-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var rid = btn.getAttribute('data-id');
+        var rObj = RADIOS_DATA.find(function (r) { return r.id === rid; });
+        if (rObj) {
+          playRadioStation(rObj);
+        }
+      });
+    });
+  }
+
+  // ────────────────────────── 10. آية وتأمل اليوم ──────────────────────────
+  function initDailyAyah() {
+    var copyBtn = document.getElementById('copyDailyAyahBtn');
+    var shareBtn = document.getElementById('shareDailyAyahBtn');
+    var playBtn = document.getElementById('playDailyAyahBtn');
+    var textEl = document.getElementById('dailyAyahText');
+    var refEl = document.getElementById('dailyAyahRef');
+
+    if (copyBtn && textEl) {
+      copyBtn.onclick = function () {
+        navigator.clipboard.writeText(textEl.textContent.trim() + ' (' + (refEl ? refEl.textContent : '') + ')').then(function () {
+          if (window.showToast) window.showToast('تم نسخ آية اليوم المباركة 📋', 'success');
+        });
+      };
+    }
+
+    if (shareBtn && textEl) {
+      shareBtn.onclick = function () {
+        var text = 'آية وتأمل اليوم:\n\n' + textEl.textContent.trim() + '\n\n' + (refEl ? refEl.textContent : '') + '\n\n— واحة القرآن | مؤسسة د. عمر هشام الخيرية\n' + window.location.origin + '/quran';
+        window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(text), '_blank');
+      };
+    }
+
+    if (playBtn) {
+      playBtn.onclick = function () {
+        // تشغيل سورة البقرة
+        playSurahAudio(2);
+      };
+    }
+  }
+
+  // ────────────────────────── الدالة التأسيسية (Init) ──────────────────────────
+  function init() {
+    loadPersistedState();
+    initTabNavigation();
+    initSurahDirectory();
+    initReaderControls();
+    initFloatingPlayer();
+    initAdhkarSection();
+    initTasbeehSection();
+    initDuasSection();
+    initKhatmahSection();
+    initRadiosSection();
+    initDailyAyah();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();

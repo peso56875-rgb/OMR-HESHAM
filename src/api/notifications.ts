@@ -106,6 +106,17 @@ const fetchFeed = async (
     )
   }
 
+  // استعلام الإشعارات والبلاغات العامة الموجهة للجميع
+  queries.push(
+    db
+      .collection('notifications')
+      .where('audience', '==', 'all')
+      .orderBy('created_at', 'desc')
+      .limit(limit)
+      .get()
+      .catch(() => ({ docs: [] }))
+  )
+
   if (isAdmin) {
     queries.push(
       db
@@ -144,7 +155,7 @@ const fetchFeed = async (
   const sharedIds = page.filter((r) => r.data.audience === 'admins').map((r) => r.id)
   const readMap = new Map<string, string | null>()
 
-  if (sharedIds.length) {
+  if (sharedIds.length && uid) {
     try {
       const refs = sharedIds.map((nid) =>
         db.collection('notification_reads').doc(readId(nid, uid))
@@ -163,7 +174,7 @@ const fetchFeed = async (
   return page.map(({ id, data }) => {
     const def = typeDef(String(data.type || ''))
     const shared = data.audience === 'admins'
-    const isRead = shared ? readMap.has(id) : data.is_read === true
+    const isRead = shared ? readMap.has(id) : Boolean(data.is_read)
     return {
       id,
       type: String(data.type || ''),
@@ -173,7 +184,7 @@ const fetchFeed = async (
       link: data.link || null,
       icon: String(data.icon || def.icon),
       priority: String(data.priority || def.priority),
-      audience: shared ? 'admins' : 'user',
+      audience: shared ? 'admins' : (data.audience || 'user'),
       actor_name: data.actor_name || null,
       created_at: String(data.created_at || ''),
       is_read: isRead,
@@ -186,7 +197,7 @@ const fetchFeed = async (
  * GET /api/notifications
  * ?limit=20&unread=1&category=financial
  */
-notifications.get('/', authMiddleware, async (c) => {
+notifications.get('/', rateLimiter(60, 60000, 'notif-list'), async (c) => {
   const user = currentUser(c)
   const uid = user.id || ''
   const isAdmin = user.role === 'admin'
@@ -223,7 +234,7 @@ notifications.get('/', authMiddleware, async (c) => {
  * نقطة خفيفة يستدعيها الجرس كل دقيقة. حدّ معدّل مرتفع لأنها تُستدعى
  * تلقائيًا من كل تبويب مفتوح، ومنخفضة التكلفة (تُرجع رقمًا فقط).
  */
-notifications.get('/count', authMiddleware, rateLimiter(120, 60000, 'notif-count'), async (c) => {
+notifications.get('/count', rateLimiter(120, 60000, 'notif-count'), async (c) => {
   const user = currentUser(c)
   const uid = user.id || ''
   const isAdmin = user.role === 'admin'

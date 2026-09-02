@@ -51,38 +51,56 @@ export function timeAgo(dateString: string): string {
 
 /** 1. جرس الإشعارات مع القائمة المنسدلة (يُستخدم في الهيدر والداشبورد) */
 export function NotificationBell({ user, isDashboard = false }: { user?: UserSession; isDashboard?: boolean }) {
-  if (!user) return null
-
   return (
-    <div class="notif-bell-container" id="notifBellContainer">
+    <div class="notif-bell-container" id={isDashboard ? 'dashNotifBellContainer' : 'notifBellContainer'}>
       <button
         type="button"
         class={`notif-bell-btn ${isDashboard ? 'dash-bell-btn' : 'header-bell-btn'}`}
-        id="notifBellBtn"
+        id={isDashboard ? 'dashNotifBellBtn' : 'notifBellBtn'}
         aria-label="مركز الإشعارات"
         aria-expanded="false"
         aria-haspopup="true"
       >
         <i class="fa-solid fa-bell notif-bell-icon" aria-hidden="true"></i>
-        <span class="notif-badge" id="notifBadge" style="display:none" aria-label="إشعارات غير مقروءة">0</span>
+        <span class="notif-badge" id={isDashboard ? 'dashNotifBadge' : 'notifBadge'} style="display:none" aria-label="إشعارات غير مقروءة">0</span>
       </button>
 
-      <div class="notif-dropdown" id="notifDropdown" aria-hidden="true" role="region" aria-label="قائمة الإشعارات">
+      <div class="notif-dropdown" id={isDashboard ? 'dashNotifDropdown' : 'notifDropdown'} aria-hidden="true" role="region" aria-label="قائمة الإشعارات">
         <div class="notif-dropdown-header">
           <div class="notif-header-title">
             <i class="fa-solid fa-bell"></i>
             <span>الإشعارات</span>
-            <span class="notif-header-unread-count" id="notifHeaderUnreadCount">0 جديدة</span>
+            <span class="notif-header-unread-count" id={isDashboard ? 'dashNotifHeaderUnreadCount' : 'notifHeaderUnreadCount'}>0 جديدة</span>
           </div>
           <div class="notif-header-actions">
-            <button type="button" class="notif-mark-all-btn" id="notifMarkAllBtn" title="تحديد الكل كمقروء">
-              <i class="fa-solid fa-check-double"></i>
-              <span>قراءة الكل</span>
-            </button>
+            {user && (
+              <button type="button" class="notif-mark-all-btn" id={isDashboard ? 'dashDropdownMarkAllBtn' : 'notifMarkAllBtn'} title="تحديد الكل كمقروء">
+                <i class="fa-solid fa-check-double"></i>
+                <span>قراءة الكل</span>
+              </button>
+            )}
             <a href="/notifications" class="notif-settings-link" title="عرض كل الإشعارات">
               <i class="fa-solid fa-arrow-up-right-from-square"></i>
             </a>
+            <button type="button" class="notif-close-mobile-btn" aria-label="إغلاق الإشعارات">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
           </div>
+        </div>
+
+        {/* Push opt-in banner on mobile/desktop */}
+        <div class="notif-push-optin-box" id="notifPushOptinBox" style="display:none">
+          <div class="notif-push-optin-content">
+            <i class="fa-solid fa-tower-broadcast"></i>
+            <div>
+              <strong>تفعيل إشعارات المتصفح</strong>
+              <small>لتصلك تنبيهات الحالات العاجلة وأخبار التبرعات فوراً</small>
+            </div>
+          </div>
+          <button type="button" class="notif-push-optin-action-btn" id="notifDropdownEnablePushBtn">
+            <span>تفعيل</span>
+            <i class="fa-solid fa-bell"></i>
+          </button>
         </div>
 
         <div class="notif-dropdown-tabs">
@@ -90,17 +108,17 @@ export function NotificationBell({ user, isDashboard = false }: { user?: UserSes
           <button type="button" class="notif-tab" data-tab="unread">غير المقروءة</button>
         </div>
 
-        <div class="notif-dropdown-list" id="notifDropdownList">
-          <div class="notif-loading-state" id="notifLoadingState">
+        <div class="notif-dropdown-list" id={isDashboard ? 'dashNotifDropdownList' : 'notifDropdownList'}>
+          <div class="notif-loading-state" id={isDashboard ? 'dashNotifLoadingState' : 'notifLoadingState'}>
             <i class="fa-solid fa-circle-notch fa-spin"></i>
             <span>جارٍ تحميل الإشعارات...</span>
           </div>
-          <div class="notif-empty-state" id="notifEmptyState" style="display:none">
+          <div class="notif-empty-state" id={isDashboard ? 'dashNotifEmptyState' : 'notifEmptyState'} style="display:none">
             <div class="notif-empty-icon"><i class="fa-solid fa-bell-slash"></i></div>
             <p>لا توجد إشعارات جديدة</p>
             <small>ستظهر التحديثات والإشعارات المهمة هنا فور وصولها.</small>
           </div>
-          <div class="notif-items-wrapper" id="notifItemsWrapper"></div>
+          <div class="notif-items-wrapper" id={isDashboard ? 'dashNotifItemsWrapper' : 'notifItemsWrapper'}></div>
         </div>
 
         <div class="notif-dropdown-footer">
@@ -122,7 +140,7 @@ export function NotificationsPage({
   pushAvailable = false,
   selectedCategory = ''
 }: {
-  user: UserSession
+  user?: UserSession
   items: any[]
   unreadCount: number
   pushAvailable: boolean
@@ -270,9 +288,27 @@ export function NotificationsPage({
             )}
           </div>
 
-          {/* قسم التفضيلات السريعة في أسفل الصفحة */}
+          {/* قسم التفضيلات أو دعوة تسجيل الدخول للزوار */}
           <div class="notif-page-prefs-wrapper reveal" style="margin-top: 2rem">
-            <NotificationPrefsSection user={user} pushAvailable={pushAvailable} />
+            {user ? (
+              <NotificationPrefsSection user={user} pushAvailable={pushAvailable} />
+            ) : (
+              <div class="profile-card-modern notif-guest-callout">
+                <div class="notif-guest-callout-icon">
+                  <i class="fa-solid fa-bell-concierge"></i>
+                </div>
+                <div class="notif-guest-callout-text">
+                  <h3>سجّل دخولك لمتابعة إشعاراتك الشخصية</h3>
+                  <p>تصلك إشعارات وتحديثات فورية عن تبرعاتك، تقارير الحالات التي ساهمت بها، وحالة طلبات التطوع عند تسجيل الدخول.</p>
+                </div>
+                <div class="notif-guest-callout-actions">
+                  <a href="/login" class="primary-btn">
+                    <span>تسجيل الدخول</span>
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
 
         </div>
