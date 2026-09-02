@@ -144,6 +144,10 @@ const RECITER_AUDIO_MAP: Record<string, string[]> = {
     'https://server7.mp3quran.net/basit/Almusshaf-Al-Mojawwad/',
     'https://download.quranicaudio.com/quran/abdulbaset_mujawwad/'
   ],
+  yasser: [
+    'https://server11.mp3quran.net/yasser/',
+    'https://download.quranicaudio.com/quran/yasser_ad-dussary/'
+  ],
   husary: [
     'https://server13.mp3quran.net/husr/',
     'https://download.quranicaudio.com/quran/mahmood_khaleel_al-husaree/'
@@ -182,6 +186,7 @@ quranApi.get('/audio/:reciter/:surah', async (c) => {
     return c.text('Invalid Surah Number', 400)
   }
 
+  const isDownload = c.req.query('download') === '1'
   const numStr = (surahNum < 10 ? '00' : (surahNum < 100 ? '0' : '')) + surahNum
   const baseUrls = RECITER_AUDIO_MAP[reciter] || RECITER_AUDIO_MAP.minshawi
 
@@ -190,16 +195,18 @@ quranApi.get('/audio/:reciter/:surah', async (c) => {
       const audioUrl = `${base}${numStr}.mp3`
       const res = await fetch(audioUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(6000)
       })
       if (res.ok && res.body) {
-        return new Response(res.body, {
-          headers: {
-            'Content-Type': 'audio/mpeg',
-            'Accept-Ranges': 'bytes',
-            'Cache-Control': 'public, max-age=604800, s-maxage=2592000'
-          }
-        })
+        const headers: Record<string, string> = {
+          'Content-Type': 'audio/mpeg',
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': 'public, max-age=604800, s-maxage=2592000'
+        }
+        if (isDownload) {
+          headers['Content-Disposition'] = `attachment; filename="Surah_${numStr}_${reciter}.mp3"`
+        }
+        return new Response(res.body, { headers })
       }
     } catch (_) {}
   }

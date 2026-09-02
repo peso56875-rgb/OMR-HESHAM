@@ -117,6 +117,7 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
                   <option value="minshawi_mujawwad">الشيخ محمد صديق المنشاوي (مجود)</option>
                   <option value="abdulbasit">الشيخ عبد الباسط عبد الصمد (مرتل)</option>
                   <option value="abdulbasit_mujawwad">الشيخ عبد الباسط عبد الصمد (مجود)</option>
+                  <option value="yasser">الشيخ ياسر الدوسري</option>
                   <option value="husary">الشيخ محمود خليل الحصري</option>
                   <option value="afs">الشيخ مشاري راشد العفاسي</option>
                   <option value="ghamadi">الشيخ سعد الغامدي</option>
@@ -640,36 +641,60 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
             </div>
           </div>
 
-          {/* Reader Footer Controls (Audio & Navigation Bar) */}
+          {/* Reader Footer Controls (Audio, Timeline, Download & Navigation Bar) */}
           <footer class="reader-footer">
-            <div class="reader-audio-controls">
-              <button type="button" class="reader-audio-btn main-play" id="readerPlaySurahBtn" title="تشغيل تلاوة السورة">
-                {icon('fa-play')} <span id="readerPlaySurahLabel">استماع للسورة</span>
-              </button>
-              <div class="reader-reciter-dropdown">
-                <select id="readerReciterSelect" title="اختر القارئ">
-                  {/* Populated in JS */}
-                </select>
-                <i class="fa-solid fa-microphone-lines"></i>
+            <div class="reader-footer-top">
+              <div class="reader-audio-controls">
+                <button type="button" class="reader-audio-btn main-play" id="readerPlaySurahBtn" title="تشغيل تلاوة السورة">
+                  {icon('fa-play')} <span id="readerPlaySurahLabel">استماع للسورة</span>
+                </button>
+                <div class="reader-reciter-dropdown">
+                  <select id="readerReciterSelect" title="اختر القارئ">
+                    {/* Populated in JS */}
+                  </select>
+                  <i class="fa-solid fa-microphone-lines"></i>
+                </div>
+              </div>
+
+              {/* Real-time Audio Seek Bar & Timeline */}
+              <div class="reader-audio-timeline" id="readerAudioTimeline">
+                <span class="reader-time-current" id="readerCurrentTime">00:00</span>
+                <div class="reader-scrubber-track">
+                  <input type="range" class="reader-scrubber" id="readerScrubber" min="0" max="100" value="0" step="0.1" aria-label="شريط تقديم وترجيع التلاوة" />
+                </div>
+                <span class="reader-time-total" id="readerTotalTime">00:00</span>
+                <div class="reader-skip-actions">
+                  <button type="button" class="reader-skip-btn" id="readerRewindBtn" title="ترجيع ١٠ ثوانٍ">
+                    <i class="fa-solid fa-rotate-left"></i> <span>١٠ث-</span>
+                  </button>
+                  <button type="button" class="reader-skip-btn" id="readerForwardBtn" title="تقديم ١٠ ثوانٍ">
+                    <i class="fa-solid fa-rotate-right"></i> <span>+١٠ث</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div class="reader-quick-actions">
-              <button type="button" class="reader-action-pill" id="readerBookmarkBtn" title="حفظ علامة مرجعية هنا">
-                <i class="fa-regular fa-bookmark"></i> <span>حفظ المكان</span>
-              </button>
-              <button type="button" class="reader-action-pill" id="readerShareSurahBtn" title="مشاركة السورة عبر واتساب">
-                <i class="fa-brands fa-whatsapp"></i> <span>مشاركة</span>
-              </button>
-            </div>
+            <div class="reader-footer-bottom">
+              <div class="reader-quick-actions">
+                <button type="button" class="reader-action-pill download-btn" id="readerDownloadSurahBtn" title="تحميل ملف التلاوة بصوت القارئ المختار">
+                  <i class="fa-solid fa-download"></i> <span>تحميل السورة</span>
+                </button>
+                <button type="button" class="reader-action-pill" id="readerBookmarkBtn" title="حفظ علامة مرجعية هنا">
+                  <i class="fa-regular fa-bookmark"></i> <span>حفظ المكان</span>
+                </button>
+                <button type="button" class="reader-action-pill" id="readerShareSurahBtn" title="مشاركة السورة عبر واتساب">
+                  <i class="fa-brands fa-whatsapp"></i> <span>مشاركة</span>
+                </button>
+              </div>
 
-            <div class="reader-nav-buttons">
-              <button type="button" class="reader-nav-btn" id="prevSurahBtn" title="السورة السابقة">
-                {icon('fa-arrow-right')} <span>السورة السابقة</span>
-              </button>
-              <button type="button" class="reader-nav-btn" id="nextSurahBtn" title="السورة التالية">
-                <span>السورة التالية</span> {icon('fa-arrow-left')}
-              </button>
+              <div class="reader-nav-buttons">
+                <button type="button" class="reader-nav-btn" id="prevSurahBtn" title="السورة السابقة">
+                  {icon('fa-arrow-right')} <span>السورة السابقة</span>
+                </button>
+                <button type="button" class="reader-nav-btn" id="nextSurahBtn" title="السورة التالية">
+                  <span>السورة التالية</span> {icon('fa-arrow-left')}
+                </button>
+              </div>
             </div>
           </footer>
 
@@ -772,7 +797,7 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
       </div>
 
       {/* Script for Quran functionality */}
-      <script src="/static/quran.js?v=2.9"></script>
+      <script src="/static/quran.js?v=3.5"></script>
     </Layout>
   )
 }

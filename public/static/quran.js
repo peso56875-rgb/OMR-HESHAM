@@ -158,6 +158,14 @@
         '/api/quran/audio/abdulbasit_mujawwad/'
       ]
     },
+    yasser: {
+      name: 'الشيخ ياسر الدوسري',
+      urls: [
+        'https://server11.mp3quran.net/yasser/',
+        'https://download.quranicaudio.com/quran/yasser_ad-dussary/',
+        '/api/quran/audio/yasser/'
+      ]
+    },
     husary: {
       name: 'الشيخ محمود خليل الحصري',
       urls: [
@@ -498,10 +506,20 @@
       tagline: 'البث الحي والمباشر على مدار ٢٤ ساعة',
       urls: [
         'https://stream.radiojar.com/8s5u5tpdtwzuv',
-        'https://n0a.radiojar.com/8s5u5tpdtwzuv',
-        'https://stream.zeno.fm/f3wvbbqmdg8uv'
+        'https://stream.zeno.fm/f3wvbbqmdg8uv',
+        'https://n0a.radiojar.com/8s5u5tpdtwzuv'
       ],
       icon: 'fa-tower-broadcast'
+    },
+    {
+      id: 'dosari_radio',
+      name: 'إذاعة الشيخ ياسر الدوسري',
+      tagline: 'تلاوات خاشعة ومؤثرة بصوت الشيخ الدوسري',
+      urls: [
+        'https://backup.qurango.net/radio/yasser_aldosari',
+        'https://qurango.net/radio/yasser_aldosari'
+      ],
+      icon: 'fa-microphone-lines'
     },
     {
       id: 'minshawi_radio',
@@ -519,7 +537,7 @@
       tagline: 'تلاوات خاشعة من الزمن الجميل',
       urls: [
         'https://backup.qurango.net/radio/abdulbasit_abdulsamad_mojawwad',
-        'https://qurango.net/radio/abdulbasit_abdulsamad_mojawwad'
+        'https://backup.qurango.net/radio/abdulbasit_abdulsamad_murattal'
       ],
       icon: 'fa-volume-high'
     },
@@ -538,25 +556,45 @@
       name: 'إذاعة الشيخ مشاري راشد العفاسي',
       tagline: 'تلاوات خاشعة وعذبة بصوت العفاسي',
       urls: [
-        'https://qurango.net/radio/mishary_alafasi',
-        'https://backup.qurango.net/radio/tarateel'
+        'https://backup.qurango.net/radio/mishary_alafasi',
+        'https://qurango.net/radio/mishary_alafasi'
       ],
       icon: 'fa-headphones'
+    },
+    {
+      id: 'maher_radio',
+      name: 'إذاعة الشيخ ماهر المعيقلي',
+      tagline: 'تلاوات الحرم المكي الشريف الخاشعة',
+      urls: [
+        'https://backup.qurango.net/radio/maher',
+        'https://qurango.net/radio/maher'
+      ],
+      icon: 'fa-kaaba'
+    },
+    {
+      id: 'ghamdi_radio',
+      name: 'إذاعة الشيخ سعد الغامدي',
+      tagline: 'المصحف المرتل برواية حفص عن عاصم',
+      urls: [
+        'https://backup.qurango.net/radio/saad_alghamdi',
+        'https://qurango.net/radio/saad_alghamdi'
+      ],
+      icon: 'fa-microphone'
     },
     {
       id: 'tarateel',
       name: 'إذاعة تراتيل وتلاوات خاشعة',
       tagline: 'مختارات من روائع التلاوات لكبار القراء',
       urls: [
-        'https://qurango.net/radio/tarateel',
-        'https://backup.qurango.net/radio/tarateel'
+        'https://backup.qurango.net/radio/tarateel',
+        'https://qurango.net/radio/tarateel'
       ],
       icon: 'fa-headphones'
     },
     {
       id: 'tafseer_radio',
       name: 'إذاعة تفسير القرآن الكريم',
-      tagline: 'بيان معاني الآيات وتدبرها لفضيلة الشيخ الشعراوي',
+      tagline: 'خواطر وتدبر آيات الذكر الحكيم للشيخ الشعراوي',
       urls: [
         'https://backup.qurango.net/radio/tafseer',
         'https://qurango.net/radio/tafseer'
@@ -566,10 +604,10 @@
     {
       id: 'ruqyah_radio',
       name: 'إذاعة الرقية الشرعية',
-      tagline: 'آيات الحفظ والشفاء والسكينة',
+      tagline: 'آيات الحفظ والشفاء والسكينة والتحصين',
       urls: [
-        'https://qurango.net/radio/roqiah',
-        'https://backup.qurango.net/radio/roqiah'
+        'https://backup.qurango.net/radio/roqiah',
+        'https://qurango.net/radio/roqiah'
       ],
       icon: 'fa-shield-halved'
     }
@@ -810,6 +848,9 @@
       html += '    <button type="button" class="surah-act-btn read-surah-btn" data-num="' + s.n + '" title="قراءة وتدبر">' +
               '      <i class="fa-solid fa-book-open"></i>' +
               '    </button>';
+      html += '    <button type="button" class="surah-act-btn download-surah-btn" data-num="' + s.n + '" title="تحميل التلاوة">' +
+              '      <i class="fa-solid fa-download"></i>' +
+              '    </button>';
       html += '    <button type="button" class="surah-act-btn fav-surah-btn ' + (isFav ? 'is-fav' : '') + '" data-num="' + s.n + '" title="إضافة للمفضلة">' +
               '      <i class="fa-' + (isFav ? 'solid' : 'regular') + ' fa-heart"></i>' +
               '    </button>';
@@ -833,6 +874,14 @@
         e.stopPropagation();
         var num = parseInt(btn.getAttribute('data-num'), 10);
         playSurahAudio(num);
+      });
+    });
+
+    grid.querySelectorAll('.download-surah-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var num = parseInt(btn.getAttribute('data-num'), 10);
+        downloadSurahAudio(num, state.currentReciter);
       });
     });
 
@@ -1623,10 +1672,56 @@
       };
     }
 
+    var readerScrubber = document.getElementById('readerScrubber');
+    var readerCurTime = document.getElementById('readerCurrentTime');
+    var readerTotTime = document.getElementById('readerTotalTime');
+    var readerRewindBtn = document.getElementById('readerRewindBtn');
+    var readerForwardBtn = document.getElementById('readerForwardBtn');
+    var readerDownloadBtn = document.getElementById('readerDownloadSurahBtn');
+
+    // شريط التقديم والترجيع في الفوتر
+    if (readerScrubber) {
+      readerScrubber.oninput = function () {
+        if (state.audioElement.duration) {
+          state.audioElement.currentTime = (readerScrubber.value / 100) * state.audioElement.duration;
+        }
+      };
+    }
+
+    // تقديم وترجيع ١٠ ثوانٍ
+    if (readerRewindBtn) {
+      readerRewindBtn.onclick = function () {
+        if (state.audioElement.src) {
+          state.audioElement.currentTime = Math.max(0, state.audioElement.currentTime - 10);
+        }
+      };
+    }
+
+    if (readerForwardBtn) {
+      readerForwardBtn.onclick = function () {
+        if (state.audioElement.src && state.audioElement.duration) {
+          state.audioElement.currentTime = Math.min(state.audioElement.duration, state.audioElement.currentTime + 10);
+        }
+      };
+    }
+
+    // تحميل السورة بصوت القارئ المختار
+    if (readerDownloadBtn) {
+      readerDownloadBtn.onclick = function () {
+        if (state.currentSurah) {
+          downloadSurahAudio(state.currentSurah.n, state.currentReciter);
+        }
+      };
+    }
+
     if (playSurahBtn) {
       playSurahBtn.onclick = function () {
         if (state.currentSurah) {
-          playSurahAudio(state.currentSurah.n, 0);
+          if (state.isPlayingAudio && currentAudioSurahNum === state.currentSurah.n) {
+            state.audioElement.pause();
+          } else {
+            playSurahAudio(state.currentSurah.n, 0);
+          }
         }
       };
     }
@@ -1799,6 +1894,32 @@
     }
   }
 
+  function downloadSurahAudio(surahNum, reciterKey) {
+    surahNum = surahNum || (state.currentSurah ? state.currentSurah.n : 1);
+    reciterKey = reciterKey || state.currentReciter || 'minshawi';
+    var surah = SURAHS.find(function (s) { return s.n === surahNum; }) || { n: surahNum, name: 'السورة' };
+    var reciterObj = RECITERS[reciterKey] || RECITERS.minshawi;
+    var reciterName = reciterObj.name.split('(')[0].trim();
+    var numStr = (surah.n < 10 ? '00' : (surah.n < 100 ? '0' : '')) + surah.n;
+
+    var downloadUrl = '/api/quran/audio/' + encodeURIComponent(reciterKey) + '/' + numStr + '?download=1';
+    var fileName = 'سورة_' + surah.name.replace(/\s+/g, '_') + '_' + reciterName.replace(/\s+/g, '_') + '.mp3';
+
+    if (window.showToast) {
+      window.showToast('جاري بدء تحميل سورة ' + surah.name + ' بصوت ' + reciterName + ' 📥', 'info');
+    }
+
+    var a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = fileName;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      if (a.parentNode) a.parentNode.removeChild(a);
+    }, 1000);
+  }
+
   function initFloatingPlayer() {
     var playPauseBtn = document.getElementById('floatingPlayPauseBtn');
     var scrubber = document.getElementById('floatingScrubber');
@@ -1832,9 +1953,21 @@
     state.audioElement.ontimeupdate = function () {
       if (state.audioElement.duration) {
         var pct = (state.audioElement.currentTime / state.audioElement.duration) * 100;
+        var formattedCurrent = formatTime(state.audioElement.currentTime);
+        var formattedTotal = formatTime(state.audioElement.duration);
+
+        // Floating Player
         if (scrubber) scrubber.value = pct;
-        if (curTime) curTime.textContent = formatTime(state.audioElement.currentTime);
-        if (totTime) totTime.textContent = formatTime(state.audioElement.duration);
+        if (curTime) curTime.textContent = formattedCurrent;
+        if (totTime) totTime.textContent = formattedTotal;
+
+        // Reader Footer Timeline
+        var rScrubber = document.getElementById('readerScrubber');
+        var rCurTime = document.getElementById('readerCurrentTime');
+        var rTotTime = document.getElementById('readerTotalTime');
+        if (rScrubber) rScrubber.value = pct;
+        if (rCurTime) rCurTime.textContent = formattedCurrent;
+        if (rTotTime) rTotTime.textContent = formattedTotal;
       }
     };
 
@@ -2382,6 +2515,7 @@
 
     state.radioAudio.removeAttribute('crossorigin');
     state.radioAudio.src = streamUrl;
+    try { state.radioAudio.load(); } catch (_) {}
 
     state.radioAudio.onplaying = function () {
       state.isPlayingRadio = true;
@@ -2399,7 +2533,7 @@
         playRadioStation(radio, urlIdx + 1);
       } else {
         stopRadio();
-        if (window.showToast) window.showToast('تعذر تشغيل بث الإذاعة في الوقت الحالي', 'warning');
+        if (window.showToast) window.showToast('تعذر تشغيل بث الإذاعة في الوقت الحالي، يرجى المحاولة لاحقاً', 'warning');
       }
     };
 
