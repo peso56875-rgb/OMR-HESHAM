@@ -91,15 +91,15 @@ quranApi.get('/tafsir/:surah/:ayah', async (c) => {
     return c.json({ success: true, surah, ayah, tafsir: tafsirCache.get(cacheKey) })
   }
 
-  // Strategy 1: QuranEnc
+  // Strategy 1: Al-Quran Cloud API (Al-Muyassar) - Fast & highly reliable
   try {
-    const qeRes = await fetch(`https://quranenc.com/api/v1/translation/aya/arabic_moyassar/${surah}/${ayah}`, {
-      signal: AbortSignal.timeout(5000)
+    const aqcRes = await fetch(`https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/ar.muyassar`, {
+      signal: AbortSignal.timeout(4000)
     })
-    if (qeRes.ok) {
-      const qeData = (await qeRes.json()) as { result?: { translation?: string } }
-      if (qeData && qeData.result && qeData.result.translation) {
-        const text = qeData.result.translation
+    if (aqcRes.ok) {
+      const aqcData = (await aqcRes.json()) as { data?: { text?: string } }
+      if (aqcData && aqcData.data && aqcData.data.text) {
+        const text = aqcData.data.text.trim()
         tafsirCache.set(cacheKey, text)
         c.header('Cache-Control', 'public, max-age=86400, s-maxage=604800')
         return c.json({ success: true, surah, ayah, tafsir: text })
@@ -107,15 +107,35 @@ quranApi.get('/tafsir/:surah/:ayah', async (c) => {
     }
   } catch (_) {}
 
-  // Strategy 2: Al-Quran Cloud
+  // Strategy 2: Quran.com API v4 (Tafsir Al-Muyassar - id 16)
   try {
-    const aqcRes = await fetch(`https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/ar.muyassar`, {
-      signal: AbortSignal.timeout(5000)
+    const qdcRes = await fetch(`https://api.quran.com/api/v4/tafsirs/16/by_ayah/${surah}:${ayah}`, {
+      signal: AbortSignal.timeout(4000)
     })
-    if (aqcRes.ok) {
-      const aqcData = (await aqcRes.json()) as { data?: { text?: string } }
-      if (aqcData && aqcData.data && aqcData.data.text) {
-        const text = aqcData.data.text
+    if (qdcRes.ok) {
+      const qdcData = (await qdcRes.json()) as { tafsir?: { text?: string } }
+      if (qdcData && qdcData.tafsir && qdcData.tafsir.text) {
+        // Strip HTML tags if present
+        const text = qdcData.tafsir.text.replace(/<[^>]*>/g, '').trim()
+        if (text) {
+          tafsirCache.set(cacheKey, text)
+          c.header('Cache-Control', 'public, max-age=86400, s-maxage=604800')
+          return c.json({ success: true, surah, ayah, tafsir: text })
+        }
+      }
+    }
+  } catch (_) {}
+
+  // Strategy 3: QuranEnc
+  try {
+    const qeRes = await fetch(`https://quranenc.com/api/v1/translation/aya/arabic_moyassar/${surah}/${ayah}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      signal: AbortSignal.timeout(3000)
+    })
+    if (qeRes.ok) {
+      const qeData = (await qeRes.json()) as { result?: { translation?: string } }
+      if (qeData && qeData.result && qeData.result.translation) {
+        const text = qeData.result.translation.trim()
         tafsirCache.set(cacheKey, text)
         c.header('Cache-Control', 'public, max-age=86400, s-maxage=604800')
         return c.json({ success: true, surah, ayah, tafsir: text })
@@ -287,32 +307,6 @@ const RADIO_STREAM_MAP: Record<string, string[]> = {
 quranApi.get('/radio/:id', async (c) => {
   const radioId = c.req.param('id')
   const streamUrls = RADIO_STREAM_MAP[radioId] || RADIO_STREAM_MAP.cairo
-
-  for (const streamUrl of streamUrls) {
-    try {
-      const res = await fetch(streamUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)',
-          'Accept': '*/*'
-        },
-        signal: AbortSignal.timeout(6000)
-      })
-
-      if (res.ok && res.body) {
-        return new Response(res.body, {
-          status: 200,
-          headers: {
-            'Content-Type': 'audio/mpeg',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-            'Access-Control-Allow-Origin': '*'
-          }
-        })
-      }
-    } catch (_) {}
-  }
-
   return c.redirect(streamUrls[0], 302)
 })
 

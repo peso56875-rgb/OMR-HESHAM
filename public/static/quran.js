@@ -1355,9 +1355,9 @@
 
     var tafsirText = '';
 
-    // Tier 1: Internal API
+    // Tier 1: Internal API (Multi-source cached backend)
     try {
-      var localRes = await fetch('/api/quran/tafsir/' + surahNum + '/' + ayahNum, { signal: AbortSignal.timeout(5000) });
+      var localRes = await fetch('/api/quran/tafsir/' + surahNum + '/' + ayahNum, { signal: AbortSignal.timeout(4000) });
       if (localRes.ok) {
         var localJson = await localRes.json();
         if (localJson && localJson.success && localJson.tafsir) {
@@ -1366,27 +1366,40 @@
       }
     } catch (_) {}
 
-    // Tier 2: QuranEnc
+    // Tier 2: Al-Quran Cloud (Direct)
     if (!tafsirText) {
       try {
-        var qeRes = await fetch('https://quranenc.com/api/v1/translation/aya/arabic_moyassar/' + surahNum + '/' + ayahNum, { signal: AbortSignal.timeout(5000) });
-        if (qeRes.ok) {
-          var qeJson = await qeRes.json();
-          if (qeJson && qeJson.result && qeJson.result.translation) {
-            tafsirText = qeJson.result.translation;
+        var aqcRes = await fetch('https://api.alquran.cloud/v1/ayah/' + surahNum + ':' + ayahNum + '/ar.muyassar', { signal: AbortSignal.timeout(4000) });
+        if (aqcRes.ok) {
+          var aqcJson = await aqcRes.json();
+          if (aqcJson && aqcJson.data && aqcJson.data.text) {
+            tafsirText = aqcJson.data.text;
           }
         }
       } catch (_) {}
     }
 
-    // Tier 3: Al-Quran Cloud
+    // Tier 3: Quran.com API v4 (Direct)
     if (!tafsirText) {
       try {
-        var aqcRes = await fetch('https://api.alquran.cloud/v1/ayah/' + surahNum + ':' + ayahNum + '/ar.muyassar', { signal: AbortSignal.timeout(5000) });
-        if (aqcRes.ok) {
-          var aqcJson = await aqcRes.json();
-          if (aqcJson && aqcJson.data && aqcJson.data.text) {
-            tafsirText = aqcJson.data.text;
+        var qdcRes = await fetch('https://api.quran.com/api/v4/tafsirs/16/by_ayah/' + surahNum + ':' + ayahNum, { signal: AbortSignal.timeout(4000) });
+        if (qdcRes.ok) {
+          var qdcJson = await qdcRes.json();
+          if (qdcJson && qdcJson.tafsir && qdcJson.tafsir.text) {
+            tafsirText = qdcJson.tafsir.text.replace(/<[^>]*>/g, '').trim();
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Tier 4: QuranEnc
+    if (!tafsirText) {
+      try {
+        var qeRes = await fetch('https://quranenc.com/api/v1/translation/aya/arabic_moyassar/' + surahNum + '/' + ayahNum, { signal: AbortSignal.timeout(3000) });
+        if (qeRes.ok) {
+          var qeJson = await qeRes.json();
+          if (qeJson && qeJson.result && qeJson.result.translation) {
+            tafsirText = qeJson.result.translation;
           }
         }
       } catch (_) {}
@@ -2618,6 +2631,21 @@
         if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>إيقاف البث</span>';
       }
       if (window.showToast) window.showToast('أنت الآن تستمع إلى: ' + radio.name + ' 📻', 'info');
+    };
+
+    // إعادة الاتصال التلقائي في حال انقطاع تدفق البث
+    state.radioAudio.onstalled = function () {
+      if (state.isPlayingRadio && state.activeRadioId === radio.id) {
+        console.log('Radio stream stalled, attempting reconnect...');
+        try { state.radioAudio.play(); } catch (_) {}
+      }
+    };
+
+    state.radioAudio.onended = function () {
+      if (state.isPlayingRadio && state.activeRadioId === radio.id) {
+        console.log('Radio stream ended, re-establishing live connection...');
+        playRadioStation(radio, urlIdx);
+      }
     };
 
     state.radioAudio.onerror = function (e) {
