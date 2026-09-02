@@ -22,7 +22,7 @@
   var isFetchingFeed = false;
   var currentTab = 'all';
 
-  // دالة لتعليم قسم لوحة التحكم كمقروء وإخفاء النقطة الحمراء
+  // دالة لتعليم قسم لوحة التحكم كمشاهد وإخفاء النقطة الحمراء
   function markDashboardSectionSeen(section) {
     if (!section) return;
     try {
@@ -33,14 +33,6 @@
     if (dot) {
       dot.style.display = 'none';
     }
-
-    // إرسال طلب في الخلفية لتعليم إشعارات هذا القسم كمقروءة للمشرف
-    fetch('/api/notifications/read-section/' + section, {
-      method: 'POST',
-      headers: { 'Accept': 'application/json' }
-    }).then(function () {
-      updateUnreadCount();
-    }).catch(function () {});
   }
 
   function timeAgo(dateString) {
@@ -88,7 +80,8 @@
 
   async function updateUnreadCount() {
     try {
-      var res = await fetch('/api/notifications/count', {
+      var res = await fetch('/api/notifications/count?_ts=' + Date.now(), {
+        cache: 'no-store',
         headers: { 'Accept': 'application/json' }
       });
       if (!res.ok) return;
@@ -96,16 +89,27 @@
       var data = await res.json();
       var count = Number(data.unread || 0);
 
-      var badges = document.querySelectorAll('.notif-badge, #notifBadge');
+      // تحديث شارات الأجراس
+      var badges = document.querySelectorAll('.notif-badge, #notifBadge, #dashNotifBadge');
       badges.forEach(function (badge) {
         if (count > 0) {
           badge.textContent = count > 99 ? '+99' : String(count);
-          badge.style.display = 'inline-flex';
+          badge.style.setProperty('display', 'inline-flex', 'important');
           badge.classList.add('pulse-badge');
         } else {
           badge.textContent = '0';
-          badge.style.display = 'none';
+          badge.style.setProperty('display', 'none', 'important');
           badge.classList.remove('pulse-badge');
+        }
+      });
+
+      // إضافة حالة has-unread لأزرار الأجراس للتنبيه البصري
+      var bellButtons = document.querySelectorAll('.notif-bell-btn, #notifBellBtn, #dashNotifBellBtn');
+      bellButtons.forEach(function (btn) {
+        if (count > 0) {
+          btn.classList.add('has-unread');
+        } else {
+          btn.classList.remove('has-unread');
         }
       });
 
@@ -114,29 +118,26 @@
         headerUnread.textContent = count > 0 ? (count + ' جديدة') : 'لا توجد جديدة';
       }
 
+      var dashHeaderUnread = document.getElementById('dashNotifHeaderUnreadCount');
+      if (dashHeaderUnread) {
+        dashHeaderUnread.textContent = count > 0 ? (count + ' جديدة') : 'لا توجد جديدة';
+      }
+
       var pageUnreadTotal = document.getElementById('notifPageUnreadTotal');
       if (pageUnreadTotal) {
         pageUnreadTotal.textContent = String(count);
       }
 
-      // ────────────────── التحكم الذكي في ظهور التوست (فقط عند أول فتح أو عند وصول جديد فعلياً) ──────────────────
-      var sessionVisited = sessionStorage.getItem('omar_session_visited');
-      var lastToastId = localStorage.getItem('omar_last_toast_id');
+      // ────────────────── التحكم الذكي في ظهور التوست والتنبيه الصوتي ──────────────────
+      if (count > 0 && data.latest && data.latest.id) {
+        var toastKey = 'omar_toast_seen_' + data.latest.id;
+        var seenThisSession = sessionStorage.getItem(toastKey);
+        var isNewArrival = lastUnreadCount >= 0 && count > lastUnreadCount;
+        var isFirstVisitWithUnread = !seenThisSession && !sessionStorage.getItem('omar_session_toasted');
 
-      if (!sessionVisited) {
-        // أول فتح للموقع في هذه الجلسة
-        sessionStorage.setItem('omar_session_visited', '1');
-        if (count > 0 && data.latest && data.latest.id && lastToastId !== data.latest.id) {
-          localStorage.setItem('omar_last_toast_id', data.latest.id);
-          playNotificationSound();
-          if (window.showToast) {
-            window.showToast(data.latest.title, 'subscribe');
-          }
-        }
-      } else if (lastUnreadCount >= 0 && count > lastUnreadCount && data.latest && data.latest.id) {
-        // وصل إشعار جديد فعلياً أثناء تصفح المستخدم
-        if (lastToastId !== data.latest.id) {
-          localStorage.setItem('omar_last_toast_id', data.latest.id);
+        if (isNewArrival || isFirstVisitWithUnread) {
+          sessionStorage.setItem(toastKey, '1');
+          sessionStorage.setItem('omar_session_toasted', '1');
           playNotificationSound();
           if (window.showToast) {
             window.showToast(data.latest.title, 'subscribe');
@@ -202,8 +203,11 @@
     if (emptyState) emptyState.style.display = 'none';
 
     try {
-      var url = '/api/notifications?limit=20' + (currentTab === 'unread' ? '&unread=1' : '');
-      var res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      var url = '/api/notifications?limit=20&_ts=' + Date.now() + (currentTab === 'unread' ? '&unread=1' : '');
+      var res = await fetch(url, {
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      });
       var json = await res.json();
       var items = (json && json.data) || [];
 

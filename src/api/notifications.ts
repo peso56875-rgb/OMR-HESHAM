@@ -64,6 +64,7 @@ const currentUser = (c: any) => (c.get('user') || {}) as {
 
 interface FeedItem {
   id: string
+  user_id?: string | null
   type: string
   category: string
   title: string
@@ -202,8 +203,8 @@ const fetchFeed = async (
   )
   const page = rows.slice(0, limit)
 
-  // حالة القراءة لإشعارات الإدارة — قراءة دفعة واحدة بـ getAll
-  const sharedIds = page.filter((r) => r.data.audience === 'admins').map((r) => r.id)
+  // حالة القراءة للإشعارات المشتركة (إدارة وعامة للجميع) — قراءة دفعة واحدة بـ getAll
+  const sharedIds = page.filter((r) => r.data.audience === 'admins' || r.data.audience === 'all').map((r) => r.id)
   const readMap = new Map<string, string | null>()
 
   if (sharedIds.length && uid) {
@@ -224,10 +225,11 @@ const fetchFeed = async (
 
   return page.map(({ id, data }) => {
     const def = typeDef(String(data.type || ''))
-    const shared = data.audience === 'admins'
-    const isRead = shared ? readMap.has(id) : Boolean(data.is_read)
+    const shared = data.audience === 'admins' || data.audience === 'all'
+    const isRead = shared ? (uid ? readMap.has(id) : Boolean(data.is_read)) : Boolean(data.is_read)
     return {
       id,
+      user_id: data.user_id || null,
       type: String(data.type || ''),
       category: String(data.category || def.category),
       title: String(data.title || def.label),
@@ -235,11 +237,11 @@ const fetchFeed = async (
       link: data.link || null,
       icon: String(data.icon || def.icon),
       priority: String(data.priority || def.priority),
-      audience: shared ? 'admins' : (data.audience || 'user'),
+      audience: shared ? (data.audience || 'admins') : (data.audience || 'user'),
       actor_name: data.actor_name || null,
       created_at: String(data.created_at || ''),
       is_read: isRead,
-      read_at: shared ? readMap.get(id) || null : data.read_at || null
+      read_at: shared ? (readMap.get(id) || null) : (data.read_at || null)
     }
   })
 }
@@ -249,6 +251,9 @@ const fetchFeed = async (
  * ?limit=20&unread=1&category=financial
  */
 notifications.get('/', rateLimiter(60, 60000, 'notif-list'), async (c) => {
+  c.header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+  c.header('Pragma', 'no-cache')
+
   const user = currentUser(c)
   const uid = user.id || ''
   const isAdmin = user.role === 'admin'
@@ -332,6 +337,9 @@ const NOTIFICATION_SECTION_MAP: Record<string, string> = {
  * تلقائيًا من كل تبويب مفتوح، ومنخفضة التكلفة (تُرجع رقمًا فقط).
  */
 notifications.get('/count', rateLimiter(120, 60000, 'notif-count'), async (c) => {
+  c.header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+  c.header('Pragma', 'no-cache')
+
   const user = currentUser(c)
   const uid = user.id || ''
   const isAdmin = user.role === 'admin'
@@ -378,11 +386,14 @@ notifications.get('/count', rateLimiter(120, 60000, 'notif-count'), async (c) =>
 notifications.post('/read/:id', authMiddleware, async (c) => {
   const user = currentUser(c)
   const uid = user.id || ''
-  // `as string` مطلوبة: c.req.param يُرجع string | undefined تحت
-  // noUncheckedIndexedAccess، والمسار يضمن وجود الجزء فعلًا.
   const id = c.req.param('id') as string
 
   if (!id) return c.json({ error: 'معرّف الإشعار مطلوب' }, 400)
+
+  // دعم إشعارات الترحيب الافتراضية
+  if (id.startsWith('welcome-')) {
+    return c.json({ ok: true, id, read_at: new Date().toISOString() })
+  }
 
   try {
     const db = getFirestore(c)
@@ -394,12 +405,14 @@ notifications.post('/read/:id', authMiddleware, async (c) => {
     const data = snap.data() || {}
     const now = new Date().toISOString()
 
-    if (data.audience === 'admins') {
-      if (user.role !== 'admin') return c.json({ error: 'غير مصرّح' }, 403)
-      await db
-        .collection('notification_reads')
-        .doc(readId(id, uid))
-        .set({ notification_id: id, user_id: uid, read_at: now })
+    if (data.audience === 'admins' || data.audience === 'all') {
+      if (data.audience === 'admins' && user.role !== 'admin') return c.json({ error: 'غير مصرّح' }, 403)
+      if (uid) {
+        await db
+          .collection('notification_reads')
+          .doc(readId(id, uid))
+          .set({ notification_id: id, user_id: uid, read_at: now })
+      }
     } else {
       // منع مستخدم من التلاعب بإشعار غيره
       if (data.user_id !== uid) return c.json({ error: 'غير مصرّح' }, 403)
@@ -479,23 +492,31 @@ notifications.post('/read-all', authMiddleware, async (c) => {
 
     const now = new Date().toISOString()
     const batch = db.batch()
+    let batchCount = 0
 
     for (const item of unread) {
-      if (item.audience === 'admins') {
-        batch.set(db.collection('notification_reads').doc(readId(item.id, uid)), {
-          notification_id: item.id,
-          user_id: uid,
-          read_at: now
-        })
-      } else {
+      if (item.id.startsWith('welcome-')) continue
+      if (item.audience === 'admins' || item.audience === 'all') {
+        if (uid) {
+          batch.set(db.collection('notification_reads').doc(readId(item.id, uid)), {
+            notification_id: item.id,
+            user_id: uid,
+            read_at: now
+          })
+          batchCount++
+        }
+      } else if (item.user_id === uid) {
         batch.update(db.collection('notifications').doc(item.id), {
           is_read: true,
           read_at: now
         })
+        batchCount++
       }
     }
 
-    await batch.commit()
+    if (batchCount > 0) {
+      await batch.commit()
+    }
     return c.json({ ok: true, updated: unread.length })
   } catch (error: any) {
     console.error('[notifications] فشل تعليم الكل كمقروء:', error?.message || error)
