@@ -139,7 +139,7 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
     <link rel="icon" type="image/png" href="/static/foundation-logo.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
-    <link rel="stylesheet" href="/static/style.css?v=2.6" />
+    <link rel="stylesheet" href="/static/style.css?v=2.7" />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'NGO',
@@ -174,8 +174,8 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
       <div class="confirm-modal" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true"><div class="confirm-card"><span class="confirm-icon">{icon('fa-triangle-exclamation')}</span><h2 id="confirm-title">تأكيد الإجراء</h2><p id="confirm-message">هل أنت متأكد من تنفيذ هذا الإجراء؟</p><div><button type="button" class="confirm-cancel">إلغاء</button><button type="button" class="confirm-accept">تأكيد</button></div></div></div>
       <SearchModal />
       {pageType === 'public' && <nav class="mobile-bottom" aria-label="تنقل سريع"><a href="/">{icon('fa-house')}<span>الرئيسية</span></a><a href="/campaigns">{icon('fa-seedling')}<span>الحملات</span></a><a class="bottom-donate" href="/donate">{icon('fa-heart')}<span>تبرّع</span></a><a href="/volunteers">{icon('fa-hand-holding-hand')}<span>تطوع</span></a><a href="/contact">{icon('fa-comment-dots')}<span>تواصل</span></a></nav>}
-      <script src="/static/app.js?v=2.6"></script>
-      <script src="/static/notifications.js?v=2.6"></script>
+      <script src="/static/app.js?v=2.7"></script>
+      <script src="/static/notifications.js?v=2.7"></script>
     </body></html>
 }
 

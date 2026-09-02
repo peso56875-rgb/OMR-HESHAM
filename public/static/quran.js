@@ -124,19 +124,85 @@
     { n: 114, name: 'الناس', en: 'An-Nas', verses: 6, type: 'مكية', juz: 30, page: 604 }
   ];
 
-  // خوادم تلاوات القراء
+  // خوادم تلاوات القراء مع روابط احتياطية عالية الاعتمادية
   var RECITERS = {
-    minshawi: { name: 'الشيخ محمد صديق المنشاوي (مرتل)', url: 'https://server10.mp3quran.net/minsh/' },
-    minshawi_mujawwad: { name: 'الشيخ محمد صديق المنشاوي (مجود)', url: 'https://server10.mp3quran.net/minsh/Almusshaf-Al-Mojawwad/' },
-    abdulbasit: { name: 'الشيخ عبد الباسط عبد الصمد (مرتل)', url: 'https://server7.mp3quran.net/basit/' },
-    abdulbasit_mujawwad: { name: 'الشيخ عبد الباسط عبد الصمد (مجود)', url: 'https://server7.mp3quran.net/basit/Almusshaf-Al-Mojawwad/' },
-    husary: { name: 'الشيخ محمود خليل الحصري', url: 'https://server13.mp3quran.net/husr/' },
-    afs: { name: 'الشيخ مشاري راشد العفاسي', url: 'https://server8.mp3quran.net/afs/' },
-    ghamadi: { name: 'الشيخ سعد الغامدي', url: 'https://server7.mp3quran.net/s_gmd/' },
-    maher: { name: 'الشيخ ماهر المعيقلي', url: 'https://server12.mp3quran.net/maher/' },
-    ajmy: { name: 'الشيخ أحمد العجمي', url: 'https://server10.mp3quran.net/ajm/' },
-    shuraim: { name: 'الشيخ سعود الشريم', url: 'https://server7.mp3quran.net/shur/' },
-    hudhaify: { name: 'الشيخ علي الحذيفي', url: 'https://server9.mp3quran.net/hthfi/' }
+    minshawi: {
+      name: 'الشيخ محمد صديق المنشاوي (مرتل)',
+      urls: [
+        'https://server10.mp3quran.net/minsh/',
+        'https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/'
+      ]
+    },
+    minshawi_mujawwad: {
+      name: 'الشيخ محمد صديق المنشاوي (مجود)',
+      urls: [
+        'https://server10.mp3quran.net/minsh/Almusshaf-Al-Mojawwad/',
+        'https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee_mujawwad/'
+      ]
+    },
+    abdulbasit: {
+      name: 'الشيخ عبد الباسط عبد الصمد (مرتل)',
+      urls: [
+        'https://server7.mp3quran.net/basit/',
+        'https://everyayah.com/data/AbdulSamad_64kbps_QuranExplorer.Com/'
+      ]
+    },
+    abdulbasit_mujawwad: {
+      name: 'الشيخ عبد الباسط عبد الصمد (مجود)',
+      urls: [
+        'https://server7.mp3quran.net/basit/Almusshaf-Al-Mojawwad/',
+        'https://download.quranicaudio.com/quran/abdul_basit_mujawwad/'
+      ]
+    },
+    husary: {
+      name: 'الشيخ محمود خليل الحصري',
+      urls: [
+        'https://server13.mp3quran.net/husr/',
+        'https://download.quranicaudio.com/quran/mahmood_khaleel_al-husaree/'
+      ]
+    },
+    afs: {
+      name: 'الشيخ مشاري راشد العفاسي',
+      urls: [
+        'https://server8.mp3quran.net/afs/',
+        'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/'
+      ]
+    },
+    ghamadi: {
+      name: 'الشيخ سعد الغامدي',
+      urls: [
+        'https://server7.mp3quran.net/s_gmd/',
+        'https://download.quranicaudio.com/quran/sa3d_al-ghaamidee/complete/'
+      ]
+    },
+    maher: {
+      name: 'الشيخ ماهر المعيقلي',
+      urls: [
+        'https://server12.mp3quran.net/maher/',
+        'https://download.quranicaudio.com/quran/maher_2/'
+      ]
+    },
+    ajmy: {
+      name: 'الشيخ أحمد العجمي',
+      urls: [
+        'https://server10.mp3quran.net/ajm/',
+        'https://download.quranicaudio.com/quran/ahmed_ibn_3ali_al-3ajamy/'
+      ]
+    },
+    shuraim: {
+      name: 'الشيخ سعود الشريم',
+      urls: [
+        'https://server7.mp3quran.net/shur/',
+        'https://download.quranicaudio.com/quran/sa3ood_ash-shuraym/'
+      ]
+    },
+    hudhaify: {
+      name: 'الشيخ علي الحذيفي',
+      urls: [
+        'https://server9.mp3quran.net/hthfi/',
+        'https://download.quranicaudio.com/quran/ali_alhuthaify/'
+      ]
+    }
   };
 
   // بيانات الأذكار
@@ -850,7 +916,8 @@
       bismillahEl.style.display = (surah.n === 9 || surah.n === 1) ? 'none' : 'block';
     }
 
-    var rName = (RECITERS[state.currentReciter] && RECITERS[state.currentReciter].name) || '';
+    var reciterKey = state.currentReciter || 'minshawi';
+    var rName = (RECITERS[reciterKey] && RECITERS[reciterKey].name) || '';
     if (rNameEl) rNameEl.textContent = 'بصوت ' + rName;
 
     // تطبيق الثيم وحجم الخط
@@ -877,7 +944,20 @@
       var ayahs = await fetchSurahAyahs(surah.n);
       renderAyahs(ayahs, scrollToAyah);
     } catch (err) {
-      streamEl.innerHTML = '<div class="quran-reader-error"><i class="fa-solid fa-triangle-exclamation"></i><p>تعذر تحميل نص السورة، يرجى التحقق من الاتصال والمحاولة ثانية.</p></div>';
+      console.warn('Failed to load surah text:', err);
+      streamEl.innerHTML = '<div class="quran-reader-error" style="text-align:center;padding:40px 20px">' +
+        '<i class="fa-solid fa-triangle-exclamation" style="font-size:2.2rem;color:var(--coral);margin-bottom:12px;display:block"></i>' +
+        '<p style="font-size:1.1rem;margin:0 0 16px;color:var(--text)">تعذر تحميل نص السورة الكريمة حالياً</p>' +
+        '<button type="button" class="primary-btn" id="retryLoadSurahBtn" style="padding:9px 24px;font-size:0.88rem;cursor:pointer">' +
+        '<i class="fa-solid fa-rotate-right"></i> إعادة المحاولة الآن' +
+        '</button>' +
+        '</div>';
+      var retryBtn = document.getElementById('retryLoadSurahBtn');
+      if (retryBtn) {
+        retryBtn.onclick = function () {
+          openQuranReader(surah.n, scrollToAyah);
+        };
+      }
     }
   }
 
@@ -891,35 +971,72 @@
   }
 
   async function fetchSurahAyahs(surahNum) {
-    // فحص الكاش المحلي في localStorage
     var cacheKey = 'omar_surah_text_' + surahNum;
     try {
       var cached = localStorage.getItem(cacheKey);
       if (cached) {
-        return JSON.parse(cached);
+        var parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch (_) {}
 
-    // طلب الآيات من Al-Quran Cloud API
-    var res = await fetch('https://api.alquran.cloud/v1/surah/' + surahNum + '/quran-uthmani');
-    if (!res.ok) throw new Error('API error');
-    var json = await res.json();
-    var ayahs = (json && json.data && json.data.ayahs) || [];
-
-    // تنظيف البسملة من أول آية إلا في الفاتحة
-    if (surahNum !== 1 && ayahs.length > 0) {
-      var firstText = ayahs[0].text;
-      var bismillahStr = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
-      if (firstText.indexOf(bismillahStr) === 0) {
-        ayahs[0].text = firstText.replace(bismillahStr, '').trim();
+    // Tier 1: Internal API (Fast, Cached on Server, Zero CORS issues)
+    try {
+      var localRes = await fetch('/api/quran/surah/' + surahNum, { signal: AbortSignal.timeout(6000) });
+      if (localRes.ok) {
+        var localJson = await localRes.json();
+        if (localJson && localJson.success && Array.isArray(localJson.ayahs) && localJson.ayahs.length > 0) {
+          try { localStorage.setItem(cacheKey, JSON.stringify(localJson.ayahs)); } catch (_) {}
+          return localJson.ayahs;
+        }
       }
+    } catch (e) {
+      console.warn('Local quran API fallback triggered:', e);
     }
 
+    // Tier 2: Quran.com API v4
     try {
-      localStorage.setItem(cacheKey, JSON.stringify(ayahs));
-    } catch (_) {}
+      var qdcRes = await fetch('https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=' + surahNum, { signal: AbortSignal.timeout(6000) });
+      if (qdcRes.ok) {
+        var qdcJson = await qdcRes.json();
+        if (qdcJson && Array.isArray(qdcJson.verses) && qdcJson.verses.length > 0) {
+          var ayahs = qdcJson.verses.map(function (v, idx) {
+            return { numberInSurah: idx + 1, text: v.text_uthmani };
+          });
+          if (surahNum !== 1 && ayahs.length > 0) {
+            var bStr = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ';
+            if (ayahs[0].text.indexOf(bStr) === 0) ayahs[0].text = ayahs[0].text.replace(bStr, '').trim();
+          }
+          try { localStorage.setItem(cacheKey, JSON.stringify(ayahs)); } catch (_) {}
+          return ayahs;
+        }
+      }
+    } catch (e) {
+      console.warn('Quran.com API fallback triggered:', e);
+    }
 
-    return ayahs;
+    // Tier 3: Al-Quran Cloud API
+    try {
+      var aqcRes = await fetch('https://api.alquran.cloud/v1/surah/' + surahNum + '/quran-uthmani', { signal: AbortSignal.timeout(6000) });
+      if (aqcRes.ok) {
+        var aqcJson = await aqcRes.json();
+        if (aqcJson && aqcJson.data && Array.isArray(aqcJson.data.ayahs) && aqcJson.data.ayahs.length > 0) {
+          var aqcAyahs = aqcJson.data.ayahs.map(function (a) {
+            return { numberInSurah: a.numberInSurah, text: a.text };
+          });
+          if (surahNum !== 1 && aqcAyahs.length > 0) {
+            var bStr2 = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
+            if (aqcAyahs[0].text.indexOf(bStr2) === 0) aqcAyahs[0].text = aqcAyahs[0].text.replace(bStr2, '').trim();
+          }
+          try { localStorage.setItem(cacheKey, JSON.stringify(aqcAyahs)); } catch (_) {}
+          return aqcAyahs;
+        }
+      }
+    } catch (e) {
+      console.warn('Al-Quran Cloud fallback triggered:', e);
+    }
+
+    throw new Error('All Quran API sources failed');
   }
 
   function renderAyahs(ayahs, targetAyah) {
@@ -968,19 +1085,64 @@
 
     if (titleEl) titleEl.textContent = 'تفسير الآية (' + toArabicDigits(ayahNum) + ') من سورة ' + (state.currentSurah ? state.currentSurah.name : '');
     if (quoteEl) quoteEl.textContent = '﴿' + ayahText + '﴾';
-    if (expEl) expEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري جلب التفسير الميسر...';
+    if (expEl) expEl.innerHTML = '<div style="text-align:center;padding:25px 0"><i class="fa-solid fa-spinner fa-spin" style="color:var(--emerald);font-size:1.5rem"></i><p style="margin-top:10px;color:var(--muted)">جاري جلب التفسير الميسر...</p></div>';
 
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
 
+    var cacheKey = 'omar_tafsir_' + surahNum + '_' + ayahNum;
     try {
-      // طلب التفسير الميسر عبر API
-      var res = await fetch('https://api.alquran.cloud/v1/ayah/' + surahNum + ':' + ayahNum + '/ar.muyassar');
-      var json = await res.json();
-      var tafsirText = (json && json.data && json.data.text) || 'التفسير الميسر غير متوفر لهذه الآية حالياً.';
+      var cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        if (expEl) expEl.innerHTML = '<p class="tafsir-paragraph">' + cached + '</p>';
+        return;
+      }
+    } catch (_) {}
+
+    var tafsirText = '';
+
+    // Tier 1: Internal API
+    try {
+      var localRes = await fetch('/api/quran/tafsir/' + surahNum + '/' + ayahNum, { signal: AbortSignal.timeout(5000) });
+      if (localRes.ok) {
+        var localJson = await localRes.json();
+        if (localJson && localJson.success && localJson.tafsir) {
+          tafsirText = localJson.tafsir;
+        }
+      }
+    } catch (_) {}
+
+    // Tier 2: QuranEnc
+    if (!tafsirText) {
+      try {
+        var qeRes = await fetch('https://quranenc.com/api/v1/translation/aya/arabic_moyassar/' + surahNum + '/' + ayahNum, { signal: AbortSignal.timeout(5000) });
+        if (qeRes.ok) {
+          var qeJson = await qeRes.json();
+          if (qeJson && qeJson.result && qeJson.result.translation) {
+            tafsirText = qeJson.result.translation;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Tier 3: Al-Quran Cloud
+    if (!tafsirText) {
+      try {
+        var aqcRes = await fetch('https://api.alquran.cloud/v1/ayah/' + surahNum + ':' + ayahNum + '/ar.muyassar', { signal: AbortSignal.timeout(5000) });
+        if (aqcRes.ok) {
+          var aqcJson = await aqcRes.json();
+          if (aqcJson && aqcJson.data && aqcJson.data.text) {
+            tafsirText = aqcJson.data.text;
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (tafsirText) {
+      try { localStorage.setItem(cacheKey, tafsirText); } catch (_) {}
       if (expEl) expEl.innerHTML = '<p class="tafsir-paragraph">' + tafsirText + '</p>';
-    } catch (_) {
-      if (expEl) expEl.innerHTML = '<p class="tafsir-paragraph">تعذر تحميل التفسير في الوقت الحالي، يرجى المحاولة لاحقاً.</p>';
+    } else {
+      if (expEl) expEl.innerHTML = '<p class="tafsir-paragraph" style="color:var(--coral)">تعذر تحميل التفسير في الوقت الحالي، يرجى المحاولة لاحقاً.</p>';
     }
   }
 
@@ -1088,16 +1250,26 @@
   }
 
   // ────────────────────────── 4. مشغل الصوتيات والتلاوة ──────────────────────────
-  function playSurahAudio(surahNum) {
+  var currentAudioCdnIndex = 0;
+  var currentAudioSurahNum = 0;
+
+  function playSurahAudio(surahNum, cdnIndex) {
     var surah = SURAHS.find(function (s) { return s.n === surahNum; });
     if (!surah) return;
 
+    cdnIndex = cdnIndex || 0;
+    currentAudioCdnIndex = cdnIndex;
+    currentAudioSurahNum = surahNum;
+    state.currentSurah = surah;
+
     var reciterKey = state.currentReciter || 'minshawi';
     var reciterObj = RECITERS[reciterKey] || RECITERS.minshawi;
+    var urlsList = reciterObj.urls || [reciterObj.url];
+    var baseUrl = urlsList[cdnIndex % urlsList.length];
 
     // تنسيق رقم السورة إلى ٣ خانات مثل 001.mp3 أو 114.mp3
     var numStr = (surah.n < 10 ? '00' : (surah.n < 100 ? '0' : '')) + surah.n;
-    var audioUrl = reciterObj.url + numStr + '.mp3';
+    var audioUrl = baseUrl + numStr + '.mp3';
 
     // إيقاف الراديو إذا كان يعمل
     stopRadio();
@@ -1108,26 +1280,74 @@
     var playPauseBtn = document.getElementById('floatingPlayPauseBtn');
 
     if (titleEl) titleEl.textContent = 'سورة ' + surah.name;
-    if (reciterEl) reciterEl.textContent = reciterObj.name;
+    if (reciterEl) reciterEl.textContent = reciterObj.name + (cdnIndex > 0 ? ' (خادم احتياطي)' : '');
     if (floatingBar) floatingBar.style.display = 'block';
 
+    if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    // إعادة تعيين المشغل وتحميل الملف
+    try {
+      state.audioElement.pause();
+      state.audioElement.removeAttribute('src');
+      state.audioElement.load();
+    } catch (_) {}
+
+    state.audioElement.crossOrigin = 'anonymous';
     state.audioElement.src = audioUrl;
-    state.audioElement.play().then(function () {
+
+    state.audioElement.oncanplay = function () {
+      if (reciterEl) reciterEl.textContent = reciterObj.name;
+    };
+
+    state.audioElement.onplaying = function () {
       state.isPlayingAudio = true;
       if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-    }).catch(function (e) {
-      console.warn('Audio play error:', e);
-      if (window.showToast) window.showToast('تعذر تشغيل التلاوة، يرجى المحاولة لاحقاً', 'warning');
-    });
+      if (reciterEl) reciterEl.textContent = reciterObj.name;
+    };
+
+    state.audioElement.onwaiting = function () {
+      if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    };
+
+    state.audioElement.onpause = function () {
+      state.isPlayingAudio = false;
+      if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+    };
+
+    state.audioElement.onerror = function () {
+      console.warn('Audio play error on source:', audioUrl);
+      if (cdnIndex + 1 < urlsList.length) {
+        console.log('Failing over to backup audio CDN:', cdnIndex + 1);
+        playSurahAudio(surahNum, cdnIndex + 1);
+      } else {
+        state.isPlayingAudio = false;
+        if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        if (reciterEl) reciterEl.textContent = 'تعذر تشغيل الصوت';
+        if (window.showToast) window.showToast('تعذر تشغيل التلاوة حالياً، يرجى تجربة قارئ آخر', 'warning');
+      }
+    };
 
     state.audioElement.onended = function () {
       state.isPlayingAudio = false;
       if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
       // تشغيل السورة التالية تلقائياً
       if (surah.n < 114) {
-        playSurahAudio(surah.n + 1);
+        playSurahAudio(surah.n + 1, 0);
       }
     };
+
+    var playPromise = state.audioElement.play();
+    if (playPromise !== undefined) {
+      playPromise.then(function () {
+        state.isPlayingAudio = true;
+        if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+      }).catch(function (e) {
+        console.warn('Audio play promise rejected:', e);
+        if (cdnIndex + 1 < urlsList.length) {
+          playSurahAudio(surahNum, cdnIndex + 1);
+        }
+      });
+    }
   }
 
   function initFloatingPlayer() {
@@ -1147,9 +1367,14 @@
           state.isPlayingAudio = false;
           playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
         } else {
-          state.audioElement.play();
-          state.isPlayingAudio = true;
-          playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+          state.audioElement.play().then(function () {
+            state.isPlayingAudio = true;
+            playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+          }).catch(function () {
+            if (currentAudioSurahNum) {
+              playSurahAudio(currentAudioSurahNum, currentAudioCdnIndex);
+            }
+          });
         }
       };
     }
@@ -1180,7 +1405,7 @@
 
     if (closeBtn) {
       closeBtn.onclick = function () {
-        state.audioElement.pause();
+        try { state.audioElement.pause(); } catch (_) {}
         state.isPlayingAudio = false;
         var floatingBar = document.getElementById('quranFloatingPlayer');
         if (floatingBar) floatingBar.style.display = 'none';
@@ -1190,7 +1415,7 @@
     if (prevBtn) {
       prevBtn.onclick = function () {
         if (state.currentSurah && state.currentSurah.n > 1) {
-          playSurahAudio(state.currentSurah.n - 1);
+          playSurahAudio(state.currentSurah.n - 1, 0);
         }
       };
     }
@@ -1198,7 +1423,7 @@
     if (nextBtn) {
       nextBtn.onclick = function () {
         if (state.currentSurah && state.currentSurah.n < 114) {
-          playSurahAudio(state.currentSurah.n + 1);
+          playSurahAudio(state.currentSurah.n + 1, 0);
         }
       };
     }

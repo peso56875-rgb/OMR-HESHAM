@@ -643,7 +643,7 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
       </div>
 
       {/* Script for Quran functionality */}
-      <script src="/static/quran.js?v=2.6"></script>
+      <script src="/static/quran.js?v=2.7"></script>
     </Layout>
   )
 }
