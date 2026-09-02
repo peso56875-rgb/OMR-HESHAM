@@ -24,25 +24,23 @@ export function Header({ user }: { user?: UserSession }) {
     <header class="site-header" id="site-header">
       <a class="brand" href="/" aria-label="الرئيسية">
         <img src="/static/foundation-logo.png" alt="شعار مؤسسة الدكتور عمر هشام" />
-        <span><b>مؤسسة الدكتور</b><strong>عمر هشام الخيرية</strong></span>
+        <span class="brand-text"><b>مؤسسة الدكتور</b><strong>عمر هشام الخيرية</strong></span>
       </a>
       <nav class="desktop-nav" aria-label="التنقل الرئيسي">
-        <a href="/">الرئيسية</a>
-        <a href="/about">من نحن</a>
-        <a href="/campaigns">الحملات</a>
-        <a href="/cases">الحالات</a>
-        <a href="/quran" style="color:var(--emerald);font-weight:700">{icon('fa-book-quran')} القرآن والأذكار</a>
-        <a href="/zakat-calculator" style="color:var(--gold-600);font-weight:700">{icon('fa-scale-balanced')} حاسبة الزكاة</a>
-        <a href="/achievements">أثرنا</a>
-        <a href="/news">الأخبار</a>
-        <a href="/contact">تواصل</a>
+        <a href="/" class="nav-item">الرئيسية</a>
+        <a href="/campaigns" class="nav-item">الحملات</a>
+        <a href="/cases" class="nav-item">الحالات</a>
+        <a href="/quran" class="nav-item nav-badge-quran">{icon('fa-book-quran')} <span>القرآن</span></a>
+        <a href="/zakat-calculator" class="nav-item nav-badge-zakat">{icon('fa-scale-balanced')} <span>الزكاة</span></a>
+        <a href="/about" class="nav-item">من نحن</a>
+        <a href="/contact" class="nav-item">تواصل</a>
         {user ? (
           <>
-            <a href="/profile" class="profile-link" style="color:var(--blue-600);font-weight:bold"><i class="fa-solid fa-user"></i> حسابي</a>
-            {user.role === 'admin' && <a href="/dashboard" class="dash-link" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-gauge"></i> التحكم</a>}
+            <a href="/profile" class="nav-item profile-link" style="color:var(--blue-600);font-weight:bold"><i class="fa-solid fa-user"></i> حسابي</a>
+            {user.role === 'admin' && <a href="/dashboard" class="nav-item dash-link" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-gauge"></i> التحكم</a>}
           </>
         ) : (
-          <a href="/login" class="login-link"><i class="fa-solid fa-right-to-bracket"></i> دخول</a>
+          <a href="/login" class="nav-item login-link"><i class="fa-solid fa-right-to-bracket"></i> دخول</a>
         )}
       </nav>
       <div class="header-actions">
@@ -52,7 +50,7 @@ export function Header({ user }: { user?: UserSession }) {
         <NotificationBell user={user} />
         <button class="icon-btn" id="theme-toggle" aria-label="تغيير المظهر">{icon('fa-moon')}</button>
         <button class="icon-btn menu-toggle" id="menu-toggle" aria-label="فتح القائمة">{icon('fa-bars-staggered')}</button>
-        <a class="donate-pill magnetic" href="/donate"><span>تبرّع الآن</span>{icon('fa-heart')}</a>
+        <a class="donate-pill magnetic" href="/donate"><span class="donate-btn-label">تبرّع</span>{icon('fa-heart')}</a>
       </div>
     </header>
     <aside class="mobile-drawer" id="mobile-drawer" aria-hidden="true">
@@ -141,7 +139,7 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
     <link rel="icon" type="image/png" href="/static/foundation-logo.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
-    <link rel="stylesheet" href="/static/style.css?v=2.5" />
+    <link rel="stylesheet" href="/static/style.css?v=2.6" />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'NGO',
@@ -176,8 +174,8 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
       <div class="confirm-modal" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true"><div class="confirm-card"><span class="confirm-icon">{icon('fa-triangle-exclamation')}</span><h2 id="confirm-title">تأكيد الإجراء</h2><p id="confirm-message">هل أنت متأكد من تنفيذ هذا الإجراء؟</p><div><button type="button" class="confirm-cancel">إلغاء</button><button type="button" class="confirm-accept">تأكيد</button></div></div></div>
       <SearchModal />
       {pageType === 'public' && <nav class="mobile-bottom" aria-label="تنقل سريع"><a href="/">{icon('fa-house')}<span>الرئيسية</span></a><a href="/campaigns">{icon('fa-seedling')}<span>الحملات</span></a><a class="bottom-donate" href="/donate">{icon('fa-heart')}<span>تبرّع</span></a><a href="/volunteers">{icon('fa-hand-holding-hand')}<span>تطوع</span></a><a href="/contact">{icon('fa-comment-dots')}<span>تواصل</span></a></nav>}
-      <script src="/static/app.js?v=2.5"></script>
-      <script src="/static/notifications.js?v=2.5"></script>
+      <script src="/static/app.js?v=2.6"></script>
+      <script src="/static/notifications.js?v=2.6"></script>
     </body></html>
 }
 
