@@ -235,4 +235,85 @@ quranApi.get('/audio/:reciter/:surah', async (c) => {
   return c.redirect(`${baseUrls[0]}${numStr}.mp3`, 302)
 })
 
+// 4. Endpoint to stream live Quran Radio stations with multi-server failover
+const RADIO_STREAM_MAP: Record<string, string[]> = {
+  cairo: [
+    'https://stream.radiojar.com/8s5u5tpdtwzuv',
+    'https://stream.zeno.fm/f3wvbbqmdg8uv',
+    'https://n0a.radiojar.com/8s5u5tpdtwzuv'
+  ],
+  dosari_radio: [
+    'https://backup.qurango.net/radio/yasser_aldosari',
+    'https://qurango.net/radio/yasser_aldosari'
+  ],
+  minshawi_radio: [
+    'https://backup.qurango.net/radio/mohammed_siddiq_alminshawi',
+    'https://qurango.net/radio/mohammed_siddiq_alminshawi'
+  ],
+  abdulbasit_radio: [
+    'https://backup.qurango.net/radio/abdulbasit_abdulsamad_mojawwad',
+    'https://backup.qurango.net/radio/abdulbasit_abdulsamad_murattal'
+  ],
+  husary_radio: [
+    'https://backup.qurango.net/radio/mahmoud_khalil_alhussary',
+    'https://qurango.net/radio/mahmoud_khalil_alhussary'
+  ],
+  afs_radio: [
+    'https://backup.qurango.net/radio/mishary_alafasi',
+    'https://qurango.net/radio/mishary_alafasi'
+  ],
+  maher_radio: [
+    'https://backup.qurango.net/radio/maher',
+    'https://qurango.net/radio/maher'
+  ],
+  ghamdi_radio: [
+    'https://backup.qurango.net/radio/saad_alghamdi',
+    'https://qurango.net/radio/saad_alghamdi'
+  ],
+  tarateel: [
+    'https://backup.qurango.net/radio/tarateel',
+    'https://qurango.net/radio/tarateel'
+  ],
+  tafseer_radio: [
+    'https://backup.qurango.net/radio/tafseer',
+    'https://qurango.net/radio/tafseer'
+  ],
+  ruqyah_radio: [
+    'https://backup.qurango.net/radio/roqiah',
+    'https://qurango.net/radio/roqiah'
+  ]
+}
+
+quranApi.get('/radio/:id', async (c) => {
+  const radioId = c.req.param('id')
+  const streamUrls = RADIO_STREAM_MAP[radioId] || RADIO_STREAM_MAP.cairo
+
+  for (const streamUrl of streamUrls) {
+    try {
+      const res = await fetch(streamUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)',
+          'Accept': '*/*'
+        },
+        signal: AbortSignal.timeout(6000)
+      })
+
+      if (res.ok && res.body) {
+        return new Response(res.body, {
+          status: 200,
+          headers: {
+            'Content-Type': 'audio/mpeg',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Access-Control-Allow-Origin': '*'
+          }
+        })
+      }
+    } catch (_) {}
+  }
+
+  return c.redirect(streamUrls[0], 302)
+})
+
 export { quranApi }

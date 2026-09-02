@@ -505,9 +505,9 @@
       name: 'إذاعة القرآن الكريم من القاهرة',
       tagline: 'البث الحي والمباشر على مدار ٢٤ ساعة',
       urls: [
+        '/api/quran/radio/cairo',
         'https://stream.radiojar.com/8s5u5tpdtwzuv',
-        'https://stream.zeno.fm/f3wvbbqmdg8uv',
-        'https://n0a.radiojar.com/8s5u5tpdtwzuv'
+        'https://stream.zeno.fm/f3wvbbqmdg8uv'
       ],
       icon: 'fa-tower-broadcast'
     },
@@ -516,6 +516,7 @@
       name: 'إذاعة الشيخ ياسر الدوسري',
       tagline: 'تلاوات خاشعة ومؤثرة بصوت الشيخ الدوسري',
       urls: [
+        '/api/quran/radio/dosari_radio',
         'https://backup.qurango.net/radio/yasser_aldosari',
         'https://qurango.net/radio/yasser_aldosari'
       ],
@@ -526,6 +527,7 @@
       name: 'إذاعة الشيخ محمد صديق المنشاوي',
       tagline: 'المصحف المرتل والمجود بنقاء فائق',
       urls: [
+        '/api/quran/radio/minshawi_radio',
         'https://backup.qurango.net/radio/mohammed_siddiq_alminshawi',
         'https://qurango.net/radio/mohammed_siddiq_alminshawi'
       ],
@@ -536,6 +538,7 @@
       name: 'إذاعة الشيخ عبد الباسط عبد الصمد',
       tagline: 'تلاوات خاشعة من الزمن الجميل',
       urls: [
+        '/api/quran/radio/abdulbasit_radio',
         'https://backup.qurango.net/radio/abdulbasit_abdulsamad_mojawwad',
         'https://backup.qurango.net/radio/abdulbasit_abdulsamad_murattal'
       ],
@@ -546,6 +549,7 @@
       name: 'إذاعة الشيخ محمود خليل الحصري',
       tagline: 'معلم الأجيال والتلاوة المتقنة',
       urls: [
+        '/api/quran/radio/husary_radio',
         'https://backup.qurango.net/radio/mahmoud_khalil_alhussary',
         'https://qurango.net/radio/mahmoud_khalil_alhussary'
       ],
@@ -556,6 +560,7 @@
       name: 'إذاعة الشيخ مشاري راشد العفاسي',
       tagline: 'تلاوات خاشعة وعذبة بصوت العفاسي',
       urls: [
+        '/api/quran/radio/afs_radio',
         'https://backup.qurango.net/radio/mishary_alafasi',
         'https://qurango.net/radio/mishary_alafasi'
       ],
@@ -566,6 +571,7 @@
       name: 'إذاعة الشيخ ماهر المعيقلي',
       tagline: 'تلاوات الحرم المكي الشريف الخاشعة',
       urls: [
+        '/api/quran/radio/maher_radio',
         'https://backup.qurango.net/radio/maher',
         'https://qurango.net/radio/maher'
       ],
@@ -576,6 +582,7 @@
       name: 'إذاعة الشيخ سعد الغامدي',
       tagline: 'المصحف المرتل برواية حفص عن عاصم',
       urls: [
+        '/api/quran/radio/ghamdi_radio',
         'https://backup.qurango.net/radio/saad_alghamdi',
         'https://qurango.net/radio/saad_alghamdi'
       ],
@@ -586,6 +593,7 @@
       name: 'إذاعة تراتيل وتلاوات خاشعة',
       tagline: 'مختارات من روائع التلاوات لكبار القراء',
       urls: [
+        '/api/quran/radio/tarateel',
         'https://backup.qurango.net/radio/tarateel',
         'https://qurango.net/radio/tarateel'
       ],
@@ -596,6 +604,7 @@
       name: 'إذاعة تفسير القرآن الكريم',
       tagline: 'خواطر وتدبر آيات الذكر الحكيم للشيخ الشعراوي',
       urls: [
+        '/api/quran/radio/tafseer_radio',
         'https://backup.qurango.net/radio/tafseer',
         'https://qurango.net/radio/tafseer'
       ],
@@ -606,6 +615,7 @@
       name: 'إذاعة الرقية الشرعية',
       tagline: 'آيات الحفظ والشفاء والسكينة والتحصين',
       urls: [
+        '/api/quran/radio/ruqyah_radio',
         'https://backup.qurango.net/radio/roqiah',
         'https://qurango.net/radio/roqiah'
       ],
@@ -2549,8 +2559,13 @@
 
   function stopRadio() {
     try {
-      state.radioAudio.pause();
-      state.radioAudio.removeAttribute('src');
+      if (state.radioAudio) {
+        state.radioAudio.pause();
+        state.radioAudio.onplaying = null;
+        state.radioAudio.onerror = null;
+        state.radioAudio.src = '';
+        state.radioAudio.removeAttribute('src');
+      }
     } catch (_) {}
     state.isPlayingRadio = false;
     state.activeRadioId = null;
@@ -2580,6 +2595,9 @@
 
     stopRadio();
 
+    // إنشاء كائن صوت نقي للبث المباشر
+    state.radioAudio = new Audio();
+
     var urls = radio.urls || [radio.url];
     var streamUrl = urls[urlIdx % urls.length];
 
@@ -2591,9 +2609,7 @@
       if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري الاتصال بالبث...</span>';
     }
 
-    state.radioAudio.removeAttribute('crossorigin');
     state.radioAudio.src = streamUrl;
-    try { state.radioAudio.load(); } catch (_) {}
 
     state.radioAudio.onplaying = function () {
       state.isPlayingRadio = true;
@@ -2604,8 +2620,8 @@
       if (window.showToast) window.showToast('أنت الآن تستمع إلى: ' + radio.name + ' 📻', 'info');
     };
 
-    state.radioAudio.onerror = function () {
-      console.warn('Radio stream error on source:', streamUrl);
+    state.radioAudio.onerror = function (e) {
+      console.warn('Radio stream error on source:', streamUrl, e);
       if (urlIdx + 1 < urls.length) {
         console.log('Failing over to next radio stream URL:', urlIdx + 1);
         playRadioStation(radio, urlIdx + 1);
