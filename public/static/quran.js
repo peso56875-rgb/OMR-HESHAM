@@ -1681,26 +1681,48 @@
 
     // شريط التقديم والترجيع في الفوتر
     if (readerScrubber) {
-      readerScrubber.oninput = function () {
-        if (state.audioElement.duration) {
-          state.audioElement.currentTime = (readerScrubber.value / 100) * state.audioElement.duration;
+      readerScrubber.addEventListener('input', function () {
+        isUserSeeking = true;
+        if (state.audioElement.duration && !isNaN(state.audioElement.duration)) {
+          var previewSec = (parseFloat(readerScrubber.value) / 100) * state.audioElement.duration;
+          var formatted = formatTime(previewSec);
+          if (readerCurTime) readerCurTime.textContent = formatted;
+          var fCurTime = document.getElementById('floatingCurrentTime');
+          if (fCurTime) fCurTime.textContent = formatted;
         }
-      };
+      });
+
+      readerScrubber.addEventListener('change', function () {
+        if (state.audioElement.duration && !isNaN(state.audioElement.duration)) {
+          var targetSec = (parseFloat(readerScrubber.value) / 100) * state.audioElement.duration;
+          applySeekToAudio(targetSec);
+        }
+        clearTimeout(seekReleaseTimer);
+        seekReleaseTimer = setTimeout(function () {
+          isUserSeeking = false;
+        }, 350);
+      });
     }
 
     // تقديم وترجيع ١٠ ثوانٍ
     if (readerRewindBtn) {
-      readerRewindBtn.onclick = function () {
+      readerRewindBtn.onclick = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         if (state.audioElement.src) {
-          state.audioElement.currentTime = Math.max(0, state.audioElement.currentTime - 10);
+          var cur = state.audioElement.currentTime || 0;
+          applySeekToAudio(cur - 10);
         }
       };
     }
 
     if (readerForwardBtn) {
-      readerForwardBtn.onclick = function () {
-        if (state.audioElement.src && state.audioElement.duration) {
-          state.audioElement.currentTime = Math.min(state.audioElement.duration, state.audioElement.currentTime + 10);
+      readerForwardBtn.onclick = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (state.audioElement.src) {
+          var cur = state.audioElement.currentTime || 0;
+          applySeekToAudio(cur + 10);
         }
       };
     }
@@ -1719,6 +1741,10 @@
         if (state.currentSurah) {
           if (state.isPlayingAudio && currentAudioSurahNum === state.currentSurah.n) {
             state.audioElement.pause();
+          } else if (!state.isPlayingAudio && currentAudioSurahNum === state.currentSurah.n && state.audioElement.src) {
+            state.audioElement.play().catch(function () {
+              playSurahAudio(state.currentSurah.n, 0);
+            });
           } else {
             playSurahAudio(state.currentSurah.n, 0);
           }
@@ -1772,6 +1798,39 @@
   // ────────────────────────── 4. مشغل الصوتيات والتلاوة ──────────────────────────
   var currentAudioCdnIndex = 0;
   var currentAudioSurahNum = 0;
+  var isUserSeeking = false;
+  var seekReleaseTimer = null;
+
+  function applySeekToAudio(targetSeconds) {
+    if (!state.audioElement || !state.audioElement.src) return;
+    var dur = state.audioElement.duration;
+    if (!dur || isNaN(dur) || !isFinite(dur)) return;
+
+    var safeTime = Math.max(0, Math.min(dur - 0.2, targetSeconds));
+    try {
+      state.audioElement.currentTime = safeTime;
+    } catch (e) {
+      console.warn('Seek error:', e);
+    }
+
+    var pct = (safeTime / dur) * 100;
+    var formatted = formatTime(safeTime);
+    var formattedTot = formatTime(dur);
+
+    var rScrubber = document.getElementById('readerScrubber');
+    var rCurTime = document.getElementById('readerCurrentTime');
+    var rTotTime = document.getElementById('readerTotalTime');
+    var fScrubber = document.getElementById('floatingScrubber');
+    var fCurTime = document.getElementById('floatingCurrentTime');
+    var fTotTime = document.getElementById('floatingTotalTime');
+
+    if (rScrubber) rScrubber.value = pct;
+    if (rCurTime) rCurTime.textContent = formatted;
+    if (rTotTime) rTotTime.textContent = formattedTot;
+    if (fScrubber) fScrubber.value = pct;
+    if (fCurTime) fCurTime.textContent = formatted;
+    if (fTotTime) fTotTime.textContent = formattedTot;
+  }
 
   function updateAllAudioButtons(isPlaying, isBuffering) {
     var floatingBtn = document.getElementById('floatingPlayPauseBtn');
@@ -1951,10 +2010,13 @@
     }
 
     state.audioElement.ontimeupdate = function () {
-      if (state.audioElement.duration) {
-        var pct = (state.audioElement.currentTime / state.audioElement.duration) * 100;
-        var formattedCurrent = formatTime(state.audioElement.currentTime);
-        var formattedTotal = formatTime(state.audioElement.duration);
+      if (isUserSeeking) return;
+      if (state.audioElement.duration && !isNaN(state.audioElement.duration)) {
+        var cur = state.audioElement.currentTime || 0;
+        var dur = state.audioElement.duration;
+        var pct = (cur / dur) * 100;
+        var formattedCurrent = formatTime(cur);
+        var formattedTotal = formatTime(dur);
 
         // Floating Player
         if (scrubber) scrubber.value = pct;
@@ -1972,11 +2034,27 @@
     };
 
     if (scrubber) {
-      scrubber.oninput = function () {
-        if (state.audioElement.duration) {
-          state.audioElement.currentTime = (scrubber.value / 100) * state.audioElement.duration;
+      scrubber.addEventListener('input', function () {
+        isUserSeeking = true;
+        if (state.audioElement.duration && !isNaN(state.audioElement.duration)) {
+          var previewSec = (parseFloat(scrubber.value) / 100) * state.audioElement.duration;
+          var formatted = formatTime(previewSec);
+          if (curTime) curTime.textContent = formatted;
+          var rCurTime = document.getElementById('readerCurrentTime');
+          if (rCurTime) rCurTime.textContent = formatted;
         }
-      };
+      });
+
+      scrubber.addEventListener('change', function () {
+        if (state.audioElement.duration && !isNaN(state.audioElement.duration)) {
+          var targetSec = (parseFloat(scrubber.value) / 100) * state.audioElement.duration;
+          applySeekToAudio(targetSec);
+        }
+        clearTimeout(seekReleaseTimer);
+        seekReleaseTimer = setTimeout(function () {
+          isUserSeeking = false;
+        }, 350);
+      });
     }
 
     if (muteBtn) {

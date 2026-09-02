@@ -187,26 +187,47 @@ quranApi.get('/audio/:reciter/:surah', async (c) => {
   }
 
   const isDownload = c.req.query('download') === '1'
+  const rangeHeader = c.req.header('range')
   const numStr = (surahNum < 10 ? '00' : (surahNum < 100 ? '0' : '')) + surahNum
   const baseUrls = RECITER_AUDIO_MAP[reciter] || RECITER_AUDIO_MAP.minshawi
 
   for (const base of baseUrls) {
     try {
       const audioUrl = `${base}${numStr}.mp3`
+      const fetchHeaders: Record<string, string> = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+      }
+      if (rangeHeader) {
+        fetchHeaders['Range'] = rangeHeader
+      }
+
       const res = await fetch(audioUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-        signal: AbortSignal.timeout(6000)
+        headers: fetchHeaders,
+        signal: AbortSignal.timeout(8000)
       })
-      if (res.ok && res.body) {
-        const headers: Record<string, string> = {
-          'Content-Type': 'audio/mpeg',
-          'Accept-Ranges': 'bytes',
-          'Cache-Control': 'public, max-age=604800, s-maxage=2592000'
+
+      if ((res.status === 200 || res.status === 206) && res.body) {
+        const responseHeaders = new Headers()
+        responseHeaders.set('Content-Type', res.headers.get('content-type') || 'audio/mpeg')
+        responseHeaders.set('Accept-Ranges', 'bytes')
+        responseHeaders.set('Cache-Control', 'public, max-age=604800, s-maxage=2592000')
+
+        const contentRange = res.headers.get('content-range')
+        if (contentRange) {
+          responseHeaders.set('Content-Range', contentRange)
+        }
+        const contentLength = res.headers.get('content-length')
+        if (contentLength) {
+          responseHeaders.set('Content-Length', contentLength)
         }
         if (isDownload) {
-          headers['Content-Disposition'] = `attachment; filename="Surah_${numStr}_${reciter}.mp3"`
+          responseHeaders.set('Content-Disposition', `attachment; filename="Surah_${numStr}_${reciter}.mp3"`)
         }
-        return new Response(res.body, { headers })
+
+        return new Response(res.body, {
+          status: res.status,
+          headers: responseHeaders
+        })
       }
     } catch (_) {}
   }
