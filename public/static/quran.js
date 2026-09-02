@@ -505,9 +505,9 @@
       name: 'إذاعة القرآن الكريم من القاهرة',
       tagline: 'البث الحي والمباشر على مدار ٢٤ ساعة',
       urls: [
-        '/api/quran/radio/cairo',
         'https://stream.radiojar.com/8s5u5tpdtwzuv',
-        'https://stream.zeno.fm/f3wvbbqmdg8uv'
+        'https://n09.radiojar.com/8s5u5tpdtwzuv',
+        '/api/quran/radio/cairo'
       ],
       icon: 'fa-tower-broadcast'
     },
@@ -516,9 +516,9 @@
       name: 'إذاعة الشيخ ياسر الدوسري',
       tagline: 'تلاوات خاشعة ومؤثرة بصوت الشيخ الدوسري',
       urls: [
-        '/api/quran/radio/dosari_radio',
         'https://backup.qurango.net/radio/yasser_aldosari',
-        'https://qurango.net/radio/yasser_aldosari'
+        'https://qurango.net/radio/yasser_aldosari',
+        '/api/quran/radio/dosari_radio'
       ],
       icon: 'fa-microphone-lines'
     },
@@ -527,9 +527,10 @@
       name: 'إذاعة الشيخ محمد صديق المنشاوي',
       tagline: 'المصحف المرتل والمجود بنقاء فائق',
       urls: [
-        '/api/quran/radio/minshawi_radio',
+        'https://qurango.net/radio/mohammed_siddiq_alminshawi',
         'https://backup.qurango.net/radio/mohammed_siddiq_alminshawi',
-        'https://qurango.net/radio/mohammed_siddiq_alminshawi'
+        'https://backup.qurango.net/radio/mohammed_siddiq_alminshawi_mojawwad',
+        '/api/quran/radio/minshawi_radio'
       ],
       icon: 'fa-microphone-lines'
     },
@@ -538,9 +539,10 @@
       name: 'إذاعة الشيخ عبد الباسط عبد الصمد',
       tagline: 'تلاوات خاشعة من الزمن الجميل',
       urls: [
-        '/api/quran/radio/abdulbasit_radio',
         'https://backup.qurango.net/radio/abdulbasit_abdulsamad_mojawwad',
-        'https://backup.qurango.net/radio/abdulbasit_abdulsamad_murattal'
+        'https://backup.qurango.net/radio/abdulbasit_abdulsamad_murattal',
+        'https://qurango.net/radio/abdulbasit_abdulsamad_mojawwad',
+        '/api/quran/radio/abdulbasit_radio'
       ],
       icon: 'fa-volume-high'
     },
@@ -549,9 +551,9 @@
       name: 'إذاعة الشيخ محمود خليل الحصري',
       tagline: 'معلم الأجيال والتلاوة المتقنة',
       urls: [
-        '/api/quran/radio/husary_radio',
         'https://backup.qurango.net/radio/mahmoud_khalil_alhussary',
-        'https://qurango.net/radio/mahmoud_khalil_alhussary'
+        'https://qurango.net/radio/mahmoud_khalil_alhussary',
+        '/api/quran/radio/husary_radio'
       ],
       icon: 'fa-book-quran'
     },
@@ -560,9 +562,9 @@
       name: 'إذاعة الشيخ مشاري راشد العفاسي',
       tagline: 'تلاوات خاشعة وعذبة بصوت العفاسي',
       urls: [
-        '/api/quran/radio/afs_radio',
         'https://backup.qurango.net/radio/mishary_alafasi',
-        'https://qurango.net/radio/mishary_alafasi'
+        'https://qurango.net/radio/mishary_alafasi',
+        '/api/quran/radio/afs_radio'
       ],
       icon: 'fa-headphones'
     },
@@ -571,9 +573,9 @@
       name: 'إذاعة الشيخ ماهر المعيقلي',
       tagline: 'تلاوات الحرم المكي الشريف الخاشعة',
       urls: [
-        '/api/quran/radio/maher_radio',
         'https://backup.qurango.net/radio/maher',
-        'https://qurango.net/radio/maher'
+        'https://qurango.net/radio/maher',
+        '/api/quran/radio/maher_radio'
       ],
       icon: 'fa-kaaba'
     },
@@ -582,9 +584,9 @@
       name: 'إذاعة الشيخ سعد الغامدي',
       tagline: 'المصحف المرتل برواية حفص عن عاصم',
       urls: [
-        '/api/quran/radio/ghamdi_radio',
         'https://backup.qurango.net/radio/saad_alghamdi',
-        'https://qurango.net/radio/saad_alghamdi'
+        'https://qurango.net/radio/saad_alghamdi',
+        '/api/quran/radio/ghamdi_radio'
       ],
       icon: 'fa-microphone'
     },
@@ -593,9 +595,9 @@
       name: 'إذاعة تراتيل وتلاوات خاشعة',
       tagline: 'مختارات من روائع التلاوات لكبار القراء',
       urls: [
-        '/api/quran/radio/tarateel',
         'https://backup.qurango.net/radio/tarateel',
-        'https://qurango.net/radio/tarateel'
+        'https://qurango.net/radio/tarateel',
+        '/api/quran/radio/tarateel'
       ],
       icon: 'fa-headphones'
     },
@@ -604,9 +606,9 @@
       name: 'إذاعة تفسير القرآن الكريم',
       tagline: 'خواطر وتدبر آيات الذكر الحكيم للشيخ الشعراوي',
       urls: [
-        '/api/quran/radio/tafseer_radio',
         'https://backup.qurango.net/radio/tafseer',
-        'https://qurango.net/radio/tafseer'
+        'https://qurango.net/radio/tafseer',
+        '/api/quran/radio/tafseer_radio'
       ],
       icon: 'fa-book-open-reader'
     },
@@ -615,9 +617,9 @@
       name: 'إذاعة الرقية الشرعية',
       tagline: 'آيات الحفظ والشفاء والسكينة والتحصين',
       urls: [
-        '/api/quran/radio/ruqyah_radio',
         'https://backup.qurango.net/radio/roqiah',
-        'https://qurango.net/radio/roqiah'
+        'https://qurango.net/radio/roqiah',
+        '/api/quran/radio/ruqyah_radio'
       ],
       icon: 'fa-shield-halved'
     }
@@ -2569,13 +2571,25 @@
 
   // ────────────────────────── 9. إذاعات القرآن الكريم ──────────────────────────
   var currentRadioUrlIndex = 0;
+  var radioWatchdogTimer = null;
+  var lastRadioCurrentTime = -1;
+  var radioStallCount = 0;
 
   function stopRadio() {
+    if (radioWatchdogTimer) {
+      clearInterval(radioWatchdogTimer);
+      radioWatchdogTimer = null;
+    }
+    radioStallCount = 0;
+    lastRadioCurrentTime = -1;
+
     try {
       if (state.radioAudio) {
-        state.radioAudio.pause();
         state.radioAudio.onplaying = null;
         state.radioAudio.onerror = null;
+        state.radioAudio.onstalled = null;
+        state.radioAudio.onended = null;
+        state.radioAudio.pause();
         state.radioAudio.src = '';
         state.radioAudio.removeAttribute('src');
       }
@@ -2608,12 +2622,15 @@
 
     stopRadio();
 
-    // إنشاء كائن صوت نقي للبث المباشر
-    state.radioAudio = new Audio();
+    // استخدام كائن صوت موحد
+    if (!state.radioAudio) {
+      state.radioAudio = new Audio();
+    }
 
     var urls = radio.urls || [radio.url];
     var streamUrl = urls[urlIdx % urls.length];
 
+    state.isPlayingRadio = true;
     state.activeRadioId = radio.id;
     var card = document.getElementById('radio-card-' + radio.id);
     if (card) {
@@ -2622,10 +2639,16 @@
       if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري الاتصال بالبث...</span>';
     }
 
-    state.radioAudio.src = streamUrl;
+    // تجهيز مسار البث مع بارامتر زمني لمنع تخزين الكاش القديم
+    var liveUrl = streamUrl.startsWith('http')
+      ? streamUrl + (streamUrl.indexOf('?') === -1 ? '?' : '&') + '_ts=' + Date.now()
+      : streamUrl;
+
+    state.radioAudio.removeAttribute('crossorigin');
+    state.radioAudio.src = liveUrl;
 
     state.radioAudio.onplaying = function () {
-      state.isPlayingRadio = true;
+      radioStallCount = 0;
       if (card) {
         var btn = card.querySelector('.radio-play-btn');
         if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>إيقاف البث</span>';
@@ -2633,41 +2656,58 @@
       if (window.showToast) window.showToast('أنت الآن تستمع إلى: ' + radio.name + ' 📻', 'info');
     };
 
-    // إعادة الاتصال التلقائي في حال انقطاع تدفق البث
-    state.radioAudio.onstalled = function () {
-      if (state.isPlayingRadio && state.activeRadioId === radio.id) {
-        console.log('Radio stream stalled, attempting reconnect...');
-        try { state.radioAudio.play(); } catch (_) {}
-      }
-    };
-
-    state.radioAudio.onended = function () {
-      if (state.isPlayingRadio && state.activeRadioId === radio.id) {
-        console.log('Radio stream ended, re-establishing live connection...');
-        playRadioStation(radio, urlIdx);
-      }
-    };
-
     state.radioAudio.onerror = function (e) {
-      console.warn('Radio stream error on source:', streamUrl, e);
-      if (urlIdx + 1 < urls.length) {
-        console.log('Failing over to next radio stream URL:', urlIdx + 1);
-        playRadioStation(radio, urlIdx + 1);
-      } else {
-        stopRadio();
-        if (window.showToast) window.showToast('تعذر تشغيل بث الإذاعة في الوقت الحالي، يرجى المحاولة لاحقاً', 'warning');
+      console.warn('Radio stream error on:', liveUrl, e);
+      if (state.isPlayingRadio && state.activeRadioId === radio.id) {
+        if (urlIdx + 1 < urls.length) {
+          console.log('Switching to alternative live stream server:', urlIdx + 1);
+          playRadioStation(radio, urlIdx + 1);
+        } else {
+          // محاولة استئناف الاتصال تلقائياً بعد ثانية ونصف
+          setTimeout(function () {
+            if (state.isPlayingRadio && state.activeRadioId === radio.id) {
+              playRadioStation(radio, 0);
+            }
+          }, 1500);
+        }
       }
     };
 
     var playPromise = state.radioAudio.play();
     if (playPromise !== undefined) {
       playPromise.catch(function (err) {
+        if (err && err.name === 'AbortError') return;
         console.warn('Radio play promise error:', err);
-        if (urlIdx + 1 < urls.length) {
+        if (state.isPlayingRadio && state.activeRadioId === radio.id && urlIdx + 1 < urls.length) {
           playRadioStation(radio, urlIdx + 1);
         }
       });
     }
+
+    // مراقب استمرارية البث المباشر (Watchdog): يضمن عدم انقطاع البث أبداً
+    radioWatchdogTimer = setInterval(function () {
+      if (!state.isPlayingRadio || state.activeRadioId !== radio.id) {
+        clearInterval(radioWatchdogTimer);
+        return;
+      }
+      var cur = state.radioAudio.currentTime;
+      if (state.radioAudio.paused) {
+        console.log('Watchdog detected paused radio stream, resuming...');
+        state.radioAudio.play().catch(function () {});
+      } else if (cur > 0 && cur === lastRadioCurrentTime) {
+        radioStallCount++;
+        if (radioStallCount >= 3) {
+          console.log('Watchdog detected stalled live stream, refreshing socket...');
+          radioStallCount = 0;
+          var freshUrl = streamUrl + (streamUrl.indexOf('?') === -1 ? '?' : '&') + '_ts=' + Date.now();
+          state.radioAudio.src = freshUrl;
+          state.radioAudio.play().catch(function () {});
+        }
+      } else {
+        radioStallCount = 0;
+      }
+      lastRadioCurrentTime = cur;
+    }, 4000);
   }
 
   function initRadiosSection() {
