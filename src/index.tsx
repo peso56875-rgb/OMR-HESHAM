@@ -16,6 +16,7 @@ import { Dashboard } from './components/Dashboard'
 import { NotificationsPage } from './components/Notifications'
 import { ZakatCalculator } from './components/Zakat'
 import { QuranHub } from './components/Quran'
+import { KidsHub } from './components/KidsHub'
 import { CasesList, CaseDetail } from './components/Cases'
 import { VolunteerPortal } from './components/VolunteerPortal'
 import { CertificateView } from './components/Certificate'
@@ -233,6 +234,10 @@ app.get('/careers', async (c) => {
 
 app.get('/zakat-calculator', (c) => {
   return c.html(<ZakatCalculator user={(c as any).get('user')} />)
+})
+
+app.get('/kids', (c) => {
+  return c.html(<KidsHub user={(c as any).get('user')} />)
 })
 
 app.get('/quran', (c) => {
@@ -977,6 +982,7 @@ app.get('/sitemap.xml', async (c) => {
     ['/', '1.0', 'daily'],
     ['/campaigns', '0.9', 'daily'],
     ['/donate', '0.9', 'weekly'],
+    ['/kids', '0.8', 'weekly'],
     ['/news', '0.8', 'daily'],
     ['/about', '0.7', 'monthly'],
     ['/achievements', '0.7', 'monthly'],
