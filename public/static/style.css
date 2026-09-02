@@ -8385,17 +8385,17 @@ body.dark .notif-dropdown {
   background: rgba(244, 63, 94, 0.08);
 }
 
-/* ─── 2. قارئ المصحف التفاعلي (Quran Reader Modal) ─── */
+/* ─── 2. قارئ المصحف الشريف الكامل (Quran Sanctuary Reader) ─── */
 .quran-reader-modal {
   position: fixed;
   inset: 0;
-  z-index: 3000;
+  z-index: 3100;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.25s ease, visibility 0.25s ease;
 }
 
 .quran-reader-modal.open {
@@ -8406,90 +8406,202 @@ body.dark .notif-dropdown {
 .quran-reader-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
+  background: rgba(3, 15, 12, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .quran-reader-dialog {
   position: relative;
-  width: min(920px, 95vw);
-  height: min(88vh, 850px);
-  border-radius: 26px;
-  background: #fbf8f0;
-  color: #2b251e;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(214, 166, 75, 0.4);
-  transform: scale(0.96) translateY(12px);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background 0.3s, color 0.3s;
 }
 
-.quran-reader-modal.open .quran-reader-dialog {
-  transform: scale(1) translateY(0);
+/* Reading Progress Bar */
+.reader-progress-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.06);
+  z-index: 10;
 }
 
-/* Reader Themes */
-.quran-reader-dialog.theme-parchment {
-  background: #fbf8f0;
-  color: #1f1b16;
+.reader-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--gold-600), var(--emerald-600));
+  transition: width 0.15s ease-out;
 }
 
-.quran-reader-dialog.theme-dark {
-  background: #081d19;
-  color: #e3f2ec;
-  border-color: rgba(22, 138, 112, 0.4);
-}
-
-.quran-reader-dialog.theme-white {
-  background: #ffffff;
-  color: #111827;
-}
-
+/* Reader Header Command Bar */
 .reader-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  position: relative;
+  padding: 10px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  z-index: 5;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
-.theme-dark .reader-header {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.reader-title-info h2 {
-  margin: 0 0 4px;
-  font-size: 1.35rem;
-  font-weight: 900;
-}
-
-.reader-meta-badge {
-  font-size: 0.76rem;
-  color: var(--muted);
-}
-
-.reader-header-actions {
+.reader-header-right {
   display: flex;
   align-items: center;
   gap: 14px;
+  flex-wrap: wrap;
+}
+
+.reader-surah-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.reader-surah-picker select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  padding: 8px 32px 8px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.reader-surah-picker i {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+
+.reader-title-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reader-title-info h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: inherit;
+}
+
+.reader-meta-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reader-meta-badge,
+.reader-juz-badge,
+.reader-page-badge {
+  font-size: 0.74rem;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.05);
+  color: inherit;
+  opacity: 0.85;
+}
+
+.reader-ayah-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 2px 4px;
+}
+
+.reader-ayah-jump input {
+  width: 65px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.82rem;
+  text-align: center;
+  outline: none;
+  padding: 4px;
+}
+
+.reader-ayah-jump button {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 4px 6px;
+  font-size: 0.78rem;
+  transition: opacity 0.2s;
+}
+
+.reader-ayah-jump button:hover {
+  opacity: 1;
+}
+
+/* Header Actions Left */
+.reader-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reader-font-family-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 4px 8px;
+}
+
+.reader-font-family-box i {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.reader-font-family-box select {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
 }
 
 .reader-font-controls {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(0, 0, 0, 0.05);
-  padding: 4px 10px;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 10px;
-}
-
-.theme-dark .reader-font-controls {
-  background: rgba(255, 255, 255, 0.08);
+  padding: 3px 8px;
 }
 
 .reader-font-controls button {
@@ -8497,141 +8609,57 @@ body.dark .notif-dropdown {
   border: none;
   color: inherit;
   cursor: pointer;
-  font-size: 0.85rem;
-  padding: 4px 8px;
+  padding: 4px 6px;
+  font-size: 0.82rem;
+  transition: transform 0.15s;
+}
+
+.reader-font-controls button:active {
+  transform: scale(0.9);
+}
+
+.reader-font-controls span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  min-width: 34px;
+  text-align: center;
+  opacity: 0.85;
 }
 
 .reader-theme-controls {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 4px 8px;
 }
 
 .theme-dot {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  border: 2px solid rgba(0, 0, 0, 0.2);
+  border: 2px solid transparent;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, border-color 0.2s;
 }
 
-.theme-dot.parchment { background: #fbf8f0; }
-.theme-dot.dark { background: #081d19; }
-.theme-dot.white { background: #ffffff; }
+.theme-dot.parchment { background: #fbf8ee; box-shadow: inset 0 0 0 1px #d6cbb5; }
+.theme-dot.dark { background: #061a15; }
+.theme-dot.white { background: #ffffff; box-shadow: inset 0 0 0 1px #cbd5e1; }
+.theme-dot.sage { background: #edf5f0; box-shadow: inset 0 0 0 1px #a8c7b8; }
 
 .theme-dot.active {
-  transform: scale(1.2);
+  transform: scale(1.22);
   border-color: var(--emerald-600);
 }
 
-.reader-close-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.06);
-  border: none;
+.reader-util-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   color: inherit;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.theme-dark .reader-close-btn {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.reader-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 30px 40px;
-  text-align: justify;
-  text-align-last: center;
-  line-height: 2.4;
-  font-family: 'Aref Ruqaa', 'Amiri', 'Traditional Arabic', serif;
-}
-
-.bismillah-banner {
-  font-family: 'Aref Ruqaa', 'Amiri', serif;
-  font-size: 1.8rem;
-  text-align: center;
-  margin: 0 0 24px;
-  color: var(--emerald-600);
-}
-
-.theme-dark .bismillah-banner {
-  color: var(--gold-2);
-}
-
-.ayah-item {
-  display: inline;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  padding: 2px 4px;
-  border-radius: 6px;
-}
-
-.ayah-item:hover {
-  background-color: rgba(22, 138, 112, 0.12);
-}
-
-.ayah-ornament {
-  display: inline-block;
-  color: var(--gold-600);
-  font-family: var(--serif);
-  font-size: 0.9em;
-  margin: 0 4px;
-  user-select: none;
-}
-
-.ayah-highlight {
-  background-color: rgba(214, 166, 75, 0.25) !important;
-}
-
-.reader-footer {
-  padding: 14px 24px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.theme-dark .reader-footer {
-  border-top-color: rgba(255, 255, 255, 0.1);
-}
-
-.reader-audio-btn {
-  background: var(--emerald-600);
-  color: #ffffff;
-  border: none;
-  padding: 9px 18px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 800;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.active-reciter-name {
-  font-size: 0.76rem;
-  color: var(--muted);
-  margin-right: 10px;
-}
-
-.reader-nav-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.reader-nav-btn {
-  background: rgba(0, 0, 0, 0.06);
-  border: none;
-  color: inherit;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: 10px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -8639,10 +8667,470 @@ body.dark .notif-dropdown {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  transition: all 0.2s;
 }
 
+.reader-util-btn.active {
+  background: var(--emerald-600);
+  border-color: var(--emerald-600);
+  color: #ffffff;
+}
+
+.reader-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.reader-close-btn:hover {
+  background: #f43f5e;
+  color: #ffffff;
+  transform: scale(1.08);
+}
+
+/* ─── Reader Body Sanctuary ─── */
+.reader-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px 20px 80px;
+  scroll-behavior: smooth;
+}
+
+.mushaf-page-frame {
+  max-width: 880px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Ornate Surah Banner */
+.surah-ornate-banner {
+  position: relative;
+  border: 2px double var(--gold-600);
+  border-radius: 16px;
+  padding: 16px 24px;
+  text-align: center;
+  margin: 0 auto 30px;
+  background: rgba(214, 166, 75, 0.06);
+  max-width: 650px;
+}
+
+.surah-ornate-banner h3 {
+  margin: 0 0 4px;
+  font-family: 'Amiri Quran', 'Amiri', 'Aref Ruqaa', serif;
+  font-size: 2rem;
+  color: inherit;
+  font-weight: 700;
+}
+
+.surah-ornate-banner p {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.ornate-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--gold-600);
+}
+
+.ornate-corner.top-right { top: -4px; right: -4px; border-left: none; border-bottom: none; }
+.ornate-corner.top-left { top: -4px; left: -4px; border-right: none; border-bottom: none; }
+.ornate-corner.bottom-right { bottom: -4px; right: -4px; border-left: none; border-top: none; }
+.ornate-corner.bottom-left { bottom: -4px; left: -4px; border-right: none; border-top: none; }
+
+/* Bismillah */
+.bismillah-banner {
+  font-family: 'Amiri Quran', 'Amiri', 'Aref Ruqaa', serif;
+  font-size: 2.1rem;
+  text-align: center;
+  margin: 0 0 32px;
+  color: inherit;
+  line-height: 1.8;
+  letter-spacing: 1px;
+}
+
+/* Ayahs Stream & Font Typographies */
+.ayahs-stream {
+  text-align: justify;
+  text-align-last: center;
+  transition: font-size 0.2s;
+  user-select: text;
+}
+
+.ayahs-stream.font-amiri-quran {
+  font-family: 'Amiri Quran', 'Amiri', serif;
+  line-height: 2.5;
+  word-spacing: 4px;
+}
+
+.ayahs-stream.font-noto-naskh {
+  font-family: 'Noto Naskh Arabic', serif;
+  line-height: 2.3;
+  word-spacing: 2px;
+}
+
+.ayahs-stream.font-scheherazade {
+  font-family: 'Scheherazade New', serif;
+  line-height: 2.45;
+  word-spacing: 3px;
+}
+
+.ayahs-stream.font-amiri {
+  font-family: 'Amiri', serif;
+  line-height: 2.3;
+  word-spacing: 2px;
+}
+
+.ayah-item {
+  display: inline;
+  cursor: pointer;
+  padding: 3px 4px;
+  border-radius: 8px;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.ayah-item:hover {
+  background-color: rgba(22, 138, 112, 0.14);
+}
+
+.ayah-ornament {
+  display: inline-block;
+  color: var(--gold-600);
+  margin: 0 4px;
+  user-select: none;
+  font-family: 'Amiri Quran', 'Amiri', serif;
+  font-size: 0.9em;
+}
+
+.ayah-marker-icon {
+  font-style: normal;
+  font-weight: bold;
+}
+
+.ayah-highlight {
+  background-color: rgba(214, 166, 75, 0.35) !important;
+  box-shadow: 0 0 0 4px rgba(214, 166, 75, 0.2);
+}
+
+/* Surah End Ornament */
+.surah-end-ornament {
+  text-align: center;
+  margin: 50px auto 20px;
+  color: var(--gold-600);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.end-svg {
+  width: 160px;
+  height: 30px;
+  color: inherit;
+}
+
+.surah-end-ornament span {
+  font-family: 'Amiri Quran', 'Amiri', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+/* ─── Themes ─── */
+/* 1. Parchment Ivory */
+.quran-reader-dialog.theme-parchment {
+  background: #fbf8ee;
+  color: #1a2923;
+}
+.theme-parchment .reader-header,
+.theme-parchment .reader-footer {
+  background: rgba(246, 240, 226, 0.95);
+  border-color: #e5dac1;
+}
+
+/* 2. Night Emerald Dark */
+.quran-reader-dialog.theme-dark {
+  background: #061a15;
+  color: #e1efe8;
+}
+.theme-dark .reader-header,
+.theme-dark .reader-footer {
+  background: rgba(4, 17, 13, 0.95);
+  border-color: rgba(22, 138, 112, 0.3);
+}
+.theme-dark .reader-surah-picker select,
+.theme-dark .reader-ayah-jump,
+.theme-dark .reader-font-family-box,
+.theme-dark .reader-font-controls,
+.theme-dark .reader-theme-controls,
+.theme-dark .reader-util-btn,
+.theme-dark .reader-close-btn,
+.theme-dark .reader-meta-badge,
+.theme-dark .reader-juz-badge,
+.theme-dark .reader-page-badge,
+.theme-dark .reader-action-pill,
 .theme-dark .reader-nav-btn {
   background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e1efe8;
+}
+
+/* 3. Pure White */
+.quran-reader-dialog.theme-white {
+  background: #ffffff;
+  color: #111827;
+}
+.theme-white .reader-header,
+.theme-white .reader-footer {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+/* 4. Soft Sage Green */
+.quran-reader-dialog.theme-sage {
+  background: #edf5f0;
+  color: #0f3327;
+}
+.theme-sage .reader-header,
+.theme-sage .reader-footer {
+  background: rgba(226, 239, 231, 0.95);
+  border-color: #cce0d4;
+}
+
+/* ─── Reader Footer ─── */
+.reader-footer {
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  z-index: 5;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.reader-audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reader-audio-btn.main-play {
+  background: var(--emerald-600);
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.reader-audio-btn.main-play:hover {
+  background: #0d6e57;
+  transform: translateY(-1px);
+}
+
+.reader-reciter-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.reader-reciter-dropdown select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 8px 28px 8px 12px;
+  border-radius: 10px;
+  outline: none;
+  cursor: pointer;
+}
+
+.reader-reciter-dropdown i {
+  position: absolute;
+  right: 10px;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.reader-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reader-action-pill {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: inherit;
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.reader-action-pill:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.reader-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reader-nav-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: inherit;
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.reader-nav-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Ayah Actions Modal / Bottom Sheet ─── */
+.ayah-action-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 3400;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s, visibility 0.25s;
+}
+
+.ayah-action-modal.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.ayah-action-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+.ayah-action-dialog {
+  position: relative;
+  width: min(540px, 94vw);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px 24px 16px 16px;
+  margin-bottom: 24px;
+  padding: 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  transform: translateY(20px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ayah-action-modal.open .ayah-action-dialog {
+  transform: translateY(0);
+}
+
+.ayah-action-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ayah-action-header h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--heading);
+}
+
+.ayah-action-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.ayah-action-quote {
+  font-family: 'Amiri Quran', 'Amiri', serif;
+  font-size: 1.25rem;
+  line-height: 2;
+  color: var(--emerald-600);
+  background: var(--surface-2);
+  padding: 14px 18px;
+  border-radius: 14px;
+  margin: 0 0 18px;
+  text-align: center;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.ayah-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.ayah-act-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px;
+  border-radius: 14px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.ayah-act-item:hover {
+  background: var(--emerald-600);
+  border-color: var(--emerald-600);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.ayah-act-item i {
+  font-size: 1rem;
 }
 
 /* ─── 3. الأذكار وحصن المسلم (Adhkar) ─── */
@@ -9765,19 +10253,46 @@ body.dark .notif-dropdown {
 }
 
 .tafsir-ayah-quote {
-  font-family: 'Aref Ruqaa', 'Amiri', serif;
-  font-size: 1.25rem;
-  line-height: 2;
+  font-family: 'Amiri Quran', 'Amiri', serif;
+  font-size: 1.35rem;
+  line-height: 2.2;
   color: var(--emerald-600);
   margin: 0 0 16px;
   text-align: center;
+  background: var(--surface-2);
+  padding: 14px 18px;
+  border-radius: 14px;
+}
+
+.tafsir-header-text h4 {
+  margin: 0 0 2px;
+  font-size: 1.05rem;
+  color: var(--heading);
+}
+
+.tafsir-source-badge {
+  font-size: 0.7rem;
+  color: var(--muted);
 }
 
 .tafsir-explanation p {
-  font-size: 0.92rem;
-  line-height: 1.9;
+  font-size: 0.95rem;
+  line-height: 2;
   color: var(--text);
   margin: 0;
+}
+
+.tafsir-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  display: flex;
+  justify-content: center;
+}
+
+.tafsir-footer .primary-btn {
+  padding: 8px 24px;
+  font-size: 0.85rem;
 }
 
 /* ─── التجاوب على الهواتف والأجهزة اللوحية (Quran Responsive) ─── */
@@ -9790,6 +10305,44 @@ body.dark .notif-dropdown {
   }
   .player-timeline {
     display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .reader-header {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .reader-surah-picker select {
+    font-size: 0.82rem;
+    padding: 6px 26px 6px 10px;
+  }
+  .reader-title-info h2 {
+    font-size: 1.1rem;
+  }
+  .reader-ayah-jump {
+    display: none;
+  }
+  .btn-text-sm {
+    display: none;
+  }
+  .reader-footer {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .reader-quick-actions {
+    display: none;
+  }
+  .surah-ornate-banner {
+    padding: 12px 16px;
+    margin-bottom: 20px;
+  }
+  .surah-ornate-banner h3 {
+    font-size: 1.6rem;
+  }
+  .bismillah-banner {
+    font-size: 1.65rem;
+    margin-bottom: 22px;
   }
 }
 
@@ -9810,7 +10363,14 @@ body.dark .notif-dropdown {
     grid-template-columns: 1fr;
   }
   .reader-body {
-    padding: 20px 16px;
+    padding: 24px 12px 60px;
+  }
+  .reader-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .reader-font-family-box select {
+    max-width: 110px;
   }
   .adhkar-item-card {
     flex-direction: column;

@@ -544,13 +544,18 @@
     activeTab: 'mushaf',
     currentSurah: null,
     currentReciter: 'minshawi',
-    fontSize: 26,
+    fontSize: 28,
+    fontFamily: 'font-amiri-quran',
     theme: 'parchment',
     audioElement: new Audio(),
     radioAudio: new Audio(),
     isPlayingAudio: false,
     isPlayingRadio: false,
     activeRadioId: null,
+    isAutoScrolling: false,
+    autoScrollTimer: null,
+    wakeLock: null,
+    activeAyahModalData: { surah: null, ayah: null, text: '' },
     // Tasbeeh
     tasbeehCount: 0,
     tasbeehTarget: 33,
@@ -640,7 +645,10 @@
       if (savedTheme) state.theme = savedTheme;
 
       var savedFont = localStorage.getItem('omar_quran_reader_fontsize');
-      if (savedFont) state.fontSize = parseInt(savedFont, 10) || 26;
+      if (savedFont) state.fontSize = parseInt(savedFont, 10) || 28;
+
+      var savedFontFamily = localStorage.getItem('omar_quran_font_family');
+      if (savedFontFamily) state.fontFamily = savedFontFamily;
     } catch (_) {}
   }
 
@@ -893,16 +901,48 @@
     } catch (_) {}
   }
 
-  // ────────────────────────── 3. قارئ المصحف التفاعلي (Quran Reader) ──────────────────────────
+  // ────────────────────────── 3. قارئ المصحف الشريف الكامل (Quran Sanctuary Reader) ──────────────────────────
+  function populateSurahAndReciterPickers() {
+    var surahSelect = document.getElementById('readerSurahSelect');
+    var reciterSelect = document.getElementById('readerReciterSelect');
+
+    if (surahSelect && surahSelect.options.length === 0) {
+      var sHtml = '';
+      SURAHS.forEach(function (s) {
+        sHtml += '<option value="' + s.n + '">' + toArabicDigits(s.n) + '. سورة ' + s.name + ' (' + toArabicDigits(s.verses) + ' آية - ج' + toArabicDigits(s.juz) + ')</option>';
+      });
+      surahSelect.innerHTML = sHtml;
+    }
+
+    if (reciterSelect && reciterSelect.options.length === 0) {
+      var rHtml = '';
+      for (var k in RECITERS) {
+        if (RECITERS.hasOwnProperty(k)) {
+          rHtml += '<option value="' + k + '">' + RECITERS[k].name + '</option>';
+        }
+      }
+      reciterSelect.innerHTML = rHtml;
+    }
+  }
+
   async function openQuranReader(surahNumber, scrollToAyah) {
     var modal = document.getElementById('quranReaderModal');
     var titleEl = document.getElementById('readerSurahTitle');
+    var bannerTitle = document.getElementById('bannerSurahTitle');
+    var bannerDetails = document.getElementById('bannerSurahDetails');
     var metaEl = document.getElementById('readerSurahMeta');
+    var juzBadge = document.getElementById('readerJuzBadge');
+    var pageBadge = document.getElementById('readerPageBadge');
     var streamEl = document.getElementById('ayahsStream');
     var bismillahEl = document.getElementById('readerBismillah');
-    var rNameEl = document.getElementById('readerReciterName');
+    var surahSelect = document.getElementById('readerSurahSelect');
+    var reciterSelect = document.getElementById('readerReciterSelect');
+    var progressBar = document.getElementById('readerProgressBar');
+    var readerBody = document.getElementById('readerBody');
 
     if (!modal || !streamEl) return;
+
+    populateSurahAndReciterPickers();
 
     var surah = SURAHS.find(function (s) { return s.n === surahNumber; });
     if (!surah) return;
@@ -910,24 +950,32 @@
     state.currentSurah = surah;
 
     if (titleEl) titleEl.textContent = 'سورة ' + surah.name;
-    if (metaEl) metaEl.textContent = surah.type + ' • ' + toArabicDigits(surah.verses) + ' آيات • الجزء ' + toArabicDigits(surah.juz) + ' • الصفحة ' + toArabicDigits(surah.page);
+    if (bannerTitle) bannerTitle.textContent = 'سورة ' + surah.name;
+    if (bannerDetails) {
+      bannerDetails.textContent = surah.type + ' • ' + toArabicDigits(surah.verses) + ' آيات • الجزء ' + toArabicDigits(surah.juz) + ' • الصفحة ' + toArabicDigits(surah.page);
+    }
+    if (metaEl) metaEl.textContent = surah.type + ' • ' + toArabicDigits(surah.verses) + ' آيات';
+    if (juzBadge) juzBadge.textContent = 'الجزء ' + toArabicDigits(surah.juz);
+    if (pageBadge) pageBadge.textContent = 'صفحة ' + toArabicDigits(surah.page);
+
+    if (surahSelect) surahSelect.value = String(surah.n);
+    if (reciterSelect) reciterSelect.value = state.currentReciter || 'minshawi';
+
     if (bismillahEl) {
-      // سورة التوبة لا تبدأ بالبسملة، وسورة الفاتحة البسملة آية منها
-      bismillahEl.style.display = (surah.n === 9 || surah.n === 1) ? 'none' : 'block';
+      // سورة التوبة لا تبدأ بالبسملة
+      bismillahEl.style.display = (surah.n === 9) ? 'none' : 'block';
     }
 
-    var reciterKey = state.currentReciter || 'minshawi';
-    var rName = (RECITERS[reciterKey] && RECITERS[reciterKey].name) || '';
-    if (rNameEl) rNameEl.textContent = 'بصوت ' + rName;
+    if (progressBar) progressBar.style.width = '0%';
 
-    // تطبيق الثيم وحجم الخط
+    // تطبيق الثيم وحجم ونوع الخط
     applyReaderStyles();
 
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
 
-    // حفظ كآخر سورة تمت قراءتها
+    // حفظ كآخر سورة تمت قراءتها للورد والاستئناف
     try {
       localStorage.setItem('omar_quran_bookmark', JSON.stringify({
         surah: surah.n,
@@ -938,17 +986,19 @@
     } catch (_) {}
 
     // تحميل آيات السورة
-    streamEl.innerHTML = '<div class="quran-reader-loading"><i class="fa-solid fa-spinner fa-spin"></i><p>جاري تحميل نص السورة الكريمة...</p></div>';
+    streamEl.innerHTML = '<div class="quran-reader-loading"><i class="fa-solid fa-spinner fa-spin"></i><p>جاري تحميل نص سورة ' + surah.name + ' بالرسم العثماني المبارك...</p></div>';
+
+    if (readerBody) readerBody.scrollTop = 0;
 
     try {
       var ayahs = await fetchSurahAyahs(surah.n);
       renderAyahs(ayahs, scrollToAyah);
     } catch (err) {
       console.warn('Failed to load surah text:', err);
-      streamEl.innerHTML = '<div class="quran-reader-error" style="text-align:center;padding:40px 20px">' +
-        '<i class="fa-solid fa-triangle-exclamation" style="font-size:2.2rem;color:var(--coral);margin-bottom:12px;display:block"></i>' +
-        '<p style="font-size:1.1rem;margin:0 0 16px;color:var(--text)">تعذر تحميل نص السورة الكريمة حالياً</p>' +
-        '<button type="button" class="primary-btn" id="retryLoadSurahBtn" style="padding:9px 24px;font-size:0.88rem;cursor:pointer">' +
+      streamEl.innerHTML = '<div class="quran-reader-error" style="text-align:center;padding:50px 20px">' +
+        '<i class="fa-solid fa-triangle-exclamation" style="font-size:2.4rem;color:var(--coral);margin-bottom:14px;display:block"></i>' +
+        '<p style="font-size:1.15rem;margin:0 0 16px;color:var(--text);font-weight:600">تعذر تحميل نص السورة الكريمة حالياً</p>' +
+        '<button type="button" class="primary-btn" id="retryLoadSurahBtn" style="padding:10px 26px;font-size:0.92rem;cursor:pointer">' +
         '<i class="fa-solid fa-rotate-right"></i> إعادة المحاولة الآن' +
         '</button>' +
         '</div>';
@@ -968,6 +1018,7 @@
       modal.setAttribute('aria-hidden', 'true');
     }
     document.body.style.overflow = '';
+    stopAutoScroll();
   }
 
   async function fetchSurahAyahs(surahNum) {
@@ -1046,7 +1097,7 @@
     var html = '';
     ayahs.forEach(function (a) {
       var numInSurah = a.numberInSurah;
-      html += '<span class="ayah-item" data-ayah-num="' + numInSurah + '" id="ayah-' + numInSurah + '">';
+      html += '<span class="ayah-item" data-ayah-num="' + numInSurah + '" id="ayah-' + numInSurah + '" title="انقر لعرض الخيارات والتفسير">';
       html += '  <span class="ayah-text">' + a.text + '</span>';
       html += '  <span class="ayah-ornament" title="آية ' + toArabicDigits(numInSurah) + '" data-ayah="' + numInSurah + '">';
       html += '    <i class="ayah-marker-icon">﴿' + toArabicDigits(numInSurah) + '﴾</i>';
@@ -1056,11 +1107,12 @@
 
     streamEl.innerHTML = html;
 
-    // أحداث النقر على الآيات لعرض التفسير أو التلاوة الفردية
+    // أحداث النقر على الآيات لفتح قائمة الإجراءات السريعة والتفسير
     streamEl.querySelectorAll('.ayah-item').forEach(function (el) {
       el.addEventListener('click', function () {
         var aNum = parseInt(el.getAttribute('data-ayah-num'), 10);
-        showAyahTafsir(state.currentSurah.n, aNum, el.querySelector('.ayah-text').textContent);
+        var text = el.querySelector('.ayah-text').textContent;
+        openAyahActionModal(state.currentSurah.n, aNum, text);
       });
     });
 
@@ -1070,8 +1122,101 @@
         if (targetEl) {
           targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
           targetEl.classList.add('ayah-highlight');
+          setTimeout(function () { targetEl.classList.remove('ayah-highlight'); }, 3000);
         }
-      }, 200);
+      }, 250);
+    }
+  }
+
+  // ────────────────────────── قائمة إجراءات الآية التفاعلية ──────────────────────────
+  function openAyahActionModal(surahNum, ayahNum, ayahText) {
+    var modal = document.getElementById('ayahActionModal');
+    var titleEl = document.getElementById('ayahActionTitle');
+    var quoteEl = document.getElementById('ayahActionText');
+
+    if (!modal) return;
+
+    state.activeAyahModalData = {
+      surah: surahNum,
+      ayah: ayahNum,
+      text: ayahText
+    };
+
+    var surahName = state.currentSurah ? state.currentSurah.name : '';
+    if (titleEl) titleEl.textContent = 'سورة ' + surahName + ' • آية ' + toArabicDigits(ayahNum);
+    if (quoteEl) quoteEl.textContent = '﴿' + ayahText + '﴾';
+
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeAyahActionModal() {
+    var modal = document.getElementById('ayahActionModal');
+    if (modal) {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function initAyahActionModal() {
+    var closeBtn = document.getElementById('closeAyahActionBtn');
+    var backdrop = document.getElementById('ayahActionBackdrop');
+    var tafsirBtn = document.getElementById('ayahActTafsirBtn');
+    var copyBtn = document.getElementById('ayahActCopyBtn');
+    var shareBtn = document.getElementById('ayahActShareBtn');
+    var bookmarkBtn = document.getElementById('ayahActBookmarkBtn');
+
+    if (closeBtn) closeBtn.onclick = closeAyahActionModal;
+    if (backdrop) backdrop.onclick = closeAyahActionModal;
+
+    if (tafsirBtn) {
+      tafsirBtn.onclick = function () {
+        closeAyahActionModal();
+        if (state.activeAyahModalData.surah) {
+          showAyahTafsir(state.activeAyahModalData.surah, state.activeAyahModalData.ayah, state.activeAyahModalData.text);
+        }
+      };
+    }
+
+    if (copyBtn) {
+      copyBtn.onclick = function () {
+        if (state.activeAyahModalData.text) {
+          var surahName = state.currentSurah ? state.currentSurah.name : '';
+          var fullText = '﴿' + state.activeAyahModalData.text + '﴾ [سورة ' + surahName + ': ' + state.activeAyahModalData.ayah + ']';
+          navigator.clipboard.writeText(fullText).then(function () {
+            if (window.showToast) window.showToast('تم نسخ نص الآية الكريمة 📋', 'success');
+            closeAyahActionModal();
+          });
+        }
+      };
+    }
+
+    if (shareBtn) {
+      shareBtn.onclick = function () {
+        if (state.activeAyahModalData.text) {
+          var surahName = state.currentSurah ? state.currentSurah.name : '';
+          var text = '﴿' + state.activeAyahModalData.text + '﴾\n[سورة ' + surahName + ' - الآية ' + state.activeAyahModalData.ayah + ']\n\n— واحة القرآن | مؤسسة د. عمر هشام الخيرية\n' + window.location.origin + '/quran';
+          window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(text), '_blank');
+          closeAyahActionModal();
+        }
+      };
+    }
+
+    if (bookmarkBtn) {
+      bookmarkBtn.onclick = function () {
+        if (state.activeAyahModalData.surah) {
+          try {
+            localStorage.setItem('omar_quran_bookmark', JSON.stringify({
+              surah: state.activeAyahModalData.surah,
+              ayah: state.activeAyahModalData.ayah,
+              time: Date.now()
+            }));
+            checkBookmarkDisplay();
+            if (window.showToast) window.showToast('تم حفظ العلامة المرجعية عند الآية ' + toArabicDigits(state.activeAyahModalData.ayah) + ' 🔖', 'success');
+            closeAyahActionModal();
+          } catch (_) {}
+        }
+      };
     }
   }
 
@@ -1150,13 +1295,23 @@
     var dialog = document.querySelector('.quran-reader-dialog');
     var fontDisplay = document.getElementById('fontSizeDisplay');
     var streamEl = document.getElementById('ayahsStream');
+    var familySelect = document.getElementById('readerFontFamilySelect');
 
     if (fontDisplay) fontDisplay.textContent = state.fontSize + 'px';
-    if (streamEl) streamEl.style.fontSize = state.fontSize + 'px';
+    if (streamEl) {
+      streamEl.style.fontSize = state.fontSize + 'px';
+      // تطبيق نوع الخط المختار
+      streamEl.classList.remove('font-amiri-quran', 'font-noto-naskh', 'font-scheherazade', 'font-amiri');
+      streamEl.classList.add(state.fontFamily || 'font-amiri-quran');
+    }
+
+    if (familySelect) {
+      familySelect.value = state.fontFamily || 'font-amiri-quran';
+    }
 
     if (dialog) {
-      dialog.classList.remove('theme-parchment', 'theme-dark', 'theme-white');
-      dialog.classList.add('theme-' + state.theme);
+      dialog.classList.remove('theme-parchment', 'theme-dark', 'theme-white', 'theme-sage');
+      dialog.classList.add('theme-' + (state.theme || 'parchment'));
     }
 
     document.querySelectorAll('.theme-dot').forEach(function (dot) {
@@ -1168,34 +1323,181 @@
     });
   }
 
+  // ────────────────────────── ميزات القراءة المتقدمة (Auto-Scroll & WakeLock) ──────────────────────────
+  function toggleAutoScroll() {
+    var btn = document.getElementById('autoScrollBtn');
+    var readerBody = document.getElementById('readerBody');
+    if (!readerBody) return;
+
+    if (state.isAutoScrolling) {
+      stopAutoScroll();
+    } else {
+      state.isAutoScrolling = true;
+      if (btn) {
+        btn.classList.add('active');
+        btn.innerHTML = '<i class="fa-solid fa-pause"></i> <span class="btn-text-sm">إيقاف التمرير</span>';
+      }
+      state.autoScrollTimer = setInterval(function () {
+        if (readerBody.scrollTop + readerBody.clientHeight >= readerBody.scrollHeight - 5) {
+          stopAutoScroll();
+        } else {
+          readerBody.scrollTop += 1;
+        }
+      }, 40);
+      if (window.showToast) window.showToast('تم تفعيل التمرير التلقائي الهادئ 📜', 'info');
+    }
+  }
+
+  function stopAutoScroll() {
+    var btn = document.getElementById('autoScrollBtn');
+    if (state.autoScrollTimer) {
+      clearInterval(state.autoScrollTimer);
+      state.autoScrollTimer = null;
+    }
+    state.isAutoScrolling = false;
+    if (btn) {
+      btn.classList.remove('active');
+      btn.innerHTML = '<i class="fa-solid fa-angles-down"></i> <span class="btn-text-sm">تمرير تلقائي</span>';
+    }
+  }
+
+  async function toggleScreenWakeLock() {
+    var btn = document.getElementById('screenWakeLockBtn');
+    if ('wakeLock' in navigator) {
+      try {
+        if (!state.wakeLock) {
+          state.wakeLock = await navigator.wakeLock.request('screen');
+          if (btn) btn.classList.add('active');
+          if (window.showToast) window.showToast('تم تفعيل إبقاء الشاشة مضيئة أثناء القراءة 💡', 'success');
+          state.wakeLock.addEventListener('release', function () {
+            state.wakeLock = null;
+            if (btn) btn.classList.remove('active');
+          });
+        } else {
+          await state.wakeLock.release();
+          state.wakeLock = null;
+          if (btn) btn.classList.remove('active');
+          if (window.showToast) window.showToast('تم إلغاء قفل الشاشة', 'info');
+        }
+      } catch (err) {
+        console.warn('Wake Lock error:', err);
+      }
+    } else {
+      if (window.showToast) window.showToast('ميزة إبقاء الشاشة غير مدعومة على متصفحك', 'info');
+    }
+  }
+
+  function toggleFullScreenReader() {
+    var modal = document.getElementById('quranReaderModal');
+    var btn = document.getElementById('fullScreenToggleBtn');
+    if (!modal) return;
+
+    if (!document.fullscreenElement) {
+      if (modal.requestFullscreen) {
+        modal.requestFullscreen().catch(function () {});
+      } else if (modal.webkitRequestFullscreen) {
+        modal.webkitRequestFullscreen();
+      }
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(function () {});
+      }
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+    }
+  }
+
   function initReaderControls() {
     var closeBtn = document.getElementById('closeReaderBtn');
     var backdrop = document.getElementById('quranReaderBackdrop');
     var fontDec = document.getElementById('fontDecreaseBtn');
     var fontInc = document.getElementById('fontIncreaseBtn');
+    var fontSelect = document.getElementById('readerFontFamilySelect');
     var themeDots = document.querySelectorAll('.theme-dot');
     var prevBtn = document.getElementById('prevSurahBtn');
     var nextBtn = document.getElementById('nextSurahBtn');
     var playSurahBtn = document.getElementById('readerPlaySurahBtn');
     var closeTafsir = document.getElementById('closeTafsirBtn');
+    var tafsirDoneBtn = document.getElementById('tafsirDoneBtn');
     var tafsirBackdrop = document.getElementById('tafsirBackdrop');
+    var surahSelect = document.getElementById('readerSurahSelect');
+    var reciterSelect = document.getElementById('readerReciterSelect');
+    var ayahJumpBtn = document.getElementById('readerAyahJumpBtn');
+    var ayahJumpInput = document.getElementById('readerAyahJumpInput');
+    var autoScrollBtn = document.getElementById('autoScrollBtn');
+    var wakeLockBtn = document.getElementById('screenWakeLockBtn');
+    var fullScreenBtn = document.getElementById('fullScreenToggleBtn');
+    var bookmarkBtn = document.getElementById('readerBookmarkBtn');
+    var shareSurahBtn = document.getElementById('readerShareSurahBtn');
+    var readerBody = document.getElementById('readerBody');
+    var progressBar = document.getElementById('readerProgressBar');
 
     if (closeBtn) closeBtn.onclick = closeQuranReader;
     if (backdrop) backdrop.onclick = closeQuranReader;
 
-    if (closeTafsir) {
-      closeTafsir.onclick = function () {
-        var tm = document.getElementById('tafsirModal');
-        if (tm) tm.classList.remove('open');
-      };
-    }
-    if (tafsirBackdrop) {
-      tafsirBackdrop.onclick = function () {
-        var tm = document.getElementById('tafsirModal');
-        if (tm) tm.classList.remove('open');
-      };
+    // تتبع شريط تقدم القراءة في السورة
+    if (readerBody && progressBar) {
+      readerBody.addEventListener('scroll', function () {
+        var totalScroll = readerBody.scrollHeight - readerBody.clientHeight;
+        if (totalScroll > 0) {
+          var pct = Math.min(100, Math.max(0, (readerBody.scrollTop / totalScroll) * 100));
+          progressBar.style.width = pct + '%';
+        }
+      });
     }
 
+    // الانتقال السريع لسورة أخرى
+    if (surahSelect) {
+      surahSelect.addEventListener('change', function () {
+        var targetNum = parseInt(surahSelect.value, 10);
+        if (targetNum) openQuranReader(targetNum);
+      });
+    }
+
+    // الانتقال لرقم آية
+    function jumpToAyahHandler() {
+      if (ayahJumpInput && ayahJumpInput.value) {
+        var val = parseInt(ayahJumpInput.value, 10);
+        if (val > 0) {
+          var targetEl = document.getElementById('ayah-' + val);
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetEl.classList.add('ayah-highlight');
+            setTimeout(function () { targetEl.classList.remove('ayah-highlight'); }, 3000);
+          } else {
+            if (window.showToast) window.showToast('رقم الآية غير موجود في هذه السورة', 'warning');
+          }
+        }
+      }
+    }
+    if (ayahJumpBtn) ayahJumpBtn.onclick = jumpToAyahHandler;
+    if (ayahJumpInput) {
+      ayahJumpInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') jumpToAyahHandler();
+      });
+    }
+
+    // تبديل نوع الخط
+    if (fontSelect) {
+      fontSelect.addEventListener('change', function () {
+        state.fontFamily = fontSelect.value;
+        applyReaderStyles();
+        try { localStorage.setItem('omar_quran_font_family', state.fontFamily); } catch (_) {}
+      });
+    }
+
+    // تبديل القارئ من داخل المصحف
+    if (reciterSelect) {
+      reciterSelect.addEventListener('change', function () {
+        state.currentReciter = reciterSelect.value;
+        try { localStorage.setItem('omar_quran_reciter', state.currentReciter); } catch (_) {}
+        if (state.isPlayingAudio && state.currentSurah) {
+          playSurahAudio(state.currentSurah.n, 0);
+        }
+      });
+    }
+
+    // تحكم حجم الخط
     if (fontDec) {
       fontDec.onclick = function () {
         if (state.fontSize > 18) {
@@ -1208,7 +1510,7 @@
 
     if (fontInc) {
       fontInc.onclick = function () {
-        if (state.fontSize < 44) {
+        if (state.fontSize < 54) {
           state.fontSize += 2;
           applyReaderStyles();
           try { localStorage.setItem('omar_quran_reader_fontsize', state.fontSize); } catch (_) {}
@@ -1216,6 +1518,7 @@
       };
     }
 
+    // تغيير الثيمات
     themeDots.forEach(function (dot) {
       dot.addEventListener('click', function () {
         state.theme = dot.getAttribute('data-theme') || 'parchment';
@@ -1223,6 +1526,36 @@
         try { localStorage.setItem('omar_quran_reader_theme', state.theme); } catch (_) {}
       });
     });
+
+    if (autoScrollBtn) autoScrollBtn.onclick = toggleAutoScroll;
+    if (wakeLockBtn) wakeLockBtn.onclick = toggleScreenWakeLock;
+    if (fullScreenBtn) fullScreenBtn.onclick = toggleFullScreenReader;
+
+    // حفظ علامة مرجعية ومشاركة
+    if (bookmarkBtn) {
+      bookmarkBtn.onclick = function () {
+        if (state.currentSurah) {
+          try {
+            localStorage.setItem('omar_quran_bookmark', JSON.stringify({
+              surah: state.currentSurah.n,
+              ayah: 1,
+              time: Date.now()
+            }));
+            checkBookmarkDisplay();
+            if (window.showToast) window.showToast('تم حفظ سورة ' + state.currentSurah.name + ' كعلامة مرجعية 🔖', 'success');
+          } catch (_) {}
+        }
+      };
+    }
+
+    if (shareSurahBtn) {
+      shareSurahBtn.onclick = function () {
+        if (state.currentSurah) {
+          var text = 'سورة ' + state.currentSurah.name + ' (' + state.currentSurah.type + ' • ' + toArabicDigits(state.currentSurah.verses) + ' آيات)\n\n— اقرأ واستمع في واحة القرآن بمؤسسة د. عمر هشام:\n' + window.location.origin + '/quran#surah=' + state.currentSurah.n;
+          window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(text), '_blank');
+        }
+      };
+    }
 
     if (prevBtn) {
       prevBtn.onclick = function () {
@@ -1243,10 +1576,52 @@
     if (playSurahBtn) {
       playSurahBtn.onclick = function () {
         if (state.currentSurah) {
-          playSurahAudio(state.currentSurah.n);
+          playSurahAudio(state.currentSurah.n, 0);
         }
       };
     }
+
+    // إغلاق مودال التفسير
+    if (closeTafsir) {
+      closeTafsir.onclick = function () {
+        var tm = document.getElementById('tafsirModal');
+        if (tm) tm.classList.remove('open');
+      };
+    }
+    if (tafsirDoneBtn) {
+      tafsirDoneBtn.onclick = function () {
+        var tm = document.getElementById('tafsirModal');
+        if (tm) tm.classList.remove('open');
+      };
+    }
+    if (tafsirBackdrop) {
+      tafsirBackdrop.onclick = function () {
+        var tm = document.getElementById('tafsirModal');
+        if (tm) tm.classList.remove('open');
+      };
+    }
+
+    // إغلاق عبر زر الهروب Esc
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        var am = document.getElementById('ayahActionModal');
+        if (am && am.classList.contains('open')) {
+          closeAyahActionModal();
+          return;
+        }
+        var tm = document.getElementById('tafsirModal');
+        if (tm && tm.classList.contains('open')) {
+          tm.classList.remove('open');
+          return;
+        }
+        var qm = document.getElementById('quranReaderModal');
+        if (qm && qm.classList.contains('open')) {
+          closeQuranReader();
+        }
+      }
+    });
+
+    initAyahActionModal();
   }
 
   // ────────────────────────── 4. مشغل الصوتيات والتلاوة ──────────────────────────

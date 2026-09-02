@@ -517,69 +517,192 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
         </div>
       </section>
 
-      {/* ─── Modern Quran Reader Modal (المصحف التفاعلي للقراءة والتفسير) ─── */}
-      <div class="quran-reader-modal" id="quranReaderModal" aria-hidden="true">
+      {/* ─── Modern Full-Page Quran Reading Sanctuary (المصحف التفاعلي الكامل) ─── */}
+      <div class="quran-reader-modal fullscreen-sanctuary" id="quranReaderModal" aria-hidden="true">
         <div class="quran-reader-backdrop" id="quranReaderBackdrop"></div>
         <div class="quran-reader-dialog">
+
+          {/* Reading Progress Line */}
+          <div class="reader-progress-track">
+            <div class="reader-progress-bar" id="readerProgressBar"></div>
+          </div>
           
-          {/* Reader Header */}
-          <div class="reader-header">
-            <div class="reader-title-info">
-              <h2 id="readerSurahTitle">سورة الفاتحة</h2>
-              <span class="reader-meta-badge" id="readerSurahMeta">مكية • ٧ آيات • الجزء الأول</span>
+          {/* Reader Top Command Bar */}
+          <header class="reader-header">
+            <div class="reader-header-right">
+              {/* Surah Quick Jump Dropdown */}
+              <div class="reader-surah-picker">
+                <select id="readerSurahSelect" aria-label="اختر السورة" title="انتقال سريع لسورة أخرى">
+                  {/* Surahs populated in quran.js */}
+                </select>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+
+              {/* Surah Title & Meta */}
+              <div class="reader-title-info">
+                <h2 id="readerSurahTitle">سورة الفاتحة</h2>
+                <div class="reader-meta-chips">
+                  <span class="reader-meta-badge" id="readerSurahMeta">مكية • ٧ آيات</span>
+                  <span class="reader-juz-badge" id="readerJuzBadge">الجزء ١</span>
+                  <span class="reader-page-badge" id="readerPageBadge">صفحة ١</span>
+                </div>
+              </div>
+
+              {/* Jump to Ayah */}
+              <div class="reader-ayah-jump">
+                <input type="number" id="readerAyahJumpInput" min="1" max="286" placeholder="رقم الآية" title="انتقل إلى رقم الآية" />
+                <button type="button" id="readerAyahJumpBtn" title="انتقال للآية">{icon('fa-magnifying-glass')}</button>
+              </div>
             </div>
 
             <div class="reader-header-actions">
+              {/* Font Family Selector */}
+              <div class="reader-font-family-box">
+                <i class="fa-solid fa-font"></i>
+                <select id="readerFontFamilySelect" title="تغيير خط المصحف الشريف" aria-label="نوع الخط">
+                  <option value="font-amiri-quran" selected>مصحف حفص (Amiri Quran)</option>
+                  <option value="font-noto-naskh">النسخ الواضح (Noto Naskh)</option>
+                  <option value="font-scheherazade">الخط العثماني (Scheherazade)</option>
+                  <option value="font-amiri">النسخ الكلاسيكي (Amiri)</option>
+                </select>
+              </div>
+
               {/* Font Size controls */}
               <div class="reader-font-controls">
-                <button type="button" id="fontDecreaseBtn" title="تصغير الخط">{icon('fa-minus')}</button>
-                <span id="fontSizeDisplay">26px</span>
-                <button type="button" id="fontIncreaseBtn" title="تكبير الخط">{icon('fa-plus')}</button>
+                <button type="button" id="fontDecreaseBtn" title="تصغير حجم الخط (Ctrl -)">{icon('fa-minus')}</button>
+                <span id="fontSizeDisplay">28px</span>
+                <button type="button" id="fontIncreaseBtn" title="تكبير حجم الخط (Ctrl +)">{icon('fa-plus')}</button>
               </div>
 
-              {/* Theme Toggle (Parchment, Dark, Clean White) */}
-              <div class="reader-theme-controls">
-                <button type="button" class="theme-dot parchment active" data-theme="parchment" title="ورق مصحف عاجي"></button>
-                <button type="button" class="theme-dot dark" data-theme="dark" title="قراءة ليلية"></button>
-                <button type="button" class="theme-dot white" data-theme="white" title="أبيض ناصع"></button>
+              {/* Theme Toggle (Parchment, Dark Emerald, Pure White, Soft Sage) */}
+              <div class="reader-theme-controls" title="اختر مظهر القراءة المريح">
+                <button type="button" class="theme-dot parchment active" data-theme="parchment" title="ورق مصحف كلاسيكي عاجي"></button>
+                <button type="button" class="theme-dot dark" data-theme="dark" title="قراءة ليلية خضراء داكنة"></button>
+                <button type="button" class="theme-dot white" data-theme="white" title="أبيض ناصع عالي التباين"></button>
+                <button type="button" class="theme-dot sage" data-theme="sage" title="أخضر نباتي هادئ للعين"></button>
               </div>
+
+              {/* Auto Scroll */}
+              <button type="button" class="reader-util-btn" id="autoScrollBtn" title="بدء / إيقاف التمرير التلقائي البطيء للقراءة بدون لمس الشاشة">
+                <i class="fa-solid fa-angles-down"></i> <span class="btn-text-sm">تمرير تلقائي</span>
+              </button>
+
+              {/* Screen Wake Lock */}
+              <button type="button" class="reader-util-btn" id="screenWakeLockBtn" title="إبقاء الشاشة مضيئة أثناء القراءة (منع القفل التلقائي)">
+                <i class="fa-solid fa-sun"></i>
+              </button>
+
+              {/* Fullscreen Toggle */}
+              <button type="button" class="reader-util-btn" id="fullScreenToggleBtn" title="ملء الشاشة">
+                <i class="fa-solid fa-expand"></i>
+              </button>
 
               {/* Close Button */}
-              <button type="button" class="reader-close-btn" id="closeReaderBtn" aria-label="إغلاق المصحف">
+              <button type="button" class="reader-close-btn" id="closeReaderBtn" aria-label="إغلاق المصحف" title="إغلاق (Esc)">
                 {icon('fa-xmark')}
               </button>
             </div>
-          </div>
+          </header>
 
           {/* Reader Body / Ayahs Container */}
           <div class="reader-body" id="readerBody">
-            <div class="bismillah-banner" id="readerBismillah">
-              ﷽
-            </div>
-            <div class="ayahs-stream" id="ayahsStream">
-              {/* Ayahs loaded here */}
+            <div class="mushaf-page-frame">
+              
+              {/* Decorative Surah Banner */}
+              <div class="surah-ornate-banner" id="surahOrnateBanner">
+                <div class="ornate-corner top-right"></div>
+                <div class="ornate-corner top-left"></div>
+                <h3 id="bannerSurahTitle">سورة الفاتحة</h3>
+                <p id="bannerSurahDetails">مكية • ٧ آيات • نزلت بعد سورة المدثر</p>
+                <div class="ornate-corner bottom-right"></div>
+                <div class="ornate-corner bottom-left"></div>
+              </div>
+
+              {/* Bismillah Banner */}
+              <div class="bismillah-banner" id="readerBismillah">
+                بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+              </div>
+
+              {/* Ayahs Stream */}
+              <div class="ayahs-stream font-amiri-quran" id="ayahsStream">
+                {/* Ayahs loaded dynamically */}
+              </div>
+
+              {/* End of Surah Decoration */}
+              <div class="surah-end-ornament" id="surahEndOrnament">
+                <svg viewBox="0 0 200 40" class="end-svg">
+                  <path d="M 10 20 Q 50 5 100 20 Q 150 35 190 20" fill="none" stroke="currentColor" stroke-width="1.5" />
+                  <circle cx="100" cy="20" r="5" fill="currentColor" />
+                </svg>
+                <span>صدق الله العظيم</span>
+              </div>
+
             </div>
           </div>
 
-          {/* Reader Footer Controls (Audio Playbar for active Surah) */}
-          <div class="reader-footer">
+          {/* Reader Footer Controls (Audio & Navigation Bar) */}
+          <footer class="reader-footer">
             <div class="reader-audio-controls">
-              <button type="button" class="reader-audio-btn main-play" id="readerPlaySurahBtn">
-                {icon('fa-play')} <span id="readerPlaySurahLabel">استماع للسورة كاملة</span>
+              <button type="button" class="reader-audio-btn main-play" id="readerPlaySurahBtn" title="تشغيل تلاوة السورة">
+                {icon('fa-play')} <span id="readerPlaySurahLabel">استماع للسورة</span>
               </button>
-              <span class="active-reciter-name" id="readerReciterName">بصوت الشيخ محمد صديق المنشاوي</span>
+              <div class="reader-reciter-dropdown">
+                <select id="readerReciterSelect" title="اختر القارئ">
+                  {/* Populated in JS */}
+                </select>
+                <i class="fa-solid fa-microphone-lines"></i>
+              </div>
+            </div>
+
+            <div class="reader-quick-actions">
+              <button type="button" class="reader-action-pill" id="readerBookmarkBtn" title="حفظ علامة مرجعية هنا">
+                <i class="fa-regular fa-bookmark"></i> <span>حفظ المكان</span>
+              </button>
+              <button type="button" class="reader-action-pill" id="readerShareSurahBtn" title="مشاركة السورة عبر واتساب">
+                <i class="fa-brands fa-whatsapp"></i> <span>مشاركة</span>
+              </button>
             </div>
 
             <div class="reader-nav-buttons">
-              <button type="button" class="reader-nav-btn" id="prevSurahBtn">
+              <button type="button" class="reader-nav-btn" id="prevSurahBtn" title="السورة السابقة">
                 {icon('fa-arrow-right')} <span>السورة السابقة</span>
               </button>
-              <button type="button" class="reader-nav-btn" id="nextSurahBtn">
+              <button type="button" class="reader-nav-btn" id="nextSurahBtn" title="السورة التالية">
                 <span>السورة التالية</span> {icon('fa-arrow-left')}
               </button>
             </div>
-          </div>
+          </footer>
 
+        </div>
+      </div>
+
+      {/* ─── Interactive Ayah Actions Modal / Bottom Sheet ─── */}
+      <div class="ayah-action-modal" id="ayahActionModal" aria-hidden="true">
+        <div class="ayah-action-backdrop" id="ayahActionBackdrop"></div>
+        <div class="ayah-action-dialog">
+          <div class="ayah-action-header">
+            <h4 id="ayahActionTitle">الآية رقم ١</h4>
+            <button type="button" class="ayah-action-close" id="closeAyahActionBtn">{icon('fa-xmark')}</button>
+          </div>
+          <blockquote class="ayah-action-quote" id="ayahActionText"></blockquote>
+          <div class="ayah-action-grid">
+            <button type="button" class="ayah-act-item" id="ayahActTafsirBtn">
+              <i class="fa-solid fa-book-open"></i>
+              <span>التفسير الميسر</span>
+            </button>
+            <button type="button" class="ayah-act-item" id="ayahActCopyBtn">
+              <i class="fa-solid fa-copy"></i>
+              <span>نسخ الآية</span>
+            </button>
+            <button type="button" class="ayah-act-item" id="ayahActShareBtn">
+              <i class="fa-brands fa-whatsapp"></i>
+              <span>مشاركة واتساب</span>
+            </button>
+            <button type="button" class="ayah-act-item" id="ayahActBookmarkBtn">
+              <i class="fa-solid fa-bookmark"></i>
+              <span>علامة مرجعية</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -588,14 +711,20 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
         <div class="tafsir-backdrop" id="tafsirBackdrop"></div>
         <div class="tafsir-dialog">
           <div class="tafsir-header">
-            <h4 id="tafsirAyahTitle">تفسير الآية</h4>
+            <div class="tafsir-header-text">
+              <h4 id="tafsirAyahTitle">التفسير الميسر</h4>
+              <span class="tafsir-source-badge">مجمع الملك فهد لطباعة المصحف الشريف</span>
+            </div>
             <button type="button" class="tafsir-close-btn" id="closeTafsirBtn">{icon('fa-xmark')}</button>
           </div>
           <div class="tafsir-body">
-            <blockquote class="tafsir-ayah-quote" id="tafsirAyahText"></blockquote>
+            <blockquote class="tafsir-ayah-quote font-amiri-quran" id="tafsirAyahText"></blockquote>
             <div class="tafsir-explanation" id="tafsirExplanationText">
               <i class="fa-solid fa-spinner fa-spin"></i> جاري جلب التفسير الميسر...
             </div>
+          </div>
+          <div class="tafsir-footer">
+            <button type="button" class="primary-btn" id="tafsirDoneBtn">تم الاستفادة بحمد الله</button>
           </div>
         </div>
       </div>
@@ -643,7 +772,7 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
       </div>
 
       {/* Script for Quran functionality */}
-      <script src="/static/quran.js?v=2.7"></script>
+      <script src="/static/quran.js?v=2.8"></script>
     </Layout>
   )
 }
