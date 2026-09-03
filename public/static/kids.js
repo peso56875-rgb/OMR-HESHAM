@@ -2280,8 +2280,8 @@
       saveBtn.addEventListener('click', () => {
         if (!emojiCanvas) return
         const dataUrl = emojiCanvas.toDataURL('image/png')
-        progress.saveDrawing(dataUrl, `تلوين ${EMOJI_TEMPLATES[currentEmojiTemplate]?.name || 'إيموجي'}`)
-        alert('تم حفظ لوحة الإيموجي في معرض رسوماتك بنجاح! 🎨')
+        progress.saveDrawing(dataUrl, `تلوين ${EMOJI_TEMPLATES[currentEmojiTemplate]?.name || 'رسمة'}`)
+        alert('تم حفظ لوحتك الملوّنة في معرض رسوماتك! 🎨')
         renderSavedGallery()
       })
     }
@@ -2362,31 +2362,358 @@
   function renderEmojiTemplate(key) {
     if (!emojiCanvas || !emojiCtx) return
     const tpl = EMOJI_TEMPLATES[key] || EMOJI_TEMPLATES.mosque
+    const ctx = emojiCtx
+    const W = emojiCanvas.width
+    const H = emojiCanvas.height
+    const cx = W / 2
+    const cy = H / 2 - 25
 
-    emojiCtx.clearRect(0, 0, emojiCanvas.width, emojiCanvas.height)
+    ctx.clearRect(0, 0, W, H)
 
-    // Cheerful background
-    const bgGrad = emojiCtx.createLinearGradient(0, 0, 0, emojiCanvas.height)
-    bgGrad.addColorStop(0, '#f8fafc')
-    bgGrad.addColorStop(1, '#f1f5f9')
-    emojiCtx.fillStyle = bgGrad
-    emojiCtx.fillRect(0, 0, emojiCanvas.width, emojiCanvas.height)
+    // White coloring-book background
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, W, H)
 
-    // Soft border frame
-    emojiCtx.strokeStyle = '#e2e8f0'
-    emojiCtx.lineWidth = 4
-    emojiCtx.strokeRect(10, 10, emojiCanvas.width - 20, emojiCanvas.height - 20)
+    // Dashed border frame (coloring book style)
+    ctx.save()
+    ctx.strokeStyle = '#cbd5e1'
+    ctx.lineWidth = 2.5
+    ctx.setLineDash([12, 7])
+    ctx.strokeRect(14, 14, W - 28, H - 28)
+    ctx.setLineDash([])
+    ctx.restore()
 
-    // Giant central emoji character
-    emojiCtx.font = '220px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif'
-    emojiCtx.textAlign = 'center'
-    emojiCtx.textBaseline = 'middle'
-    emojiCtx.fillText(tpl.emoji, emojiCanvas.width / 2, emojiCanvas.height / 2 - 10)
+    // Helper: draw an outline-only shape (white fill + dark stroke)
+    function outline(drawFn, lw) {
+      ctx.save()
+      ctx.fillStyle = '#ffffff'
+      ctx.strokeStyle = '#1e293b'
+      ctx.lineWidth = lw || 3.5
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      drawFn()
+      ctx.restore()
+    }
 
-    // Caption title
-    emojiCtx.font = 'bold 26px "Tajawal", "Noto Naskh Arabic", sans-serif'
-    emojiCtx.fillStyle = '#0c4a3f'
-    emojiCtx.fillText(tpl.name, emojiCanvas.width / 2, emojiCanvas.height - 40)
+    switch (key) {
+      case 'mosque': {
+        // Base building
+        outline(() => { ctx.beginPath(); ctx.rect(cx - 135, cy + 55, 270, 115); ctx.fill(); ctx.stroke() })
+        // Main dome
+        outline(() => { ctx.beginPath(); ctx.arc(cx, cy + 55, 78, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        // Left minaret body
+        outline(() => { ctx.beginPath(); ctx.rect(cx - 160, cy - 30, 28, 88); ctx.fill(); ctx.stroke() })
+        // Right minaret body
+        outline(() => { ctx.beginPath(); ctx.rect(cx + 132, cy - 30, 28, 88); ctx.fill(); ctx.stroke() })
+        // Left minaret cap
+        outline(() => { ctx.beginPath(); ctx.arc(cx - 146, cy - 30, 14, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        // Right minaret cap
+        outline(() => { ctx.beginPath(); ctx.arc(cx + 146, cy - 30, 14, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        // Door arch base
+        outline(() => { ctx.beginPath(); ctx.rect(cx - 24, cy + 108, 48, 62); ctx.fill(); ctx.stroke() })
+        // Door arch top
+        outline(() => { ctx.beginPath(); ctx.arc(cx, cy + 108, 24, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        // Left window
+        outline(() => { ctx.beginPath(); ctx.arc(cx - 80, cy + 95, 17, Math.PI, 0); ctx.rect(cx - 97, cy + 95, 34, 26); ctx.fill(); ctx.stroke() }, 2.5)
+        // Right window
+        outline(() => { ctx.beginPath(); ctx.arc(cx + 80, cy + 95, 17, Math.PI, 0); ctx.rect(cx + 63, cy + 95, 34, 26); ctx.fill(); ctx.stroke() }, 2.5)
+        // Crescent on dome top
+        ctx.save()
+        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2.5; ctx.fillStyle = '#ffffff'
+        ctx.beginPath(); ctx.arc(cx, cy - 22, 13, 0, Math.PI * 2); ctx.fill(); ctx.stroke()
+        ctx.beginPath(); ctx.arc(cx + 6, cy - 22, 10, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill()
+        ctx.restore()
+        break
+      }
+
+      case 'crescent': {
+        // Outer full circle
+        outline(() => { ctx.beginPath(); ctx.arc(cx - 15, cy, 125, 0, Math.PI * 2); ctx.fill(); ctx.stroke() })
+        // Inner masking circle (white, no stroke) to carve crescent
+        ctx.save(); ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1
+        ctx.beginPath(); ctx.arc(cx + 50, cy - 25, 108, 0, Math.PI * 2); ctx.fill()
+        ctx.restore()
+        // Redraw crescent outline arcs
+        ctx.save()
+        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 3.5; ctx.lineCap = 'round'
+        ctx.beginPath(); ctx.arc(cx - 15, cy, 125, 0.55, Math.PI * 2 - 0.45); ctx.stroke()
+        ctx.beginPath(); ctx.arc(cx + 50, cy - 25, 108, Math.PI * 1.2, Math.PI * 0.12); ctx.stroke()
+        ctx.restore()
+        // 5-point star
+        ctx.save()
+        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2.5; ctx.fillStyle = '#ffffff'
+        const sx = cx + 90, sy = cy - 65, sr = 22
+        ctx.beginPath()
+        for (let i = 0; i < 10; i++) {
+          const a = (i * Math.PI) / 5 - Math.PI / 2
+          const r = i % 2 === 0 ? sr : sr * 0.42
+          const px = sx + r * Math.cos(a), py = sy + r * Math.sin(a)
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)
+        }
+        ctx.closePath(); ctx.fill(); ctx.stroke()
+        ctx.restore()
+        break
+      }
+
+      case 'fish': {
+        // Body ellipse
+        outline(() => { ctx.beginPath(); ctx.ellipse(cx - 20, cy, 128, 74, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke() })
+        // Tail
+        outline(() => {
+          ctx.beginPath(); ctx.moveTo(cx + 108, cy)
+          ctx.lineTo(cx + 172, cy - 62); ctx.lineTo(cx + 172, cy + 62); ctx.closePath()
+          ctx.fill(); ctx.stroke()
+        })
+        // Top fin
+        outline(() => {
+          ctx.beginPath(); ctx.moveTo(cx - 25, cy - 74)
+          ctx.lineTo(cx + 22, cy - 118); ctx.lineTo(cx + 62, cy - 74); ctx.closePath()
+          ctx.fill(); ctx.stroke()
+        })
+        // Eye outer
+        outline(() => { ctx.beginPath(); ctx.arc(cx - 88, cy - 20, 16, 0, Math.PI * 2); ctx.fill(); ctx.stroke() })
+        // Eye pupil
+        ctx.fillStyle = '#1e293b'
+        ctx.beginPath(); ctx.arc(cx - 91, cy - 22, 6, 0, Math.PI * 2); ctx.fill()
+        // Scale arcs
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1.8
+        for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(cx - 20 + i * 48, cy + 10, 34, 0.25, Math.PI - 0.25); ctx.stroke() }
+        ctx.restore()
+        break
+      }
+
+      case 'flower': {
+        // 6 petals
+        for (let i = 0; i < 6; i++) {
+          const ang = (i * Math.PI * 2) / 6
+          outline(() => {
+            ctx.save()
+            ctx.translate(cx + Math.cos(ang) * 78, cy + Math.sin(ang) * 78)
+            ctx.rotate(ang)
+            ctx.beginPath(); ctx.ellipse(0, 0, 33, 52, 0, 0, Math.PI * 2)
+            ctx.fill(); ctx.stroke()
+            ctx.restore()
+          })
+        }
+        // Center circle
+        outline(() => { ctx.beginPath(); ctx.arc(cx, cy, 44, 0, Math.PI * 2); ctx.fill(); ctx.stroke() })
+        // Dot pattern in center
+        ctx.save(); ctx.fillStyle = '#1e293b'
+        for (let i = 0; i < 7; i++) {
+          const a = (i * Math.PI * 2) / 7
+          ctx.beginPath(); ctx.arc(cx + Math.cos(a) * 19, cy + Math.sin(a) * 19, 4, 0, Math.PI * 2); ctx.fill()
+        }
+        ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill()
+        ctx.restore()
+        // Stem
+        outline(() => { ctx.beginPath(); ctx.rect(cx - 8, cy + 126, 16, 80); ctx.fill(); ctx.stroke() })
+        // Leaf
+        outline(() => {
+          ctx.beginPath(); ctx.moveTo(cx, cy + 158)
+          ctx.bezierCurveTo(cx + 58, cy + 138, cx + 68, cy + 198, cx + 18, cy + 202)
+          ctx.bezierCurveTo(cx + 8, cy + 207, cx, cy + 192, cx, cy + 158)
+          ctx.fill(); ctx.stroke()
+        }, 2.5)
+        break
+      }
+
+      case 'tree': {
+        // Three layered triangles
+        outline(() => { ctx.beginPath(); ctx.moveTo(cx, cy - 155); ctx.lineTo(cx - 135, cy + 10); ctx.lineTo(cx + 135, cy + 10); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        outline(() => { ctx.beginPath(); ctx.moveTo(cx, cy - 85); ctx.lineTo(cx - 158, cy + 68); ctx.lineTo(cx + 158, cy + 68); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        outline(() => { ctx.beginPath(); ctx.moveTo(cx, cy - 18); ctx.lineTo(cx - 175, cy + 135); ctx.lineTo(cx + 175, cy + 135); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        // Trunk
+        outline(() => { ctx.beginPath(); ctx.rect(cx - 28, cy + 135, 56, 65); ctx.fill(); ctx.stroke() })
+        // Decoration circles on tree
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2.2
+        const deco = [[cx, cy - 55], [cx - 60, cy + 15], [cx + 60, cy + 15], [cx - 30, cy + 75], [cx + 30, cy + 75], [cx, cy + 82]]
+        deco.forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(dx, dy, 10, 0, Math.PI * 2); ctx.stroke() })
+        ctx.restore()
+        break
+      }
+
+      case 'lion': {
+        // Mane outer circle
+        outline(() => { ctx.beginPath(); ctx.arc(cx, cy, 128, 0, Math.PI * 2); ctx.fill(); ctx.stroke() })
+        // Mane spikes
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2.5
+        for (let i = 0; i < 12; i++) {
+          const a = (i * Math.PI * 2) / 12
+          ctx.beginPath()
+          ctx.moveTo(cx + Math.cos(a) * 108, cy + Math.sin(a) * 108)
+          ctx.lineTo(cx + Math.cos(a) * 145, cy + Math.sin(a) * 145)
+          ctx.stroke()
+        }
+        ctx.restore()
+        // Face circle
+        outline(() => { ctx.beginPath(); ctx.arc(cx, cy, 84, 0, Math.PI * 2); ctx.fill(); ctx.stroke() })
+        // Left eye
+        outline(() => { ctx.beginPath(); ctx.ellipse(cx - 27, cy - 24, 14, 17, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke() })
+        // Right eye
+        outline(() => { ctx.beginPath(); ctx.ellipse(cx + 27, cy - 24, 14, 17, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke() })
+        // Pupils
+        ctx.fillStyle = '#1e293b'
+        ctx.beginPath(); ctx.arc(cx - 27, cy - 24, 7, 0, Math.PI * 2); ctx.fill()
+        ctx.beginPath(); ctx.arc(cx + 27, cy - 24, 7, 0, Math.PI * 2); ctx.fill()
+        // Nose triangle
+        outline(() => { ctx.beginPath(); ctx.moveTo(cx, cy + 5); ctx.lineTo(cx - 14, cy + 24); ctx.lineTo(cx + 14, cy + 24); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        // Smile lines
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2.8; ctx.lineCap = 'round'
+        ctx.beginPath(); ctx.moveTo(cx, cy + 24); ctx.bezierCurveTo(cx - 28, cy + 48, cx - 44, cy + 43, cx - 44, cy + 34); ctx.stroke()
+        ctx.beginPath(); ctx.moveTo(cx, cy + 24); ctx.bezierCurveTo(cx + 28, cy + 48, cx + 44, cy + 43, cx + 44, cy + 34); ctx.stroke()
+        ctx.restore()
+        // Whiskers
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1.5
+        ;[0, 1, 2].forEach(i => {
+          const oy = cy + 10 + i * 9
+          ctx.beginPath(); ctx.moveTo(cx - 44, oy); ctx.lineTo(cx - 84, oy - 3); ctx.stroke()
+          ctx.beginPath(); ctx.moveTo(cx + 44, oy); ctx.lineTo(cx + 84, oy - 3); ctx.stroke()
+        })
+        ctx.restore()
+        // Ears
+        outline(() => { ctx.beginPath(); ctx.moveTo(cx - 58, cy - 73); ctx.lineTo(cx - 94, cy - 128); ctx.lineTo(cx - 18, cy - 98); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        outline(() => { ctx.beginPath(); ctx.moveTo(cx + 58, cy - 73); ctx.lineTo(cx + 94, cy - 128); ctx.lineTo(cx + 18, cy - 98); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        break
+      }
+
+      case 'car': {
+        // Main body
+        outline(() => { ctx.beginPath(); ctx.rect(cx - 178, cy + 8, 356, 98); ctx.fill(); ctx.stroke() })
+        // Roof/cabin
+        outline(() => {
+          ctx.beginPath(); ctx.moveTo(cx - 108, cy + 8)
+          ctx.lineTo(cx - 78, cy - 68); ctx.lineTo(cx + 78, cy - 68); ctx.lineTo(cx + 108, cy + 8)
+          ctx.closePath(); ctx.fill(); ctx.stroke()
+        })
+        // Left window
+        outline(() => { ctx.beginPath(); ctx.rect(cx - 68, cy - 58, 53, 52); ctx.fill(); ctx.stroke() }, 2.5)
+        // Right window
+        outline(() => { ctx.beginPath(); ctx.rect(cx + 15, cy - 58, 53, 52); ctx.fill(); ctx.stroke() }, 2.5)
+        // Left wheel
+        outline(() => { ctx.beginPath(); ctx.arc(cx - 108, cy + 106, 44, 0, Math.PI * 2); ctx.fill(); ctx.stroke() })
+        // Right wheel
+        outline(() => { ctx.beginPath(); ctx.arc(cx + 108, cy + 106, 44, 0, Math.PI * 2); ctx.fill(); ctx.stroke() })
+        // Wheel hubs
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2
+        ctx.beginPath(); ctx.arc(cx - 108, cy + 106, 17, 0, Math.PI * 2); ctx.stroke()
+        ctx.beginPath(); ctx.arc(cx + 108, cy + 106, 17, 0, Math.PI * 2); ctx.stroke()
+        ctx.restore()
+        // Headlight
+        outline(() => { ctx.beginPath(); ctx.ellipse(cx + 168, cy + 38, 17, 11, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke() }, 2.5)
+        // Door line
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2
+        ctx.beginPath(); ctx.moveTo(cx + 10, cy + 8); ctx.lineTo(cx + 10, cy + 106); ctx.stroke()
+        ctx.restore()
+        break
+      }
+
+      case 'rocket': {
+        // Body
+        outline(() => { ctx.beginPath(); ctx.rect(cx - 50, cy - 78, 100, 158); ctx.fill(); ctx.stroke() })
+        // Nose cone
+        outline(() => { ctx.beginPath(); ctx.moveTo(cx, cy - 158); ctx.lineTo(cx - 50, cy - 78); ctx.lineTo(cx + 50, cy - 78); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        // Porthole
+        outline(() => { ctx.beginPath(); ctx.arc(cx, cy - 18, 29, 0, Math.PI * 2); ctx.fill(); ctx.stroke() })
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2
+        ctx.beginPath(); ctx.arc(cx, cy - 18, 15, 0, Math.PI * 2); ctx.stroke()
+        ctx.restore()
+        // Left fin
+        outline(() => { ctx.beginPath(); ctx.moveTo(cx - 50, cy + 58); ctx.lineTo(cx - 100, cy + 108); ctx.lineTo(cx - 50, cy + 80); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        // Right fin
+        outline(() => { ctx.beginPath(); ctx.moveTo(cx + 50, cy + 58); ctx.lineTo(cx + 100, cy + 108); ctx.lineTo(cx + 50, cy + 80); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        // Nozzle
+        outline(() => { ctx.beginPath(); ctx.moveTo(cx - 34, cy + 80); ctx.lineTo(cx - 50, cy + 128); ctx.lineTo(cx + 50, cy + 128); ctx.lineTo(cx + 34, cy + 80); ctx.closePath(); ctx.fill(); ctx.stroke() })
+        // Flame outline
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'
+        ctx.beginPath(); ctx.moveTo(cx - 30, cy + 128); ctx.bezierCurveTo(cx - 18, cy + 168, cx, cy + 185, cx + 18, cy + 168); ctx.bezierCurveTo(cx + 30, cy + 158, ctx.lineTo && 0, 0, cx + 30, cy + 128); ctx.stroke()
+        ctx.restore()
+        // Dashed lines on body
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4])
+        ctx.beginPath(); ctx.moveTo(cx - 50, cy + 22); ctx.lineTo(cx + 50, cy + 22); ctx.stroke()
+        ctx.beginPath(); ctx.moveTo(cx - 50, cy + 50); ctx.lineTo(cx + 50, cy + 50); ctx.stroke()
+        ctx.setLineDash([]); ctx.restore()
+        break
+      }
+
+      case 'apple': {
+        // Main body (apple shape with bezier)
+        outline(() => {
+          ctx.beginPath()
+          ctx.moveTo(cx, cy - 75)
+          ctx.bezierCurveTo(cx + 158, cy - 75, cx + 158, cy + 118, cx, cy + 138)
+          ctx.bezierCurveTo(cx - 158, cy + 118, cx - 158, cy - 75, cx, cy - 75)
+          ctx.fill(); ctx.stroke()
+        })
+        // Cleft at top (white circle to carve)
+        ctx.save(); ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 6
+        ctx.beginPath(); ctx.arc(cx, cy - 78, 20, 0, Math.PI * 2); ctx.fill(); ctx.stroke()
+        ctx.restore()
+        // Stem
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 4; ctx.lineCap = 'round'
+        ctx.beginPath(); ctx.moveTo(cx, cy - 93); ctx.bezierCurveTo(cx + 5, cy - 128, cx + 30, cy - 138, cx + 24, cy - 153); ctx.stroke()
+        ctx.restore()
+        // Leaf
+        outline(() => {
+          ctx.lineWidth = 2.5
+          ctx.beginPath(); ctx.moveTo(cx + 14, cy - 128)
+          ctx.bezierCurveTo(cx + 58, cy - 158, cx + 74, cy - 123, cx + 38, cy - 113)
+          ctx.bezierCurveTo(cx + 24, cy - 106, cx + 9, cy - 118, cx + 14, cy - 128)
+          ctx.fill(); ctx.stroke()
+        })
+        // Shine arc
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2; ctx.lineCap = 'round'
+        ctx.beginPath(); ctx.arc(cx - 55, cy - 28, 22, -Math.PI * 0.88, -Math.PI * 0.22); ctx.stroke()
+        ctx.restore()
+        break
+      }
+
+      case 'crown': {
+        // Crown points shape
+        outline(() => {
+          ctx.beginPath()
+          ctx.moveTo(cx - 158, cy + 22)
+          ctx.lineTo(cx - 158, cy - 98)
+          ctx.lineTo(cx - 78, cy + 22)
+          ctx.lineTo(cx, cy - 138)
+          ctx.lineTo(cx + 78, cy + 22)
+          ctx.lineTo(cx + 158, cy - 98)
+          ctx.lineTo(cx + 158, cy + 22)
+          ctx.closePath()
+          ctx.fill(); ctx.stroke()
+        })
+        // Base band
+        outline(() => { ctx.beginPath(); ctx.rect(cx - 158, cy + 22, 316, 78); ctx.fill(); ctx.stroke() })
+        // Jewels on band
+        ;[cx - 118, cx - 40, cx + 40, cx + 118].forEach(jx => {
+          outline(() => { ctx.beginPath(); ctx.arc(jx, cy + 60, 13, 0, Math.PI * 2); ctx.fill(); ctx.stroke() }, 2.5)
+        })
+        // Star on top
+        ctx.save(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2.5; ctx.fillStyle = '#ffffff'
+        const starR = 20, starX = cx, starY = cy - 128
+        ctx.beginPath()
+        for (let i = 0; i < 10; i++) {
+          const a = (i * Math.PI) / 5 - Math.PI / 2
+          const r = i % 2 === 0 ? starR : starR * 0.42
+          i === 0 ? ctx.moveTo(starX + r * Math.cos(a), starY + r * Math.sin(a))
+                  : ctx.lineTo(starX + r * Math.cos(a), starY + r * Math.sin(a))
+        }
+        ctx.closePath(); ctx.fill(); ctx.stroke()
+        ctx.restore()
+        break
+      }
+    }
+
+    // Bottom label
+    ctx.save()
+    ctx.font = 'bold 23px "Tajawal", "Noto Naskh Arabic", sans-serif'
+    ctx.fillStyle = '#334155'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(tpl.name, cx, H - 30)
+    ctx.font = '13px "Tajawal", sans-serif'
+    ctx.fillStyle = '#94a3b8'
+    ctx.fillText('✏️ لوّن الرسمة بالألوان التي تحبها', cx, H - 12)
+    ctx.restore()
   }
 
   // Drawing Lessons

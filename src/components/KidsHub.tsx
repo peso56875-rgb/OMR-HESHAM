@@ -1327,7 +1327,7 @@ export function KidsHub({ user }: { user?: UserSession }) {
 
         <div class="sub-mode-row">
           <button class="sub-tab-chip active" data-sub="draw-free"><i class="fa-solid fa-paintbrush"></i> لوحة الرسم الحر</button>
-          <button class="sub-tab-chip" data-sub="draw-coloring"><i class="fa-solid fa-fill-drip"></i> دفتر التلوين الجاهز</button>
+          <button class="sub-tab-chip" data-sub="draw-coloring"><i class="fa-solid fa-fill-drip"></i> دفتر التلوين (لوّن بنفسك!)</button>
           <button class="sub-tab-chip" data-sub="draw-lessons"><i class="fa-solid fa-chalkboard-user"></i> دروس ارسم معي خطوة بخطوة</button>
           <button class="sub-tab-chip" data-sub="draw-gallery"><i class="fa-solid fa-images"></i> معرض رسوماتي (<span id="galleryCountLabel">0</span>)</button>
         </div>
