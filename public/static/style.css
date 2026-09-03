@@ -13308,6 +13308,132 @@ body.dark .dua-content { color: var(--mint); }
 .reset-progress-btn:hover { background: #ef4444; color: #ffffff; }
 .privacy-assurance-note { font-size: 0.8rem; color: var(--muted); }
 
+/* ─── Emoji UI & Badges ─── */
+.nav-tab-emoji {
+  font-size: 1.35rem;
+  line-height: 1;
+  display: inline-block;
+  margin-inline-end: 4px;
+}
+.letter-emoji-badge {
+  font-size: 1.2rem;
+  line-height: 1;
+  display: inline-block;
+  margin-inline-end: 4px;
+  vertical-align: middle;
+}
+.spotlight-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+  display: inline-block;
+  margin-inline-end: 6px;
+  vertical-align: middle;
+}
+
+/* ─── Quran Recitation Audio Equalizer Bars ─── */
+.quran-soundwave-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 16px;
+  margin-inline-start: 10px;
+  vertical-align: middle;
+}
+.quran-soundwave-bars span {
+  width: 3px;
+  background: #10b981;
+  border-radius: 2px;
+  animation: quranEqualizer 0.7s ease-in-out infinite alternate;
+}
+.quran-soundwave-bars span:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+.quran-soundwave-bars span:nth-child(2) { height: 16px; animation-delay: 0.35s; }
+.quran-soundwave-bars span:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+.quran-soundwave-bars span:nth-child(4) { height: 15px; animation-delay: 0.45s; }
+.quran-soundwave-bars span:nth-child(5) { height: 7px; animation-delay: 0.15s; }
+
+@keyframes quranEqualizer {
+  0% { height: 4px; }
+  100% { height: 16px; }
+}
+
+.verse-unit-row {
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+.verse-unit-row:hover {
+  background: rgba(12, 74, 63, 0.05);
+  border-color: rgba(22, 138, 112, 0.4);
+  transform: translateX(-3px);
+}
+.verse-unit-row.active-reading {
+  background: rgba(22, 138, 112, 0.12) !important;
+  border-color: #168a70 !important;
+  box-shadow: 0 0 16px rgba(22, 138, 112, 0.22);
+}
+
+/* ─── Emoji Stickers & Coloring Studio ─── */
+.emoji-stickers-dock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+.emoji-stickers-dock .stickers-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #475569;
+}
+.stickers-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sticker-btn {
+  font-size: 1.6rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sticker-btn:hover {
+  transform: scale(1.15);
+  background: #f1f5f9;
+}
+.sticker-btn.selected {
+  border-color: #d97706;
+  background: #fef3c7;
+  box-shadow: 0 0 10px rgba(217, 119, 6, 0.35);
+  transform: scale(1.18);
+}
+.emoji-coloring-canvas-wrap {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  border: 2px solid #e2e8f0;
+  display: flex;
+  justify-content: center;
+}
+#emojiColoringCanvas {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  touch-action: none;
+  cursor: crosshair;
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .tracer-layout-clean { grid-template-columns: 1fr; }

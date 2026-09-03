@@ -1,172 +1,172 @@
 import { Layout, icon } from './shared'
 import type { UserSession } from '../types'
 
-// All 28 Arabic letters with complete position examples (initial, medial, final)
+// All 28 Arabic letters with complete position examples (initial, medial, final) and child-friendly emojis
 export const ARABIC_LETTERS = [
   {
-    letter: 'أ', name: 'ألف', word: 'أَسَد', icon: 'fa-feather', color: '#0c4a3f',
+    letter: 'أ', name: 'ألف', word: 'أَسَد', emoji: '🦁', icon: 'fa-feather', color: '#0c4a3f',
     initial: { char: 'أَ', word: 'أَسَد' },
     medial: { char: 'ـأَ', word: 'فَأْر' },
     final: { char: 'ـأ', word: 'نَبَأ' }
   },
   {
-    letter: 'ب', name: 'باء', word: 'بَاب', icon: 'fa-door-open', color: '#168a70',
+    letter: 'ب', name: 'باء', word: 'بَاب', emoji: '🚪', icon: 'fa-door-open', color: '#168a70',
     initial: { char: 'بـ', word: 'بَيْت' },
     medial: { char: 'ـبـ', word: 'حَبْل' },
     final: { char: 'ـب', word: 'عِنَب' }
   },
   {
-    letter: 'ت', name: 'تاء', word: 'تَاج', icon: 'fa-crown', color: '#d97706',
+    letter: 'ت', name: 'تاء', word: 'تَاج', emoji: '👑', icon: 'fa-crown', color: '#d97706',
     initial: { char: 'تـ', word: 'تَمْر' },
     medial: { char: 'ـتـ', word: 'كِتَاب' },
     final: { char: 'ـت', word: 'بِنْت' }
   },
   {
-    letter: 'ث', name: 'ثاء', word: 'ثَمَر', icon: 'fa-apple-whole', color: '#7c3aed',
+    letter: 'ث', name: 'ثاء', word: 'ثَمَر', emoji: '🍓', icon: 'fa-apple-whole', color: '#7c3aed',
     initial: { char: 'ثـ', word: 'ثَوْب' },
     medial: { char: 'ـثـ', word: 'عُثْمَان' },
     final: { char: 'ـث', word: 'أَثَاث' }
   },
   {
-    letter: 'ج', name: 'جيم', word: 'جَبَل', icon: 'fa-mountain', color: '#0284c7',
+    letter: 'ج', name: 'جيم', word: 'جَمَل', emoji: '🐪', icon: 'fa-mountain', color: '#0284c7',
     initial: { char: 'جـ', word: 'جَمَل' },
     medial: { char: 'ـجـ', word: 'شَجَرَة' },
     final: { char: 'ـج', word: 'بُرْج' }
   },
   {
-    letter: 'ح', name: 'حاء', word: 'حَدِيقَة', icon: 'fa-tree', color: '#059669',
+    letter: 'ح', name: 'حاء', word: 'حَدِيقَة', emoji: '🎒', icon: 'fa-tree', color: '#059669',
     initial: { char: 'حـ', word: 'حَقِيبَة' },
     medial: { char: 'ـحـ', word: 'بَحْر' },
     final: { char: 'ـح', word: 'مِفْتَاح' }
   },
   {
-    letter: 'خ', name: 'خاء', word: 'خَيْر', icon: 'fa-hand-holding-heart', color: '#b45309',
+    letter: 'خ', name: 'خاء', word: 'خَيْر', emoji: '🍞', icon: 'fa-hand-holding-heart', color: '#b45309',
     initial: { char: 'خـ', word: 'خُبْز' },
     medial: { char: 'ـخـ', word: 'نَخْلَة' },
     final: { char: 'ـخ', word: 'مَطْبَخ' }
   },
   {
-    letter: 'د', name: 'دال', word: 'دَرْب', icon: 'fa-route', color: '#2563eb',
+    letter: 'د', name: 'دال', word: 'دَفْتَر', emoji: '📓', icon: 'fa-route', color: '#2563eb',
     initial: { char: 'د', word: 'دَفْتَر' },
     medial: { char: 'ـد', word: 'مَدْرَسَة' },
     final: { char: 'ـد', word: 'مَسْجِد' }
   },
   {
-    letter: 'ذ', name: 'ذال', word: 'ذَهَب', icon: 'fa-coins', color: '#ea580c',
+    letter: 'ذ', name: 'ذال', word: 'ذَهَب', emoji: '🌽', icon: 'fa-coins', color: '#ea580c',
     initial: { char: 'ذ', word: 'ذُرَة' },
     medial: { char: 'ـذ', word: 'بَذْرَة' },
     final: { char: 'ـذ', word: 'مُعَاذ' }
   },
   {
-    letter: 'ر', name: 'راء', word: 'رَحْمَة', icon: 'fa-heart', color: '#dc2626',
+    letter: 'ر', name: 'راء', word: 'رَحْمَة', emoji: '🕊️', icon: 'fa-heart', color: '#dc2626',
     initial: { char: 'ر', word: 'رَسُول' },
     medial: { char: 'ـر', word: 'قُرْآن' },
     final: { char: 'ـر', word: 'نَهْر' }
   },
   {
-    letter: 'ز', name: 'زاي', word: 'زَيْتُون', icon: 'fa-leaf', color: '#0d9488',
+    letter: 'ز', name: 'زاي', word: 'زَيْتُون', emoji: '🌸', icon: 'fa-leaf', color: '#0d9488',
     initial: { char: 'ز', word: 'زَهْرَة' },
     medial: { char: 'ـز', word: 'مَزْرَعَة' },
     final: { char: 'ـز', word: 'خُبْز' }
   },
   {
-    letter: 'س', name: 'سين', word: 'سَلَام', icon: 'fa-dove', color: '#4f46e5',
+    letter: 'س', name: 'سين', word: 'سَلَام', emoji: '☀️', icon: 'fa-dove', color: '#4f46e5',
     initial: { char: 'سـ', word: 'سَمَاء' },
     medial: { char: 'ـسـ', word: 'مَسْجِد' },
     final: { char: 'ـس', word: 'شَمْس' }
   },
   {
-    letter: 'ش', name: 'شين', word: 'شَمْس', icon: 'fa-sun', color: '#d97706',
+    letter: 'ش', name: 'شين', word: 'شَمْس', emoji: '🌴', icon: 'fa-sun', color: '#d97706',
     initial: { char: 'شـ', word: 'شَجَرَة' },
     medial: { char: 'ـشـ', word: 'مِشْكَاة' },
     final: { char: 'ـش', word: 'عُشّ' }
   },
   {
-    letter: 'ص', name: 'صاد', word: 'صَلَاة', icon: 'fa-hands-praying', color: '#059669',
+    letter: 'ص', name: 'صاد', word: 'صَلَاة', emoji: '💡', icon: 'fa-hands-praying', color: '#059669',
     initial: { char: 'صـ', word: 'صَبَاح' },
     medial: { char: 'ـصـ', word: 'مِصْبَاح' },
     final: { char: 'ـص', word: 'قَفَص' }
   },
   {
-    letter: 'ض', name: 'ضاد', word: 'ضِيَاء', icon: 'fa-lightbulb', color: '#15803d',
+    letter: 'ض', name: 'ضاد', word: 'ضِيَاء', emoji: '🌍', icon: 'fa-lightbulb', color: '#15803d',
     initial: { char: 'ضـ', word: 'ضَوْء' },
     medial: { char: 'ـضـ', word: 'رَمَضَان' },
     final: { char: 'ـض', word: 'أَرْض' }
   },
   {
-    letter: 'ط', name: 'طاء', word: 'طَيْر', icon: 'fa-feather-pointed', color: '#0284c7',
+    letter: 'ط', name: 'طاء', word: 'طَيْر', emoji: '✈️', icon: 'fa-feather-pointed', color: '#0284c7',
     initial: { char: 'طـ', word: 'طَالِب' },
     medial: { char: 'ـطـ', word: 'مَطَر' },
     final: { char: 'ـط', word: 'خَيْط' }
   },
   {
-    letter: 'ظ', name: 'ظاء', word: 'ظِلّ', icon: 'fa-cloud-sun', color: '#9333ea',
+    letter: 'ظ', name: 'ظاء', word: 'ظِلّ', emoji: '✉️', icon: 'fa-cloud-sun', color: '#9333ea',
     initial: { char: 'ظـ', word: 'ظَرْف' },
     medial: { char: 'ـظـ', word: 'نَظَافَة' },
     final: { char: 'ـظ', word: 'حَافِظ' }
   },
   {
-    letter: 'ع', name: 'عين', word: 'عِلْم', icon: 'fa-graduation-cap', color: '#c026d3',
+    letter: 'ع', name: 'عين', word: 'عِلْم', emoji: '👁️', icon: 'fa-graduation-cap', color: '#c026d3',
     initial: { char: 'عـ', word: 'عَيْن' },
     medial: { char: 'ـعـ', word: 'مُعَلِّم' },
     final: { char: 'ـع', word: 'شَارِع' }
   },
   {
-    letter: 'غ', name: 'غين', word: 'غَيْم', icon: 'fa-cloud', color: '#e11d48',
+    letter: 'غ', name: 'غين', word: 'غَيْم', emoji: '☁️', icon: 'fa-cloud', color: '#e11d48',
     initial: { char: 'غـ', word: 'غَابَة' },
     medial: { char: 'ـغـ', word: 'صَغِير' },
     final: { char: 'ـغ', word: 'صِمَاغ' }
   },
   {
-    letter: 'ف', name: 'فاء', word: 'فَجْر', icon: 'fa-sun-plant-wilt', color: '#0369a1',
+    letter: 'ف', name: 'فاء', word: 'فَجْر', emoji: '🏮', icon: 'fa-sun-plant-wilt', color: '#0369a1',
     initial: { char: 'فـ', word: 'فَانُوس' },
     medial: { char: 'ـفـ', word: 'طِفْل' },
     final: { char: 'ـف', word: 'مُصْحَف' }
   },
   {
-    letter: 'ق', name: 'قاف', word: 'قُرْآن', icon: 'fa-book-quran', color: '#6d28d9',
+    letter: 'ق', name: 'قاف', word: 'قُرْآن', emoji: '✏️', icon: 'fa-book-quran', color: '#6d28d9',
     initial: { char: 'قـ', word: 'قَلَم' },
     medial: { char: 'ـقـ', word: 'حَقِيبَة' },
     final: { char: 'ـق', word: 'شُرُوق' }
   },
   {
-    letter: 'ك', name: 'كاف', word: 'كِتَاب', icon: 'fa-book-open', color: '#047857',
+    letter: 'ك', name: 'كاف', word: 'كِتَاب', emoji: '📖', icon: 'fa-book-open', color: '#047857',
     initial: { char: 'كـ', word: 'كَعْبَة' },
     medial: { char: 'ـكـ', word: 'مَكْتَبَة' },
     final: { char: 'ـك', word: 'مَلِك' }
   },
   {
-    letter: 'ل', name: 'لام', word: 'لَوْحَة', icon: 'fa-palette', color: '#b45309',
+    letter: 'ل', name: 'لام', word: 'لَوْحَة', emoji: '🍋', icon: 'fa-palette', color: '#b45309',
     initial: { char: 'لـ', word: 'لَيْل' },
     medial: { char: 'ـلـ', word: 'قَلَم' },
     final: { char: 'ـل', word: 'جَمَل' }
   },
   {
-    letter: 'م', name: 'ميم', word: 'مَسْجِد', icon: 'fa-mosque', color: '#0c4a3f',
+    letter: 'م', name: 'ميم', word: 'مَسْجِد', emoji: '🕌', icon: 'fa-mosque', color: '#0c4a3f',
     initial: { char: 'مـ', word: 'مِئْذَنَة' },
     medial: { char: 'ـمـ', word: 'شَمْس' },
     final: { char: 'ـم', word: 'قَلَم' }
   },
   {
-    letter: 'ن', name: 'نون', word: 'نُور', icon: 'fa-star', color: '#d97706',
+    letter: 'ن', name: 'نون', word: 'نُور', emoji: '🌴', icon: 'fa-star', color: '#d97706',
     initial: { char: 'نـ', word: 'نَخْلَة' },
     medial: { char: 'ـنـ', word: 'مِنْبَر' },
     final: { char: 'ـن', word: 'مُؤْمِن' }
   },
   {
-    letter: 'هـ', name: 'هاء', word: 'هِدَايَة', icon: 'fa-compass', color: '#0284c7',
+    letter: 'هـ', name: 'هاء', word: 'هِدَايَة', emoji: '🌙', icon: 'fa-compass', color: '#0284c7',
     initial: { char: 'هـ', word: 'هِلَال' },
     medial: { char: 'ـهـ', word: 'زَهْرَة' },
     final: { char: 'ـه', word: 'وَجْه' }
   },
   {
-    letter: 'و', name: 'واو', word: 'وُضُوء', icon: 'fa-droplet', color: '#e11d48',
+    letter: 'و', name: 'واو', word: 'وُضُوء', emoji: '🌹', icon: 'fa-droplet', color: '#e11d48',
     initial: { char: 'و', word: 'وَطَن' },
     medial: { char: 'ـو', word: 'نُور' },
     final: { char: 'ـو', word: 'دَلْو' }
   },
   {
-    letter: 'ي', name: 'ياء', word: 'يَقِين', icon: 'fa-hand-peace', color: '#7c3aed',
+    letter: 'ي', name: 'ياء', word: 'يَقِين', emoji: '✋', icon: 'fa-hand-peace', color: '#7c3aed',
     initial: { char: 'يـ', word: 'يَد' },
     medial: { char: 'ـيـ', word: 'إِيمَان' },
     final: { char: 'ـي', word: 'أَخِي' }
@@ -366,39 +366,39 @@ export function KidsHub({ user }: { user?: UserSession }) {
         </div>
       </section>
 
-      {/* ─── Navigation Tabs Bar ─── */}
+      {/* ─── Navigation Tabs Bar (With Child-Friendly Emojis) ─── */}
       <nav class="kids-main-nav-bar" aria-label="أقسام واحة الأطفال">
         <div class="kids-tabs-track" role="tablist">
           <button class="kids-nav-tab active" data-tab="letters" role="tab" aria-selected="true">
-            <i class="fa-solid fa-spell-check"></i>
+            <span class="nav-tab-emoji">📖</span>
             <span>القراءة والحروف</span>
           </button>
           <button class="kids-nav-tab" data-tab="quran" role="tab" aria-selected="false">
-            <i class="fa-solid fa-book-quran"></i>
+            <span class="nav-tab-emoji">🕌</span>
             <span>تحفيظ القرآن (المنشاوي المعلم)</span>
           </button>
           <button class="kids-nav-tab" data-tab="numbers" role="tab" aria-selected="false">
-            <i class="fa-solid fa-arrow-down-1-9"></i>
+            <span class="nav-tab-emoji">🔢</span>
             <span>الأرقام والحساب</span>
           </button>
           <button class="kids-nav-tab" data-tab="duas" role="tab" aria-selected="false">
-            <i class="fa-solid fa-hands-praying"></i>
+            <span class="nav-tab-emoji">🤲</span>
             <span>الأدعية والآداب</span>
           </button>
           <button class="kids-nav-tab" data-tab="drawing" role="tab" aria-selected="false">
-            <i class="fa-solid fa-palette"></i>
+            <span class="nav-tab-emoji">🎨</span>
             <span>مرسم الصغار</span>
           </button>
           <button class="kids-nav-tab" data-tab="games" role="tab" aria-selected="false">
-            <i class="fa-solid fa-brain"></i>
-            <span>ألعاب الذكاء</span>
+            <span class="nav-tab-emoji">🎮</span>
+            <span>ألعاب وتحديات الذكاء</span>
           </button>
           <button class="kids-nav-tab" data-tab="stars" role="tab" aria-selected="false">
-            <i class="fa-solid fa-certificate"></i>
+            <span class="nav-tab-emoji">🏆</span>
             <span>لوحة الشرف والشهادة</span>
           </button>
           <button class="kids-nav-tab" data-tab="parents" role="tab" aria-selected="false">
-            <i class="fa-solid fa-user-shield"></i>
+            <span class="nav-tab-emoji">👨‍👩‍👧</span>
             <span>متابعة ولي الأمر</span>
           </button>
         </div>
@@ -416,13 +416,13 @@ export function KidsHub({ user }: { user?: UserSession }) {
 
         {/* Sub-modes bar */}
         <div class="sub-mode-row">
-          <button class="sub-tab-chip active" data-sub="letters-grid"><i class="fa-solid fa-border-all"></i> شبكة الحروف الـ 28</button>
-          <button class="sub-tab-chip" data-sub="letters-positions"><i class="fa-solid fa-arrows-split-up-and-left"></i> مواضع الحرف (أول/وسط/آخر)</button>
-          <button class="sub-tab-chip" data-sub="letters-tashkeel"><i class="fa-solid fa-sliders"></i> الحركات والتشكيل</button>
-          <button class="sub-tab-chip" data-sub="letters-words"><i class="fa-solid fa-layer-group"></i> الكلمات الأولى والمفردات</button>
-          <button class="sub-tab-chip" data-sub="letters-sentences"><i class="fa-solid fa-microphone-lines"></i> الجمل الأولى والقراءة المسموعة</button>
-          <button class="sub-tab-chip" data-sub="letters-tracer"><i class="fa-solid fa-pen-nib"></i> مرسم تتبع الحرف</button>
-          <button class="sub-tab-chip" data-sub="letters-quiz"><i class="fa-solid fa-circle-question"></i> اختبار الأذن الذكية</button>
+          <button class="sub-tab-chip active" data-sub="letters-grid"><span>🔤</span> شبكة الحروف الـ 28</button>
+          <button class="sub-tab-chip" data-sub="letters-positions"><span>↔️</span> مواضع الحرف (أول/وسط/آخر)</button>
+          <button class="sub-tab-chip" data-sub="letters-tashkeel"><span>🪶</span> الحركات والتشكيل</button>
+          <button class="sub-tab-chip" data-sub="letters-words"><span>📚</span> الكلمات الأولى والمفردات</button>
+          <button class="sub-tab-chip" data-sub="letters-sentences"><span>🎤</span> الجمل الأولى والقراءة المسموعة</button>
+          <button class="sub-tab-chip" data-sub="letters-tracer"><span>✍️</span> مرسم تتبع الحرف</button>
+          <button class="sub-tab-chip" data-sub="letters-quiz"><span>🎯</span> اختبار الأذن الذكية</button>
         </div>
 
         {/* Subview 1: Grid */}
@@ -434,6 +434,7 @@ export function KidsHub({ user }: { user?: UserSession }) {
                 data-letter={item.letter}
                 data-name={item.name}
                 data-word={item.word}
+                data-emoji={item.emoji}
                 data-idx={idx}
                 style={`--card-accent: ${item.color}`}
               >
@@ -441,7 +442,7 @@ export function KidsHub({ user }: { user?: UserSession }) {
                 <span class="letter-symbol">{item.letter}</span>
                 <div class="letter-meta">
                   <span class="letter-name">{item.name}</span>
-                  <span class="letter-sample-word"><i class={`fa-solid ${item.icon}`}></i> {item.word}</span>
+                  <span class="letter-sample-word"><span class="letter-emoji-badge">{item.emoji}</span> {item.word}</span>
                 </div>
                 <div class="positions-mini-preview">
                   <span title={`في أول الكلمة: ${item.initial.word}`}>{item.initial.char}</span>
@@ -458,7 +459,7 @@ export function KidsHub({ user }: { user?: UserSession }) {
               <div class="dock-letter-large" id="spotlightChar">أ</div>
               <div class="dock-text">
                 <h3 id="spotlightTitle">حرف الألف — أ</h3>
-                <p id="spotlightExample">مثال: <strong id="spotlightWord">أَسَد</strong></p>
+                <p id="spotlightExample">مثال: <span id="spotlightEmoji" class="spotlight-emoji">🦁</span> <strong id="spotlightWord">أَسَد</strong></p>
               </div>
               <button type="button" class="dock-close-btn" id="closeSpotlightBtn" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -719,13 +720,16 @@ export function KidsHub({ user }: { user?: UserSession }) {
             {/* Prominent Al-Minshawi Audio Player Bar */}
             <div class="minshawi-player-dock" id="minshawiPlayerDock">
               <div class="player-left-meta">
-                <span class="reciter-tag"><i class="fa-solid fa-user"></i> فضيلة الشيخ المنشاوي مع الأطفال</span>
+                <span class="reciter-tag">🕌 تلاوة المعلم • الشيخ محمد صديق المنشاوي</span>
                 <strong id="currentPlayingVerseLabel">الآية ١ من سورة الفاتحة</strong>
+                <div class="quran-soundwave-bars" id="quranAudioWave" style="display:none;" title="الصوت يعمل الآن">
+                  <span></span><span></span><span></span><span></span><span></span>
+                </div>
               </div>
 
               <div class="player-center-controls">
                 <button type="button" class="ctrl-btn" id="btnPrevVerse" title="الآية السابقة"><i class="fa-solid fa-forward-step"></i></button>
-                <button type="button" class="ctrl-btn main-play" id="btnPlayPauseVerse" title="تشغيل / إيقاف"><i class="fa-solid fa-play"></i></button>
+                <button type="button" class="ctrl-btn main-play" id="btnPlayPauseVerse" title="تشغيل / إيقاف التلاوة"><i class="fa-solid fa-play"></i></button>
                 <button type="button" class="ctrl-btn" id="btnNextVerse" title="الآية التالية"><i class="fa-solid fa-backward-step"></i></button>
               </div>
 
@@ -933,31 +937,48 @@ export function KidsHub({ user }: { user?: UserSession }) {
           </div>
         </div>
 
-        {/* Ready to Color SVGs */}
+        {/* Ready to Color Emoji World & Stickers */}
         <div class="sub-panel" id="subview-draw-coloring">
           <div class="coloring-studio-card">
             <div class="coloring-templates-strip" id="coloringTemplatesBar">
-              <button class="tpl-btn active" data-shape="mosque"><i class="fa-solid fa-mosque"></i> مسجد مبارك</button>
-              <button class="tpl-btn" data-shape="crescent"><i class="fa-solid fa-moon"></i> هلال ونجمة</button>
-              <button class="tpl-btn" data-shape="fish"><i class="fa-solid fa-fish"></i> سمكة في البحر</button>
-              <button class="tpl-btn" data-shape="flower"><i class="fa-solid fa-spa"></i> زهرة جميلة</button>
-              <button class="tpl-btn" data-shape="tree"><i class="fa-solid fa-tree"></i> شجرة خضراء</button>
+              <button class="tpl-btn active" data-shape="mosque"><span>🕌</span> مسجد مبارك</button>
+              <button class="tpl-btn" data-shape="crescent"><span>🌙</span> هلال ونجمة</button>
+              <button class="tpl-btn" data-shape="fish"><span>🐟</span> سمكة البحر</button>
+              <button class="tpl-btn" data-shape="flower"><span>🌸</span> وردة الربيع</button>
+              <button class="tpl-btn" data-shape="tree"><span>🌳</span> شجرة خضراء</button>
+              <button class="tpl-btn" data-shape="lion"><span>🦁</span> أسد شجاع</button>
+              <button class="tpl-btn" data-shape="car"><span>🚗</span> سيارة مرحة</button>
+              <button class="tpl-btn" data-shape="rocket"><span>🚀</span> صاروخ الفضاء</button>
+              <button class="tpl-btn" data-shape="apple"><span>🍎</span> تفاحة لذيذة</button>
+              <button class="tpl-btn" data-shape="crown"><span>👑</span> تاج الأبطال</button>
             </div>
 
             <div class="coloring-work-arena">
-              <div class="coloring-palette-strip" id="coloringPalette">
-                {['#0c4a3f', '#168a70', '#d97706', '#2563eb', '#dc2626', '#7c3aed', '#0284c7', '#059669', '#ea580c', '#475569'].map((c, i) => (
-                  <button type="button" class={`color-swatch-bubble ${i === 0 ? 'active' : ''}`} data-color={c} style={`background:${c}`}></button>
-                ))}
+              {/* Fun Emoji Stickers & Stamps Dock */}
+              <div class="emoji-stickers-dock" id="emojiStickersDock">
+                <span class="stickers-title">ختام وملصقات مبهجة (انقر لوضع الختم):</span>
+                <div class="stickers-row" id="emojiStickerButtons">
+                  {['🎈', '⭐', '✨', '💖', '🌈', '🍭', '🦁', '🐱', '🚀', '🕌', '🌴', '🍎', '🦋', '🍦', '☀️', '🕊️'].map(stk => (
+                    <button type="button" class="sticker-btn" data-sticker={stk} title={`ختم ملصق ${stk}`}>{stk}</button>
+                  ))}
+                </div>
               </div>
 
-              <div class="coloring-svg-viewport" id="coloringSvgContainer">
-                {/* SVG dynamically loaded */}
+              <div class="coloring-palette-strip" id="coloringPalette">
+                {['#0c4a3f', '#168a70', '#d97706', '#2563eb', '#dc2626', '#7c3aed', '#0284c7', '#059669', '#ea580c', '#f59e0b', '#ec4899', '#475569'].map((c, i) => (
+                  <button type="button" class={`color-swatch-bubble ${i === 0 ? 'active' : ''}`} data-color={c} style={`background:${c}`}></button>
+                ))}
+                <input type="color" id="coloringCustomColor" value="#168a70" class="custom-color-bubble" title="اختر أي لون" />
+              </div>
+
+              <div class="emoji-coloring-canvas-wrap">
+                <canvas id="emojiColoringCanvas" width="800" height="460"></canvas>
               </div>
 
               <div class="coloring-bottom-actions">
-                <button type="button" class="outline-btn" id="btnResetColoring"><i class="fa-solid fa-rotate-left"></i> مسح الألوان</button>
-                <button type="button" class="primary-btn" id="btnSaveColoring"><i class="fa-solid fa-check"></i> اعتماد التلوينة وإضافتها للمعرض</button>
+                <button type="button" class="outline-btn" id="btnResetColoring"><i class="fa-solid fa-rotate-left"></i> مسح وإعادة رسم</button>
+                <button type="button" class="primary-btn" id="btnSaveColoring"><i class="fa-solid fa-check"></i> حفظ التلوينة بالمعرض</button>
+                <button type="button" class="outline-btn" id="btnDownloadColoring"><i class="fa-solid fa-download"></i> تنزيل اللوحة</button>
               </div>
             </div>
           </div>
@@ -1434,7 +1455,7 @@ export function KidsHub({ user }: { user?: UserSession }) {
       <div id="kidsConfettiOverlay" class="confetti-overlay" pointer-events="none"></div>
 
       {/* Interactive Script */}
-      <script src="/static/kids.js?v=2.0"></script>
+      <script src="/static/kids.js?v=2.4.0"></script>
     </Layout>
   )
 }

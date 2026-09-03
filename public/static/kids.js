@@ -1,10 +1,9 @@
 /**
- * واحة أطفال المؤسسة — Kids Learning Hub v2.1
- * Includes:
- * 1. Sheikh Al-Minshawi Teacher Recitation with Child Repetition (No robotic speech fallback for Quran!)
- * 2. 7 Interactive Kids Games & Challenges with Multiple Levels, Emojis, and Sounds
- * 3. Daily Quests, XP System, and Treasure Box Rewards
- * 4. Letter Positions, Vocabulary, Sentences Karaoke, Math, Duas, and Drawing Studio
+ * واحة أطفال المؤسسة — Kids Learning Hub v2.4.0
+ * 1. Sheikh Al-Minshawi Teacher Recitation with Children Repetition (المصحف المعلم بصوت المنشاوي وترديد الأطفال)
+ * 2. Ultra-Accurate Classical Arabic Voice Engine (Google Natural Arabic + Neural TTS)
+ * 3. Emoji Art & Stickers Studio (replacing SVGs with child-friendly emojis and stamps)
+ * 4. 7 Multi-Level Kids Games with Emojis, XP, and Daily Quests
  */
 
 ;(function () {
@@ -83,42 +82,83 @@
 
   const sfx = new SoundFX()
 
-  // ─── Arabic Speech Synthesizer Wrapper (For letters, vocabulary and quiz ONLY) ───
+  // ─── High-Accuracy Classical Arabic Voice Engine (Google Natural Voice + Neural Fallback) ───
   class KidsSpeech {
     constructor() {
+      this.audioEl = new Audio()
+      this.audioEl.preload = 'auto'
       this.synth = window.speechSynthesis || null
-      this.voice = null
-      if (this.synth) {
-        this.loadVoices()
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-          speechSynthesis.onvoiceschanged = () => this.loadVoices()
-        }
+      this.bestVoice = null
+      this.initVoices()
+    }
+
+    initVoices() {
+      if (!this.synth) return
+      const pick = () => {
+        const voices = this.synth.getVoices()
+        this.bestVoice = voices.find(v => v.lang && v.lang.startsWith('ar') && (v.name.includes('Natural') || v.name.includes('Online') || v.name.includes('Neural'))) ||
+                         voices.find(v => v.lang && v.lang.startsWith('ar') && v.name.includes('Google')) ||
+                         voices.find(v => v.lang === 'ar-SA' || v.lang === 'ar_SA') ||
+                         voices.find(v => v.lang && v.lang.startsWith('ar')) || null
+      }
+      pick()
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = pick
       }
     }
 
-    loadVoices() {
-      if (!this.synth) return
-      const voices = this.synth.getVoices()
-      this.voice = voices.find(v => v.lang && v.lang.startsWith('ar')) || null
+    speak(text, onEnd = null) {
+      if (!text) return
+      // Clean text of emojis and special characters for clear pronunciation
+      const cleanText = text.replace(/[\u{1F300}-\u{1FAFF}]|[\u{2600}-\u{27BF}]/gu, '').replace(/[•—\-_]/g, ' ').trim()
+      if (!cleanText) return
+
+      this.stop()
+
+      // Primary: Google Natural Arabic TTS (Crystal clear Classical Arabic with perfect vowels)
+      const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q=${encodeURIComponent(cleanText)}`
+      
+      this.audioEl.src = googleTtsUrl
+      this.audioEl.onended = () => {
+        if (onEnd) onEnd()
+      }
+      this.audioEl.onerror = () => {
+        this.speakViaSynth(cleanText, onEnd)
+      }
+
+      const p = this.audioEl.play()
+      if (p !== undefined) {
+        p.catch(() => {
+          this.speakViaSynth(cleanText, onEnd)
+        })
+      }
     }
 
-    speak(text, onEnd = null) {
+    speakViaSynth(text, onEnd) {
       if (!this.synth) return
       try {
         this.synth.cancel()
-        const utterance = new SpeechSynthesisUtterance(text)
-        utterance.lang = 'ar-SA'
-        if (this.voice) {
-          utterance.voice = this.voice
-        }
-        utterance.rate = 0.88
-        utterance.pitch = 1.05
-        if (onEnd) {
-          utterance.onend = onEnd
-        }
-        this.synth.speak(utterance)
+        const utter = new SpeechSynthesisUtterance(text)
+        utter.lang = 'ar-SA'
+        if (this.bestVoice) utter.voice = this.bestVoice
+        utter.rate = 0.85
+        utter.pitch = 1.05
+        if (onEnd) utter.onend = onEnd
+        this.synth.speak(utter)
       } catch (e) {
-        console.warn('Speech synthesis error:', e)
+        console.warn('Synth error:', e)
+      }
+    }
+
+    stop() {
+      if (this.audioEl) {
+        this.audioEl.pause()
+        this.audioEl.currentTime = 0
+        this.audioEl.onended = null
+        this.audioEl.onerror = null
+      }
+      if (this.synth) {
+        this.synth.cancel()
       }
     }
   }
@@ -172,7 +212,7 @@
   // ─── Progress, XP & Daily Quests Manager ───
   class ProgressManager {
     constructor() {
-      this.STORAGE_KEY = 'omar_kids_progress_v2_1'
+      this.STORAGE_KEY = 'omar_kids_progress_v2_4'
       this.data = this.load()
     }
 
@@ -313,7 +353,6 @@
       const drawingsCount = (this.data.drawings || []).length
       const level = this.data.level || 1
       const xp = this.data.xp || 0
-      const nextXp = level * 100
 
       // Header indicators
       const heroStars = document.getElementById('totalStarsCounter')
@@ -449,6 +488,7 @@
 
         if (target === 'drawing') {
           setTimeout(resizeDrawingCanvas, 60)
+          setTimeout(initEmojiColoringCanvas, 60)
         } else if (target === 'letters') {
           setTimeout(setupLetterTracer, 60)
         }
@@ -473,10 +513,10 @@
 
             if (targetSub === 'draw-free') {
               setTimeout(resizeDrawingCanvas, 60)
+            } else if (targetSub === 'draw-coloring') {
+              setTimeout(initEmojiColoringCanvas, 60)
             } else if (targetSub === 'letters-tracer') {
               setTimeout(setupLetterTracer, 60)
-            } else if (targetSub === 'game-balloons') {
-              // Prepare balloon arena
             }
           }
         })
@@ -503,34 +543,34 @@
 
   // ─── TAB 1: LETTERS & READING ───
   const LETTERS_DATA = [
-    { letter: 'أ', name: 'ألف', word: 'أَسَد', initial: { char: 'أَ', word: 'أَسَد' }, medial: { char: 'ـأَ', word: 'فَأْر' }, final: { char: 'ـأ', word: 'نَبَأ' } },
-    { letter: 'ب', name: 'باء', word: 'بَاب', initial: { char: 'بـ', word: 'بَيْت' }, medial: { char: 'ـبـ', word: 'حَبْل' }, final: { char: 'ـب', word: 'عِنَب' } },
-    { letter: 'ت', name: 'تاء', word: 'تَاج', initial: { char: 'تـ', word: 'تَمْر' }, medial: { char: 'ـتـ', word: 'كِتَاب' }, final: { char: 'ـت', word: 'بِنْت' } },
-    { letter: 'ث', name: 'ثاء', word: 'ثَمَر', initial: { char: 'ثـ', word: 'ثَوْب' }, medial: { char: 'ـثـ', word: 'عُثْمَان' }, final: { char: 'ـث', word: 'أَثَاث' } },
-    { letter: 'ج', name: 'جيم', word: 'جَمَل', initial: { char: 'جـ', word: 'جَمَل' }, medial: { char: 'ـجـ', word: 'شَجَرَة' }, final: { char: 'ـج', word: 'بُرْج' } },
-    { letter: 'ح', name: 'حاء', word: 'حَدِيقَة', initial: { char: 'حـ', word: 'حَقِيبَة' }, medial: { char: 'ـحـ', word: 'بَحْر' }, final: { char: 'ـح', word: 'مِفْتَاح' } },
-    { letter: 'خ', name: 'خاء', word: 'خَيْر', initial: { char: 'خـ', word: 'خُبْز' }, medial: { char: 'ـخـ', word: 'نَخْلَة' }, final: { char: 'ـخ', word: 'مَطْبَخ' } },
-    { letter: 'د', name: 'دال', word: 'دَفْتَر', initial: { char: 'د', word: 'دَفْتَر' }, medial: { char: 'ـد', word: 'مَدْرَسَة' }, final: { char: 'ـد', word: 'مَسْجِد' } },
-    { letter: 'ذ', name: 'ذال', word: 'ذَهَب', initial: { char: 'ذ', word: 'ذُرَة' }, medial: { char: 'ـذ', word: 'بَذْرَة' }, final: { char: 'ـذ', word: 'مُعَاذ' } },
-    { letter: 'ر', name: 'راء', word: 'رَحْمَة', initial: { char: 'ر', word: 'رَسُول' }, medial: { char: 'ـر', word: 'قُرْآن' }, final: { char: 'ـر', word: 'نَهْر' } },
-    { letter: 'ز', name: 'زاي', word: 'زَيْتُون', initial: { char: 'ز', word: 'زَهْرَة' }, medial: { char: 'ـز', word: 'مَزْرَعَة' }, final: { char: 'ـز', word: 'خُبْز' } },
-    { letter: 'س', name: 'سين', word: 'سَلَام', initial: { char: 'سـ', word: 'سَمَاء' }, medial: { char: 'ـسـ', word: 'مَسْجِد' }, final: { char: 'ـس', word: 'شَمْس' } },
-    { letter: 'ش', name: 'شين', word: 'شَمْس', initial: { char: 'شـ', word: 'شَجَرَة' }, medial: { char: 'ـشـ', word: 'مِشْكَاة' }, final: { char: 'ـش', word: 'عُشّ' } },
-    { letter: 'ص', name: 'صاد', word: 'صَلَاة', initial: { char: 'صـ', word: 'صَبَاح' }, medial: { char: 'ـصـ', word: 'مِصْبَاح' }, final: { char: 'ـص', word: 'قَفَص' } },
-    { letter: 'ض', name: 'ضاد', word: 'ضِيَاء', initial: { char: 'ضـ', word: 'ضَوْء' }, medial: { char: 'ـضـ', word: 'رَمَضَان' }, final: { char: 'ـض', word: 'أَرْض' } },
-    { letter: 'ط', name: 'طاء', word: 'طَيْر', initial: { char: 'طـ', word: 'طَالِب' }, medial: { char: 'ـطـ', word: 'مَطَر' }, final: { char: 'ـط', word: 'خَيْط' } },
-    { letter: 'ظ', name: 'ظاء', word: 'ظِلّ', initial: { char: 'ظـ', word: 'ظَرْف' }, medial: { char: 'ـظـ', word: 'نَظَافَة' }, final: { char: 'ـظ', word: 'حَافِظ' } },
-    { letter: 'ع', name: 'عين', word: 'عِلْم', initial: { char: 'عـ', word: 'عَيْن' }, medial: { char: 'ـعـ', word: 'مُعَلِّم' }, final: { char: 'ـع', word: 'شَارِع' } },
-    { letter: 'غ', name: 'غين', word: 'غَيْم', initial: { char: 'غـ', word: 'غَابَة' }, medial: { char: 'ـغـ', word: 'صَغِير' }, final: { char: 'ـغ', word: 'صِمَاغ' } },
-    { letter: 'ف', name: 'فاء', word: 'فَجْر', initial: { char: 'فـ', word: 'فَانُوس' }, medial: { char: 'ـفـ', word: 'طِفْل' }, final: { char: 'ـف', word: 'مُصْحَف' } },
-    { letter: 'ق', name: 'قاف', word: 'قُرْآن', initial: { char: 'قـ', word: 'قَلَم' }, medial: { char: 'ـقـ', word: 'حَقِيبَة' }, final: { char: 'ـق', word: 'شُرُوق' } },
-    { letter: 'ك', name: 'كاف', word: 'كِتَاب', initial: { char: 'كـ', word: 'كَعْبَة' }, medial: { char: 'ـكـ', word: 'مَكْتَبَة' }, final: { char: 'ـك', word: 'مَلِك' } },
-    { letter: 'ل', name: 'لام', word: 'لَوْحَة', initial: { char: 'لـ', word: 'لَيْل' }, medial: { char: 'ـلـ', word: 'قَلَم' }, final: { char: 'ـل', word: 'جَمَل' } },
-    { letter: 'م', name: 'ميم', word: 'مَسْجِد', initial: { char: 'مـ', word: 'مِئْذَنَة' }, medial: { char: 'ـمـ', word: 'شَمْس' }, final: { char: 'ـم', word: 'قَلَم' } },
-    { letter: 'ن', name: 'نون', word: 'نُور', initial: { char: 'نـ', word: 'نَخْلَة' }, medial: { char: 'ـنـ', word: 'مِنْبَر' }, final: { char: 'ـن', word: 'مُؤْمِن' } },
-    { letter: 'هـ', name: 'هاء', word: 'هِدَايَة', initial: { char: 'هـ', word: 'هِلَال' }, medial: { char: 'ـهـ', word: 'زَهْرَة' }, final: { char: 'ـه', word: 'وَجْه' } },
-    { letter: 'و', name: 'واو', word: 'وُضُوء', initial: { char: 'و', word: 'وَطَن' }, medial: { char: 'ـو', word: 'نُور' }, final: { char: 'ـو', word: 'دَلْو' } },
-    { letter: 'ي', name: 'ياء', word: 'يَقِين', initial: { char: 'يـ', word: 'يَد' }, medial: { char: 'ـيـ', word: 'إِيمَان' }, final: { char: 'ـي', word: 'أَخِي' } }
+    { letter: 'أ', name: 'ألف', word: 'أَسَد', emoji: '🦁', initial: { char: 'أَ', word: 'أَسَد' }, medial: { char: 'ـأَ', word: 'فَأْر' }, final: { char: 'ـأ', word: 'نَبَأ' } },
+    { letter: 'ب', name: 'باء', word: 'بَاب', emoji: '🚪', initial: { char: 'بـ', word: 'بَيْت' }, medial: { char: 'ـبـ', word: 'حَبْل' }, final: { char: 'ـب', word: 'عِنَب' } },
+    { letter: 'ت', name: 'تاء', word: 'تَاج', emoji: '👑', initial: { char: 'تـ', word: 'تَمْر' }, medial: { char: 'ـتـ', word: 'كِتَاب' }, final: { char: 'ـت', word: 'بِنْت' } },
+    { letter: 'ث', name: 'ثاء', word: 'ثَمَر', emoji: '🍓', initial: { char: 'ثـ', word: 'ثَوْب' }, medial: { char: 'ـثـ', word: 'عُثْمَان' }, final: { char: 'ـث', word: 'أَثَاث' } },
+    { letter: 'ج', name: 'جيم', word: 'جَمَل', emoji: '🐪', initial: { char: 'جـ', word: 'جَمَل' }, medial: { char: 'ـجـ', word: 'شَجَرَة' }, final: { char: 'ـج', word: 'بُرْج' } },
+    { letter: 'ح', name: 'حاء', word: 'حَدِيقَة', emoji: '🎒', initial: { char: 'حـ', word: 'حَقِيبَة' }, medial: { char: 'ـحـ', word: 'بَحْر' }, final: { char: 'ـح', word: 'مِفْتَاح' } },
+    { letter: 'خ', name: 'خاء', word: 'خَيْر', emoji: '🍞', initial: { char: 'خـ', word: 'خُبْز' }, medial: { char: 'ـخـ', word: 'نَخْلَة' }, final: { char: 'ـخ', word: 'مَطْبَخ' } },
+    { letter: 'د', name: 'دال', word: 'دَفْتَر', emoji: '📓', initial: { char: 'د', word: 'دَفْتَر' }, medial: { char: 'ـد', word: 'مَدْرَسَة' }, final: { char: 'ـد', word: 'مَسْجِد' } },
+    { letter: 'ذ', name: 'ذال', word: 'ذَهَب', emoji: '🌽', initial: { char: 'ذ', word: 'ذُرَة' }, medial: { char: 'ـذ', word: 'بَذْرَة' }, final: { char: 'ـذ', word: 'مُعَاذ' } },
+    { letter: 'ر', name: 'راء', word: 'رَحْمَة', emoji: '🕊️', initial: { char: 'ر', word: 'رَسُول' }, medial: { char: 'ـر', word: 'قُرْآن' }, final: { char: 'ـر', word: 'نَهْر' } },
+    { letter: 'ز', name: 'زاي', word: 'زَيْتُون', emoji: '🌸', initial: { char: 'ز', word: 'زَهْرَة' }, medial: { char: 'ـز', word: 'مَزْرَعَة' }, final: { char: 'ـز', word: 'خُبْز' } },
+    { letter: 'س', name: 'سين', word: 'سَلَام', emoji: '☀️', initial: { char: 'سـ', word: 'سَمَاء' }, medial: { char: 'ـسـ', word: 'مَسْجِد' }, final: { char: 'ـس', word: 'شَمْس' } },
+    { letter: 'ش', name: 'شين', word: 'شَمْس', emoji: '🌴', initial: { char: 'شـ', word: 'شَجَرَة' }, medial: { char: 'ـشـ', word: 'مِشْكَاة' }, final: { char: 'ـش', word: 'عُشّ' } },
+    { letter: 'ص', name: 'صاد', word: 'صَلَاة', emoji: '💡', initial: { char: 'صـ', word: 'صَبَاح' }, medial: { char: 'ـصـ', word: 'مِصْبَاح' }, final: { char: 'ـص', word: 'قَفَص' } },
+    { letter: 'ض', name: 'ضاد', word: 'ضِيَاء', emoji: '🌍', initial: { char: 'ضـ', word: 'ضَوْء' }, medial: { char: 'ـضـ', word: 'رَمَضَان' }, final: { char: 'ـض', word: 'أَرْض' } },
+    { letter: 'ط', name: 'طاء', word: 'طَيْر', emoji: '✈️', initial: { char: 'طـ', word: 'طَالِب' }, medial: { char: 'ـطـ', word: 'مَطَر' }, final: { char: 'ـط', word: 'خَيْط' } },
+    { letter: 'ظ', name: 'ظاء', word: 'ظِلّ', emoji: '✉️', initial: { char: 'ظـ', word: 'ظَرْف' }, medial: { char: 'ـظـ', word: 'نَظَافَة' }, final: { char: 'ـظ', word: 'حَافِظ' } },
+    { letter: 'ع', name: 'عين', word: 'عِلْم', emoji: '👁️', initial: { char: 'عـ', word: 'عَيْن' }, medial: { char: 'ـعـ', word: 'مُعَلِّم' }, final: { char: 'ـع', word: 'شَارِع' } },
+    { letter: 'غ', name: 'غين', word: 'غَيْم', emoji: '☁️', initial: { char: 'غـ', word: 'غَابَة' }, medial: { char: 'ـغـ', word: 'صَغِير' }, final: { char: 'ـغ', word: 'صِمَاغ' } },
+    { letter: 'ف', name: 'فاء', word: 'فَجْر', emoji: '🏮', initial: { char: 'فـ', word: 'فَانُوس' }, medial: { char: 'ـفـ', word: 'طِفْل' }, final: { char: 'ـف', word: 'مُصْحَف' } },
+    { letter: 'ق', name: 'قاف', word: 'قُرْآن', emoji: '✏️', initial: { char: 'قـ', word: 'قَلَم' }, medial: { char: 'ـقـ', word: 'حَقِيبَة' }, final: { char: 'ـق', word: 'شُرُوق' } },
+    { letter: 'ك', name: 'كاف', word: 'كِتَاب', emoji: '📖', initial: { char: 'كـ', word: 'كَعْبَة' }, medial: { char: 'ـكـ', word: 'مَكْتَبَة' }, final: { char: 'ـك', word: 'مَلِك' } },
+    { letter: 'ل', name: 'لام', word: 'لَوْحَة', emoji: '🍋', initial: { char: 'لـ', word: 'لَيْل' }, medial: { char: 'ـلـ', word: 'قَلَم' }, final: { char: 'ـل', word: 'جَمَل' } },
+    { letter: 'م', name: 'ميم', word: 'مَسْجِد', emoji: '🕌', initial: { char: 'مـ', word: 'مِئْذَنَة' }, medial: { char: 'ـمـ', word: 'شَمْس' }, final: { char: 'ـم', word: 'قَلَم' } },
+    { letter: 'ن', name: 'نون', word: 'نُور', emoji: '🌴', initial: { char: 'نـ', word: 'نَخْلَة' }, medial: { char: 'ـنـ', word: 'مِنْبَر' }, final: { char: 'ـن', word: 'مُؤْمِن' } },
+    { letter: 'هـ', name: 'هاء', word: 'هِدَايَة', emoji: '🌙', initial: { char: 'هـ', word: 'هِلَال' }, medial: { char: 'ـهـ', word: 'زَهْرَة' }, final: { char: 'ـه', word: 'وَجْه' } },
+    { letter: 'و', name: 'واو', word: 'وُضُوء', emoji: '🌹', initial: { char: 'و', word: 'وَطَن' }, medial: { char: 'ـو', word: 'نُور' }, final: { char: 'ـو', word: 'دَلْو' } },
+    { letter: 'ي', name: 'ياء', word: 'يَقِين', emoji: '✋', initial: { char: 'يـ', word: 'يَد' }, medial: { char: 'ـيـ', word: 'إِيمَان' }, final: { char: 'ـي', word: 'أَخِي' } }
   ]
 
   let activeLetterObj = LETTERS_DATA[0]
@@ -541,6 +581,7 @@
     const charEl = document.getElementById('spotlightChar')
     const titleEl = document.getElementById('spotlightTitle')
     const wordEl = document.getElementById('spotlightWord')
+    const emojiEl = document.getElementById('spotlightEmoji')
     const playLetterBtn = document.getElementById('playLetterSoundBtn')
     const playWordBtn = document.getElementById('playWordSoundBtn')
     const goToPositionsBtn = document.getElementById('goToPositionsBtn')
@@ -560,6 +601,7 @@
             charEl.textContent = found.letter
             titleEl.textContent = `حرف ${found.name} — ${found.letter}`
             wordEl.textContent = found.word
+            if (emojiEl) emojiEl.textContent = found.emoji || '🌟'
             spotlight.classList.add('visible')
           }
           speech.speak(`حرف ${found.name}، ${found.letter}، ${found.word}`)
@@ -703,36 +745,36 @@
   // Words Catalog
   const WORDS_CATALOG = {
     family: [
-      { text: 'أَبِي', sub: 'السند والعطاء', letters: 'أ - ب - ي' },
-      { text: 'أُمِّي', sub: 'ينبوع الحنان', letters: 'أ - م - ي' },
-      { text: 'أَخِي', sub: 'رفيق دربي', letters: 'أ - خ - ي' },
-      { text: 'أُخْتِي', sub: 'نور دارنا', letters: 'أ - خ - ت - ي' },
-      { text: 'جَدِّي', sub: 'بركة البيت', letters: 'ج - د - ي' },
-      { text: 'بَيْتِي', sub: 'سكن وأمان', letters: 'ب - ي - ت - ي' }
+      { text: 'أَبِي', sub: 'السند والعطاء 🧔', letters: 'أ - ب - ي' },
+      { text: 'أُمِّي', sub: 'ينبوع الحنان 🧕', letters: 'أ - م - ي' },
+      { text: 'أَخِي', sub: 'رفيق دربي 👦', letters: 'أ - خ - ي' },
+      { text: 'أُخْتِي', sub: 'نور دارنا 👧', letters: 'أ - خ - ت - ي' },
+      { text: 'جَدِّي', sub: 'بركة البيت 👴', letters: 'ج - د - ي' },
+      { text: 'بَيْتِي', sub: 'سكن وأمان 🏠', letters: 'ب - ي - ت - ي' }
     ],
     nature: [
-      { text: 'شَمْس', sub: 'ضياء ودفء', letters: 'ش - م - س' },
-      { text: 'قَمَر', sub: 'نور في السماء', letters: 'ق - م - ر' },
-      { text: 'نَجْم', sub: 'يهتدي به الساري', letters: 'ن - ج - م' },
-      { text: 'سَحَاب', sub: 'يحمل المطر', letters: 'س - ح - ا - ب' },
-      { text: 'مَطَر', sub: 'غيث ورحمة', letters: 'م - ط - ر' },
-      { text: 'شَجَرَة', sub: 'ظل وثمر', letters: 'ش - ج - ر - ة' }
+      { text: 'شَمْس', sub: 'ضياء ودفء ☀️', letters: 'ش - م - س' },
+      { text: 'قَمَر', sub: 'نور في السماء 🌙', letters: 'ق - م - ر' },
+      { text: 'نَجْم', sub: 'يهتدي به الساري ⭐', letters: 'ن - ج - م' },
+      { text: 'سَحَاب', sub: 'يحمل المطر ☁️', letters: 'س - ح - ا - ب' },
+      { text: 'مَطَر', sub: 'غيث ورحمة 🌧️', letters: 'م - ط - ر' },
+      { text: 'شَجَرَة', sub: 'ظل وثمر 🌳', letters: 'ش - ج - ر - ة' }
     ],
     school: [
-      { text: 'كِتَاب', sub: 'كنز المعرفة', letters: 'ك - ت - ا - ب' },
-      { text: 'قَلَم', sub: 'يكتب المستقبل', letters: 'ق - ل - م' },
-      { text: 'دَفْتَر', sub: 'أدون فيه علمي', letters: 'د - ف - ت - ر' },
-      { text: 'مُعَلِّم', sub: 'يبني العقول', letters: 'م - ع - ل - م' },
-      { text: 'طَالِب', sub: 'يسعى للنجاح', letters: 'ط - ا - ل - ب' },
-      { text: 'مَدْرَسَة', sub: 'بيتي الثاني', letters: 'م - د - ر - س - ة' }
+      { text: 'كِتَاب', sub: 'كنز المعرفة 📖', letters: 'ك - ت - ا - ب' },
+      { text: 'قَلَم', sub: 'يكتب المستقبل ✏️', letters: 'ق - ل - م' },
+      { text: 'دَفْتَر', sub: 'أدون فيه علمي 📓', letters: 'د - ف - ت - ر' },
+      { text: 'مُعَلِّم', sub: 'يبني العقول 👨‍🏫', letters: 'م - ع - ل - م' },
+      { text: 'طَالِب', sub: 'يسعى للنجاح 🎒', letters: 'ط - ا - ل - ب' },
+      { text: 'مَدْرَسَة', sub: 'بيتي الثاني 🏫', letters: 'م - د - ر - س - ة' }
     ],
     islamic: [
-      { text: 'مَسْجِد', sub: 'بيت الله المبارك', letters: 'م - س - ج - د' },
-      { text: 'مُصْحَف', sub: 'كتاب الله الكريم', letters: 'م - ص - ح - ف' },
-      { text: 'صَلَاة', sub: 'صلتي بربي', letters: 'ص - ل - ا - ة' },
-      { text: 'كَعْبَة', sub: 'قبلة المسلمين', letters: 'ك - ع - ب - ة' },
-      { text: 'دُعَاء', sub: 'سلاح المؤمن', letters: 'د - ع - ا - ء' },
-      { text: 'إِحْسَان', sub: 'طريق المحبة', letters: 'إ - ح - س - ا - ن' }
+      { text: 'مَسْجِد', sub: 'بيت الله المبارك 🕌', letters: 'م - س - ج - د' },
+      { text: 'مُصْحَف', sub: 'كتاب الله الكريم 📖', letters: 'م - ص - ح - ف' },
+      { text: 'صَلَاة', sub: 'صلتي بربي 🤲', letters: 'ص - ل - ا - ة' },
+      { text: 'كَعْبَة', sub: 'قبلة المسلمين 🕋', letters: 'ك - ع - ب - ة' },
+      { text: 'دُعَاء', sub: 'سلاح المؤمن 🤲', letters: 'د - ع - ا - ء' },
+      { text: 'إِحْسَان', sub: 'طريق المحبة 💖', letters: 'إ - ح - س - ا - ن' }
     ]
   }
 
@@ -836,7 +878,7 @@
         if (wordSpans[wordIdx]) wordSpans[wordIdx].classList.add('speaking')
         speech.speak(s.words[wordIdx], () => {
           wordIdx++
-          setTimeout(speakNextWord, 200)
+          setTimeout(speakNextWord, 220)
         })
       } else {
         wordSpans.forEach(sp => sp.classList.remove('speaking'))
@@ -1008,7 +1050,7 @@
       const btn = document.createElement('button')
       btn.type = 'button'
       btn.className = 'quiz-select-btn'
-      btn.textContent = item.letter
+      btn.innerHTML = `<span class="q-char">${item.letter}</span><small>${item.emoji}</small>`
       btn.addEventListener('click', () => {
         if (item.letter === quizCurrentLetter.letter) {
           btn.classList.add('correct')
@@ -1017,7 +1059,7 @@
           progress.addStars(2, false)
           const scoreEl = document.getElementById('quizScoreVal')
           if (scoreEl) scoreEl.textContent = quizScore
-          banner.textContent = `أحسنت! هذا حرف ${quizCurrentLetter.name} (${quizCurrentLetter.letter})!`
+          banner.textContent = `أحسنت! هذا حرف ${quizCurrentLetter.name} (${quizCurrentLetter.letter})! ${quizCurrentLetter.emoji}`
           banner.className = 'quiz-feedback-box success'
           banner.style.display = 'block'
           speech.speak(`إجابة صحيحة، حرف ${quizCurrentLetter.name}`)
@@ -1034,20 +1076,22 @@
     })
   }
 
-  // ─── TAB 2: QURAN MEMORIZATION (AL-MINSHAWI TEACHER - 100% REAL AUDIO, ZERO SPEECH SYNTHESIS) ───
+  // ─── TAB 2: QURAN MEMORIZATION (AL-MINSHAWI TEACHER - 100% AUTHENTIC AUDIO ENGINE) ───
   let currentSurahId = 1
   let currentSurahName = 'الفاتحة'
   let currentVerses = []
   let currentPlayingVerseIdx = 0
   let isVersePlaying = false
-  let verseAudio = new Audio()
-  verseAudio.preload = 'auto'
-  let isMaskMode = false
   let verseRepeatTarget = 3
   let currentVerseRepeatCount = 1
-  let quranPlaybackMode = 'ayah' // 'ayah' (with child repetition) or 'full' (continuous surah)
+  let quranPlaybackMode = 'ayah' // 'ayah' (with children repetition) or 'full' (continuous teacher surah)
+  let isMaskMode = false
 
-  // Extensive built-in Quran texts for Juz Amma to guarantee instantaneous loading
+  // Dedicated HTML5 audio instance for Holy Quran recitation
+  const quranAudio = new Audio()
+  quranAudio.preload = 'auto'
+
+  // Preloaded common Juz Amma surahs for instantaneous zero-latency offline loading
   const OFFLINE_SURAHS = {
     1: [
       { num: 1, text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ' },
@@ -1159,9 +1203,7 @@
         quranPlaybackMode = 'ayah'
         btnModeAyah.classList.add('active')
         btnModeFull.classList.remove('active')
-        verseAudio.pause()
-        isVersePlaying = false
-        updatePlayButtonIcon()
+        stopQuranPlayback()
       })
 
       btnModeFull.addEventListener('click', () => {
@@ -1247,21 +1289,38 @@
       })
     }
 
-    verseAudio.addEventListener('ended', onVerseAudioEnded)
-    verseAudio.addEventListener('waiting', () => {
+    quranAudio.addEventListener('ended', onVerseAudioEnded)
+    quranAudio.addEventListener('waiting', () => {
       const btn = document.getElementById('btnPlayPauseVerse')
       if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'
     })
-    verseAudio.addEventListener('playing', () => {
+    quranAudio.addEventListener('playing', () => {
       isVersePlaying = true
       updatePlayButtonIcon()
+      setSoundwaveActive(true)
     })
-    verseAudio.addEventListener('pause', () => {
+    quranAudio.addEventListener('pause', () => {
       isVersePlaying = false
       updatePlayButtonIcon()
+      setSoundwaveActive(false)
     })
 
     loadSurah(1, 'الفاتحة')
+  }
+
+  function setSoundwaveActive(active) {
+    const wave = document.getElementById('quranAudioWave')
+    if (wave) {
+      wave.style.display = active ? 'inline-flex' : 'none'
+    }
+  }
+
+  function stopQuranPlayback() {
+    quranAudio.pause()
+    quranAudio.currentTime = 0
+    isVersePlaying = false
+    updatePlayButtonIcon()
+    setSoundwaveActive(false)
   }
 
   function loadSurah(id, name) {
@@ -1269,9 +1328,7 @@
     currentSurahName = name
     currentPlayingVerseIdx = 0
     currentVerseRepeatCount = 1
-    verseAudio.pause()
-    isVersePlaying = false
-    updatePlayButtonIcon()
+    stopQuranPlayback()
 
     const nameEl = document.getElementById('currentSurahName')
     if (nameEl) nameEl.textContent = `سورة ${name}`
@@ -1283,7 +1340,7 @@
 
     const list = document.getElementById('versesInteractiveList')
     if (list) {
-      list.innerHTML = '<div class="verses-loading-state"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل آيات سورة ' + name + '...</div>'
+      list.innerHTML = '<div class="verses-loading-state"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل سورة ' + name + '...</div>'
     }
 
     if (OFFLINE_SURAHS[id]) {
@@ -1292,7 +1349,6 @@
       return
     }
 
-    // Try our local server endpoint first
     fetch(`/api/quran/surah/${id}`)
       .then(r => r.json())
       .then(d => {
@@ -1340,6 +1396,7 @@
       const row = document.createElement('div')
       row.className = `verse-unit-row ${idx === currentPlayingVerseIdx ? 'active-reading' : ''}`
       row.id = `verseRow_${idx}`
+      row.style.cursor = 'pointer'
 
       let textHtml = verse.text
       if (isMaskMode) {
@@ -1358,8 +1415,8 @@
         <button type="button" class="verse-single-play-btn" title="الاستماع لهذه الآية بصوت المنشاوي وترديد الأطفال"><i class="fa-solid fa-volume-high"></i></button>
       `
 
-      row.querySelector('.verse-single-play-btn').addEventListener('click', (e) => {
-        e.stopPropagation()
+      // Clicking anywhere on the verse row starts reciting it!
+      row.addEventListener('click', () => {
         sfx.tap()
         currentPlayingVerseIdx = idx
         currentVerseRepeatCount = 1
@@ -1380,15 +1437,12 @@
     updatePlayerLabel()
   }
 
-  function getAyahAudioUrl(surah, ayah) {
-    const s = String(surah).padStart(3, '0')
-    const a = String(ayah).padStart(3, '0')
-    return `https://everyayah.com/data/Minshawy_Teacher_128kbps/${s}${a}.mp3`
-  }
-
   function playVerseAudio(idx) {
     if (!currentVerses[idx]) return
     currentPlayingVerseIdx = idx
+
+    // Stop any active speech synthesizer so it NEVER speaks over the Quran!
+    speech.stop()
 
     document.querySelectorAll('.verse-unit-row').forEach((r, i) => {
       r.classList.toggle('active-reading', i === idx)
@@ -1398,78 +1452,113 @@
     })
 
     const target = currentVerses[idx]
-    const primaryUrl = getAyahAudioUrl(currentSurahId, target.num)
+    const s = String(currentSurahId).padStart(3, '0')
+    const a = String(target.num).padStart(3, '0')
 
-    // Stop previous and set new source
-    verseAudio.pause()
-    verseAudio.currentTime = 0
+    const mirrors = [
+      `https://everyayah.com/data/Minshawy_Teacher_128kbps/${s}${a}.mp3`,
+      `https://verses.quran.com/Minshawi/Mujawwad/mp3/${s}${a}.mp3`,
+      `https://everyayah.com/data/Minshawy_Murattal_128kbps/${s}${a}.mp3`
+    ]
 
-    // Setup fallback mirror on error without ever touching speech synthesis
-    verseAudio.onerror = () => {
-      console.warn('EveryAyah primary mirror error, trying backup mirror...')
-      const s = String(currentSurahId).padStart(3, '0')
-      const a = String(target.num).padStart(3, '0')
-      verseAudio.onerror = null // Prevent infinite loop
-      verseAudio.src = `https://everyayah.com/data/Minshawy_Murattal_128kbps/${s}${a}.mp3`
-      verseAudio.play().catch(e => console.error('Audio play error:', e))
+    let mirrorIdx = 0
+
+    function attemptPlay() {
+      quranAudio.pause()
+      quranAudio.onended = null
+      quranAudio.onerror = null
+
+      quranAudio.onerror = () => {
+        mirrorIdx++
+        if (mirrorIdx < mirrors.length) {
+          console.warn(`Quran mirror ${mirrorIdx} failed, trying mirror ${mirrorIdx + 1}...`)
+          attemptPlay()
+        } else {
+          console.error('All Quran mirrors failed for', s, a)
+          isVersePlaying = false
+          updatePlayButtonIcon()
+          setSoundwaveActive(false)
+        }
+      }
+
+      quranAudio.src = mirrors[mirrorIdx]
+      const p = quranAudio.play()
+      if (p !== undefined) {
+        p.then(() => {
+          isVersePlaying = true
+          updatePlayButtonIcon()
+          setSoundwaveActive(true)
+        }).catch(err => {
+          console.warn('Playback deferred or interrupted:', err)
+          isVersePlaying = false
+          updatePlayButtonIcon()
+          setSoundwaveActive(false)
+        })
+      }
     }
-
-    verseAudio.src = primaryUrl
-    verseAudio.load()
 
     updatePlayerLabel()
     updateRepeatIndicator()
-
-    const playPromise = verseAudio.play()
-    if (playPromise !== undefined) {
-      playPromise.then(() => {
-        isVersePlaying = true
-        updatePlayButtonIcon()
-      }).catch(err => {
-        console.warn('Audio play request:', err)
-        isVersePlaying = false
-        updatePlayButtonIcon()
-      })
-    }
+    attemptPlay()
   }
 
   function playFullSurahAudio() {
+    speech.stop()
     const sStr = String(currentSurahId).padStart(3, '0')
-    const fullUrl = `https://server10.mp3quran.net/minsh/${sStr}.mp3`
+    
+    // Sheikh Al-Minshawi Authentic Teacher Surah (المصحف المعلم مع الأطفال)
+    const mirrors = [
+      `https://server10.mp3quran.net/minsh/Almusshaf-Al-Mo-lim/${sStr}.mp3`,
+      `https://server10.mp3quran.net/minsh/${sStr}.mp3`,
+      `https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/${sStr}.mp3`
+    ]
 
-    verseAudio.pause()
-    verseAudio.currentTime = 0
+    let mIdx = 0
 
-    verseAudio.onerror = () => {
-      console.warn('Full surah server10 error, trying quranicaudio...')
-      verseAudio.onerror = null
-      verseAudio.src = `https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/${sStr}.mp3`
-      verseAudio.play().catch(e => console.error('Full surah backup error:', e))
+    function attemptFullSurah() {
+      quranAudio.pause()
+      quranAudio.onended = null
+      quranAudio.onerror = null
+
+      quranAudio.onerror = () => {
+        mIdx++
+        if (mIdx < mirrors.length) {
+          console.warn(`Full surah mirror ${mIdx} failed, trying next mirror...`)
+          attemptFullSurah()
+        } else {
+          isVersePlaying = false
+          updatePlayButtonIcon()
+          setSoundwaveActive(false)
+        }
+      }
+
+      quranAudio.src = mirrors[mIdx]
+      const p = quranAudio.play()
+      if (p !== undefined) {
+        p.then(() => {
+          isVersePlaying = true
+          updatePlayButtonIcon()
+          setSoundwaveActive(true)
+        }).catch(err => {
+          console.warn('Full surah play deferred:', err)
+          isVersePlaying = false
+          updatePlayButtonIcon()
+          setSoundwaveActive(false)
+        })
+      }
     }
-
-    verseAudio.src = fullUrl
-    verseAudio.load()
 
     const label = document.getElementById('currentPlayingVerseLabel')
-    if (label) label.textContent = `تلاوة سورة ${currentSurahName} كاملة متصلة (المنشاوي)`
+    if (label) label.textContent = `تلاوة سورة ${currentSurahName} كاملة (المصحف المعلم - المنشاوي والأطفال)`
 
-    const p = verseAudio.play()
-    if (p !== undefined) {
-      p.then(() => {
-        isVersePlaying = true
-        updatePlayButtonIcon()
-      }).catch(err => {
-        console.warn('Full surah play deferred:', err)
-        isVersePlaying = false
-        updatePlayButtonIcon()
-      })
-    }
+    attemptFullSurah()
   }
 
   function onVerseAudioEnded() {
     if (quranPlaybackMode === 'full') {
       isVersePlaying = false
       updatePlayButtonIcon()
+      setSoundwaveActive(false)
       sfx.celebrate()
       launchTastefulConfetti(40)
       return
@@ -1479,9 +1568,9 @@
       currentVerseRepeatCount++
       updateRepeatIndicator()
       setTimeout(() => {
-        verseAudio.currentTime = 0
-        verseAudio.play().catch(() => {})
-      }, 400)
+        quranAudio.currentTime = 0
+        quranAudio.play().catch(() => {})
+      }, 500)
     } else {
       currentVerseRepeatCount = 1
       if (currentPlayingVerseIdx < currentVerses.length - 1) {
@@ -1490,6 +1579,7 @@
       } else {
         isVersePlaying = false
         updatePlayButtonIcon()
+        setSoundwaveActive(false)
         sfx.celebrate()
         launchTastefulConfetti(50)
       }
@@ -1499,9 +1589,10 @@
   function togglePlayCurrentVerse() {
     sfx.tap()
     if (isVersePlaying) {
-      verseAudio.pause()
+      quranAudio.pause()
       isVersePlaying = false
       updatePlayButtonIcon()
+      setSoundwaveActive(false)
     } else {
       if (quranPlaybackMode === 'full') {
         playFullSurahAudio()
@@ -1538,6 +1629,7 @@
     'صِفْر', 'وَاحِد', 'اثْنَان', 'ثَلَاثَة', 'أَرْبَعَة', 'خَمْسَة', 'سِتَّة', 'سَبْعَة', 'ثَمَانِيَة', 'تِسْعَة', 'عَشَرَة',
     'أَحَدَ عَشَر', 'اثْنَا عَشَر', 'ثَلَاثَةَ عَشَر', 'أَرْبَعَةَ عَشَر', 'خَمْسَةَ عَشَر', 'سِتَّةَ عَشَر', 'سَبْعَةَ عَشَر', 'ثَمَانِيَةَ عَشَر', 'تِسْعَةَ عَشَر', 'عِشْرُون'
   ]
+  const NUMBER_EMOJIS = ['0️⃣', '☝️', '✌️', '🌟', '🍀', '✋', '🎲', '🌈', '🐙', '🎈', '🔟', '⚽', '🧁', '🍎', '🚗', '🚀', '👑', '🕌', '💎', '🌙', '🏆']
 
   function initNumbers() {
     const grid = document.getElementById('numbersGridContainer')
@@ -1551,7 +1643,7 @@
             <span class="digit-arabic">${ARABIC_DIGITS[i]}</span>
             <span class="digit-latin">${i}</span>
           </div>
-          <div class="digit-name">${NUMBER_NAMES[i]}</div>
+          <div class="digit-name">${NUMBER_NAMES[i]} <span class="num-emoji">${NUMBER_EMOJIS[i] || '⭐'}</span></div>
           <div class="digit-dots-row">${'● '.repeat(Math.min(i, 10))}</div>
         `
         card.addEventListener('click', () => {
@@ -1583,7 +1675,7 @@
 
         if (isCorrect) {
           sfx.correct()
-          feedback.textContent = `إجابة صحيحة! ${compA} ${op} ${compB}`
+          feedback.textContent = `إجابة صحيحة! ${compA} ${op} ${compB} 🎉`
           feedback.className = 'exercise-feedback success'
           progress.addStars(2, false)
           speech.speak(`صحيح! ${compA} ${op === '>' ? 'أكبر من' : op === '<' ? 'أصغر من' : 'يساوي'} ${compB}`)
@@ -1684,7 +1776,7 @@
         if (val === answer) {
           sfx.correct()
           b.classList.add('correct')
-          feedback.textContent = `إجابة صحيحة! ${mathA} ${mathMode === 'add' ? '+' : '-'} ${mathB} = ${answer}`
+          feedback.textContent = `إجابة صحيحة! ${mathA} ${mathMode === 'add' ? '+' : '-'} ${mathB} = ${answer} 🎉`
           feedback.className = 'exercise-feedback success'
           progress.addStars(2, false)
           speech.speak(`صحيح! الناتج هو ${answer}`)
@@ -1747,7 +1839,7 @@
         if (val === seqAnswer) {
           sfx.correct()
           btn.classList.add('correct')
-          feedback.textContent = `أحسنت! الرقم المفقود هو ${seqAnswer}`
+          feedback.textContent = `أحسنت! الرقم المفقود هو ${seqAnswer} ⭐`
           feedback.className = 'exercise-feedback success'
           progress.addStars(2, false)
           speech.speak(`أحسنت! الرقم هو ${seqAnswer}`)
@@ -1792,7 +1884,7 @@
         if (isCorrect) {
           sfx.correct()
           opt.classList.add('correct')
-          feedback.textContent = 'أحسنت صنعاً! هذا أدب إسلامي نبيل يرضي الله ورسوله.'
+          feedback.textContent = 'أحسنت صنعاً! هذا أدب إسلامي نبيل يرضي الله ورسوله. 🌟'
           feedback.className = 'exercise-feedback success'
           progress.addStars(2, false)
           speech.speak('أحسنت صنعاً، هذا هو الخلق الإسلامي النبيل')
@@ -1806,7 +1898,7 @@
     })
   }
 
-  // ─── TAB 5: DRAWING STUDIO & COLORING ───
+  // ─── TAB 5: DRAWING STUDIO & EMOJI COLORING WORLD ───
   let drawCanvas, drawCtx
   let isDrawing = false
   let currentColor = '#0c4a3f'
@@ -1908,7 +2000,7 @@
       downloadBtn.addEventListener('click', () => {
         sfx.tap()
         const link = document.createElement('a')
-        link.download = `لوحة_مؤسسة_عمر_هشام_${Date.now()}.png`
+        link.download = `لوحة_أطفال_عمر_هشام_${Date.now()}.png`
         link.href = drawCanvas.toDataURL('image/png')
         link.click()
       })
@@ -1962,7 +2054,7 @@
     drawCanvas.addEventListener('touchmove', moveDraw, { passive: false })
     window.addEventListener('touchend', endDraw)
 
-    initColoringBook()
+    initEmojiColoringWorld()
     initDrawingLessons()
     renderSavedGallery()
   }
@@ -1992,130 +2084,204 @@
     }
   }
 
-  // Coloring Book SVGs
-  let activeColoringColor = '#168a70'
-  const COLORING_SVGS = {
-    mosque: `
-      <svg viewBox="0 0 400 320" class="clean-coloring-svg">
-        <rect x="0" y="0" width="400" height="320" fill="#f8fafc" class="color-part"/>
-        <path d="M140 180 C140 100, 260 100, 260 180 Z" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <path d="M195 90 A12 12 0 1 0 205 75 A10 10 0 1 1 195 90 Z" fill="#ffffff" stroke="#1e293b" stroke-width="2" class="color-part"/>
-        <rect x="120" y="180" width="160" height="110" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <path d="M175 290 L175 230 C175 210, 225 210, 225 230 L225 290 Z" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <rect x="70" y="90" width="30" height="200" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <path d="M65 90 L85 45 L105 90 Z" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <rect x="300" y="90" width="30" height="200" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <path d="M295 90 L315 45 L335 90 Z" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <rect x="0" y="290" width="400" height="30" fill="#ffffff" stroke="#1e293b" stroke-width="2" class="color-part"/>
-      </svg>
-    `,
-    crescent: `
-      <svg viewBox="0 0 400 320" class="clean-coloring-svg">
-        <rect x="0" y="0" width="400" height="320" fill="#f8fafc" class="color-part"/>
-        <path d="M180 60 A90 90 0 1 0 250 230 A110 110 0 1 1 180 60 Z" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <polygon points="270,110 282,138 312,138 288,155 297,184 270,166 243,184 252,155 228,138 258,138" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-      </svg>
-    `,
-    fish: `
-      <svg viewBox="0 0 400 320" class="clean-coloring-svg">
-        <rect x="0" y="0" width="400" height="320" fill="#f8fafc" class="color-part"/>
-        <path d="M80 160 C120 70, 260 70, 300 160 C260 250, 120 250, 80 160 Z" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <polygon points="80,160 30,100 30,220" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <circle cx="260" cy="140" r="14" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <circle cx="264" cy="140" r="5" fill="#1e293b"/>
-        <path d="M170 160 C180 110, 220 130, 210 170 Z" fill="#ffffff" stroke="#1e293b" stroke-width="2" class="color-part"/>
-      </svg>
-    `,
-    flower: `
-      <svg viewBox="0 0 400 320" class="clean-coloring-svg">
-        <rect x="0" y="0" width="400" height="320" fill="#f8fafc" class="color-part"/>
-        <rect x="195" y="160" width="10" height="130" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <ellipse cx="160" cy="220" rx="35" ry="16" transform="rotate(-30 160 220)" fill="#ffffff" stroke="#1e293b" stroke-width="2" class="color-part"/>
-        <ellipse cx="240" cy="220" rx="35" ry="16" transform="rotate(30 240 220)" fill="#ffffff" stroke="#1e293b" stroke-width="2" class="color-part"/>
-        <circle cx="200" cy="100" r="35" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <circle cx="150" cy="130" r="35" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <circle cx="160" cy="190" r="35" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <circle cx="240" cy="190" r="35" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <circle cx="250" cy="130" r="35" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <circle cx="200" cy="150" r="26" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-      </svg>
-    `,
-    tree: `
-      <svg viewBox="0 0 400 320" class="clean-coloring-svg">
-        <rect x="0" y="0" width="400" height="320" fill="#f8fafc" class="color-part"/>
-        <path d="M180 290 L185 160 L215 160 L220 290 Z" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <circle cx="150" cy="130" r="45" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <circle cx="250" cy="130" r="45" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <circle cx="200" cy="80" r="50" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-        <circle cx="200" cy="140" r="40" fill="#ffffff" stroke="#1e293b" stroke-width="3" class="color-part"/>
-      </svg>
-    `
+  // ─── EMOJI COLORING WORLD & STICKERS STUDIO (Replaces SVGs with pure child-friendly emojis) ───
+  let emojiCanvas, emojiCtx
+  let activeEmojiColor = '#168a70'
+  let activeSelectedSticker = null
+  let currentEmojiTemplate = 'mosque'
+  let isEmojiPainting = false
+
+  const EMOJI_TEMPLATES = {
+    mosque: { emoji: '🕌', name: 'مسجد مبارك', desc: 'بيت الله المبارك لأداء الصلاة' },
+    crescent: { emoji: '🌙', name: 'هلال رمضان', desc: 'ينير السماء في ليالي الشهر الفضيل' },
+    fish: { emoji: '🐟', name: 'سمكة البحر', desc: 'تسبح بخفة في أعماق البحار' },
+    flower: { emoji: '🌸', name: 'وردة الربيع', desc: 'عطر فواح وألوان بديعة' },
+    tree: { emoji: '🌳', name: 'شجرة خضراء', desc: 'ظل وثمار وخضرة مباركة' },
+    lion: { emoji: '🦁', name: 'أسد شجاع', desc: 'ملك الغابة القوي' },
+    car: { emoji: '🚗', name: 'سيارة مرحة', desc: 'تسير في أمان وسلام' },
+    rocket: { emoji: '🚀', name: 'صاروخ الفضاء', desc: 'ينطلق نحو النجوم والمجرات' },
+    apple: { emoji: '🍎', name: 'تفاحة لذيذة', desc: 'فاكهة صحية ومفيدة' },
+    crown: { emoji: '👑', name: 'تاج الأبطال', desc: 'يتوج به حفظة القرآن والناجحون' }
   }
 
-  function initColoringBook() {
-    const palette = document.getElementById('coloringPalette')
-    const tplButtons = document.querySelectorAll('#coloringTemplatesBar .tpl-btn')
+  function initEmojiColoringCanvas() {
+    emojiCanvas = document.getElementById('emojiColoringCanvas')
+    if (!emojiCanvas) return
+    emojiCtx = emojiCanvas.getContext('2d')
+    renderEmojiTemplate(currentEmojiTemplate)
+  }
 
-    if (palette) {
-      palette.querySelectorAll('.color-swatch-bubble').forEach(swatch => {
-        swatch.addEventListener('click', () => {
-          sfx.tap()
-          palette.querySelectorAll('.color-swatch-bubble').forEach(s => s.classList.remove('active'))
-          swatch.classList.add('active')
-          activeColoringColor = swatch.getAttribute('data-color')
-        })
-      })
-    }
+  function initEmojiColoringWorld() {
+    initEmojiColoringCanvas()
 
-    tplButtons.forEach(btn => {
+    const tplBtns = document.querySelectorAll('#coloringTemplatesBar .tpl-btn')
+    tplBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         sfx.tap()
-        tplButtons.forEach(b => b.classList.remove('active'))
+        tplBtns.forEach(b => b.classList.remove('active'))
         btn.classList.add('active')
-        loadColoringTemplate(btn.getAttribute('data-shape'))
+        currentEmojiTemplate = btn.getAttribute('data-shape')
+        renderEmojiTemplate(currentEmojiTemplate)
       })
     })
 
+    // Palette swatches
+    document.querySelectorAll('#coloringPalette .color-swatch-bubble').forEach(sw => {
+      sw.addEventListener('click', () => {
+        sfx.tap()
+        document.querySelectorAll('#coloringPalette .color-swatch-bubble').forEach(s => s.classList.remove('active'))
+        sw.classList.add('active')
+        activeEmojiColor = sw.getAttribute('data-color')
+        activeSelectedSticker = null
+      })
+    })
+
+    const customColor = document.getElementById('coloringCustomColor')
+    if (customColor) {
+      customColor.addEventListener('input', (e) => {
+        activeEmojiColor = e.target.value
+        activeSelectedSticker = null
+      })
+    }
+
+    // Emoji Sticker buttons
+    document.querySelectorAll('#emojiStickerButtons .sticker-btn').forEach(stkBtn => {
+      stkBtn.addEventListener('click', () => {
+        sfx.pop()
+        document.querySelectorAll('#emojiStickerButtons .sticker-btn').forEach(b => b.classList.remove('selected'))
+        stkBtn.classList.add('selected')
+        activeSelectedSticker = stkBtn.getAttribute('data-sticker')
+      })
+    })
+
+    // Reset button
     const resetBtn = document.getElementById('btnResetColoring')
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
         sfx.tap()
-        const activeBtn = document.querySelector('#coloringTemplatesBar .tpl-btn.active')
-        if (activeBtn) {
-          loadColoringTemplate(activeBtn.getAttribute('data-shape'))
-        }
+        renderEmojiTemplate(currentEmojiTemplate)
       })
     }
 
-    const saveColoringBtn = document.getElementById('btnSaveColoring')
-    if (saveColoringBtn) {
-      saveColoringBtn.addEventListener('click', () => {
-        sfx.star()
-        progress.addStars(3, true)
-        alert('تم اعتماد تلوينتك الرائعة وحصلت على 3 نقاط تميز.')
+    // Save button
+    const saveBtn = document.getElementById('btnSaveColoring')
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        if (!emojiCanvas) return
+        const dataUrl = emojiCanvas.toDataURL('image/png')
+        progress.saveDrawing(dataUrl, `تلوين ${EMOJI_TEMPLATES[currentEmojiTemplate]?.name || 'إيموجي'}`)
+        alert('تم حفظ لوحة الإيموجي في معرض رسوماتك بنجاح! 🎨')
+        renderSavedGallery()
       })
     }
 
-    loadColoringTemplate('mosque')
+    // Download button
+    const dlBtn = document.getElementById('btnDownloadColoring')
+    if (dlBtn) {
+      dlBtn.addEventListener('click', () => {
+        if (!emojiCanvas) return
+        sfx.tap()
+        const link = document.createElement('a')
+        link.download = `لوحة_إيموجي_عمر_هشام_${Date.now()}.png`
+        link.href = emojiCanvas.toDataURL('image/png')
+        link.click()
+      })
+    }
+
+    // Canvas click / draw handlers
+    function getCanvasPos(e) {
+      const rect = emojiCanvas.getBoundingClientRect()
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY
+      return {
+        x: (clientX - rect.left) * (emojiCanvas.width / rect.width),
+        y: (clientY - rect.top) * (emojiCanvas.height / rect.height)
+      }
+    }
+
+    function onPointerDown(e) {
+      if (!emojiCanvas || !emojiCtx) return
+      e.preventDefault()
+      const p = getCanvasPos(e)
+
+      // If sticker tool is active, stamp the sticker!
+      if (activeSelectedSticker) {
+        sfx.pop()
+        emojiCtx.font = '54px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif'
+        emojiCtx.textAlign = 'center'
+        emojiCtx.textBaseline = 'middle'
+        emojiCtx.fillText(activeSelectedSticker, p.x, p.y)
+        return
+      }
+
+      // Otherwise, paint!
+      isEmojiPainting = true
+      emojiCtx.beginPath()
+      emojiCtx.moveTo(p.x, p.y)
+      emojiCtx.lineCap = 'round'
+      emojiCtx.lineJoin = 'round'
+      emojiCtx.lineWidth = 14
+      emojiCtx.strokeStyle = activeEmojiColor
+    }
+
+    function onPointerMove(e) {
+      if (!isEmojiPainting || activeSelectedSticker) return
+      e.preventDefault()
+      const p = getCanvasPos(e)
+      emojiCtx.lineTo(p.x, p.y)
+      emojiCtx.stroke()
+    }
+
+    function onPointerUp() {
+      isEmojiPainting = false
+      if (emojiCtx) emojiCtx.closePath()
+    }
+
+    if (emojiCanvas) {
+      emojiCanvas.addEventListener('mousedown', onPointerDown)
+      emojiCanvas.addEventListener('mousemove', onPointerMove)
+      window.addEventListener('mouseup', onPointerUp)
+
+      emojiCanvas.addEventListener('touchstart', onPointerDown, { passive: false })
+      emojiCanvas.addEventListener('touchmove', onPointerMove, { passive: false })
+      window.addEventListener('touchend', onPointerUp)
+    }
   }
 
-  function loadColoringTemplate(shapeKey) {
-    const container = document.getElementById('coloringSvgContainer')
-    if (!container || !COLORING_SVGS[shapeKey]) return
-    container.innerHTML = COLORING_SVGS[shapeKey]
+  function renderEmojiTemplate(key) {
+    if (!emojiCanvas || !emojiCtx) return
+    const tpl = EMOJI_TEMPLATES[key] || EMOJI_TEMPLATES.mosque
 
-    container.querySelectorAll('.color-part').forEach(part => {
-      part.addEventListener('click', () => {
-        sfx.tap()
-        part.setAttribute('fill', activeColoringColor)
-      })
-    })
+    emojiCtx.clearRect(0, 0, emojiCanvas.width, emojiCanvas.height)
+
+    // Cheerful background
+    const bgGrad = emojiCtx.createLinearGradient(0, 0, 0, emojiCanvas.height)
+    bgGrad.addColorStop(0, '#f8fafc')
+    bgGrad.addColorStop(1, '#f1f5f9')
+    emojiCtx.fillStyle = bgGrad
+    emojiCtx.fillRect(0, 0, emojiCanvas.width, emojiCanvas.height)
+
+    // Soft border frame
+    emojiCtx.strokeStyle = '#e2e8f0'
+    emojiCtx.lineWidth = 4
+    emojiCtx.strokeRect(10, 10, emojiCanvas.width - 20, emojiCanvas.height - 20)
+
+    // Giant central emoji character
+    emojiCtx.font = '220px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif'
+    emojiCtx.textAlign = 'center'
+    emojiCtx.textBaseline = 'middle'
+    emojiCtx.fillText(tpl.emoji, emojiCanvas.width / 2, emojiCanvas.height / 2 - 10)
+
+    // Caption title
+    emojiCtx.font = 'bold 26px "Tajawal", "Noto Naskh Arabic", sans-serif'
+    emojiCtx.fillStyle = '#0c4a3f'
+    emojiCtx.fillText(tpl.name, emojiCanvas.width / 2, emojiCanvas.height - 40)
   }
 
   // Drawing Lessons
   const DRAWING_LESSONS = [
     {
-      title: 'كيف ترسم مسجداً إسلامياً مباركاً',
+      title: 'كيف ترسم مسجداً إسلامياً مباركاً 🕌',
       steps: [
         '١. ارسم قاعدة مستطيلة للمسجد على سطر مستقيم.',
         '٢. ارسم نصف دائرة مقوسة فوق المنتصف لتشكل القبة الرئيسية.',
@@ -2125,7 +2291,7 @@
       ]
     },
     {
-      title: 'كيف ترسم سمكة سابحة في الأعماق',
+      title: 'كيف ترسم سمكة سابحة في الأعماق 🐟',
       steps: [
         '١. ارسم شكلاً بيضاوياً أفقياً لجسم السمكة.',
         '٢. ارسم مثلثاً متصلاً بالجهة الخلفية لعمل الذيل.',
@@ -2135,7 +2301,7 @@
       ]
     },
     {
-      title: 'كيف ترسم زهرة ربيعية متفتحة',
+      title: 'كيف ترسم زهرة ربيعية متفتحة 🌸',
       steps: [
         '١. ابدأ برسم دائرة صغيرة في المنتصف تمثل قلب الزهرة.',
         '٢. ارسم خمس بتلات متناسقة ومستديرة تحيط بالدائرة المركزية.',
@@ -2156,7 +2322,7 @@
       card.className = 'refined-lesson-card'
       const stepsHtml = lesson.steps.map(s => `<li>${s}</li>`).join('')
       card.innerHTML = `
-        <h3><i class="fa-solid fa-paintbrush"></i> ${lesson.title}</h3>
+        <h3>${lesson.title}</h3>
         <ol class="lesson-ordered-list">${stepsHtml}</ol>
         <button type="button" class="sub-tab-chip" style="margin-top:14px;"><i class="fa-solid fa-pencil"></i> ابدأ رسمها في اللوحة</button>
       `
@@ -2438,7 +2604,6 @@
     const container = document.getElementById('balloonsFloatContainer')
     if (!container || !isBalloonGameRunning) return
 
-    // Ensure at least one target balloon
     const waveLetters = [currentBalloonTarget]
     while (waveLetters.length < 5) {
       const rand = BALLOON_LETTERS[Math.floor(Math.random() * BALLOON_LETTERS.length)]
@@ -2479,7 +2644,6 @@
 
       container.appendChild(bEl)
 
-      // Auto remove when floated away
       setTimeout(() => {
         if (bEl.parentElement) bEl.remove()
       }, 9000)
