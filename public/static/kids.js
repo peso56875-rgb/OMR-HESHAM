@@ -3824,24 +3824,73 @@
     })
   }
 
-  // ─── TAB 7: OFFICIAL CERTIFICATE MODAL & PRINTING ───
+  // ─── TAB 7: OFFICIAL CERTIFICATE MODAL & IMAGE GENERATION ───
   function initCertificate() {
     const openBtn = document.getElementById('btnOpenCertModal')
     const closeBtn = document.getElementById('closeCertModalBtn')
     const closeBg = document.getElementById('closeCertModalBg')
     const cancelBtn = document.getElementById('btnCancelCert')
     const modal = document.getElementById('kidsCertModal')
-    const printBtn = document.getElementById('btnPrintCert')
+    const downloadBtn = document.getElementById('btnDownloadCertImage')
+    const shareBtn = document.getElementById('btnShareCertImage')
     const datePrint = document.getElementById('certDatePrintVal')
+    const starsPrint = document.getElementById('certStarsPrintVal')
+    const nameInput = document.getElementById('certChildNameInput')
+    const namePreview = document.getElementById('certChildNamePreview')
+    const canvas = document.getElementById('kidsCertCanvas')
+
+    // التاريخ الحالي المنسق باللغة العربية
+    const todayFormatted = new Date().toLocaleDateString('ar-EG', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
 
     if (datePrint) {
-      datePrint.textContent = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })
+      datePrint.textContent = todayFormatted
+    }
+
+    // استرجاع اسم البطل المحفوظ مسبقاً إن وجد
+    const savedHeroName = (localStorage.getItem('kids_hero_name') || '').trim()
+    if (nameInput) {
+      if (savedHeroName) {
+        nameInput.value = savedHeroName
+        if (namePreview) namePreview.textContent = savedHeroName
+      }
+
+      nameInput.addEventListener('input', () => {
+        const val = nameInput.value.trim()
+        if (namePreview) {
+          namePreview.textContent = val || 'البطل المتميز'
+        }
+        try {
+          if (val) localStorage.setItem('kids_hero_name', val)
+        } catch (_) {}
+      })
     }
 
     function openModal() {
       sfx.star()
       if (modal) modal.style.display = 'flex'
-      launchTastefulConfetti(35)
+      launchTastefulConfetti(45)
+
+      // تحديث رصيد النقاط المعروض في الشهادة
+      const totalStars = (progress && progress.data && progress.data.totalStars) ? progress.data.totalStars : 120
+      if (starsPrint) {
+        starsPrint.textContent = totalStars + ' نقطة تميز ⭐'
+      }
+
+      // توجيه مؤشر الكتابة إلى حقل الاسم ليدخل الطفل اسمه مباشرة
+      setTimeout(() => {
+        if (nameInput) {
+          nameInput.focus()
+          if (!nameInput.value) {
+            nameInput.placeholder = 'اكتب اسمك هنا يا بطل ليظهر في الشهادة...'
+          } else {
+            nameInput.select()
+          }
+        }
+      }, 150)
     }
 
     function closeModal() {
@@ -3853,10 +3902,310 @@
     if (closeBg) closeBg.addEventListener('click', closeModal)
     if (cancelBtn) cancelBtn.addEventListener('click', closeModal)
 
-    if (printBtn) {
-      printBtn.addEventListener('click', () => {
-        sfx.celebrate()
-        window.print()
+    // دالة رسم الشهادة الاحترافية على الكانفاس بدقة فائقة (Ultra-HD 1920x1357)
+    function drawCertificateCanvas(childName, totalStars, dateStr) {
+      if (!canvas) return
+      const ctx = canvas.getContext('2d')
+      const W = 1920
+      const H = 1357
+
+      canvas.width = W
+      canvas.height = H
+      ctx.clearRect(0, 0, W, H)
+
+      // 1. تدرج الخلفية الفاخر بلون ورق البردي العاجي
+      const bgGrad = ctx.createLinearGradient(0, 0, W, H)
+      bgGrad.addColorStop(0, '#ffffff')
+      bgGrad.addColorStop(0.3, '#fffdf7')
+      bgGrad.addColorStop(0.7, '#fefbf2')
+      bgGrad.addColorStop(1, '#fcf5e5')
+      ctx.fillStyle = bgGrad
+      ctx.fillRect(0, 0, W, H)
+
+      // 2. نقوش وزخارف خلفية إسلامية رقيقة
+      ctx.save()
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.08)'
+      ctx.lineWidth = 1
+      for (let x = 70; x < W; x += 80) {
+        for (let y = 70; y < H; y += 80) {
+          ctx.beginPath()
+          ctx.arc(x, y, 2, 0, Math.PI * 2)
+          ctx.stroke()
+        }
+      }
+      ctx.restore()
+
+      // 3. الإطارات الملكية المذهبة
+      ctx.save()
+      // الإطار الخارجي المذهب المزدوج
+      ctx.strokeStyle = '#d4af37'
+      ctx.lineWidth = 12
+      ctx.strokeRect(36, 36, W - 72, H - 72)
+
+      ctx.strokeStyle = '#b8860b'
+      ctx.lineWidth = 3
+      ctx.strokeRect(50, 50, W - 100, H - 100)
+
+      // الإطار الزمردي الأنيق
+      ctx.strokeStyle = '#0c4a3f'
+      ctx.lineWidth = 5
+      ctx.strokeRect(66, 66, W - 132, H - 132)
+
+      // الإطار الداخلي الخفيف
+      ctx.strokeStyle = '#d4af37'
+      ctx.lineWidth = 2
+      ctx.strokeRect(78, 78, W - 156, H - 156)
+
+      // زوايا الزخرفة الإسلامية (Corner Medallions)
+      function drawCornerMedallion(cx, cy, angle) {
+        ctx.save()
+        ctx.translate(cx, cy)
+        ctx.rotate(angle)
+        ctx.fillStyle = '#d4af37'
+        ctx.beginPath()
+        ctx.moveTo(0, 0)
+        ctx.lineTo(50, 0)
+        ctx.lineTo(0, 50)
+        ctx.closePath()
+        ctx.fill()
+
+        ctx.fillStyle = '#0c4a3f'
+        ctx.beginPath()
+        ctx.arc(18, 18, 7, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.restore()
+      }
+      drawCornerMedallion(78, 78, 0)
+      drawCornerMedallion(W - 78, 78, Math.PI / 2)
+      drawCornerMedallion(W - 78, H - 78, Math.PI)
+      drawCornerMedallion(78, H - 78, -Math.PI / 2)
+      ctx.restore()
+
+      // 4. رأس الشهادة والتاج
+      ctx.save()
+      ctx.textAlign = 'center'
+      ctx.font = '56px "Segoe UI Emoji", Apple Color Emoji, sans-serif'
+      ctx.fillText('🌟 👑 🌟', W / 2, 175)
+
+      // اسم المؤسسة
+      ctx.fillStyle = '#0c4a3f'
+      ctx.font = 'bold 46px "Aref Ruqaa", "Amiri", "Tajawal", serif'
+      ctx.fillText('مؤسسة الدكتور عمر هشام الخيرية', W / 2, 250)
+
+      ctx.fillStyle = '#64748b'
+      ctx.font = '600 24px "Tajawal", sans-serif'
+      ctx.fillText('المشهرة برقم 3115 لسنة 2026 — واحة التعليم القرآني والتربوي للأطفال', W / 2, 296)
+
+      // فاصل زخرفي ذهبي
+      ctx.strokeStyle = '#d4af37'
+      ctx.lineWidth = 2.5
+      ctx.beginPath()
+      ctx.moveTo(W / 2 - 420, 326)
+      ctx.lineTo(W / 2 + 420, 326)
+      ctx.stroke()
+      ctx.restore()
+
+      // 5. شريط عنوان الشهادة الملكي
+      ctx.save()
+      const ribbonW = 680
+      const ribbonH = 80
+      const ribbonX = (W - ribbonW) / 2
+      const ribbonY = 356
+
+      const ribGrad = ctx.createLinearGradient(ribbonX, ribbonY, ribbonX + ribbonW, ribbonY + ribbonH)
+      ribGrad.addColorStop(0, '#f59e0b')
+      ribGrad.addColorStop(0.5, '#d97706')
+      ribGrad.addColorStop(1, '#b45309')
+      ctx.fillStyle = ribGrad
+
+      ctx.beginPath()
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(ribbonX, ribbonY, ribbonW, ribbonH, 40)
+      } else {
+        ctx.rect(ribbonX, ribbonY, ribbonW, ribbonH)
+      }
+      ctx.fill()
+
+      ctx.strokeStyle = '#fef08a'
+      ctx.lineWidth = 3
+      ctx.stroke()
+
+      ctx.fillStyle = '#ffffff'
+      ctx.textAlign = 'center'
+      ctx.font = 'bold 38px "Tajawal", "Aref Ruqaa", sans-serif'
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.25)'
+      ctx.shadowBlur = 6
+      ctx.fillText('★  شَهَادَةُ تَقْدِيرٍ وَتَفَوُّقٍ  ★', W / 2, ribbonY + 54)
+      ctx.restore()
+
+      // 6. عبارة التقديم
+      ctx.save()
+      ctx.textAlign = 'center'
+      ctx.fillStyle = '#475569'
+      ctx.font = '600 28px "Tajawal", sans-serif'
+      ctx.fillText('تَشْهَدُ إِدَارَةُ الْمُؤَسَّسَةِ بِأَنَّ الْبَطَلَ الْمُتَمَيِّزَ / الْبَطَلَةَ الْمُتَمَيِّزَةَ:', W / 2, 505)
+
+      // 7. اسم الطفل بخط عريض وفخم جداً
+      const name = (childName && childName.trim()) ? childName.trim() : 'البطل المتميز'
+      ctx.fillStyle = '#064e3b'
+      ctx.shadowColor = 'rgba(212, 175, 55, 0.4)'
+      ctx.shadowBlur = 10
+      ctx.shadowOffsetY = 3
+      ctx.font = 'bold 66px "Aref Ruqaa", "Amiri", "Tajawal", serif'
+      ctx.fillText(name, W / 2, 615)
+      ctx.shadowColor = 'transparent'
+
+      // خط زخرفي تحت اسم الطفل مع نجوم
+      const textMetrics = ctx.measureText(name)
+      const underWidth = Math.max(380, textMetrics.width + 100)
+      ctx.strokeStyle = '#d4af37'
+      ctx.lineWidth = 4
+      ctx.beginPath()
+      ctx.moveTo(W / 2 - underWidth / 2, 646)
+      ctx.lineTo(W / 2 + underWidth / 2, 646)
+      ctx.stroke()
+
+      ctx.fillStyle = '#d4af37'
+      ctx.font = '24px sans-serif'
+      ctx.fillText('◆', W / 2 - underWidth / 2 - 16, 654)
+      ctx.fillText('◆', W / 2 + underWidth / 2 + 16, 654)
+
+      // 8. نص التكريم المعتمد
+      ctx.fillStyle = '#334155'
+      ctx.font = '500 27px "Tajawal", sans-serif'
+      ctx.fillText('قَدْ أَتَمَّ بِنَجَاحٍ وَإِتْقَانٍ حِفْظَ قِصَارِ السُّوَرِ بِمُصْحَفِ الْمِنْشَاوِي الْمُعَلِّمِ، وَأَتْقَنَ مَبَادِئَ الْقِرَاءَةِ', W / 2, 735)
+      ctx.fillText('وَالْأَدْعِيَةِ الْمَأْثُورَةِ فِي وَاحَةِ أَطْفَالِ الْمُؤَسَّسَةِ، سَائِلِينَ اللَّهَ لَهُ مَزِيداً مِنَ التَّوْفِيقِ وَالسَّدَادِ.', W / 2, 785)
+
+      // خط فاصل قبل التوقيعات
+      ctx.strokeStyle = '#e2e8f0'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(220, 850)
+      ctx.lineTo(W - 220, 850)
+      ctx.stroke()
+
+      // 9. بيانات التوثيق والخاتم
+      // اليمين: رصيد الإنجاز
+      ctx.textAlign = 'center'
+      ctx.fillStyle = '#64748b'
+      ctx.font = '600 23px "Tajawal", sans-serif'
+      ctx.fillText('الرصيد المنجز:', 420, 935)
+      ctx.fillStyle = '#d97706'
+      ctx.font = 'bold 34px "Tajawal", sans-serif'
+      ctx.fillText(totalStars + ' نقطة تميز ⭐', 420, 988)
+
+      // اليسار: تاريخ الإصدار
+      ctx.fillStyle = '#64748b'
+      ctx.font = '600 23px "Tajawal", sans-serif'
+      ctx.fillText('تاريخ الإصدار والتكريم:', W - 420, 935)
+      ctx.fillStyle = '#1e293b'
+      ctx.font = 'bold 29px "Tajawal", sans-serif'
+      ctx.fillText(dateStr, W - 420, 988)
+
+      // المنتصف: الختم الرسمي لمؤسسة د. عمر هشام
+      ctx.save()
+      ctx.translate(W / 2, 960)
+      ctx.rotate(-0.09) // انحناء خفيف لمحاكاة الختم الحي
+      ctx.strokeStyle = '#b91c1c'
+      ctx.lineWidth = 5
+      ctx.strokeRect(-135, -60, 270, 120)
+      ctx.strokeStyle = '#dc2626'
+      ctx.lineWidth = 1.5
+      ctx.strokeRect(-126, -51, 252, 102)
+
+      ctx.fillStyle = '#b91c1c'
+      ctx.font = 'bold 23px "Tajawal", sans-serif'
+      ctx.fillText('خاتم الاعتماد الرسمي', 0, -15)
+      ctx.font = 'bold 20px "Tajawal", sans-serif'
+      ctx.fillText('مؤسسة د. عمر هشام', 0, 18)
+      ctx.font = '700 14px "Tajawal", sans-serif'
+      ctx.fillText('★ معتمد رسميًا 2026 ★', 0, 39)
+      ctx.restore()
+
+      // شارة أسفل الشهادة
+      ctx.fillStyle = '#94a3b8'
+      ctx.font = '500 18px "Tajawal", sans-serif'
+      ctx.fillText('وثيقة رسمية صادرة إلكترونياً عن واحة أطفال مؤسسة الدكتور عمر هشام الخيرية — جميع الحقوق محفوظة', W / 2, H - 100)
+      ctx.restore()
+    }
+
+    // تنزيل الشهادة كصورة PNG مباشرة على الهاتف أو الكمبيوتر
+    function downloadCertificateImage() {
+      const heroName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'البطل المتميز'
+      const totalStars = (progress && progress.data && progress.data.totalStars) ? progress.data.totalStars : 120
+
+      drawCertificateCanvas(heroName, totalStars, todayFormatted)
+
+      if (!canvas) return
+
+      // إظهار تأثير حماسي
+      sfx.celebrate()
+      launchTastefulConfetti(70)
+
+      if (typeof canvas.toBlob === 'function') {
+        canvas.toBlob((blob) => {
+          if (!blob) return
+          const url = URL.createObjectURL(blob)
+          const safeName = heroName.replace(/[/\\?%*:|"<>]/g, '_')
+          const a = document.createElement('a')
+          a.download = `شهادة_تفوق_البطل_${safeName}.png`
+          a.href = url
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          setTimeout(() => URL.revokeObjectURL(url), 4000)
+
+          if (window.showToast) {
+            window.showToast(`تم تحميل شهادة البطل (${heroName}) كصورة عالية الدقة بنجاح! 📸🌟`, 'success')
+          }
+        }, 'image/png')
+      } else {
+        const url = canvas.toDataURL('image/png')
+        const safeName = heroName.replace(/[/\\?%*:|"<>]/g, '_')
+        const a = document.createElement('a')
+        a.download = `شهادة_تفوق_البطل_${safeName}.png`
+        a.href = url
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+
+        if (window.showToast) {
+          window.showToast(`تم تحميل شهادة البطل (${heroName}) كصورة عالية الدقة بنجاح! 📸🌟`, 'success')
+        }
+      }
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', downloadCertificateImage)
+    }
+
+    // تفعيل المشاركة المباشرة إذا كانت مدعومة على الهاتف (Web Share API)
+    if (shareBtn && typeof navigator.share === 'function') {
+      shareBtn.style.display = 'inline-flex'
+      shareBtn.addEventListener('click', () => {
+        const heroName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'البطل المتميز'
+        const totalStars = (progress && progress.data && progress.data.totalStars) ? progress.data.totalStars : 120
+
+        drawCertificateCanvas(heroName, totalStars, todayFormatted)
+
+        if (!canvas) return
+        canvas.toBlob(async (blob) => {
+          if (!blob) return
+          const safeName = heroName.replace(/[/\\?%*:|"<>]/g, '_')
+          const file = new File([blob], `شهادة_تفوق_${safeName}.png`, { type: 'image/png' })
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                title: `شهادة تفوق البطل ${heroName}`,
+                text: `شهادة شرف وتفوق معتمدة من مؤسسة الدكتور عمر هشام الخيرية للبطل ${heroName} 🌟`,
+                files: [file]
+              })
+            } catch (_) {}
+          } else {
+            downloadCertificateImage()
+          }
+        }, 'image/png')
       })
     }
   }

@@ -3454,12 +3454,38 @@ body.vol-lightbox-open {
   }
 }
 
-/* Ensure header and dash-topbar rise to highest z-index when notification dropdown is open */
+/* Ensure header and dash-topbar rise to highest z-index and disable backdrop-filter trap when notification dropdown is open */
 .site-header:has(.notif-dropdown.open),
 .site-header.notif-open,
 .dash-topbar:has(.notif-dropdown.open),
 .dash-topbar.notif-open {
-  z-index: 2800 !important;
+  z-index: 99999 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+.dash-topbar.notif-open .dash-top-actions,
+.dash-top-actions:has(.notif-dropdown.open) {
+  overflow: visible !important;
+}
+
+/* Prevent dash-top-actions button rules (42px square) from breaking buttons inside notification dropdown */
+.dash-top-actions .notif-dropdown button,
+.notif-dropdown button {
+  width: auto !important;
+  height: auto !important;
+  border-radius: initial !important;
+}
+
+#dashNotifBellContainer {
+  position: relative !important;
+}
+
+#dashNotifDropdown {
+  left: auto !important;
+  right: 0 !important;
+  transform-origin: top right !important;
 }
 
 /* ─── 2. القائمة المنسدلة للإشعارات (Notification Dropdown) ─── */
@@ -5591,13 +5617,23 @@ body.dark .notif-dropdown {
 
 /* ─── Notification Dropdown Mobile Bottom-Sheet (both header and dashboard) ─── */
 @media (max-width: 780px) {
-  .site-header.notif-open {
+  .site-header.notif-open,
+  .dash-topbar.notif-open,
+  .dash-topbar:has(.notif-dropdown.open) {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+    overflow: visible !important;
+  }
+
+  .dash-topbar.notif-open .dash-top-actions,
+  .dash-topbar:has(.notif-dropdown.open) .dash-top-actions,
+  .dash-top-actions:has(.notif-dropdown.open) {
+    overflow: visible !important;
   }
 
   .notif-backdrop {
     display: block !important;
+    z-index: 99990 !important;
   }
 
   .notif-bell-container {
@@ -5619,7 +5655,7 @@ body.dark .notif-dropdown {
     border-left: none !important;
     border-right: none !important;
     box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.5) !important;
-    z-index: 2900 !important;
+    z-index: 99999 !important;
     display: none;
     flex-direction: column;
     transform: translateY(100%) !important;
@@ -13200,18 +13236,90 @@ body.dark .dua-content { color: var(--mint); }
   margin-bottom: 14px;
 }
 .cert-intro-text { font-size: 0.95rem; color: #475569; margin-bottom: 10px; }
-.cert-recipient-field input {
-  font-family: 'Tajawal', sans-serif;
+
+/* صندوق إدخال اسم البطل التفاعلي */
+.cert-child-prompt-box {
+  background: linear-gradient(135deg, rgba(12, 74, 63, 0.05) 0%, rgba(212, 175, 55, 0.12) 100%);
+  border: 1.5px solid #d4af37;
+  border-radius: 18px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  text-align: right;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.08);
+}
+.cert-prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.cert-prompt-header .prompt-icon {
   font-size: 1.8rem;
-  font-weight: 900;
+  animation: starPulse 1.8s infinite ease-in-out;
+}
+@keyframes starPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2) rotate(15deg); }
+}
+.cert-prompt-header h4 {
+  margin: 0 0 2px;
+  font-size: 1.15rem;
   color: #0c4a3f;
-  text-align: center;
-  border: none;
-  border-bottom: 2px dashed #d4af37;
-  background: transparent;
-  width: min(420px, 90%);
+  font-weight: 800;
+}
+.cert-prompt-header p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+.cert-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.cert-input-wrapper i {
+  position: absolute;
+  right: 14px;
+  color: #d4af37;
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+.cert-input-wrapper input {
+  width: 100%;
+  padding: 12px 42px 12px 16px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #064e3b;
+  border: 2px solid #d4af37;
+  border-radius: 14px;
+  background: #ffffff;
+  outline: none;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+.cert-input-wrapper input:focus {
+  border-color: #0c4a3f;
+  box-shadow: 0 0 0 4px rgba(12, 74, 63, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.cert-recipient-field {
   margin-bottom: 14px;
 }
+
+.cert-name-preview {
+  display: inline-block;
+  font-family: 'Aref Ruqaa', 'Amiri', 'Tajawal', serif;
+  font-size: 2.3rem;
+  font-weight: 900;
+  color: #064e3b;
+  text-shadow: 0 2px 8px rgba(12, 74, 63, 0.12);
+  border-bottom: 3px double #d4af37;
+  padding: 4px 28px;
+  min-width: 220px;
+  transition: all 0.2s ease;
+}
+
 .cert-body-statement {
   font-size: 1rem;
   color: #334155;
@@ -13236,7 +13344,48 @@ body.dark .dua-content { color: var(--mint); }
   font-size: 0.78rem;
   transform: rotate(-6deg);
 }
-.cert-dialog-actions { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
+.cert-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.cert-download-action-btn {
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%) !important;
+  color: #ffffff !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  padding: 13px 26px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+.cert-download-action-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.45) !important;
+}
+
+.cert-share-action-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  padding: 13px 20px !important;
+  border-radius: 14px !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
 
 /* ─── TAB 8: PARENTS DASHBOARD ─── */
 .parents-kpi-row {
@@ -14090,4 +14239,441 @@ body.dark .dua-content { color: var(--mint); }
     width: 100%;
     max-width: 100%;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PWA APP INSTALLATION STYLES (بانر ونوافذ وأزرار تثبيت التطبيق)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* بانر التثبيت العائم الذكي */
+.pwa-floating-banner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99990;
+  max-width: 440px;
+  width: calc(100% - 48px);
+  background: linear-gradient(135deg, rgba(9, 50, 43, 0.96) 0%, rgba(6, 29, 25, 0.98) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.45);
+  border-radius: 24px;
+  padding: 20px 22px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform: translateY(140%);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
+}
+
+.pwa-floating-banner.is-visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.pwa-banner-close {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.pwa-banner-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+.pwa-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: right;
+  padding-left: 24px;
+}
+
+.pwa-banner-app-icon {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  padding: 6px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(12, 74, 63, 0.4) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+.pwa-banner-app-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+}
+.pwa-badge-pulse {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid #061d19;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulseDot 1.8s infinite;
+}
+
+.pwa-banner-text {
+  flex: 1;
+}
+.pwa-banner-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fef08a;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+.pwa-banner-text h4 {
+  font-size: 1.05rem;
+  margin: 0 0 4px;
+  font-weight: 800;
+  color: #ffffff;
+}
+.pwa-banner-text p {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.pwa-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pwa-install-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #06211d;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 0.95rem;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.pwa-install-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(245, 158, 11, 0.45);
+}
+.pwa-dismiss-btn {
+  background: transparent;
+  color: #94a3b8;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.pwa-dismiss-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+/* بطاقة التثبيت في القائمة الجانبية (Mobile Drawer PWA Card) */
+.drawer-pwa-card {
+  margin: 0 16px 16px;
+  background: linear-gradient(135deg, rgba(12, 74, 63, 0.15) 0%, rgba(212, 175, 55, 0.12) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.drawer-pwa-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: right;
+}
+.drawer-pwa-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  object-fit: contain;
+  background: #ffffff;
+  padding: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+.drawer-pwa-info strong {
+  display: block;
+  font-size: 0.98rem;
+  color: var(--text);
+  font-weight: 800;
+}
+.drawer-pwa-info small {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.btn-drawer-pwa-install {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.92rem;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  transition: transform 0.2s ease;
+}
+.btn-drawer-pwa-install:hover {
+  transform: translateY(-1px);
+}
+
+/* زر التثبيت في شريط لوحة التحكم السفلي (Dash Sidebar PWA Button) */
+.dash-pwa-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(212, 175, 55, 0.08);
+  color: #f59e0b;
+  font-weight: 800;
+  font-size: 0.88rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 8px;
+}
+.dash-pwa-btn:hover {
+  background: rgba(212, 175, 55, 0.18);
+  border-color: #f59e0b;
+  color: #ffffff;
+}
+
+/* نافذة إرشادات التثبيت المخصصة للهواتف (PWA Install Guide Modal) */
+.pwa-guide-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99995;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.pwa-guide-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.pwa-guide-card {
+  position: relative;
+  z-index: 2;
+  background: #ffffff;
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  border-radius: 26px;
+  padding: 30px 24px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  transform: scale(0.92);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+.pwa-guide-modal.is-open .pwa-guide-card {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.pwa-guide-close {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 1rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.pwa-guide-close:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.pwa-guide-icon-box {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(12, 74, 63, 0.1) 0%, rgba(212, 175, 55, 0.2) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  padding: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.pwa-guide-icon-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 14px;
+}
+
+.pwa-guide-header h3 {
+  font-size: 1.35rem;
+  color: #0c4a3f;
+  margin: 0 0 6px;
+  font-weight: 800;
+}
+.pwa-guide-header p {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.pwa-steps-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 16px;
+  text-align: right;
+  margin-bottom: 22px;
+}
+.pwa-device-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #0c4a3f;
+  background: rgba(12, 74, 63, 0.08);
+  padding: 4px 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.pwa-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.pwa-step-item:last-child {
+  margin-bottom: 0;
+}
+.pwa-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0c4a3f;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.pwa-step-desc {
+  font-size: 0.9rem;
+  color: #334155;
+  line-height: 1.6;
+}
+.pwa-step-desc strong {
+  color: #0c4a3f;
+}
+
+.pwa-guide-confirm-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #0c4a3f 0%, #062b24 100%);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(12, 74, 63, 0.25);
+  transition: transform 0.2s ease;
+}
+.pwa-guide-confirm-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* التكيف مع شاشات الهواتف المحمولة */
+@media (max-width: 640px) {
+  .pwa-floating-banner {
+    bottom: 84px; /* فوق شريط التنقل السفلي للهاتف */
+    right: 14px;
+    left: 14px;
+    width: auto;
+    padding: 16px;
+    border-radius: 20px;
+  }
+  .pwa-banner-content {
+    gap: 12px;
+    padding-left: 20px;
+  }
+  .pwa-banner-app-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+  }
+  .pwa-banner-text h4 {
+    font-size: 0.98rem;
+  }
+  .pwa-banner-text p {
+    font-size: 0.78rem;
+  }
+}
+
+/* إخفاء عناصر التثبيت عندما يكون التطبيق مثبتًا بالفعل */
+html.is-pwa-standalone .pwa-floating-banner,
+html.is-pwa-standalone .drawer-pwa-card,
+html.is-pwa-standalone .dash-pwa-btn,
+html.is-pwa-standalone #headerPwaBtn {
+  display: none !important;
 }

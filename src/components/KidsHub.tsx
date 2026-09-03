@@ -1873,7 +1873,7 @@ export function KidsHub({ user }: { user?: UserSession }) {
             </div>
 
             <button type="button" class="primary-btn cert-open-btn" id="btnOpenCertModal">
-              <i class="fa-solid fa-file-invoice"></i> عرض وطباعة شهادة التفوق الرسمية
+              <i class="fa-solid fa-award"></i> استلام وتحميل شهادة التفوق باسمك 🏆
             </button>
           </div>
 
@@ -1928,23 +1928,45 @@ export function KidsHub({ user }: { user?: UserSession }) {
           <div class="cert-dialog-box">
             <button class="cert-dialog-close" id="closeCertModalBtn" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
 
+            {/* صندوق كتابة اسم البطل التفاعلي */}
+            <div class="cert-child-prompt-box">
+              <div class="cert-prompt-header">
+                <span class="prompt-icon">🌟</span>
+                <div>
+                  <h4>اكتب اسمك يا بطل لتصدر الشهادة باسمك:</h4>
+                  <p>اكتب اسمك وسيظهر فوراً على الشهادة الرسمية بخط عربي مذهب وأنيق</p>
+                </div>
+              </div>
+              <div class="cert-input-wrapper">
+                <i class="fa-solid fa-pen-nib"></i>
+                <input
+                  type="text"
+                  id="certChildNameInput"
+                  placeholder="مثال: عبد الرحمن أحمد أو فاطمة محمود"
+                  value=""
+                  maxLength={40}
+                  autocomplete="off"
+                />
+              </div>
+            </div>
+
             <div class="cert-print-document" id="certPrintArea">
               <div class="cert-outer-border">
                 <div class="cert-inner-border">
                   <header class="cert-inst-header">
                     <img src="/static/foundation-logo.png" alt="شعار المؤسسة" class="cert-emblem" />
                     <h2>مؤسسة الدكتور عمر هشام الخيرية</h2>
-                    <p>المشهرة برقم 3115 لسنة 2026 — واحة التعليم القرآني والتربوي</p>
+                    <p>المشهرة برقم 3115 لسنة 2026 — واحة التعليم القرآني والتربوي للأطفال</p>
                   </header>
 
                   <div class="cert-ribbon-title">
-                    <span>شَهَادَةُ تَقْدِيرٍ وَتَفَوُّقٍ</span>
+                    <span>★ شَهَادَةُ تَقْدِيرٍ وَتَفَوُّقٍ ★</span>
                   </div>
 
                   <p class="cert-intro-text">تَشْهَدُ إِدَارَةُ الْمُؤَسَّسَةِ بِأَنَّ الْبَطَلَ الْمُتَمَيِّزَ / الْبَطَلَةَ الْمُتَمَيِّزَةَ:</p>
 
                   <div class="cert-recipient-field">
-                    <input type="text" id="certChildNameInput" placeholder="اكتب اسم الطالب هنا" value="أحمد محمود" />
+                    <span class="cert-name-preview" id="certChildNamePreview">البطل المتميز</span>
                   </div>
 
                   <p class="cert-body-statement">
@@ -1954,7 +1976,7 @@ export function KidsHub({ user }: { user?: UserSession }) {
                   <footer class="cert-signatures-row">
                     <div class="sig-col">
                       <small>الرصيد المنجز:</small>
-                      <strong id="certStarsPrintVal">120 نقطة تميز</strong>
+                      <strong id="certStarsPrintVal">120 نقطة تميز ⭐</strong>
                     </div>
                     <div class="sig-col">
                       <small>تاريخ الإصدار:</small>
@@ -1969,9 +1991,16 @@ export function KidsHub({ user }: { user?: UserSession }) {
             </div>
 
             <div class="cert-dialog-actions">
-              <button type="button" class="primary-btn" id="btnPrintCert"><i class="fa-solid fa-print"></i> طباعة الشهادة / حفظ PDF</button>
+              <button type="button" class="primary-btn cert-download-action-btn" id="btnDownloadCertImage">
+                <i class="fa-solid fa-cloud-arrow-down"></i> تحميل الشهادة كصورة في هاتفك 📸
+              </button>
+              <button type="button" class="secondary-btn cert-share-action-btn" id="btnShareCertImage" style="display:none;">
+                <i class="fa-solid fa-share-nodes"></i> مشاركة الصورة
+              </button>
               <button type="button" class="outline-btn" id="btnCancelCert">إغلاق</button>
             </div>
+            {/* كانفاس مخفي للرسم والتحويل إلى صورة عالية الدقة */}
+            <canvas id="kidsCertCanvas" width="1920" height="1357" style="display:none;"></canvas>
           </div>
         </div>
       </section>
@@ -2041,7 +2070,7 @@ export function KidsHub({ user }: { user?: UserSession }) {
       <div id="kidsConfettiOverlay" class="confetti-overlay" pointer-events="none"></div>
 
       {/* Interactive Script */}
-      <script src="/static/kids.js?v=3.0.0"></script>
+      <script src="/static/kids.js?v=3.1.0"></script>
     </Layout>
   )
 }

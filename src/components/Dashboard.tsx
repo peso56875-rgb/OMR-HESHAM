@@ -45,7 +45,13 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
             </a>
           ))}
         </nav>
-        <div class="dash-sidebar-footer"><a href="/">{icon('fa-arrow-up-right-from-square')}<span>عرض الموقع</span></a><a href="/api/auth/logout">{icon('fa-right-from-bracket')}<span>تسجيل الخروج</span></a></div>
+        <div class="dash-sidebar-footer">
+          <button type="button" class="dash-pwa-btn pwa-install-trigger" id="dashPwaInstallBtn">
+            {icon('fa-mobile-screen-button')}<span>تثبيت التطبيق</span>
+          </button>
+          <a href="/">{icon('fa-arrow-up-right-from-square')}<span>عرض الموقع</span></a>
+          <a href="/api/auth/logout">{icon('fa-right-from-bracket')}<span>تسجيل الخروج</span></a>
+        </div>
       </aside>
       <button class="dash-backdrop" type="button" aria-label="إغلاق القائمة"></button>
       <div class="dash-main">

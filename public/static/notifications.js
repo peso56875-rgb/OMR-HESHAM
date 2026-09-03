@@ -76,6 +76,26 @@
     } catch (_) {}
   }
 
+  // ────────────────────────── إدارة حالة القراءة محلياً (Guest / Offline Persistence) ──────────────────────────
+  function getLocallyReadIds() {
+    try {
+      return JSON.parse(localStorage.getItem('omar_read_notifs') || '[]');
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function addLocallyReadId(id) {
+    if (!id) return;
+    try {
+      var ids = getLocallyReadIds();
+      if (ids.indexOf(id) === -1) {
+        ids.push(id);
+        localStorage.setItem('omar_read_notifs', JSON.stringify(ids));
+      }
+    } catch (_) {}
+  }
+
   // ────────────────────────── تحديث العدّاد ──────────────────────────
 
   async function updateUnreadCount() {
@@ -88,6 +108,17 @@
 
       var data = await res.json();
       var count = Number(data.unread || 0);
+
+      var localReads = getLocallyReadIds();
+      if (count > 0 && localReads.length > 0) {
+        var defaultUnreads = ['welcome-quran', 'welcome-zakat'];
+        var readDefaultsCount = defaultUnreads.filter(function (id) {
+          return localReads.indexOf(id) !== -1;
+        }).length;
+        if (readDefaultsCount > 0) {
+          count = Math.max(0, count - readDefaultsCount);
+        }
+      }
 
       // تحديث شارات الأجراس
       var badges = document.querySelectorAll('.notif-badge, #notifBadge, #dashNotifBadge');
@@ -221,9 +252,10 @@
 
       if (emptyState) emptyState.style.display = 'none';
 
+      var localReads = getLocallyReadIds();
       var html = '';
       items.forEach(function (item) {
-        var isRead = Boolean(item.is_read);
+        var isRead = Boolean(item.is_read) || localReads.indexOf(item.id) !== -1;
         var iconName = item.icon || 'fa-bell';
 
         html += '<div class="notif-dropdown-item ' + (isRead ? 'is-read' : 'is-unread') + '" data-id="' + item.id + '" data-link="' + (item.link || '') + '">';
@@ -249,14 +281,16 @@
           var notifId = el.getAttribute('data-id');
           var targetLink = el.getAttribute('data-link');
 
-          // تعليم كمقروء في الخلفية
-          if (el.classList.contains('is-unread')) {
+          // تعليم كمقروء محلياً وفي السيرفر
+          if (notifId) {
+            addLocallyReadId(notifId);
             markAsRead(notifId);
-            el.classList.remove('is-unread');
-            el.classList.add('is-read');
-            var bullet = el.querySelector('.notif-item-unread-bullet');
-            if (bullet) bullet.remove();
           }
+
+          el.classList.remove('is-unread');
+          el.classList.add('is-read');
+          var bullet = el.querySelector('.notif-item-unread-bullet');
+          if (bullet) bullet.remove();
 
           closeAllDropdowns();
 
@@ -283,39 +317,66 @@
 
   async function markAsRead(id) {
     if (!id) return;
+    addLocallyReadId(id);
     try {
       await fetch('/api/notifications/read/' + encodeURIComponent(id), {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
-      updateUnreadCount();
     } catch (_) {}
+    updateUnreadCount();
   }
 
   async function markAllAsRead() {
+    // تعليم كل الإشعارات محلياً فوراً
+    addLocallyReadId('welcome-quran');
+    addLocallyReadId('welcome-zakat');
+    addLocallyReadId('welcome-foundation');
+
+    document.querySelectorAll('.notif-dropdown-item, .notif-feed-item').forEach(function (el) {
+      var id = el.getAttribute('data-id');
+      if (id) addLocallyReadId(id);
+      el.classList.remove('is-unread');
+      el.classList.add('is-read');
+      var bullet = el.querySelector('.notif-item-unread-bullet');
+      if (bullet) bullet.remove();
+    });
+
+    // تصفير فوري لشارات الأجراس في الواجهة
+    var badges = document.querySelectorAll('.notif-badge, #notifBadge, #dashNotifBadge');
+    badges.forEach(function (badge) {
+      badge.textContent = '0';
+      badge.style.setProperty('display', 'none', 'important');
+      badge.classList.remove('pulse-badge');
+    });
+
+    var bellButtons = document.querySelectorAll('.notif-bell-btn, #notifBellBtn, #dashNotifBellBtn');
+    bellButtons.forEach(function (btn) {
+      btn.classList.remove('has-unread');
+    });
+
+    var headerUnreads = document.querySelectorAll('#notifHeaderUnreadCount, #dashNotifHeaderUnreadCount');
+    headerUnreads.forEach(function (el) {
+      el.textContent = 'لا توجد جديدة';
+    });
+
     try {
-      var res = await fetch('/api/notifications/read-all', {
+      await fetch('/api/notifications/read-all', {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
-      if (res.ok) {
-        if (window.showToast) window.showToast('تم تحديد جميع الإشعارات كمقروءة', 'success');
-        updateUnreadCount();
-        loadDropdownFeed();
-        // تحديث عناصر الصفحة إذا كنا في /notifications
-        document.querySelectorAll('.notif-feed-item.is-unread').forEach(function (el) {
-          el.classList.remove('is-unread');
-          el.classList.add('is-read');
-        });
-      }
     } catch (_) {}
+
+    if (window.showToast) window.showToast('تم تحديد جميع الإشعارات كمقروءة', 'success');
+    updateUnreadCount();
+    loadDropdownFeed();
   }
 
   // ────────────────────────── تهيئة زر وقائمة الجرس ──────────────────────────
 
   function closeAllDropdowns() {
     var dropdowns = document.querySelectorAll('.notif-dropdown');
-    var bells = document.querySelectorAll('.notif-bell-btn');
+    var bells = document.querySelectorAll('.notif-bell-btn, #notifBellBtn, #dashNotifBellBtn');
     var backdrop = document.getElementById('notifBackdrop');
 
     dropdowns.forEach(function (d) {
@@ -345,48 +406,38 @@
     }
   }
 
+  function openDropdown(dropdown, bellBtn) {
+    if (!dropdown) return;
+    dropdown.classList.add('open');
+    dropdown.setAttribute('aria-hidden', 'false');
+    if (bellBtn) bellBtn.setAttribute('aria-expanded', 'true');
+
+    var header = dropdown.closest('.site-header, .dash-topbar') || document.querySelector('.site-header, .dash-topbar');
+    if (header) header.classList.add('notif-open');
+
+    if (window.innerWidth <= 780) {
+      var bd = document.getElementById('notifBackdrop');
+      if (!bd) {
+        bd = document.createElement('div');
+        bd.className = 'notif-backdrop';
+        bd.id = 'notifBackdrop';
+        bd.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(bd);
+        bd.onclick = function (e) {
+          e.preventDefault();
+          closeAllDropdowns();
+        };
+      }
+      bd.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    checkPushBanner();
+    loadDropdownFeed(dropdown);
+  }
+
   function initBellHandlers() {
-    var bells = document.querySelectorAll('.notif-bell-btn');
     var backdrop = document.getElementById('notifBackdrop');
     var dropdowns = document.querySelectorAll('.notif-dropdown');
-
-    if (!bells.length && !dropdowns.length) return;
-
-    function openDropdown(dropdown, bellBtn) {
-      if (!dropdown) return;
-      dropdown.classList.add('open');
-      dropdown.setAttribute('aria-hidden', 'false');
-      if (bellBtn) bellBtn.setAttribute('aria-expanded', 'true');
-
-      var header = dropdown.closest('.site-header, .dash-topbar') || document.querySelector('.site-header');
-      if (header) header.classList.add('notif-open');
-
-      if (window.innerWidth <= 780) {
-        if (backdrop) backdrop.classList.add('open');
-        document.body.style.overflow = 'hidden';
-      }
-      checkPushBanner();
-      loadDropdownFeed(dropdown);
-    }
-
-    // ربط الأجراس
-    bells.forEach(function (bellBtn) {
-      bellBtn.onclick = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var container = bellBtn.closest('.notif-bell-container');
-        var dropdown = container ? container.querySelector('.notif-dropdown') : document.querySelector('.notif-dropdown');
-        if (!dropdown) return;
-
-        var isOpen = dropdown.classList.contains('open');
-        if (isOpen) {
-          closeAllDropdowns();
-        } else {
-          closeAllDropdowns();
-          openDropdown(dropdown, bellBtn);
-        }
-      };
-    });
 
     // إغلاق عبر الخلفية (Backdrop)
     if (backdrop) {
@@ -405,13 +456,31 @@
       };
     });
 
-    // إغلاق عند النقر بالخارج
+    // تفويض نقر الجرس على مستوى الـ document ليعمل في كافة الشاشات ولوحة التحكم وتحديثات الـ DOM
     document.addEventListener('click', function (e) {
-      var inContainer = Array.from(document.querySelectorAll('.notif-bell-container')).some(function (c) {
-        return c && c.contains(e.target);
-      });
-      var inBackdrop = backdrop && backdrop.contains(e.target);
-      if (!inContainer && !inBackdrop) {
+      var bellBtn = e.target.closest('.notif-bell-btn, #notifBellBtn, #dashNotifBellBtn');
+      if (bellBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        var container = bellBtn.closest('.notif-bell-container');
+        var dropdown = container ? container.querySelector('.notif-dropdown') : document.querySelector('.notif-dropdown');
+        if (!dropdown) return;
+
+        var isOpen = dropdown.classList.contains('open');
+        if (isOpen) {
+          closeAllDropdowns();
+        } else {
+          closeAllDropdowns();
+          openDropdown(dropdown, bellBtn);
+        }
+        return;
+      }
+
+      // إغلاق عند النقر بالخارج
+      var inDropdown = e.target.closest('.notif-dropdown');
+      var inContainer = e.target.closest('.notif-bell-container');
+      var inBackdrop = e.target.closest('.notif-backdrop');
+      if (!inDropdown && !inContainer && !inBackdrop) {
         closeAllDropdowns();
       }
     });

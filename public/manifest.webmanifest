@@ -2,15 +2,22 @@
   "name": "مؤسسة الدكتور عمر هشام الخيرية",
   "short_name": "مؤسسة عمر هشام",
   "description": "مؤسسة أهلية مشهرة تعمل على تفريج الكرب ودعم المرضى ونشر العلم وتعليم القرآن",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0c4a3f",
+  "background_color": "#06211d",
   "theme_color": "#0c4a3f",
   "lang": "ar",
   "dir": "rtl",
   "orientation": "portrait-primary",
+  "categories": ["social", "education", "lifestyle", "charity"],
   "icons": [
+    {
+      "src": "/static/foundation-logo-256.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/static/foundation-logo-256.png",
       "sizes": "256x256",
@@ -21,7 +28,33 @@
       "src": "/static/foundation-logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "القرآن الكريم والأذكار",
+      "short_name": "القرآن",
+      "url": "/quran",
+      "icons": [{ "src": "/static/foundation-logo-256.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "واحة الأطفال (تعلم ولعب)",
+      "short_name": "الأطفال",
+      "url": "/kids",
+      "icons": [{ "src": "/static/foundation-logo-256.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "تبرع الآن",
+      "short_name": "تبرع",
+      "url": "/donate",
+      "icons": [{ "src": "/static/foundation-logo-256.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "حاسبة الزكاة الذكية",
+      "short_name": "الزكاة",
+      "url": "/zakat-calculator",
+      "icons": [{ "src": "/static/foundation-logo-256.png", "sizes": "192x192" }]
     }
   ]
 }

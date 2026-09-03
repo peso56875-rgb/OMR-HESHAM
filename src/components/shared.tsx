@@ -48,6 +48,7 @@ export function Header({ user }: { user?: UserSession }) {
         <button class="icon-btn open-search-trigger" id="header-search-btn" aria-label="بحث فوري في الموقع (Ctrl+K)" title="بحث فوري (Ctrl+K)">
           {icon('fa-magnifying-glass')}
         </button>
+        <button class="icon-btn pwa-install-trigger" id="headerPwaBtn" type="button" aria-label="تثبيت تطبيق المؤسسة على هاتفك" title="تثبيت تطبيق المؤسسة">{icon('fa-mobile-screen-button')}</button>
         <NotificationBell user={user} />
         <button class="icon-btn" id="theme-toggle" aria-label="تغيير المظهر">{icon('fa-moon')}</button>
         <button class="icon-btn menu-toggle" id="menu-toggle" aria-label="فتح القائمة">{icon('fa-bars-staggered')}</button>
@@ -62,6 +63,18 @@ export function Header({ user }: { user?: UserSession }) {
           <i class="fa-solid fa-magnifying-glass"></i>
           <span>بحث فوري في الموقع...</span>
           <kbd>Ctrl+K</kbd>
+        </button>
+      </div>
+      <div class="drawer-pwa-card">
+        <div class="drawer-pwa-info">
+          <img src="/static/foundation-logo-256.png" alt="أيقونة التطبيق" class="drawer-pwa-icon" />
+          <div>
+            <strong>تطبيق المؤسسة الرسمي</strong>
+            <small>تصفح أسرع وبدون إنترنت</small>
+          </div>
+        </div>
+        <button type="button" class="btn-drawer-pwa-install pwa-install-trigger" id="drawerPwaInstallBtn">
+          <i class="fa-solid fa-download"></i> تثبيت التطبيق
         </button>
       </div>
       <nav>
@@ -87,7 +100,6 @@ export function Header({ user }: { user?: UserSession }) {
       </nav>
     </aside>
     <div class="drawer-backdrop" id="drawer-backdrop"></div>
-    <div class="notif-backdrop" id="notifBackdrop" aria-hidden="true"></div>
   </>
 }
 
@@ -139,9 +151,13 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
     <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Aref+Ruqaa:wght@400;700&family=Manrope:wght@400;600;700;800&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Scheherazade+New:wght@400;600;700&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/png" href="/static/foundation-logo.png" />
+    <link rel="apple-touch-icon" href="/static/foundation-logo-256.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="مؤسسة عمر هشام" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
-    <link rel="stylesheet" href="/static/style.css?v=3.7" />
+    <link rel="stylesheet" href="/static/style.css?v=3.8" />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'NGO',
@@ -175,9 +191,91 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
       <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"><span class="toast-icon"><i class="fa-solid fa-check"></i></span><span class="toast-content"><strong>تم بنجاح</strong><span class="toast-message"></span></span><button class="toast-close" type="button" aria-label="إغلاق الإشعار">{icon('fa-xmark')}</button><span class="toast-progress" aria-hidden="true"></span></div>
       <div class="confirm-modal" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true"><div class="confirm-card"><span class="confirm-icon">{icon('fa-triangle-exclamation')}</span><h2 id="confirm-title">تأكيد الإجراء</h2><p id="confirm-message">هل أنت متأكد من تنفيذ هذا الإجراء؟</p><div><button type="button" class="confirm-cancel">إلغاء</button><button type="button" class="confirm-accept">تأكيد</button></div></div></div>
       <SearchModal />
+      <div class="notif-backdrop" id="notifBackdrop" aria-hidden="true"></div>
+
+      {/* ─── بانر تثبيت تطبيق المؤسسة الذكي (PWA Floating Banner) ─── */}
+      <aside class="pwa-floating-banner" id="pwaFloatingBanner" aria-hidden="true" style="display:none">
+        <button type="button" class="pwa-banner-close" id="pwaBannerCloseBtn" aria-label="إغلاق الإشعار"><i class="fa-solid fa-xmark"></i></button>
+        <div class="pwa-banner-content">
+          <div class="pwa-banner-app-icon">
+            <img src="/static/foundation-logo-256.png" alt="شعار التطبيق" />
+            <span class="pwa-badge-pulse"></span>
+          </div>
+          <div class="pwa-banner-text">
+            <span class="pwa-banner-tag">⚡ تطبيق الهاتف الرسمي</span>
+            <h4>حمّل تطبيق مؤسسة د. عمر هشام الآن</h4>
+            <p>تصفح أسرع، المصحف والأذكار بدون نت، وتنبيهات فورية لكفالة الحالات الإنسانية.</p>
+          </div>
+        </div>
+        <div class="pwa-banner-actions">
+          <button type="button" class="pwa-install-btn pwa-install-trigger" id="pwaBannerInstallBtn">
+            <i class="fa-solid fa-download"></i>
+            <span>تثبيت التطبيق الآن</span>
+          </button>
+          <button type="button" class="pwa-dismiss-btn" id="pwaBannerDismissBtn">لاحقاً</button>
+        </div>
+      </aside>
+
+      {/* ─── نافذة إرشادات التثبيت المخصصة للهواتف (PWA Install Guide Modal) ─── */}
+      <div class="pwa-guide-modal" id="pwaGuideModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="pwaGuideTitle">
+        <div class="pwa-guide-backdrop" id="pwaGuideBackdrop"></div>
+        <div class="pwa-guide-card">
+          <button type="button" class="pwa-guide-close" id="pwaGuideCloseBtn" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
+          
+          <div class="pwa-guide-header">
+            <div class="pwa-guide-icon-box">
+              <img src="/static/foundation-logo-256.png" alt="شعار المؤسسة" />
+            </div>
+            <h3 id="pwaGuideTitle">تثبيت تطبيق المؤسسة على هاتفك</h3>
+            <p>تطبيق خفيف جداً، سريع، ولا يشغل مساحة من ذاكرة هاتفك</p>
+          </div>
+
+          <div class="pwa-steps-box" id="pwaIosSteps">
+            <span class="pwa-device-badge"><i class="fa-brands fa-apple"></i> لمستخدمي آيفون وآيباد (Safari)</span>
+            <div class="pwa-step-item">
+              <div class="pwa-step-num">1</div>
+              <div class="pwa-step-desc">
+                اضغط على زر المشاركة <strong><i class="fa-solid fa-arrow-up-from-bracket"></i> (Share)</strong> في شريط المتصفح بالأسفل.
+              </div>
+            </div>
+            <div class="pwa-step-item">
+              <div class="pwa-step-num">2</div>
+              <div class="pwa-step-desc">
+                مرر القائمة لأسفل واختر <strong><i class="fa-solid fa-plus-square"></i> إضافة إلى الشاشة الرئيسية (Add to Home Screen)</strong>.
+              </div>
+            </div>
+            <div class="pwa-step-item">
+              <div class="pwa-step-num">3</div>
+              <div class="pwa-step-desc">
+                اضغط على <strong>«إضافة (Add)»</strong> بأعلى الشاشة، وسيظهر تطبيق المؤسسة فوراً بين تطبيقاتك! 📱✨
+              </div>
+            </div>
+          </div>
+
+          <div class="pwa-steps-box" id="pwaAndroidSteps" style="display:none">
+            <span class="pwa-device-badge"><i class="fa-brands fa-android"></i> لمستخدمي أندرويد والمتصفحات الأخرى</span>
+            <div class="pwa-step-item">
+              <div class="pwa-step-num">1</div>
+              <div class="pwa-step-desc">
+                اضغط على زر القائمة <strong><i class="fa-solid fa-ellipsis-vertical"></i> (الثلاث نقاط)</strong> أعلى المتصفح.
+              </div>
+            </div>
+            <div class="pwa-step-item">
+              <div class="pwa-step-num">2</div>
+              <div class="pwa-step-desc">
+                اختر <strong>«تثبيت التطبيق (Install App)»</strong> أو <strong>«إضافة إلى الشاشة الرئيسية»</strong>.
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="pwa-guide-confirm-btn" id="pwaGuideConfirmBtn">فهمت ذلك، تم</button>
+        </div>
+      </div>
+
       {pageType === 'public' && <nav class="mobile-bottom" aria-label="تنقل سريع"><a href="/">{icon('fa-house')}<span>الرئيسية</span></a><a href="/campaigns">{icon('fa-seedling')}<span>الحملات</span></a><a class="bottom-donate" href="/donate">{icon('fa-heart')}<span>تبرّع</span></a><a href="/volunteers">{icon('fa-hand-holding-hand')}<span>تطوع</span></a><a href="/contact">{icon('fa-comment-dots')}<span>تواصل</span></a></nav>}
       <script src="/static/app.js?v=2.8"></script>
-      <script src="/static/notifications.js?v=3.3"></script>
+      <script src="/static/notifications.js?v=3.5"></script>
+      <script src="/static/pwa.js?v=1.0"></script>
     </body></html>
 }
 

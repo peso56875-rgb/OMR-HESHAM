@@ -73,12 +73,10 @@ export function NotificationBell({ user, isDashboard = false }: { user?: UserSes
             <span class="notif-header-unread-count" id={isDashboard ? 'dashNotifHeaderUnreadCount' : 'notifHeaderUnreadCount'}>0 جديدة</span>
           </div>
           <div class="notif-header-actions">
-            {user && (
-              <button type="button" class="notif-mark-all-btn" id={isDashboard ? 'dashDropdownMarkAllBtn' : 'notifMarkAllBtn'} title="تحديد الكل كمقروء">
-                <i class="fa-solid fa-check-double"></i>
-                <span>قراءة الكل</span>
-              </button>
-            )}
+            <button type="button" class="notif-mark-all-btn" id={isDashboard ? 'dashDropdownMarkAllBtn' : 'notifMarkAllBtn'} title="تحديد الكل كمقروء">
+              <i class="fa-solid fa-check-double"></i>
+              <span>قراءة الكل</span>
+            </button>
             <a href="/notifications" class="notif-settings-link" title="عرض كل الإشعارات">
               <i class="fa-solid fa-arrow-up-right-from-square"></i>
             </a>
