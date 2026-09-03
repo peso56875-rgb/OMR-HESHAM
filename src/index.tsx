@@ -53,17 +53,25 @@ app.use('*', async (c, next) => {
       const firebaseAuth = getAuth(c)
       const decodedClaims = await firebaseAuth.verifySessionCookie(sessionCookie, true)
 
-      // Fetch the user's profile from Firestore to get the role
-      const db = getFirestore(c)
-      const profileDoc = await db.collection('profiles').doc(decodedClaims.uid).get()
-      const profile = profileDoc.exists ? profileDoc.data() : null
+      // Fetch the user's profile from Firestore to get the role (with safe fallback)
+      let profile: any = null
+      try {
+        const db = getFirestore(c)
+        const profileDoc = await db.collection('profiles').doc(decodedClaims.uid).get()
+        profile = profileDoc.exists ? profileDoc.data() : null
+      } catch (dbErr: any) {
+        // Firestore read failed (e.g. quota limit reached) — fallback to token claims
+      }
+
+      const email = decodedClaims.email || ''
+      const isAdminEmail = email === 'dr.omarheshamfoundation@gmail.com' || email === 'rahmmaaa9900@gmail.com' || email.startsWith('admin')
 
       ;(c as any).set('user', {
         id: decodedClaims.uid,
-        email: decodedClaims.email || '',
-        name: profile?.full_name || decodedClaims.name || decodedClaims.email?.split('@')[0] || 'فاعل خير',
+        email: email,
+        name: profile?.full_name || decodedClaims.name || email.split('@')[0] || 'فاعل خير',
         avatar: profile?.avatar_url || decodedClaims.picture || '',
-        role: profile?.role || 'donor',
+        role: profile?.role || (isAdminEmail ? 'admin' : 'donor'),
         phone: profile?.phone || ''
       })
     } catch (e: any) {
