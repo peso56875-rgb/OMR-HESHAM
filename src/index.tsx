@@ -911,6 +911,10 @@ app.get('/dashboard', async (c) => {
     } else {
       viewData = { list: [], stats: {}, recentDonations: [] }
     }
+    const isExhausted = error.message?.includes('RESOURCE_EXHAUSTED') || error.code === 8 || String(error).includes('Quota')
+    if (isExhausted) {
+      viewData.isQuotaExceeded = true
+    }
   }
 
   return c.html(<Dashboard view={view} data={viewData} user={user} />)
