@@ -382,6 +382,7 @@
     dropdowns.forEach(function (d) {
       d.classList.remove('open');
       d.setAttribute('aria-hidden', 'true');
+      d.style.transform = '';
     });
     bells.forEach(function (b) {
       b.setAttribute('aria-expanded', 'false');
@@ -430,6 +431,20 @@
       }
       bd.classList.add('open');
       document.body.style.overflow = 'hidden';
+    } else {
+      // شاشات سطح المكتب والكمبيوتر: ضبط موضع القائمة لمنع أي اقتطاع للشاشة نهائياً
+      requestAnimationFrame(function () {
+        var rect = dropdown.getBoundingClientRect();
+        if (rect.left < 16) {
+          var offset = 16 - rect.left;
+          dropdown.style.transform = 'translateX(' + offset + 'px)';
+        } else if (rect.right > window.innerWidth - 16) {
+          var offset = rect.right - (window.innerWidth - 16);
+          dropdown.style.transform = 'translateX(-' + offset + 'px)';
+        } else {
+          dropdown.style.transform = '';
+        }
+      });
     }
     checkPushBanner();
     loadDropdownFeed(dropdown);

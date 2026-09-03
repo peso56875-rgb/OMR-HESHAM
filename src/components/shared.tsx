@@ -157,7 +157,7 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
     <meta name="apple-mobile-web-app-title" content="مؤسسة عمر هشام" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
-    <link rel="stylesheet" href="/static/style.css?v=3.8" />
+    <link rel="stylesheet" href="/static/style.css?v=3.9" />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'NGO',
@@ -274,7 +274,7 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
 
       {pageType === 'public' && <nav class="mobile-bottom" aria-label="تنقل سريع"><a href="/">{icon('fa-house')}<span>الرئيسية</span></a><a href="/campaigns">{icon('fa-seedling')}<span>الحملات</span></a><a class="bottom-donate" href="/donate">{icon('fa-heart')}<span>تبرّع</span></a><a href="/volunteers">{icon('fa-hand-holding-hand')}<span>تطوع</span></a><a href="/contact">{icon('fa-comment-dots')}<span>تواصل</span></a></nav>}
       <script src="/static/app.js?v=2.8"></script>
-      <script src="/static/notifications.js?v=3.5"></script>
+      <script src="/static/notifications.js?v=3.6"></script>
       <script src="/static/pwa.js?v=1.0"></script>
     </body></html>
 }

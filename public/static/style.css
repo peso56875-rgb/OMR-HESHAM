@@ -3483,9 +3483,9 @@ body.vol-lightbox-open {
 }
 
 #dashNotifDropdown {
-  left: auto !important;
-  right: 0 !important;
-  transform-origin: top right !important;
+  left: 0 !important;
+  right: auto !important;
+  transform-origin: top left !important;
 }
 
 /* ─── 2. القائمة المنسدلة للإشعارات (Notification Dropdown) ─── */
