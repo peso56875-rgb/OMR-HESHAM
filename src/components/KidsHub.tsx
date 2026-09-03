@@ -987,40 +987,202 @@ export function KidsHub({ user }: { user?: UserSession }) {
 
       {/* ══════════════════════════════════════════════════════
           TAB 6: INTELLECTUAL GAMES
+      {/* ══════════════════════════════════════════════════════
+          TAB 6: KIDS ADVENTURE & GAMES WORLD (عالم الألعاب والتحديات)
       ══════════════════════════════════════════════════════ */}
       <section class="kids-tab-view" id="panel-games">
         <header class="section-title-wrap">
-          <span class="sub-kicker indigo"><i class="fa-solid fa-brain"></i> الذكاء وقوة الملاحظة</span>
-          <h2>ألعاب تعليمية <span>تنمي التفكير</span></h2>
-          <p>ألعاب هادفة وممتعة تقوي الذاكرة وتثري الحصيلة اللغوية العربية للطفل بأسلوب تنافسي راقٍ.</p>
+          <span class="sub-kicker purple"><i class="fa-solid fa-gamepad"></i> مرح وتحديات ذهنية</span>
+          <h2>عالم ألعاب وتحديات <span>الأشبال 🎮</span></h2>
+          <p>ألعاب تفاعلية ممتعة، مستويات متدرجة، ألغاز ذكاء، ومسابقات تنافسية تجمع بين المرح والتعلم وحصد النجوم!</p>
         </header>
 
-        <div class="sub-mode-row">
-          <button class="sub-tab-chip active" data-sub="game-memory"><i class="fa-solid fa-clone"></i> لعبة الذاكرة (مطابقة الحروف)</button>
-          <button class="sub-tab-chip" data-sub="game-scramble"><i class="fa-solid fa-puzzle-piece"></i> ترتيب حروف الكلمات</button>
-          <button class="sub-tab-chip" data-sub="game-missing"><i class="fa-solid fa-magnifying-glass"></i> اكتشف الحرف الناقص</button>
+        {/* Daily Quest & Level Bar */}
+        <div class="games-hero-quest-bar">
+          <div class="player-rank-badge">
+            <span class="rank-avatar" id="gameRankAvatar">🦁</span>
+            <div class="rank-meta">
+              <strong id="gameRankTitle">بطل الواحة الذهبي</strong>
+              <small>المستوى <span id="gameLevelNum">1</span> • <span id="gameXpText">0 / 100 XP</span></small>
+            </div>
+          </div>
+
+          <div class="daily-quests-summary">
+            <div class="quest-title"><i class="fa-solid fa-trophy"></i> مهمة اليوم اليومية:</div>
+            <div class="quest-chips-line">
+              <span class="quest-pill" id="questBalloon"><span class="q-icon">🎈</span> اصطد 5 بالونات</span>
+              <span class="quest-pill" id="questMemory"><span class="q-icon">🧠</span> أكمل جولة ذاكرة</span>
+              <span class="quest-pill" id="questMath"><span class="q-icon">⚡</span> حل تحدي حساب</span>
+            </div>
+          </div>
+
+          <button type="button" class="treasure-box-btn disabled" id="btnOpenTreasure" title="أكمل مهمات اليوم لفتح صندوق الكنز">
+            <span class="treasure-emoji">🎁</span>
+            <span class="treasure-text">صندوق الكنز</span>
+          </button>
         </div>
 
-        {/* Game 1: Memory */}
+        {/* Sub-Games Navigation Chips */}
+        <div class="sub-mode-row games-nav-row">
+          <button class="sub-tab-chip active" data-sub="game-memory">
+            <span>🧠</span> لعبة الذاكرة الخارقة
+          </button>
+          <button class="sub-tab-chip" data-sub="game-balloons">
+            <span>🎈</span> صائد البالونات والحروف
+          </button>
+          <button class="sub-tab-chip" data-sub="game-math-blitz">
+            <span>⚡</span> تحدي سرعة الحساب
+          </button>
+          <button class="sub-tab-chip" data-sub="game-emoji-match">
+            <span>🧩</span> لغز الكلمة والصورة
+          </button>
+          <button class="sub-tab-chip" data-sub="game-scramble">
+            <span>🔤</span> ترتيب الحروف والكلمات
+          </button>
+          <button class="sub-tab-chip" data-sub="game-missing">
+            <span>🎯</span> صائد الحرف الناقص
+          </button>
+          <button class="sub-tab-chip" data-sub="game-muslim-quiz">
+            <span>🕌</span> مسابقة الشبل المسلم
+          </button>
+        </div>
+
+        {/* ─── Game 1: Super Memory Flip ─── */}
         <div class="sub-panel active" id="subview-game-memory">
           <div class="memory-game-panel">
-            <div class="game-stats-header">
-              <span>المحاولات: <strong id="memFlipsCount">0</strong></span>
-              <span>الأزواج المتطابقة: <strong id="memMatchesCount">0 / 6</strong></span>
-              <button type="button" class="outline-btn compact" id="btnRestartMemory"><i class="fa-solid fa-rotate"></i> جولة جديدة</button>
+            <div class="game-header-bar">
+              <div class="game-difficulty-pills" id="memoryDiffPills">
+                <button type="button" class="diff-chip active" data-level="easy">🍎 سهل (فواكه 8 كروت)</button>
+                <button type="button" class="diff-chip" data-level="medium">🦁 متوسط (حيوانات 12 كارت)</button>
+                <button type="button" class="diff-chip" data-level="hard">🚀 خارق (فضاء وحروف 16 كارت)</button>
+              </div>
+              <div class="game-live-stats">
+                <span class="stat-pill"><i class="fa-solid fa-hand-pointer"></i> الحركات: <strong id="memFlipsCount">0</strong></span>
+                <span class="stat-pill"><i class="fa-solid fa-check"></i> المطابقات: <strong id="memMatchesCount">0</strong></span>
+                <button type="button" class="game-reset-btn" id="btnRestartMemory"><i class="fa-solid fa-rotate"></i> جولة جديدة</button>
+              </div>
             </div>
-            <div class="memory-cards-grid" id="memoryCardsBoard">
-              {/* 12 cards */}
+
+            <div class="memory-cards-grid level-easy" id="memoryCardsBoard">
+              {/* Dynamic cards */}
+            </div>
+
+            <div class="game-win-banner" id="memWinBanner" style="display:none;">
+              <span class="win-stars">⭐⭐⭐</span>
+              <h3>رائع يا عبقري الذاكرة! 🎉</h3>
+              <p>تمكنت من مطابقة جميع البطاقات بذكاء وإتقان.</p>
+              <button type="button" class="primary-btn" id="btnNextMemoryLevel">العب مستوى أصعب <i class="fa-solid fa-arrow-left"></i></button>
             </div>
           </div>
         </div>
 
-        {/* Game 2: Word Scramble */}
+        {/* ─── Game 2: Balloon Popper Quest ─── */}
+        <div class="sub-panel" id="subview-game-balloons">
+          <div class="balloon-game-panel">
+            <div class="balloon-top-bar">
+              <div class="balloon-target-mission" id="balloonMissionBox">
+                <span class="mission-tag">🎯 المهمة الحالية:</span>
+                <strong id="balloonTargetPrompt">اصطاد بالون حرف [ أ ] 🎈</strong>
+              </div>
+              <div class="balloon-score-cluster">
+                <span>النقاط: <strong id="balloonScore">0</strong></span>
+                <span>المتبقي: <strong id="balloonTimer">30s</strong></span>
+                <button type="button" class="primary-btn compact" id="btnStartBalloons"><i class="fa-solid fa-play"></i> ابدأ الجولة</button>
+              </div>
+            </div>
+
+            <div class="balloon-sky-arena" id="balloonSkyArena">
+              <div class="sky-clouds-backdrop">
+                <div class="cloud c1">☁️</div>
+                <div class="cloud c2">☁️</div>
+                <div class="cloud c3">☁️</div>
+              </div>
+              <div class="balloons-floating-container" id="balloonsFloatContainer">
+                <div class="sky-intro-prompt">
+                  <div class="big-balloon-icon">🎈</div>
+                  <h3>جاهز للصيد والمرح؟</h3>
+                  <p>انقر على زر "ابدأ الجولة" لتنطلق البالونات في السماء واصطد الحرف أو الرقم المطلوب بأسرع ما يمكن!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Game 3: Math Speed Blitz ─── */}
+        <div class="sub-panel" id="subview-game-math-blitz">
+          <div class="math-blitz-panel">
+            <div class="game-header-bar">
+              <div class="game-difficulty-pills" id="mathBlitzDiffPills">
+                <button type="button" class="diff-chip active" data-level="easy">🟢 جمع مبسط (1-10)</button>
+                <button type="button" class="diff-chip" data-level="medium">🟡 جمع وطرح (حتى 30)</button>
+                <button type="button" class="diff-chip" data-level="hard">🔴 عبقري الحساب (ضرب وجمع)</button>
+              </div>
+              <div class="game-live-stats">
+                <span class="stat-pill"><i class="fa-solid fa-bolt"></i> متتالي: <strong id="mathStreakCount">0🔥</strong></span>
+                <span class="stat-pill"><i class="fa-solid fa-star"></i> النقاط: <strong id="mathBlitzScore">0</strong></span>
+                <span class="stat-pill"><i class="fa-solid fa-clock"></i> الوقت: <strong id="mathBlitzTimer">30s</strong></span>
+              </div>
+            </div>
+
+            <div class="math-blitz-arena">
+              <div class="math-timer-bar-wrap">
+                <div class="math-timer-bar" id="mathTimeProgressBar"></div>
+              </div>
+
+              <div class="blitz-equation-card">
+                <span class="blitz-emoji-cue" id="blitzEmojiCue">⚡</span>
+                <div class="blitz-equation-text" id="blitzEquationText">3 + 4 = ؟</div>
+              </div>
+
+              <div class="blitz-choices-matrix" id="blitzChoicesMatrix">
+                {/* 4 Choices */}
+              </div>
+
+              <div class="exercise-feedback" id="blitzFeedback"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Game 4: Word & Emoji Matcher ─── */}
+        <div class="sub-panel" id="subview-game-emoji-match">
+          <div class="emoji-match-panel">
+            <div class="game-header-bar">
+              <span class="stat-pill"><i class="fa-solid fa-layer-group"></i> الجولة: <strong id="emojiMatchRound">1 / 8</strong></span>
+              <span class="stat-pill"><i class="fa-solid fa-star"></i> النقاط: <strong id="emojiMatchScore">0</strong></span>
+              <button type="button" class="game-reset-btn" id="btnNextEmojiPuzzle">لغز آخر <i class="fa-solid fa-arrow-left"></i></button>
+            </div>
+
+            <div class="emoji-puzzle-arena">
+              <div class="puzzle-word-header">
+                <span class="puzzle-kicker">ما هي الصورة المناسبة لهذه الكلمة؟</span>
+                <h3 class="puzzle-target-word" id="emojiTargetWord">سَيَّارَة</h3>
+                <button type="button" class="puzzle-listen-word" id="btnListenPuzzleWord"><i class="fa-solid fa-volume-high"></i> استمع للكلمة</button>
+              </div>
+
+              <div class="emoji-cards-grid" id="emojiPuzzleChoices">
+                {/* 4 Emoji tiles */}
+              </div>
+
+              <div class="exercise-feedback" id="emojiMatchFeedback"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Game 5: Word Builder / Scramble ─── */}
         <div class="sub-panel" id="subview-game-scramble">
           <div class="scramble-game-panel">
+            <div class="game-header-bar">
+              <div class="game-difficulty-pills" id="scrambleLevelPills">
+                <button type="button" class="diff-chip active" data-len="3">كلمات من 3 حروف 🟢</button>
+                <button type="button" class="diff-chip" data-len="4">كلمات من 4 حروف 🟡</button>
+                <button type="button" class="diff-chip" data-len="5">كلمات من 5 حروف 🔴</button>
+              </div>
+              <span class="stat-pill"><i class="fa-solid fa-star"></i> تم حل: <strong id="scrambleSolvedCount">0</strong></span>
+            </div>
+
             <div class="scramble-cue-box">
-              <span class="scramble-icon-badge" id="scrambleIconBadge"><i class="fa-solid fa-book"></i></span>
-              <h3 id="scramblePrompt">رتّب حروف هذه الكلمة بشكل صحيح:</h3>
+              <span class="scramble-icon-badge" id="scrambleIconBadge">🦁</span>
+              <h3 id="scramblePrompt">رتّب حروف كلمة تعني: (ملك الغابة)</h3>
             </div>
 
             <div class="scramble-slots-line" id="scrambleSlotsRow">
@@ -1033,28 +1195,51 @@ export function KidsHub({ user }: { user?: UserSession }) {
 
             <div class="scramble-buttons-row">
               <button type="button" class="primary-btn" id="btnCheckScramble"><i class="fa-solid fa-check"></i> تحقق من الترتيب</button>
+              <button type="button" class="outline-btn" id="btnResetCurrentScramble"><i class="fa-solid fa-rotate-left"></i> إعادة المحاولة</button>
               <button type="button" class="outline-btn" id="btnNextScramble">الكلمة التالية <i class="fa-solid fa-arrow-left"></i></button>
             </div>
             <div class="exercise-feedback" id="scrambleFeedback"></div>
           </div>
         </div>
 
-        {/* Game 3: Missing Letter */}
+        {/* ─── Game 6: Missing Letter Hunter ─── */}
         <div class="sub-panel" id="subview-game-missing">
           <div class="missing-letter-panel">
             <div class="missing-cue-header">
-              <span class="missing-icon-badge" id="missingIconBadge"><i class="fa-solid fa-apple-whole"></i></span>
+              <span class="missing-icon-badge" id="missingIconBadge">🍎</span>
               <h3>ما هو الحرف المناسب لإكمال الكلمة؟</h3>
             </div>
 
             <div class="missing-word-representation" id="missingWordDisplay">
-              {/* Missing word */}
+              <span class="missing-text-cue">؟ـفَّاح</span> <small>(فاكهة لذيذة ومفيدة)</small>
             </div>
 
             <div class="missing-choices-strip" id="missingChoicesRow">
               {/* 4 choices */}
             </div>
             <div class="exercise-feedback" id="missingFeedback"></div>
+          </div>
+        </div>
+
+        {/* ─── Game 7: Little Muslim Quiz Challenge ─── */}
+        <div class="sub-panel" id="subview-game-muslim-quiz">
+          <div class="muslim-quiz-panel">
+            <div class="game-header-bar">
+              <span class="stat-pill"><i class="fa-solid fa-moon"></i> مسابقة الشبل المسلم</span>
+              <span class="stat-pill"><i class="fa-solid fa-star"></i> نقاط التميز: <strong id="muslimQuizScore">0</strong></span>
+              <span class="stat-pill" id="muslimQuizProgress">السؤال 1 من 6</span>
+            </div>
+
+            <div class="muslim-question-card">
+              <div class="question-emoji-head" id="muslimQuestionEmoji">🕌</div>
+              <h3 class="question-text" id="muslimQuestionText">ما هو الكتاب المعجز الذي أنزله الله على نبينا محمد ﷺ؟</h3>
+
+              <div class="muslim-answers-matrix" id="muslimAnswersMatrix">
+                {/* 4 Answers */}
+              </div>
+
+              <div class="exercise-feedback" id="muslimQuizFeedback"></div>
+            </div>
           </div>
         </div>
       </section>

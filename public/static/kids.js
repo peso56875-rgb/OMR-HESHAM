@@ -1,13 +1,16 @@
 /**
- * واحة أطفال المؤسسة — Kids Learning Hub v2.0
- * Comprehensive Client-Side Interactive Engine
- * Al-Minshawi Teacher Recitation + Arabic Speech Synthesis + Canvas Tracer + Drawing Studio + Educational Games
+ * واحة أطفال المؤسسة — Kids Learning Hub v2.1
+ * Includes:
+ * 1. Sheikh Al-Minshawi Teacher Recitation with Child Repetition (No robotic speech fallback for Quran!)
+ * 2. 7 Interactive Kids Games & Challenges with Multiple Levels, Emojis, and Sounds
+ * 3. Daily Quests, XP System, and Treasure Box Rewards
+ * 4. Letter Positions, Vocabulary, Sentences Karaoke, Math, Duas, and Drawing Studio
  */
 
 ;(function () {
   'use strict'
 
-  // ─── Web Audio Chimes & Sound Synthesizer (Reliable, Zero External Lag) ───
+  // ─── Web Audio Chimes & Sound Synthesizer ───
   class SoundFX {
     constructor() {
       this.ctx = null
@@ -47,6 +50,11 @@
       this.playTone(520, 'sine', 0.06, 0.08)
     }
 
+    pop() {
+      this.playTone(880, 'sine', 0.04, 0.2)
+      setTimeout(() => this.playTone(440, 'triangle', 0.08, 0.15), 25)
+    }
+
     correct() {
       this.playTone(523.25, 'sine', 0.16, 0.18) // C5
       setTimeout(() => this.playTone(659.25, 'sine', 0.22, 0.22), 110) // E5
@@ -75,7 +83,7 @@
 
   const sfx = new SoundFX()
 
-  // ─── Arabic Speech Synthesizer Wrapper ───
+  // ─── Arabic Speech Synthesizer Wrapper (For letters, vocabulary and quiz ONLY) ───
   class KidsSpeech {
     constructor() {
       this.synth = window.speechSynthesis || null
@@ -117,13 +125,13 @@
 
   const speech = new KidsSpeech()
 
-  // ─── Tasteful Confetti Particle Generator ───
+  // ─── Confetti Particle Generator ───
   function launchTastefulConfetti(count = 45) {
     const container = document.getElementById('kidsConfettiOverlay')
     if (!container) return
     sfx.celebrate()
     container.innerHTML = ''
-    const colors = ['#0c4a3f', '#168a70', '#d97706', '#2563eb', '#7c3aed', '#f59e0b']
+    const colors = ['#0c4a3f', '#168a70', '#d97706', '#2563eb', '#7c3aed', '#f59e0b', '#ec4899']
 
     for (let i = 0; i < count; i++) {
       const piece = document.createElement('div')
@@ -131,7 +139,7 @@
       const startX = Math.random() * 100
       const endX = startX + (Math.random() * 30 - 15)
       const color = colors[Math.floor(Math.random() * colors.length)]
-      const size = Math.random() * 9 + 6
+      const size = Math.random() * 10 + 6
       const duration = Math.random() * 1.8 + 1.6
 
       piece.style.cssText = `
@@ -141,7 +149,7 @@
         width: ${size}px;
         height: ${size * 0.7}px;
         background: ${color};
-        opacity: 0.85;
+        opacity: 0.9;
         transform: rotate(${Math.random() * 360}deg);
         border-radius: 2px;
         z-index: 9999;
@@ -161,10 +169,10 @@
     }
   }
 
-  // ─── Progress & Achievements Manager ───
+  // ─── Progress, XP & Daily Quests Manager ───
   class ProgressManager {
     constructor() {
-      this.STORAGE_KEY = 'omar_kids_progress_v2'
+      this.STORAGE_KEY = 'omar_kids_progress_v2_1'
       this.data = this.load()
     }
 
@@ -175,6 +183,14 @@
       } catch (e) {}
       return {
         stars: 0,
+        xp: 0,
+        level: 1,
+        dailyQuests: {
+          balloon: 0, // out of 5
+          memory: false,
+          math: 0, // out of 2
+          treasureClaimed: false
+        },
         lettersLearned: {},
         surahsMemorized: {},
         drawings: [],
@@ -190,14 +206,54 @@
       this.updateUI()
     }
 
+    addXp(amount = 10) {
+      this.data.xp = (this.data.xp || 0) + amount
+      const nextLevelReq = this.data.level * 100
+      if (this.data.xp >= nextLevelReq) {
+        this.data.level = (this.data.level || 1) + 1
+        sfx.celebrate()
+        launchTastefulConfetti(60)
+        speech.speak(`مبارك يا بطل! ارتقيت إلى المستوى ${this.data.level}!`)
+      }
+      this.save()
+    }
+
     addStars(count = 1, celebrate = true) {
       this.data.stars = (this.data.stars || 0) + count
+      this.addXp(count * 5)
       sfx.star()
       if (celebrate && count >= 3) {
         launchTastefulConfetti(count * 6)
       }
       this.checkBadges()
       this.save()
+    }
+
+    updateQuest(type, amount = 1) {
+      if (!this.data.dailyQuests) {
+        this.data.dailyQuests = { balloon: 0, memory: false, math: 0, treasureClaimed: false }
+      }
+      if (type === 'balloon') {
+        this.data.dailyQuests.balloon = Math.min(5, (this.data.dailyQuests.balloon || 0) + amount)
+      } else if (type === 'memory') {
+        this.data.dailyQuests.memory = true
+      } else if (type === 'math') {
+        this.data.dailyQuests.math = Math.min(2, (this.data.dailyQuests.math || 0) + amount)
+      }
+      this.save()
+    }
+
+    claimTreasure() {
+      if (!this.data.dailyQuests) return
+      const q = this.data.dailyQuests
+      if (q.balloon >= 5 && q.memory && q.math >= 2 && !q.treasureClaimed) {
+        q.treasureClaimed = true
+        this.addStars(25, true)
+        this.data.badges['daily_treasure'] = true
+        launchTastefulConfetti(80)
+        speech.speak('ما شاء الله! فتحت صندوق الكنز الذهبي وحصلت على 25 نجمة تميز وسام الشبل المغوار!')
+        this.save()
+      }
     }
 
     markLetter(letter) {
@@ -255,6 +311,9 @@
       const lettersCount = Object.keys(this.data.lettersLearned || {}).length
       const surahsCount = Object.keys(this.data.surahsMemorized || {}).length
       const drawingsCount = (this.data.drawings || []).length
+      const level = this.data.level || 1
+      const xp = this.data.xp || 0
+      const nextXp = level * 100
 
       // Header indicators
       const heroStars = document.getElementById('totalStarsCounter')
@@ -268,10 +327,52 @@
 
       const rankTitle = document.getElementById('currentRankTitle')
       if (rankTitle) {
-        if (starsCount >= 100) rankTitle.textContent = 'فارس القرآن المتقن'
-        else if (starsCount >= 50) rankTitle.textContent = 'شبل واحة الخير'
-        else if (starsCount >= 20) rankTitle.textContent = 'طالب نجيب'
-        else rankTitle.textContent = 'بطل مجتهد'
+        if (starsCount >= 150) rankTitle.textContent = 'فارس القرآن والعلم 👑'
+        else if (starsCount >= 80) rankTitle.textContent = 'بطل الواحة الذهبي 🦁'
+        else if (starsCount >= 40) rankTitle.textContent = 'شبل مجتهد 🌟'
+        else rankTitle.textContent = 'مستكشف مبتدئ 🐣'
+      }
+
+      // Games Bar Rank & XP
+      const gameAvatar = document.getElementById('gameRankAvatar')
+      if (gameAvatar) {
+        gameAvatar.textContent = level >= 4 ? '👑' : level >= 3 ? '🦁' : level >= 2 ? '🌟' : '🐣'
+      }
+      const gameTitle = document.getElementById('gameRankTitle')
+      if (gameTitle) {
+        gameTitle.textContent = level >= 4 ? 'فارس واحة المعرفة' : level >= 3 ? 'بطل الألعاب والتحديات' : level >= 2 ? 'صائد النجوم الذكي' : 'شبل الواحة'
+      }
+      const gameLvlNum = document.getElementById('gameLevelNum')
+      if (gameLvlNum) gameLvlNum.textContent = level
+      const gameXp = document.getElementById('gameXpText')
+      if (gameXp) gameXp.textContent = `${xp % 100} / 100 XP`
+
+      // Daily Quests
+      const q = this.data.dailyQuests || { balloon: 0, memory: false, math: 0, treasureClaimed: false }
+      const qB = document.getElementById('questBalloon')
+      if (qB) {
+        qB.classList.toggle('completed', q.balloon >= 5)
+        qB.innerHTML = `<span class="q-icon">🎈</span> اصطد 5 بالونات (${q.balloon}/5)`
+      }
+      const qM = document.getElementById('questMemory')
+      if (qM) {
+        qM.classList.toggle('completed', !!q.memory)
+        qM.innerHTML = `<span class="q-icon">🧠</span> جولة ذاكرة (${q.memory ? 'مكتمل' : '0/1'})`
+      }
+      const qMath = document.getElementById('questMath')
+      if (qMath) {
+        qMath.classList.toggle('completed', q.math >= 2)
+        qMath.innerHTML = `<span class="q-icon">⚡</span> حل تحدي حساب (${q.math}/2)`
+      }
+
+      const btnTreasure = document.getElementById('btnOpenTreasure')
+      if (btnTreasure) {
+        const canClaim = q.balloon >= 5 && q.memory && q.math >= 2 && !q.treasureClaimed
+        btnTreasure.classList.toggle('disabled', !canClaim)
+        btnTreasure.classList.toggle('ready-claim', canClaim)
+        if (q.treasureClaimed) {
+          btnTreasure.innerHTML = '<span class="treasure-emoji">✨</span><span class="treasure-text">تم فتح الصندوق</span>'
+        }
       }
 
       // Certificate indicators
@@ -374,6 +475,8 @@
               setTimeout(resizeDrawingCanvas, 60)
             } else if (targetSub === 'letters-tracer') {
               setTimeout(setupLetterTracer, 60)
+            } else if (targetSub === 'game-balloons') {
+              // Prepare balloon arena
             }
           }
         })
@@ -385,22 +488,29 @@
     if (guideBtn) {
       guideBtn.addEventListener('click', () => {
         sfx.correct()
-        speech.speak('مرحباً بكم في واحة أطفال مؤسسة الدكتور عمر هشام الخيرية. نرحب بكم لتعلم القرآن الكريم بصوت الشيخ المنشاوي المعلم وترديد الأطفال، والقراءة والأرقام والرسم الهادف.')
+        speech.speak('مرحباً بكم في واحة أطفال مؤسسة الدكتور عمر هشام الخيرية! هنا نستمع للمصحف المعلم بصوت الشيخ المنشاوي وترديد الأطفال، ونتعلم لغة القرآن والأرقام ونلعب أجمل الألعاب الهادفة.')
+      })
+    }
+
+    // Treasure box button
+    const treasureBtn = document.getElementById('btnOpenTreasure')
+    if (treasureBtn) {
+      treasureBtn.addEventListener('click', () => {
+        progress.claimTreasure()
       })
     }
   }
 
   // ─── TAB 1: LETTERS & READING ───
-  // Letter data mapping
   const LETTERS_DATA = [
     { letter: 'أ', name: 'ألف', word: 'أَسَد', initial: { char: 'أَ', word: 'أَسَد' }, medial: { char: 'ـأَ', word: 'فَأْر' }, final: { char: 'ـأ', word: 'نَبَأ' } },
     { letter: 'ب', name: 'باء', word: 'بَاب', initial: { char: 'بـ', word: 'بَيْت' }, medial: { char: 'ـبـ', word: 'حَبْل' }, final: { char: 'ـب', word: 'عِنَب' } },
     { letter: 'ت', name: 'تاء', word: 'تَاج', initial: { char: 'تـ', word: 'تَمْر' }, medial: { char: 'ـتـ', word: 'كِتَاب' }, final: { char: 'ـت', word: 'بِنْت' } },
     { letter: 'ث', name: 'ثاء', word: 'ثَمَر', initial: { char: 'ثـ', word: 'ثَوْب' }, medial: { char: 'ـثـ', word: 'عُثْمَان' }, final: { char: 'ـث', word: 'أَثَاث' } },
-    { letter: 'ج', name: 'جيم', word: 'جَبَل', initial: { char: 'جـ', word: 'جَمَل' }, medial: { char: 'ـجـ', word: 'شَجَرَة' }, final: { char: 'ـج', word: 'بُرْج' } },
+    { letter: 'ج', name: 'جيم', word: 'جَمَل', initial: { char: 'جـ', word: 'جَمَل' }, medial: { char: 'ـجـ', word: 'شَجَرَة' }, final: { char: 'ـج', word: 'بُرْج' } },
     { letter: 'ح', name: 'حاء', word: 'حَدِيقَة', initial: { char: 'حـ', word: 'حَقِيبَة' }, medial: { char: 'ـحـ', word: 'بَحْر' }, final: { char: 'ـح', word: 'مِفْتَاح' } },
     { letter: 'خ', name: 'خاء', word: 'خَيْر', initial: { char: 'خـ', word: 'خُبْز' }, medial: { char: 'ـخـ', word: 'نَخْلَة' }, final: { char: 'ـخ', word: 'مَطْبَخ' } },
-    { letter: 'د', name: 'دال', word: 'دَرْب', initial: { char: 'د', word: 'دَفْتَر' }, medial: { char: 'ـد', word: 'مَدْرَسَة' }, final: { char: 'ـد', word: 'مَسْجِد' } },
+    { letter: 'د', name: 'دال', word: 'دَفْتَر', initial: { char: 'د', word: 'دَفْتَر' }, medial: { char: 'ـد', word: 'مَدْرَسَة' }, final: { char: 'ـد', word: 'مَسْجِد' } },
     { letter: 'ذ', name: 'ذال', word: 'ذَهَب', initial: { char: 'ذ', word: 'ذُرَة' }, medial: { char: 'ـذ', word: 'بَذْرَة' }, final: { char: 'ـذ', word: 'مُعَاذ' } },
     { letter: 'ر', name: 'راء', word: 'رَحْمَة', initial: { char: 'ر', word: 'رَسُول' }, medial: { char: 'ـر', word: 'قُرْآن' }, final: { char: 'ـر', word: 'نَهْر' } },
     { letter: 'ز', name: 'زاي', word: 'زَيْتُون', initial: { char: 'ز', word: 'زَهْرَة' }, medial: { char: 'ـز', word: 'مَزْرَعَة' }, final: { char: 'ـز', word: 'خُبْز' } },
@@ -499,7 +609,7 @@
       })
     }
 
-    // Letter Positions Explorer
+    // Positions explorer
     const posSelect = document.getElementById('posLetterSelect')
     if (posSelect) {
       posSelect.addEventListener('change', (e) => {
@@ -509,7 +619,7 @@
       renderPositionsForLetter(posSelect.value || 'أ')
     }
 
-    // Tashkeel dynamic interactive controls
+    // Tashkeel
     const tashCustomSelect = document.getElementById('tashkeelCustomSelect')
     const vocalStrip = document.getElementById('vocalButtonsStrip')
 
@@ -543,13 +653,8 @@
       })
     })
 
-    // Init Words Catalog
     initWordsCatalog()
-
-    // Init Sentences Karaoke
     initSentencesKaraoke()
-
-    // Init Quiz
     initLettersQuiz()
   }
 
@@ -562,9 +667,7 @@
       <div class="pos-card-item">
         <span class="pos-tag">في أول الكلمة</span>
         <div class="pos-char-visual">${item.initial.char}</div>
-        <div class="pos-word-example">
-          <strong>${item.initial.word}</strong>
-        </div>
+        <div class="pos-word-example"><strong>${item.initial.word}</strong></div>
         <button type="button" class="listen-pos-btn" data-speak="${item.initial.word}">
           <i class="fa-solid fa-volume-high"></i> استمع للمثال
         </button>
@@ -573,9 +676,7 @@
       <div class="pos-card-item">
         <span class="pos-tag">في وسط الكلمة</span>
         <div class="pos-char-visual">${item.medial.char}</div>
-        <div class="pos-word-example">
-          <strong>${item.medial.word}</strong>
-        </div>
+        <div class="pos-word-example"><strong>${item.medial.word}</strong></div>
         <button type="button" class="listen-pos-btn" data-speak="${item.medial.word}">
           <i class="fa-solid fa-volume-high"></i> استمع للمثال
         </button>
@@ -584,9 +685,7 @@
       <div class="pos-card-item">
         <span class="pos-tag">في آخر الكلمة</span>
         <div class="pos-char-visual">${item.final.char}</div>
-        <div class="pos-word-example">
-          <strong>${item.final.word}</strong>
-        </div>
+        <div class="pos-word-example"><strong>${item.final.word}</strong></div>
         <button type="button" class="listen-pos-btn" data-speak="${item.final.word}">
           <i class="fa-solid fa-volume-high"></i> استمع للمثال
         </button>
@@ -601,7 +700,7 @@
     })
   }
 
-  // ─── First Words Catalog ───
+  // Words Catalog
   const WORDS_CATALOG = {
     family: [
       { text: 'أَبِي', sub: 'السند والعطاء', letters: 'أ - ب - ي' },
@@ -677,7 +776,7 @@
     renderCategory('family')
   }
 
-  // ─── First Sentences with Karaoke Highlighting ───
+  // Sentences Karaoke
   const SENTENCES_LIST = [
     { full: 'اللَّهُ رَبِّي وَالْإِسْلَامُ دِينِي', words: ['اللَّهُ', 'رَبِّي', 'وَالْإِسْلَامُ', 'دِينِي'], meaning: 'شهادة التوحيد واعتزاز بدين الإسلام' },
     { full: 'الْقُرْآنُ الْكَرِيمُ كِتَابِي وَنُورِي', words: ['الْقُرْآنُ', 'الْكَرِيمُ', 'كِتَابِي', 'وَنُورِي'], meaning: 'التمسك بالقرآن الكريم منهجاً وهداية' },
@@ -691,10 +790,7 @@
     const playBtn = document.getElementById('btnPlaySentenceAudio')
     const nextBtn = document.getElementById('btnNextSentence')
 
-    if (playBtn) {
-      playBtn.addEventListener('click', playCurrentSentence)
-    }
-
+    if (playBtn) playBtn.addEventListener('click', playCurrentSentence)
     if (nextBtn) {
       nextBtn.addEventListener('click', () => {
         sfx.tap()
@@ -750,7 +846,7 @@
     speakNextWord()
   }
 
-  // ─── Letter Tracer with Canvas ───
+  // Letter Tracer
   let currentTraceLetter = 'أ'
   let tracerCanvas, tracerCtx
   let isTracing = false
@@ -767,7 +863,6 @@
 
     drawTracerGuide()
 
-    // Chips
     document.querySelectorAll('#tracerLetterChips .tracer-chip').forEach(btn => {
       btn.addEventListener('click', () => {
         sfx.tap()
@@ -882,7 +977,7 @@
     tracerCtx.setLineDash([])
   }
 
-  // ─── Listen & Choose Quiz ───
+  // Letters Quiz
   let quizCurrentLetter = null
   let quizScore = 0
 
@@ -939,19 +1034,20 @@
     })
   }
 
-  // ─── TAB 2: QURAN MEMORIZATION (AL-MINSHAWI TEACHER WITH CHILDREN REPETITION) ───
+  // ─── TAB 2: QURAN MEMORIZATION (AL-MINSHAWI TEACHER - 100% REAL AUDIO, ZERO SPEECH SYNTHESIS) ───
   let currentSurahId = 1
   let currentSurahName = 'الفاتحة'
   let currentVerses = []
   let currentPlayingVerseIdx = 0
   let isVersePlaying = false
   let verseAudio = new Audio()
+  verseAudio.preload = 'auto'
   let isMaskMode = false
   let verseRepeatTarget = 3
   let currentVerseRepeatCount = 1
   let quranPlaybackMode = 'ayah' // 'ayah' (with child repetition) or 'full' (continuous surah)
 
-  // Built-in offline Quran texts for key short surahs
+  // Extensive built-in Quran texts for Juz Amma to guarantee instantaneous loading
   const OFFLINE_SURAHS = {
     1: [
       { num: 1, text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ' },
@@ -981,17 +1077,66 @@
       { num: 1, text: 'قُلْ هُوَ اللَّهُ أَحَدٌ' },
       { num: 2, text: 'اللَّهُ الصَّمَدُ' },
       { num: 3, text: 'لَمْ يَلِدْ وَلَمْ يُولَدْ' },
-      { num: 4, text: 'وَمَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ' }
+      { num: 4, text: 'وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ' }
+    ],
+    111: [
+      { num: 1, text: 'تَبَّتْ يَدَا أَبِي لَهَبٍ وَتَبَّ' },
+      { num: 2, text: 'مَا أَغْنَىٰ عَنْهُ مَالُهُ وَمَا كَسَبَ' },
+      { num: 3, text: 'سَيَصْلَىٰ نَارًا ذَاتَ لَهَبٍ' },
+      { num: 4, text: 'وَامْرَأَتُهُ حَمَّالَةَ الْحَطَبِ' },
+      { num: 5, text: 'فِي جِيدِهَا حَبْلٌ مِّن مَّسَدٍ' }
     ],
     110: [
       { num: 1, text: 'إِذَا جَاءَ نَصْرُ اللَّهِ وَالْفَتْحُ' },
       { num: 2, text: 'وَرَأَيْتَ النَّاسَ يَدْخُلُونَ فِي دِينِ اللَّهِ أَفْوَاجًا' },
       { num: 3, text: 'فَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ ۚ إِنَّهُ كَانَ تَوَّابًا' }
     ],
+    109: [
+      { num: 1, text: 'قُلْ يَا أَيُّهَا الْكَافِرُونَ' },
+      { num: 2, text: 'لَا أَعْبُدُ مَا تَعْبُدُونَ' },
+      { num: 3, text: 'وَلَا أَنتُمْ عَابِدُونَ مَا أَعْبُدُ' },
+      { num: 4, text: 'وَلَا أَنَا عَابِدٌ مَّا عَبَدتُّمْ' },
+      { num: 5, text: 'وَلَا أَنتُمْ عَابِدُونَ مَا أَعْبُدُ' },
+      { num: 6, text: 'لَكُمْ دِينُكُمْ وَلِيَ دِينِ' }
+    ],
     108: [
       { num: 1, text: 'إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ' },
       { num: 2, text: 'فَصَلِّ لِرَبِّكَ وَانْحَرْ' },
       { num: 3, text: 'إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ' }
+    ],
+    107: [
+      { num: 1, text: 'أَرَأَيْتَ الَّذِي يُكَذِّبُ بِالدِّينِ' },
+      { num: 2, text: 'فَذَٰلِكَ الَّذِي يَدُعُّ الْيَتِيمَ' },
+      { num: 3, text: 'وَلَا يَحُضُّ عَلَىٰ طَعَامِ الْمِسْكِينِ' },
+      { num: 4, text: 'فَوَيْلٌ لِّلْمُصَلِّينَ' },
+      { num: 5, text: 'الَّذِينَ هُمْ عَن صَلَاتِهِمْ سَاهُونَ' },
+      { num: 6, text: 'الَّذِينَ هُمْ يُرَاءُونَ' },
+      { num: 7, text: 'وَيَمْنَعُونَ الْمَاعُونَ' }
+    ],
+    106: [
+      { num: 1, text: 'لِإِيلَافِ قُرَيْشٍ' },
+      { num: 2, text: 'إِيلَافِهِمْ رِحْلَةَ الشِّتَاءِ وَالصَّيْفِ' },
+      { num: 3, text: 'فَلْيَعْبُدُوا رَبَّ هَٰذَا الْبَيْتِ' },
+      { num: 4, text: 'الَّذِي أَطْعَمَهُم مِّن جُوعٍ وَآمَنَهُم مِّنْ خَوْفٍ' }
+    ],
+    105: [
+      { num: 1, text: 'أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَابِ الْفِيلِ' },
+      { num: 2, text: 'أَلَمْ يَجْعَلْ كَيْدَهُمْ فِي تَضْلِيلٍ' },
+      { num: 3, text: 'وَأَرْسَلَ عَلَيْهِمْ طَيْرًا أَبَابِيلَ' },
+      { num: 4, text: 'تَرْمِيهِم بِحِجَارَةٍ مِّن سِجِّيلٍ' },
+      { num: 5, text: 'فَجَعَلَهُمْ كَعَصْفٍ مَّأْكُولٍ' }
+    ],
+    103: [
+      { num: 1, text: 'وَالْعَصْرِ' },
+      { num: 2, text: 'إِنَّ الْإِنسَانَ لَفِي خُسْرٍ' },
+      { num: 3, text: 'إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ' }
+    ],
+    97: [
+      { num: 1, text: 'إِنَّا أَنزَلْنَاهُ فِي لَيْلَةِ الْقَدْرِ' },
+      { num: 2, text: 'وَمَا أَدْرَاكَ مَا لَيْلَةُ الْقَدْرِ' },
+      { num: 3, text: 'لَيْلَةُ الْقَدْرِ خَيْرٌ مِّنْ أَلْفِ شَهْرٍ' },
+      { num: 4, text: 'تَنَزَّلُ الْمَلَائِكَةُ وَالرُّوحُ فِيهَا بِإِذْنِ رَبِّهِم مِّن كُلِّ أَمْرٍ' },
+      { num: 5, text: 'سَلَامٌ هِيَ حَتَّىٰ مَطْلَعِ الْفَجْرِ' }
     ]
   }
 
@@ -1097,11 +1242,24 @@
     if (btnMarkDone) {
       btnMarkDone.addEventListener('click', () => {
         progress.markSurah(currentSurahId)
-        speech.speak(`مبارك يا بطل! تم تثبيت حفظك لسورة ${currentSurahName}`)
+        sfx.celebrate()
+        launchTastefulConfetti(50)
       })
     }
 
     verseAudio.addEventListener('ended', onVerseAudioEnded)
+    verseAudio.addEventListener('waiting', () => {
+      const btn = document.getElementById('btnPlayPauseVerse')
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'
+    })
+    verseAudio.addEventListener('playing', () => {
+      isVersePlaying = true
+      updatePlayButtonIcon()
+    })
+    verseAudio.addEventListener('pause', () => {
+      isVersePlaying = false
+      updatePlayButtonIcon()
+    })
 
     loadSurah(1, 'الفاتحة')
   }
@@ -1125,7 +1283,7 @@
 
     const list = document.getElementById('versesInteractiveList')
     if (list) {
-      list.innerHTML = '<div class="verses-loading-state"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل آيات السورة المباركة...</div>'
+      list.innerHTML = '<div class="verses-loading-state"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل آيات سورة ' + name + '...</div>'
     }
 
     if (OFFLINE_SURAHS[id]) {
@@ -1134,6 +1292,24 @@
       return
     }
 
+    // Try our local server endpoint first
+    fetch(`/api/quran/surah/${id}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.success && Array.isArray(d.ayahs) && d.ayahs.length > 0) {
+          currentVerses = d.ayahs.map(a => ({
+            num: a.numberInSurah,
+            text: a.text
+          }))
+          renderVerses()
+        } else {
+          fetchExternalSurah(id)
+        }
+      })
+      .catch(() => fetchExternalSurah(id))
+  }
+
+  function fetchExternalSurah(id) {
     fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`)
       .then(r => r.json())
       .then(d => {
@@ -1179,7 +1355,7 @@
       row.innerHTML = `
         <span class="verse-symbol-ring">۝ ${verse.num}</span>
         <div class="verse-script-content">${textHtml}</div>
-        <button type="button" class="verse-single-play-btn" title="الاستماع لهذه الآية بترديد الأطفال"><i class="fa-solid fa-volume-high"></i></button>
+        <button type="button" class="verse-single-play-btn" title="الاستماع لهذه الآية بصوت المنشاوي وترديد الأطفال"><i class="fa-solid fa-volume-high"></i></button>
       `
 
       row.querySelector('.verse-single-play-btn').addEventListener('click', (e) => {
@@ -1205,7 +1381,6 @@
   }
 
   function getAyahAudioUrl(surah, ayah) {
-    // Sheikh Al-Minshawi Teacher (with child repetition) on EveryAyah CDN: 3 digits surah + 3 digits ayah
     const s = String(surah).padStart(3, '0')
     const a = String(ayah).padStart(3, '0')
     return `https://everyayah.com/data/Minshawy_Teacher_128kbps/${s}${a}.mp3`
@@ -1223,32 +1398,72 @@
     })
 
     const target = currentVerses[idx]
-    const audioUrl = getAyahAudioUrl(currentSurahId, target.num)
+    const primaryUrl = getAyahAudioUrl(currentSurahId, target.num)
 
-    verseAudio.src = audioUrl
-    verseAudio.play().then(() => {
-      isVersePlaying = true
-      updatePlayButtonIcon()
-      updatePlayerLabel()
-      updateRepeatIndicator()
-    }).catch(() => {
-      // Fallback to speech if audio blocked
-      speech.speak(target.text, onVerseAudioEnded)
-      isVersePlaying = true
-      updatePlayButtonIcon()
-    })
+    // Stop previous and set new source
+    verseAudio.pause()
+    verseAudio.currentTime = 0
+
+    // Setup fallback mirror on error without ever touching speech synthesis
+    verseAudio.onerror = () => {
+      console.warn('EveryAyah primary mirror error, trying backup mirror...')
+      const s = String(currentSurahId).padStart(3, '0')
+      const a = String(target.num).padStart(3, '0')
+      verseAudio.onerror = null // Prevent infinite loop
+      verseAudio.src = `https://everyayah.com/data/Minshawy_Murattal_128kbps/${s}${a}.mp3`
+      verseAudio.play().catch(e => console.error('Audio play error:', e))
+    }
+
+    verseAudio.src = primaryUrl
+    verseAudio.load()
+
+    updatePlayerLabel()
+    updateRepeatIndicator()
+
+    const playPromise = verseAudio.play()
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        isVersePlaying = true
+        updatePlayButtonIcon()
+      }).catch(err => {
+        console.warn('Audio play request:', err)
+        isVersePlaying = false
+        updatePlayButtonIcon()
+      })
+    }
   }
 
   function playFullSurahAudio() {
     const sStr = String(currentSurahId).padStart(3, '0')
     const fullUrl = `https://server10.mp3quran.net/minsh/${sStr}.mp3`
+
+    verseAudio.pause()
+    verseAudio.currentTime = 0
+
+    verseAudio.onerror = () => {
+      console.warn('Full surah server10 error, trying quranicaudio...')
+      verseAudio.onerror = null
+      verseAudio.src = `https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/${sStr}.mp3`
+      verseAudio.play().catch(e => console.error('Full surah backup error:', e))
+    }
+
     verseAudio.src = fullUrl
-    verseAudio.play().then(() => {
-      isVersePlaying = true
-      updatePlayButtonIcon()
-      const label = document.getElementById('currentPlayingVerseLabel')
-      if (label) label.textContent = `تلاوة سورة ${currentSurahName} كاملة متصلة`
-    }).catch(() => {})
+    verseAudio.load()
+
+    const label = document.getElementById('currentPlayingVerseLabel')
+    if (label) label.textContent = `تلاوة سورة ${currentSurahName} كاملة متصلة (المنشاوي)`
+
+    const p = verseAudio.play()
+    if (p !== undefined) {
+      p.then(() => {
+        isVersePlaying = true
+        updatePlayButtonIcon()
+      }).catch(err => {
+        console.warn('Full surah play deferred:', err)
+        isVersePlaying = false
+        updatePlayButtonIcon()
+      })
+    }
   }
 
   function onVerseAudioEnded() {
@@ -1266,7 +1481,7 @@
       setTimeout(() => {
         verseAudio.currentTime = 0
         verseAudio.play().catch(() => {})
-      }, 500)
+      }, 400)
     } else {
       currentVerseRepeatCount = 1
       if (currentPlayingVerseIdx < currentVerses.length - 1) {
@@ -1306,7 +1521,7 @@
   function updatePlayerLabel() {
     const label = document.getElementById('currentPlayingVerseLabel')
     if (label && currentVerses[currentPlayingVerseIdx]) {
-      label.textContent = `الآية ${currentVerses[currentPlayingVerseIdx].num} من سورة ${currentSurahName} (المنشاوي المعلم)`
+      label.textContent = `الآية ${currentVerses[currentPlayingVerseIdx].num} من سورة ${currentSurahName} (المنشاوي مع الأطفال)`
     }
   }
 
@@ -1353,7 +1568,6 @@
     initSequenceGame()
   }
 
-  // Number Comparison: > < =
   let compA = 7, compB = 4
   function initComparisonGame() {
     const btnList = document.querySelectorAll('.compare-buttons-row .comp-btn')
@@ -1396,14 +1610,12 @@
 
     compA = Math.floor(Math.random() * 15) + 1
     compB = Math.floor(Math.random() * 15) + 1
-    // 20% chance of equality
     if (Math.random() < 0.2) compB = compA
 
     aEl.textContent = `${compA} (${ARABIC_DIGITS[compA] || compA})`
     bEl.textContent = `${compB} (${ARABIC_DIGITS[compB] || compB})`
   }
 
-  // Visual Math (Addition/Subtraction)
   let mathMode = 'add'
   let mathA = 3, mathB = 2
 
@@ -1488,7 +1700,6 @@
     })
   }
 
-  // Missing Number Sequence
   let seqAnswer = 3
   function initSequenceGame() {
     nextSequence()
@@ -1503,7 +1714,7 @@
     if (feedback) feedback.textContent = ''
 
     const start = Math.floor(Math.random() * 12) + 1
-    const missingIdx = Math.floor(Math.random() * 4) // 0 to 3
+    const missingIdx = Math.floor(Math.random() * 4)
     seqAnswer = start + missingIdx
 
     row.innerHTML = ''
@@ -1574,7 +1785,6 @@
       })
     })
 
-    // Ethical quiz
     document.querySelectorAll('.manner-option-btn').forEach(opt => {
       opt.addEventListener('click', () => {
         const isCorrect = opt.getAttribute('data-correct') === 'true'
@@ -1843,7 +2053,6 @@
   }
 
   function initColoringBook() {
-    const container = document.getElementById('coloringSvgContainer')
     const palette = document.getElementById('coloringPalette')
     const tplButtons = document.querySelectorAll('#coloringTemplatesBar .tpl-btn')
 
@@ -2000,30 +2209,70 @@
     })
   }
 
-  // ─── TAB 6: INTELLECTUAL GAMES ───
-  // Memory Card Match
-  let memoryCards = []
-  let flippedCards = []
-  let matchedPairs = 0
-  let flipsCount = 0
+  // ══════════════════════════════════════════════════════════════════════
+  // TAB 6: THE 7 KIDS GAMES & ADVENTURE WORLD (WITH EMOJIS & CHALLENGES)
+  // ══════════════════════════════════════════════════════════════════════
 
-  const MEMORY_ITEMS = [
-    { val: 'أ', name: 'ألف' },
-    { val: 'ب', name: 'باء' },
-    { val: 'ت', name: 'تاء' },
-    { val: 'ج', name: 'جيم' },
-    { val: 'س', name: 'سين' },
-    { val: 'م', name: 'ميم' }
-  ]
+  // ─── Game 1: Super Memory Flip (with 3 difficulty levels) ───
+  const MEMORY_DATA = {
+    easy: [
+      { val: '🍎', name: 'تفاح' },
+      { val: '🍌', name: 'موز' },
+      { val: '🍓', name: 'فراولة' },
+      { val: '🍇', name: 'عنب' }
+    ],
+    medium: [
+      { val: '🦁', name: 'أسد' },
+      { val: '🐘', name: 'فيل' },
+      { val: '🦒', name: 'زرافة' },
+      { val: '🦓', name: 'حمار وحشي' },
+      { val: '🐒', name: 'قرد' },
+      { val: '🐪', name: 'جمل' }
+    ],
+    hard: [
+      { val: '🚀', name: 'صاروخ' },
+      { val: '🌙', name: 'قمر' },
+      { val: '☀️', name: 'شمس' },
+      { val: '🌟', name: 'نجمة' },
+      { val: '📖', name: 'مصحف' },
+      { val: '🕌', name: 'مسجد' },
+      { val: '👑', name: 'تاج' },
+      { val: '🏆', name: 'كأس' }
+    ]
+  }
+
+  let memoryLevel = 'easy'
+  let memoryFlippedCards = []
+  let memoryMatchedCount = 0
+  let memoryFlips = 0
 
   function initMemoryGame() {
-    const restartBtn = document.getElementById('btnRestartMemory')
-    if (restartBtn) {
-      restartBtn.addEventListener('click', () => {
+    const diffChips = document.querySelectorAll('#memoryDiffPills .diff-chip')
+    diffChips.forEach(chip => {
+      chip.addEventListener('click', () => {
         sfx.tap()
+        diffChips.forEach(c => c.classList.remove('active'))
+        chip.classList.add('active')
+        memoryLevel = chip.getAttribute('data-level')
+        startMemoryRound()
+      })
+    })
+
+    const restartBtn = document.getElementById('btnRestartMemory')
+    if (restartBtn) restartBtn.addEventListener('click', () => { sfx.tap(); startMemoryRound() })
+
+    const nextLvlBtn = document.getElementById('btnNextMemoryLevel')
+    if (nextLvlBtn) {
+      nextLvlBtn.addEventListener('click', () => {
+        sfx.tap()
+        if (memoryLevel === 'easy') memoryLevel = 'medium'
+        else if (memoryLevel === 'medium') memoryLevel = 'hard'
+        else memoryLevel = 'easy'
+        diffChips.forEach(c => c.classList.toggle('active', c.getAttribute('data-level') === memoryLevel))
         startMemoryRound()
       })
     }
+
     startMemoryRound()
   }
 
@@ -2031,16 +2280,22 @@
     const board = document.getElementById('memoryCardsBoard')
     const flipsLabel = document.getElementById('memFlipsCount')
     const matchesLabel = document.getElementById('memMatchesCount')
+    const winBanner = document.getElementById('memWinBanner')
     if (!board) return
 
-    matchedPairs = 0
-    flipsCount = 0
-    flippedCards = []
+    if (winBanner) winBanner.style.display = 'none'
+    memoryMatchedCount = 0
+    memoryFlips = 0
+    memoryFlippedCards = []
+
+    const items = MEMORY_DATA[memoryLevel] || MEMORY_DATA.easy
     if (flipsLabel) flipsLabel.textContent = '0'
-    if (matchesLabel) matchesLabel.textContent = '0 / 6'
+    if (matchesLabel) matchesLabel.textContent = `0 / ${items.length}`
+
+    board.className = `memory-cards-grid level-${memoryLevel}`
 
     const deck = []
-    MEMORY_ITEMS.forEach((item, pairIdx) => {
+    items.forEach((item, pairIdx) => {
       deck.push({ ...item, pairIdx })
       deck.push({ ...item, pairIdx })
     })
@@ -2052,95 +2307,486 @@
       card.className = 'clean-memory-card'
       card.innerHTML = `
         <div class="card-flipper">
-          <div class="card-side back"><i class="fa-solid fa-question"></i></div>
+          <div class="card-side back"><span class="back-star-ico">⭐</span></div>
           <div class="card-side front">
-            <span class="card-char">${item.val}</span>
+            <span class="card-emoji-big">${item.val}</span>
             <small>${item.name}</small>
           </div>
         </div>
       `
-      card.addEventListener('click', () => onCardClicked(card, item))
+      card.addEventListener('click', () => onCardClicked(card, item, items.length))
       board.appendChild(card)
     })
   }
 
-  function onCardClicked(cardEl, item) {
-    if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched') || flippedCards.length >= 2) {
+  function onCardClicked(cardEl, item, totalPairs) {
+    if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched') || memoryFlippedCards.length >= 2) {
       return
     }
 
     sfx.tap()
     cardEl.classList.add('flipped')
-    flippedCards.push({ cardEl, item })
+    memoryFlippedCards.push({ cardEl, item })
 
-    if (flippedCards.length === 2) {
-      flipsCount++
+    if (memoryFlippedCards.length === 2) {
+      memoryFlips++
       const flipsLabel = document.getElementById('memFlipsCount')
-      if (flipsLabel) flipsLabel.textContent = flipsCount
+      if (flipsLabel) flipsLabel.textContent = memoryFlips
 
-      const [c1, c2] = flippedCards
+      const [c1, c2] = memoryFlippedCards
       if (c1.item.pairIdx === c2.item.pairIdx) {
         setTimeout(() => {
           sfx.correct()
           c1.cardEl.classList.add('matched')
           c2.cardEl.classList.add('matched')
-          matchedPairs++
+          memoryMatchedCount++
           const matchesLabel = document.getElementById('memMatchesCount')
-          if (matchesLabel) matchesLabel.textContent = `${matchedPairs} / 6`
-          speech.speak(`حرف ${c1.item.name}`)
-          flippedCards = []
+          if (matchesLabel) matchesLabel.textContent = `${memoryMatchedCount} / ${totalPairs}`
+          speech.speak(c1.item.name)
+          memoryFlippedCards = []
 
-          if (matchedPairs === 6) {
+          if (memoryMatchedCount === totalPairs) {
             sfx.celebrate()
-            launchTastefulConfetti(50)
-            progress.data.gamesWon = (progress.data.gamesWon || 0) + 1
+            launchTastefulConfetti(55)
+            progress.updateQuest('memory')
             progress.addStars(4, true)
-            speech.speak('أحسنت يا بطل! اكتملت الجولة بنجاح تام.')
+            const winBanner = document.getElementById('memWinBanner')
+            if (winBanner) winBanner.style.display = 'block'
+            speech.speak('رائع جداً! فزت بالجولة بجدارة!')
           }
-        }, 350)
+        }, 320)
       } else {
         setTimeout(() => {
           sfx.wrong()
           c1.cardEl.classList.remove('flipped')
           c2.cardEl.classList.remove('flipped')
-          flippedCards = []
-        }, 850)
+          memoryFlippedCards = []
+        }, 800)
       }
     }
   }
 
-  // Word Scramble
-  const SCRAMBLE_WORDS = [
-    { word: 'قَلَم', letters: ['ق', 'ل', 'م'], hint: 'أداة الكتابة والعلم' },
-    { word: 'كِتَاب', letters: ['ك', 'ت', 'ا', 'ب'], hint: 'كنز المعرفة' },
-    { word: 'مَسْجِد', letters: ['م', 'س', 'ج', 'د'], hint: 'بيت الله المبارك' },
-    { word: 'نُور', letters: ['ن', 'و', 'ر'], hint: 'ضياء يبدد الظلام' },
-    { word: 'سَمَاء', letters: ['س', 'م', 'ا', 'ء'], hint: 'فوقنا تتزين بالنجوم' }
-  ]
-  let currentScrambleIdx = 0
-  let userPlacedLetters = []
+  // ─── Game 2: Balloon Popper Quest 🎈 ───
+  let balloonTimerInterval = null
+  let balloonSecondsLeft = 30
+  let balloonScore = 0
+  let currentBalloonTarget = null
+  let isBalloonGameRunning = false
 
-  function initWordScramble() {
-    const checkBtn = document.getElementById('btnCheckScramble')
-    const nextBtn = document.getElementById('btnNextScramble')
-    if (checkBtn) checkBtn.addEventListener('click', checkScrambleAnswer)
+  const BALLOON_LETTERS = ['أ', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ر', 'س', 'ش', 'ص', 'ط', 'ع', 'ف', 'ق', 'ك', 'ل', 'م', 'ن', 'و', 'ي']
+  const BALLOON_COLORS = [
+    { bg: '#ef4444', name: 'الأحمر' },
+    { bg: '#3b82f6', name: 'الأزرق' },
+    { bg: '#f59e0b', name: 'الأصفر' },
+    { bg: '#10b981', name: 'الأخضر' },
+    { bg: '#8b5cf6', name: 'الينفسجي' },
+    { bg: '#ec4899', name: 'الوردي' }
+  ]
+
+  function initBalloonGame() {
+    const startBtn = document.getElementById('btnStartBalloons')
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        sfx.tap()
+        startBalloonRound()
+      })
+    }
+  }
+
+  function startBalloonRound() {
+    isBalloonGameRunning = true
+    balloonScore = 0
+    balloonSecondsLeft = 30
+
+    const scoreEl = document.getElementById('balloonScore')
+    const timerEl = document.getElementById('balloonTimer')
+    const container = document.getElementById('balloonsFloatContainer')
+    if (scoreEl) scoreEl.textContent = '0'
+    if (timerEl) timerEl.textContent = '30s'
+    if (!container) return
+
+    container.innerHTML = ''
+    clearInterval(balloonTimerInterval)
+
+    nextBalloonMission()
+    spawnBalloonsWave()
+
+    balloonTimerInterval = setInterval(() => {
+      balloonSecondsLeft--
+      if (timerEl) timerEl.textContent = `${balloonSecondsLeft}s`
+      if (balloonSecondsLeft % 3 === 0) {
+        spawnBalloonsWave()
+      }
+      if (balloonSecondsLeft <= 0) {
+        clearInterval(balloonTimerInterval)
+        endBalloonRound()
+      }
+    }, 1000)
+  }
+
+  function nextBalloonMission() {
+    const targetChar = BALLOON_LETTERS[Math.floor(Math.random() * BALLOON_LETTERS.length)]
+    currentBalloonTarget = targetChar
+    const promptEl = document.getElementById('balloonTargetPrompt')
+    if (promptEl) {
+      promptEl.innerHTML = `اصطاد بالون حرف [ <span class="target-char-glow">${targetChar}</span> ] 🎈`
+    }
+    speech.speak(`اصطاد بالون حرف ${targetChar}`)
+  }
+
+  function spawnBalloonsWave() {
+    const container = document.getElementById('balloonsFloatContainer')
+    if (!container || !isBalloonGameRunning) return
+
+    // Ensure at least one target balloon
+    const waveLetters = [currentBalloonTarget]
+    while (waveLetters.length < 5) {
+      const rand = BALLOON_LETTERS[Math.floor(Math.random() * BALLOON_LETTERS.length)]
+      waveLetters.push(rand)
+    }
+    waveLetters.sort(() => 0.5 - Math.random())
+
+    waveLetters.forEach((char, idx) => {
+      const bEl = document.createElement('div')
+      const colorObj = BALLOON_COLORS[Math.floor(Math.random() * BALLOON_COLORS.length)]
+      bEl.className = 'interactive-flying-balloon'
+      bEl.style.backgroundColor = colorObj.bg
+      bEl.style.left = `${10 + idx * 17}%`
+      bEl.style.animationDuration = `${Math.random() * 3 + 6}s`
+      bEl.innerHTML = `
+        <span class="balloon-string"></span>
+        <span class="balloon-letter-face">${char}</span>
+      `
+
+      bEl.addEventListener('pointerdown', (e) => {
+        e.stopPropagation()
+        if (!isBalloonGameRunning) return
+        if (char === currentBalloonTarget) {
+          sfx.pop()
+          bEl.classList.add('popped')
+          balloonScore += 10
+          const sEl = document.getElementById('balloonScore')
+          if (sEl) sEl.textContent = balloonScore
+          progress.updateQuest('balloon', 1)
+          setTimeout(() => bEl.remove(), 250)
+          nextBalloonMission()
+        } else {
+          sfx.wrong()
+          bEl.classList.add('wobble-error')
+          setTimeout(() => bEl.classList.remove('wobble-error'), 400)
+        }
+      })
+
+      container.appendChild(bEl)
+
+      // Auto remove when floated away
+      setTimeout(() => {
+        if (bEl.parentElement) bEl.remove()
+      }, 9000)
+    })
+  }
+
+  function endBalloonRound() {
+    isBalloonGameRunning = false
+    sfx.celebrate()
+    launchTastefulConfetti(45)
+    progress.addStars(Math.max(2, Math.floor(balloonScore / 20)), true)
+    const promptEl = document.getElementById('balloonTargetPrompt')
+    if (promptEl) {
+      promptEl.innerHTML = `انتهت الجولة! جمعت <strong>${balloonScore}</strong> نقطة! 🎉`
+    }
+    speech.speak(`أحسنت يا بطل! أنهيت جولة البالونات بنجاح!`)
+  }
+
+  // ─── Game 3: Math Speed Blitz ⚡ ───
+  let blitzDiff = 'easy'
+  let blitzTimer = 30
+  let blitzTimerId = null
+  let blitzScore = 0
+  let blitzStreak = 0
+  let blitzCurrentAnswer = 0
+
+  function initMathBlitz() {
+    const diffChips = document.querySelectorAll('#mathBlitzDiffPills .diff-chip')
+    diffChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        sfx.tap()
+        diffChips.forEach(c => c.classList.remove('active'))
+        chip.classList.add('active')
+        blitzDiff = chip.getAttribute('data-level')
+        startMathBlitz()
+      })
+    })
+
+    startMathBlitz()
+  }
+
+  function startMathBlitz() {
+    blitzScore = 0
+    blitzStreak = 0
+    blitzTimer = 30
+
+    const scoreEl = document.getElementById('mathBlitzScore')
+    const streakEl = document.getElementById('mathStreakCount')
+    const timerEl = document.getElementById('mathBlitzTimer')
+    const bar = document.getElementById('mathTimeProgressBar')
+
+    if (scoreEl) scoreEl.textContent = '0'
+    if (streakEl) streakEl.textContent = '0🔥'
+    if (timerEl) timerEl.textContent = '30s'
+    if (bar) bar.style.width = '100%'
+
+    clearInterval(blitzTimerId)
+    nextBlitzQuestion()
+
+    blitzTimerId = setInterval(() => {
+      blitzTimer--
+      if (timerEl) timerEl.textContent = `${blitzTimer}s`
+      if (bar) bar.style.width = `${(blitzTimer / 30) * 100}%`
+      if (blitzTimer <= 0) {
+        clearInterval(blitzTimerId)
+        endMathBlitz()
+      }
+    }, 1000)
+  }
+
+  function nextBlitzQuestion() {
+    const eqEl = document.getElementById('blitzEquationText')
+    const matrix = document.getElementById('blitzChoicesMatrix')
+    const feedback = document.getElementById('blitzFeedback')
+    if (!eqEl || !matrix) return
+
+    if (feedback) feedback.textContent = ''
+    let a = 0, b = 0, op = '+'
+
+    if (blitzDiff === 'easy') {
+      a = Math.floor(Math.random() * 5) + 1
+      b = Math.floor(Math.random() * 5) + 1
+      op = '+'
+      blitzCurrentAnswer = a + b
+    } else if (blitzDiff === 'medium') {
+      if (Math.random() > 0.5) {
+        a = Math.floor(Math.random() * 15) + 5
+        b = Math.floor(Math.random() * 10) + 1
+        op = '+'
+        blitzCurrentAnswer = a + b
+      } else {
+        a = Math.floor(Math.random() * 15) + 10
+        b = Math.floor(Math.random() * 9) + 1
+        op = '-'
+        blitzCurrentAnswer = a - b
+      }
+    } else {
+      a = Math.floor(Math.random() * 5) + 2
+      b = Math.floor(Math.random() * 5) + 1
+      op = '×'
+      blitzCurrentAnswer = a * b
+    }
+
+    eqEl.textContent = `${a} ${op} ${b} = ؟`
+
+    const choices = [blitzCurrentAnswer]
+    while (choices.length < 4) {
+      const r = Math.max(0, blitzCurrentAnswer + Math.floor(Math.random() * 7) - 3)
+      if (!choices.includes(r)) choices.push(r)
+    }
+    choices.sort(() => 0.5 - Math.random())
+
+    matrix.innerHTML = ''
+    choices.forEach(val => {
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'blitz-choice-tile'
+      btn.textContent = val
+      btn.addEventListener('click', () => {
+        if (val === blitzCurrentAnswer) {
+          sfx.correct()
+          blitzStreak++
+          const bonus = Math.min(3, Math.floor(blitzStreak / 2) + 1)
+          blitzScore += 10 * bonus
+          progress.updateQuest('math', 1)
+
+          const sEl = document.getElementById('mathBlitzScore')
+          const strkEl = document.getElementById('mathStreakCount')
+          if (sEl) sEl.textContent = blitzScore
+          if (strkEl) strkEl.textContent = `${blitzStreak}🔥`
+
+          feedback.textContent = `إجابة صحيحة! (+${10 * bonus} نقطة) 🎉`
+          feedback.className = 'exercise-feedback success'
+          setTimeout(nextBlitzQuestion, 600)
+        } else {
+          sfx.wrong()
+          blitzStreak = 0
+          const strkEl = document.getElementById('mathStreakCount')
+          if (strkEl) strkEl.textContent = '0'
+          feedback.textContent = 'إجابة غير صحيحة، ركز يا بطل'
+          feedback.className = 'exercise-feedback error'
+        }
+      })
+      matrix.appendChild(btn)
+    })
+  }
+
+  function endMathBlitz() {
+    sfx.celebrate()
+    launchTastefulConfetti(45)
+    progress.addStars(Math.max(2, Math.floor(blitzScore / 30)), true)
+    const eqEl = document.getElementById('blitzEquationText')
+    if (eqEl) eqEl.textContent = `أحسنت! نتيجتك: ${blitzScore} نقطة! 🏆`
+  }
+
+  // ─── Game 4: Word & Emoji Matcher 🧩 ───
+  const EMOJI_PUZZLES = [
+    { word: 'سَيَّارَة', correct: '🚗', options: ['🚗', '✈️', '🚢', '🚂'], meaning: 'وسيلة نقل برية تسير على عجلات' },
+    { word: 'أَسَد', correct: '🦁', options: ['🦁', '🐘', '🦒', '🐒'], meaning: 'ملك الغابة القوي' },
+    { word: 'شَمْس', correct: '☀️', options: ['☀️', '🌙', '⭐', '☁️'], meaning: 'تضيء الكون وتبعث الدفء' },
+    { word: 'تُفَّاحَة', correct: '🍎', options: ['🍎', '🍌', '🍇', '🍓'], meaning: 'فاكهة لذيذة ومفيدة للصحة' },
+    { word: 'مَسْجِد', correct: '🕌', options: ['🕌', '🏠', '🏫', '🏥'], meaning: 'بيت الله المبارك لأداء الصلاة' },
+    { word: 'طَائِرَة', correct: '✈️', options: ['✈️', '🚗', '🚲', '🚀'], meaning: 'تحلق في السماء بين السحاب' },
+    { word: 'قَمَر', correct: '🌙', options: ['🌙', '☀️', '🌍', '🪐'], meaning: 'ينير ظلمة الليل بإذن الله' },
+    { word: 'سَاعَة', correct: '⏰', options: ['⏰', '📱', '💻', '📺'], meaning: 'نعرف بها أوقات الصلاة واليوم' }
+  ]
+  let currentEmojiPuzzleIdx = 0
+  let emojiMatchScore = 0
+
+  function initEmojiMatcher() {
+    const listenBtn = document.getElementById('btnListenPuzzleWord')
+    if (listenBtn) {
+      listenBtn.addEventListener('click', () => {
+        const p = EMOJI_PUZZLES[currentEmojiPuzzleIdx]
+        sfx.tap()
+        speech.speak(p.word)
+      })
+    }
+
+    const nextBtn = document.getElementById('btnNextEmojiPuzzle')
     if (nextBtn) {
       nextBtn.addEventListener('click', () => {
         sfx.tap()
-        currentScrambleIdx = (currentScrambleIdx + 1) % SCRAMBLE_WORDS.length
+        currentEmojiPuzzleIdx = (currentEmojiPuzzleIdx + 1) % EMOJI_PUZZLES.length
+        loadEmojiPuzzle()
+      })
+    }
+
+    loadEmojiPuzzle()
+  }
+
+  function loadEmojiPuzzle() {
+    const p = EMOJI_PUZZLES[currentEmojiPuzzleIdx]
+    const wordEl = document.getElementById('emojiTargetWord')
+    const grid = document.getElementById('emojiPuzzleChoices')
+    const roundEl = document.getElementById('emojiMatchRound')
+    const feedback = document.getElementById('emojiMatchFeedback')
+
+    if (wordEl) wordEl.textContent = p.word
+    if (roundEl) roundEl.textContent = `${currentEmojiPuzzleIdx + 1} / ${EMOJI_PUZZLES.length}`
+    if (feedback) feedback.textContent = ''
+    if (!grid) return
+
+    grid.innerHTML = ''
+    const shuffled = [...p.options].sort(() => 0.5 - Math.random())
+
+    shuffled.forEach(emoji => {
+      const tile = document.createElement('button')
+      tile.type = 'button'
+      tile.className = 'emoji-choice-tile'
+      tile.innerHTML = `<span class="emoji-big">${emoji}</span>`
+      tile.addEventListener('click', () => {
+        if (emoji === p.correct) {
+          sfx.correct()
+          tile.classList.add('correct')
+          emojiMatchScore += 10
+          const sEl = document.getElementById('emojiMatchScore')
+          if (sEl) sEl.textContent = emojiMatchScore
+          feedback.textContent = `أحسنت يا بطل! ${p.word} تعني (${p.meaning}) 🎉`
+          feedback.className = 'exercise-feedback success'
+          progress.addStars(2, false)
+          speech.speak(`أحسنت! كلمة ${p.word}`)
+          setTimeout(() => {
+            currentEmojiPuzzleIdx = (currentEmojiPuzzleIdx + 1) % EMOJI_PUZZLES.length
+            loadEmojiPuzzle()
+          }, 1500)
+        } else {
+          sfx.wrong()
+          tile.classList.add('wrong')
+          feedback.textContent = 'رمز غير مطابق للكلمة، تأمل المعنى جيداً'
+          feedback.className = 'exercise-feedback error'
+        }
+      })
+      grid.appendChild(tile)
+    })
+  }
+
+  // ─── Game 5: Word Builder / Scramble 🔤 ───
+  const SCRAMBLE_WORDS_BY_LEN = {
+    3: [
+      { word: 'أَسَد', letters: ['أ', 'س', 'د'], hint: 'ملك الغابة القوي', emoji: '🦁' },
+      { word: 'قَلَم', letters: ['ق', 'ل', 'م'], hint: 'أداة الكتابة والعلم', emoji: '✏️' },
+      { word: 'نُور', letters: ['ن', 'و', 'ر'], hint: 'ضياء يبدد الظلام', emoji: '💡' },
+      { word: 'جَمَل', letters: ['ج', 'م', 'ل'], hint: 'سفينة الصحراء الصبور', emoji: '🐪' },
+      { word: 'عِنَب', letters: ['ع', 'ن', 'ب'], hint: 'فاكهة لذيذة ومباركة', emoji: '🍇' }
+    ],
+    4: [
+      { word: 'كِتَاب', letters: ['ك', 'ت', 'ا', 'ب'], hint: 'كنز المعرفة والقراءة', emoji: '📖' },
+      { word: 'مَسْجِد', letters: ['م', 'س', 'ج', 'د'], hint: 'بيت الله المبارك', emoji: '🕌' },
+      { word: 'هِلَال', letters: ['هـ', 'ل', 'ا', 'ل'], hint: 'بداية الشهر القمري', emoji: '🌙' },
+      { word: 'شَجَرَة', letters: ['ش', 'ج', 'ر', 'ة'], hint: 'ظل وثمار وخضرة', emoji: '🌳' },
+      { word: 'بَيْتِي', letters: ['ب', 'ي', 'ت', 'ي'], hint: 'سكن وأمان الأسرة', emoji: '🏠' }
+    ],
+    5: [
+      { word: 'طَائِرَة', letters: ['ط', 'ا', 'ئ', 'ر', 'ة'], hint: 'تحلق عالياً في السماء', emoji: '✈️' },
+      { word: 'سَيَّارَة', letters: ['س', 'ي', 'ا', 'ر', 'ة'], hint: 'مركبة للتنقل والسفر', emoji: '🚗' },
+      { word: 'مَدْرَسَة', letters: ['م', 'د', 'ر', 'س', 'ة'], hint: 'صرح العلم والمعرفة', emoji: '🏫' },
+      { word: 'فَرَاشَة', letters: ['ف', 'ر', 'ا', 'ش', 'ة'], hint: 'كائن ملون يطير بين الأزهار', emoji: '🦋' }
+    ]
+  }
+
+  let scrambleLen = 3
+  let currentScrambleIdx = 0
+  let userPlacedLetters = []
+  let scrambleSolved = 0
+
+  function initWordScramble() {
+    const lvlChips = document.querySelectorAll('#scrambleLevelPills .diff-chip')
+    lvlChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        sfx.tap()
+        lvlChips.forEach(c => c.classList.remove('active'))
+        chip.classList.add('active')
+        scrambleLen = parseInt(chip.getAttribute('data-len'), 10) || 3
+        currentScrambleIdx = 0
+        loadScramble()
+      })
+    })
+
+    const checkBtn = document.getElementById('btnCheckScramble')
+    const nextBtn = document.getElementById('btnNextScramble')
+    const resetBtn = document.getElementById('btnResetCurrentScramble')
+
+    if (checkBtn) checkBtn.addEventListener('click', checkScrambleAnswer)
+    if (resetBtn) resetBtn.addEventListener('click', () => { sfx.tap(); loadScramble() })
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        sfx.tap()
+        const list = SCRAMBLE_WORDS_BY_LEN[scrambleLen]
+        currentScrambleIdx = (currentScrambleIdx + 1) % list.length
         loadScramble()
       })
     }
+
     loadScramble()
   }
 
   function loadScramble() {
-    const target = SCRAMBLE_WORDS[currentScrambleIdx]
+    const list = SCRAMBLE_WORDS_BY_LEN[scrambleLen]
+    const target = list[currentScrambleIdx]
     const slotsRow = document.getElementById('scrambleSlotsRow')
     const tilesRow = document.getElementById('scrambleTilesRow')
     const promptEl = document.getElementById('scramblePrompt')
+    const iconEl = document.getElementById('scrambleIconBadge')
     const feedback = document.getElementById('scrambleFeedback')
 
+    if (iconEl) iconEl.textContent = target.emoji
     if (promptEl) promptEl.textContent = `رتّب حروف كلمة تعني: (${target.hint})`
     if (feedback) feedback.textContent = ''
     userPlacedLetters = new Array(target.letters.length).fill(null)
@@ -2179,38 +2825,43 @@
   }
 
   function checkScrambleAnswer() {
-    const target = SCRAMBLE_WORDS[currentScrambleIdx]
+    const list = SCRAMBLE_WORDS_BY_LEN[scrambleLen]
+    const target = list[currentScrambleIdx]
     const feedback = document.getElementById('scrambleFeedback')
     const answer = userPlacedLetters.join('')
 
     if (answer === target.letters.join('')) {
       sfx.correct()
+      scrambleSolved++
+      const sEl = document.getElementById('scrambleSolvedCount')
+      if (sEl) sEl.textContent = scrambleSolved
+
       if (feedback) {
-        feedback.textContent = `أحسنت صنعاً! الكلمة هي "${target.word}"`
+        feedback.textContent = `أحسنت صنعاً! الكلمة هي "${target.word}" ${target.emoji}`
         feedback.className = 'exercise-feedback success'
       }
       progress.addStars(3, false)
       speech.speak(`أحسنت، كلمة ${target.word}`)
       setTimeout(() => {
-        currentScrambleIdx = (currentScrambleIdx + 1) % SCRAMBLE_WORDS.length
+        currentScrambleIdx = (currentScrambleIdx + 1) % list.length
         loadScramble()
       }, 1400)
     } else {
       sfx.wrong()
       if (feedback) {
-        feedback.textContent = 'الترتيب غير مطابق، حاول إعادة ترتيب الحروف'
+        feedback.textContent = 'الترتيب غير مطابق، انقر على إعادة المحاولة'
         feedback.className = 'exercise-feedback error'
       }
-      setTimeout(loadScramble, 1000)
     }
   }
 
-  // Missing Letter Game
+  // ─── Game 6: Missing Letter Hunter 🎯 ───
   const MISSING_WORDS = [
-    { full: 'كِتَاب', missing: 'كـ', choices: ['كـ', 'مـ', 'سـ', 'فـ'], display: '؟ـتَاب', hint: 'مصدر العلم والقراءة' },
-    { full: 'مَسْجِد', missing: 'مـ', choices: ['مـ', 'نـ', 'بـ', 'لـ'], display: '؟ـسْجِد', hint: 'دار العبادة والصلاة' },
-    { full: 'قَلَم', missing: 'قـ', choices: ['قـ', 'فـ', 'عـ', 'طـ'], display: '؟ـلَم', hint: 'نكتب به العلم' },
-    { full: 'شَمْس', missing: 'شـ', choices: ['شـ', 'سـ', 'صـ', 'ضـ'], display: '؟ـمْس', hint: 'تشرق في الصباح' }
+    { full: 'تُفَّاح', missing: 'تـ', choices: ['تـ', 'بـ', 'سـ', 'مـ'], display: '؟ـفَّاح', hint: 'فاكهة لذيذة ومفيدة', emoji: '🍎' },
+    { full: 'كِتَاب', missing: 'كـ', choices: ['كـ', 'مـ', 'سـ', 'فـ'], display: '؟ـتَاب', hint: 'مصدر العلم والقراءة', emoji: '📖' },
+    { full: 'مَسْجِد', missing: 'مـ', choices: ['مـ', 'نـ', 'بـ', 'لـ'], display: '؟ـسْجِد', hint: 'دار العبادة والصلاة', emoji: '🕌' },
+    { full: 'قَلَم', missing: 'قـ', choices: ['قـ', 'فـ', 'عـ', 'طـ'], display: '؟ـلَم', hint: 'نكتب به العلم', emoji: '✏️' },
+    { full: 'شَمْس', missing: 'شـ', choices: ['شـ', 'سـ', 'صـ', 'ضـ'], display: '؟ـمْس', hint: 'تشرق في الصباح', emoji: '☀️' }
   ]
   let currentMissingIdx = 0
 
@@ -2222,8 +2873,10 @@
     const target = MISSING_WORDS[currentMissingIdx]
     const displayEl = document.getElementById('missingWordDisplay')
     const choicesRow = document.getElementById('missingChoicesRow')
+    const iconEl = document.getElementById('missingIconBadge')
     const feedback = document.getElementById('missingFeedback')
 
+    if (iconEl) iconEl.textContent = target.emoji
     if (displayEl) displayEl.innerHTML = `<span class="missing-text-cue">${target.display}</span> <small>(${target.hint})</small>`
     if (feedback) feedback.textContent = ''
 
@@ -2238,7 +2891,7 @@
           if (ch === target.missing) {
             sfx.correct()
             btn.classList.add('correct')
-            feedback.textContent = `إجابة صحيحة! الكلمة كاملة هي: "${target.full}"`
+            feedback.textContent = `إجابة صحيحة! الكلمة كاملة هي: "${target.full}" ${target.emoji}`
             feedback.className = 'exercise-feedback success'
             progress.addStars(2, false)
             speech.speak(`صحيح، ${target.full}`)
@@ -2256,6 +2909,104 @@
         choicesRow.appendChild(btn)
       })
     }
+  }
+
+  // ─── Game 7: Little Muslim Quiz Challenge 🕌 ───
+  const MUSLIM_QUESTIONS = [
+    {
+      emoji: '📖',
+      question: 'ما هو الكتاب المعجز الذي أنزله الله تعالى على نبينا محمد ﷺ؟',
+      answers: ['القرآن الكريم', 'التوراة', 'الإنجيل', 'الزبور'],
+      correct: 0,
+      note: 'القرآن الكريم كلام الله المعجز الخالد المنزّل على قلب نبينا محمد ﷺ.'
+    },
+    {
+      emoji: '🕋',
+      question: 'ما هي القبلة الشريفة التي يتجه إليها المسلمون في صلاتهم؟',
+      answers: ['الكعبة المشرفة بمكة', 'المسجد الأقصى', 'المسجد النبوي', 'جبل أحد'],
+      correct: 0,
+      note: 'الكعبة المشرفة هي قبلة المسلمين في جميع بقاع الأرض.'
+    },
+    {
+      emoji: '✋',
+      question: 'كم عدد أركان الإسلام العظيمة؟',
+      answers: ['خمسة أركان', 'ثلاثة أركان', 'سبعة أركان', 'عشرة أركان'],
+      correct: 0,
+      note: 'بني الإسلام على خمس: الشهادتان، الصلاة، الزكاة، صوم رمضان، وحج البيت.'
+    },
+    {
+      emoji: '🍽️',
+      question: 'ماذا يستحب للمسلم أن يقول قبل البدء في تناول طعامه؟',
+      answers: ['بِسْمِ اللَّهِ', 'الْحَمْدُ لِلَّهِ', 'سُبْحَانَ اللَّهِ', 'أَسْتَغْفِرُ اللَّهَ'],
+      correct: 0,
+      note: 'قال ﷺ: (يا غلام سمّ الله وكل بيمينك وكل مما يليك).'
+    },
+    {
+      emoji: '💖',
+      question: 'من هما أحق الناس بحسن صحبتنا وبرنا ورعايتنا؟',
+      answers: ['الوالدان (الأب والأم)', 'الأصدقاء فقط', 'الجيران فقط', 'المعلمون فقط'],
+      correct: 0,
+      note: 'بر الوالدين من أعظم القربات التي يحبها الله تعالى ورسوله.'
+    },
+    {
+      emoji: '🤲',
+      question: 'ماذا يقول المسلم إذا عطس وحمد الله؟',
+      answers: ['الْحَمْدُ لِلَّهِ', 'يَرْحَمُكَ اللَّهُ', 'شُكْراً جَزِيلاً', 'أَهْلاً وَسَهْلاً'],
+      correct: 0,
+      note: 'يقول العاطس: الحمد لله، ويقول له أخوه: يرحمك الله.'
+    }
+  ]
+  let muslimQuizIdx = 0
+  let muslimQuizScore = 0
+
+  function initMuslimQuiz() {
+    loadMuslimQuestion()
+  }
+
+  function loadMuslimQuestion() {
+    const target = MUSLIM_QUESTIONS[muslimQuizIdx]
+    const emojiHead = document.getElementById('muslimQuestionEmoji')
+    const textEl = document.getElementById('muslimQuestionText')
+    const matrix = document.getElementById('muslimAnswersMatrix')
+    const progEl = document.getElementById('muslimQuizProgress')
+    const feedback = document.getElementById('muslimQuizFeedback')
+
+    if (emojiHead) emojiHead.textContent = target.emoji
+    if (textEl) textEl.textContent = target.question
+    if (progEl) progEl.textContent = `السؤال ${muslimQuizIdx + 1} من ${MUSLIM_QUESTIONS.length}`
+    if (feedback) feedback.textContent = ''
+    if (!matrix) return
+
+    matrix.innerHTML = ''
+    target.answers.forEach((ans, idx) => {
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'muslim-ans-tile'
+      btn.textContent = ans
+      btn.addEventListener('click', () => {
+        if (idx === target.correct) {
+          sfx.correct()
+          btn.classList.add('correct')
+          muslimQuizScore += 10
+          const sEl = document.getElementById('muslimQuizScore')
+          if (sEl) sEl.textContent = muslimQuizScore
+          feedback.textContent = `إجابة صحيحة ومباركة! ✨ (${target.note})`
+          feedback.className = 'exercise-feedback success'
+          progress.addStars(2, false)
+          speech.speak('إجابة صحيحة، ما شاء الله!')
+          setTimeout(() => {
+            muslimQuizIdx = (muslimQuizIdx + 1) % MUSLIM_QUESTIONS.length
+            loadMuslimQuestion()
+          }, 1800)
+        } else {
+          sfx.wrong()
+          btn.classList.add('wrong')
+          feedback.textContent = 'فكر ثانية يا بطل، اقرأ السؤال بتأمل'
+          feedback.className = 'exercise-feedback error'
+        }
+      })
+      matrix.appendChild(btn)
+    })
   }
 
   // ─── TAB 7: OFFICIAL CERTIFICATE MODAL & PRINTING ───
@@ -2303,7 +3054,7 @@
     }
   }
 
-  // ─── Bootstrap on Ready ───
+  // ─── Bootstrap on DOM Ready ───
   document.addEventListener('DOMContentLoaded', () => {
     initTabs()
     initLetters()
@@ -2312,8 +3063,12 @@
     initDuas()
     initDrawing()
     initMemoryGame()
+    initBalloonGame()
+    initMathBlitz()
+    initEmojiMatcher()
     initWordScramble()
     initMissingLetterGame()
+    initMuslimQuiz()
     initCertificate()
     initParentDashboard()
 
