@@ -1,6 +1,7 @@
 import { Context, Next } from 'hono'
 import { getCookie } from 'hono/cookie'
 import { getAuth, getFirestore } from '../lib/firebase-admin'
+import { isPlatformAdmin } from '../lib/admin-check'
 
 /**
  * Authentication middleware — verifies user is logged in via Firebase session cookie.
@@ -34,7 +35,7 @@ export const authMiddleware = async (c: Context, next: Next) => {
     }
 
     const email = decodedClaims.email || ''
-    const isAdminEmail = email === 'dr.omarheshamfoundation@gmail.com' || email === 'rahmmaaa9900@gmail.com' || email.startsWith('admin')
+    const isAdmin = isPlatformAdmin(email, decodedClaims.uid)
 
     // Get user profile from Firestore to fetch role and full name (with graceful fallback)
     let profileData: any = null
@@ -51,7 +52,7 @@ export const authMiddleware = async (c: Context, next: Next) => {
       email: email,
       name: profileData?.full_name || decodedClaims.name || email.split('@')[0] || 'عضو',
       avatar: profileData?.avatar_url || decodedClaims.picture || '',
-      role: profileData?.role || (isAdminEmail ? 'admin' : 'user')
+      role: (profileData?.role === 'admin' || isAdmin) ? 'admin' : (profileData?.role || 'user')
     }
 
     c.set('user', sessionUser)
@@ -94,7 +95,7 @@ export const adminMiddleware = async (c: Context, next: Next) => {
     }
 
     const email = decodedClaims.email || ''
-    const isAdminEmail = email === 'dr.omarheshamfoundation@gmail.com' || email === 'rahmmaaa9900@gmail.com' || email.startsWith('admin')
+    const isAdmin = isPlatformAdmin(email, decodedClaims.uid)
 
     // Check admin role from Firestore profiles collection (with graceful fallback for admin emails)
     let profileData: any = null
@@ -106,7 +107,7 @@ export const adminMiddleware = async (c: Context, next: Next) => {
       console.warn('[Admin Middleware] Firestore read bypassed:', dbErr.message)
     }
 
-    const role = profileData?.role || (isAdminEmail ? 'admin' : 'user')
+    const role = (profileData?.role === 'admin' || isAdmin) ? 'admin' : (profileData?.role || 'user')
     if (role !== 'admin') {
       return c.json({ error: 'ليس لديك صلاحية للقيام بهذا الإجراء' }, 403)
     }

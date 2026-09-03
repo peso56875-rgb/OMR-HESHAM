@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getAuth, getFirestore } from '../lib/firebase-admin'
 import { setCookie, deleteCookie } from 'hono/cookie'
 import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
+import { isPlatformAdmin } from '../lib/admin-check'
 
 export const auth = new Hono()
 
@@ -37,8 +38,8 @@ auth.post('/session', async (c) => {
     // Get user details from Firebase Auth
     const decodedToken = await firebaseAuth.verifySessionCookie(sessionCookie)
     const email = decodedToken.email || ''
-    const isAdminEmail = email === 'dr.omarheshamfoundation@gmail.com' || email === 'rahmmaaa9900@gmail.com' || email.startsWith('admin')
-    let role = isAdminEmail ? 'admin' : 'donor'
+    const isAdmin = isPlatformAdmin(email, decodedToken.uid)
+    let role = isAdmin ? 'admin' : 'donor'
     
     // Safely attempt Firestore profile synchronization
     try {
@@ -50,7 +51,7 @@ auth.post('/session', async (c) => {
         // Check if it's the first profile in the collection to set as admin
         const profilesSnapshot = await db.collection('profiles').limit(1).get()
         const isFirst = profilesSnapshot.empty
-        role = (isFirst || isAdminEmail) ? 'admin' : 'donor'
+        role = (isFirst || isAdmin) ? 'admin' : 'donor'
         const fullName = decodedToken.name || email.split('@')[0] || 'عضو جديد'
 
         await profileRef.set({
@@ -73,7 +74,7 @@ auth.post('/session', async (c) => {
           })
         })
       } else {
-        role = profileDoc.data()?.role || role
+        role = (profileDoc.data()?.role === 'admin' || isAdmin) ? 'admin' : (profileDoc.data()?.role || role)
       }
     } catch (dbErr: any) {
       console.warn('[Session Auth] Firestore sync skipped due to error (e.g. quota limit):', dbErr.message)
