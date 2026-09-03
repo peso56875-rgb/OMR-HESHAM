@@ -173,53 +173,352 @@ export const ARABIC_LETTERS = [
   }
 ]
 
-// Vocabulary categories for First Words
+// ══════════════════════════════════════════════════════
+// EXPANDED 120+ VOCABULARY WORDS ACROSS 8 RICH WORLDS
+// ══════════════════════════════════════════════════════
 export const WORD_CATEGORIES = [
   {
-    id: 'family', name: 'الأسرة والبيت', icon: 'fa-people-roof',
+    id: 'animals', name: 'عالم الكائنات والحيوانات', icon: 'fa-paw', emoji: '🦁',
     words: [
-      { text: 'أَبِي', sub: 'السند والعطاء', letters: 'أ - ب - ي' },
-      { text: 'أُمِّي', sub: 'ينبوع الحنان', letters: 'أ - م - ي' },
-      { text: 'أَخِي', sub: 'رفيق دربي', letters: 'أ - خ - ي' },
-      { text: 'أُخْتِي', sub: 'نور دارنا', letters: 'أ - خ - ت - ي' },
-      { text: 'جَدِّي', sub: 'بركة البيت', letters: 'ج - د - ي' },
-      { text: 'بَيْتِي', sub: 'سكن وأمان', letters: 'ب - ي - ت - ي' }
+      { text: 'أَسَد', sub: 'ملك الغابة الشجاع', letters: 'أ - س - د', emoji: '🦁' },
+      { text: 'نَمِر', sub: 'سريع وقوي ومخطط', letters: 'ن - م - ر', emoji: '🐯' },
+      { text: 'فِيل', sub: 'ضخم وصاحب خرطوم طويل', letters: 'ف - ي - ل', emoji: '🐘' },
+      { text: 'زَرَافَة', sub: 'أطول كائن بعنق جميل', letters: 'ز - ر - ا - ف - ة', emoji: '🦒' },
+      { text: 'جَمَل', sub: 'سفينة الصحراء الصبورة', letters: 'ج - م - ل', emoji: '🐪' },
+      { text: 'حِصَان', sub: 'رمز الأصالة والسرعة', letters: 'ح - ص - ا - ن', emoji: '🐎' },
+      { text: 'صَقْر', sub: 'حامي السماء وحاد البصر', letters: 'ص - ق - ر', emoji: '🦅' },
+      { text: 'حَمَامَة', sub: 'رمز السلام والهدوء', letters: 'ح - م - ا - م - ة', emoji: '🕊️' },
+      { text: 'هُدْهُد', sub: 'طائر ذكي ذكره القرآن', letters: 'هـ - د - هـ - د', emoji: '🪶' },
+      { text: 'نَحْلَة', sub: 'تصنع العسل اللذيذ بنشاط', letters: 'ن - ح - ل - ة', emoji: '🐝' },
+      { text: 'فَرَاشَة', sub: 'ألوان زاهية تطير بخفة', letters: 'ف - ر - ا - ش - ة', emoji: '🦋' },
+      { text: 'أَرْنَب', sub: 'يقفز بمرح ويحب الجزر', letters: 'أ - ر - ن - ب', emoji: '🐰' },
+      { text: 'قِرْد', sub: 'رشيق ومرح ويتسلق الأشجار', letters: 'ق - ر - د', emoji: '🐒' },
+      { text: 'سُلَحْفَاة', sub: 'صبورة وتحمل بيتها على ظهرها', letters: 'س - ل - ح - ف - ا - ة', emoji: '🐢' },
+      { text: 'قِطَّة', sub: 'أليفة ونظيفة وتحب اللعب', letters: 'ق - ط - ة', emoji: '🐱' }
     ]
   },
   {
-    id: 'nature', name: 'الطبيعة والكون', icon: 'fa-earth-africa',
+    id: 'fruits', name: 'الفواكه والخضار اللذيذة', icon: 'fa-apple-whole', emoji: '🍎',
     words: [
-      { text: 'شَمْس', sub: 'ضياء ودفء', letters: 'ش - م - س' },
-      { text: 'قَمَر', sub: 'نور في السماء', letters: 'ق - م - ر' },
-      { text: 'نَجْم', sub: 'يهتدي به الساري', letters: 'ن - ج - م' },
-      { text: 'سَحَاب', sub: 'يحمل المطر', letters: 'س - ح - ا - ب' },
-      { text: 'مَطَر', sub: 'غيث ورحمة', letters: 'م - ط - ر' },
-      { text: 'شَجَرَة', sub: 'ظل وثمر', letters: 'ش - ج - ر - ة' }
+      { text: 'تُفَّاح', sub: 'فاكهة الصحة والقوة', letters: 'ت - ف - ا - ح', emoji: '🍎' },
+      { text: 'مَوْز', sub: 'طاقة ومذاق حلو رائع', letters: 'م - و - ز', emoji: '🍌' },
+      { text: 'بُرْتُقَال', sub: 'غني بفيتامين ج المنعش', letters: 'ب - ر - ت - ق - ا - ل', emoji: '🍊' },
+      { text: 'عِنَب', sub: 'عناقيد حلوة مباركة', letters: 'ع - ن - ب', emoji: '🍇' },
+      { text: 'فَرَاوْلَة', sub: 'حمراء جميلة يحبها الأطفال', letters: 'ف - ر - ا - و - ل - ة', emoji: '🍓' },
+      { text: 'رُمَّان', sub: 'حبات ياقوتية مذكورة في القرآن', letters: 'ر - م - ا - ن', emoji: '🍒' },
+      { text: 'تِين', sub: 'فاكهة مباركة ومغذية', letters: 'ت - ي - ن', emoji: '🫐' },
+      { text: 'زَيْتُون', sub: 'شجرة مباركة وزيت نافع', letters: 'ز - ي - ت - و - ن', emoji: '🫒' },
+      { text: 'بَطِّيخ', sub: 'منعش ولذيذ في الصيف', letters: 'ب - ط - ي - خ', emoji: '🍉' },
+      { text: 'جَزَر', sub: 'يقوي النظر ومقرمش ولذيذ', letters: 'ج - ز - ر', emoji: '🥕' },
+      { text: 'خِيَار', sub: 'رطب ومنعش في كل سلطة', letters: 'خ - ي - ا - ر', emoji: '🥒' },
+      { text: 'طَمَاطِم', sub: 'حمراء شهية وغنية بالفوائد', letters: 'ط - م - ا - ط - م', emoji: '🍅' },
+      { text: 'ذُرَة', sub: 'حبات صفراء ذهبية لذيذة', letters: 'ذ - ر - ة', emoji: '🌽' },
+      { text: 'أَنَانَاس', sub: 'تاج الفواكه الاستوائية', letters: 'أ - ن - ا - ن - ا - س', emoji: '🍍' },
+      { text: 'كُمَّثْرَى', sub: 'حلوة وعصيرية ومفيدة', letters: 'ك - م - ث - ر - ى', emoji: '🍐' }
     ]
   },
   {
-    id: 'school', name: 'المدرسة والعلم', icon: 'fa-graduation-cap',
+    id: 'family', name: 'الأسرة والبيت الدافئ', icon: 'fa-people-roof', emoji: '🏠',
     words: [
-      { text: 'كِتَاب', sub: 'كنز المعرفة', letters: 'ك - ت - ا - ب' },
-      { text: 'قَلَم', sub: 'يكتب المستقبل', letters: 'ق - ل - م' },
-      { text: 'دَفْتَر', sub: 'أدون فيه علمي', letters: 'د - ف - ت - ر' },
-      { text: 'مُعَلِّم', sub: 'يبني العقول', letters: 'م - ع - ل - م' },
-      { text: 'طَالِب', sub: 'يسعى للنجاح', letters: 'ط - ا - ل - ب' },
-      { text: 'مَدْرَسَة', sub: 'بيتي الثاني', letters: 'م - د - ر - س - ة' }
+      { text: 'أَبِي', sub: 'السند والعطاء والأمان', letters: 'أ - ب - ي', emoji: '👨' },
+      { text: 'أُمِّي', sub: 'ينبوع الحنان والجنة تحت قدميها', letters: 'أ - م - ي', emoji: '👩' },
+      { text: 'أَخِي', sub: 'رفيق دربي وسندي', letters: 'أ - خ - ي', emoji: '👦' },
+      { text: 'أُخْتِي', sub: 'نور دارنا وبهجتها', letters: 'أ - خ - ت - ي', emoji: '👧' },
+      { text: 'جَدِّي', sub: 'بركة البيت وحكايات الحكمة', letters: 'ج - د - ي', emoji: '👴' },
+      { text: 'جَدَّتِي', sub: 'قلب دافئ ودعاء مستجاب', letters: 'ج - د - ت - ي', emoji: '👵' },
+      { text: 'بَيْتِي', sub: 'سكن وأمان واجتماع الأحباب', letters: 'ب - ي - ت - ي', emoji: '🏡' },
+      { text: 'غُرْفَة', sub: 'مكاني الهادئ للنوم والدراسة', letters: 'غ - ر - ف - ة', emoji: '🚪' },
+      { text: 'نَافِذَة', sub: 'يدخل منها ضوء الشمس العليل', letters: 'ن - ا - ف - ذ - ة', emoji: '🪟' },
+      { text: 'سَرِير', sub: 'أنام عليه وأحلم أحلاماً سعيدة', letters: 'س - ر - ي - ر', emoji: '🛏️' },
+      { text: 'مَائِدَة', sub: 'نجتمع حولها ونسمي الله', letters: 'م - ا - ئ - د - ة', emoji: '🍽️' },
+      { text: 'مَطْبَخ', sub: 'تصنع فيه أمي أشهى الوجبات', letters: 'م - ط - ب - خ', emoji: '🍳' },
+      { text: 'حَدِيقَة', sub: 'زهور عطرة ولعب ومرح', letters: 'ح - د - ي - ق - ة', emoji: '🪴' },
+      { text: 'بَاب', sub: 'أستأذن قبله وأفتحه بابتسامة', letters: 'ب - ا - ب', emoji: '🚪' },
+      { text: 'سَاعَة', sub: 'تنظم أوقات صلاتنا ويومنا', letters: 'س - ا - ع - ة', emoji: '⏰' }
     ]
   },
   {
-    id: 'islamic', name: 'معاني وإيمانيات', icon: 'fa-mosque',
+    id: 'school', name: 'المدرسة وطريق العلم', icon: 'fa-graduation-cap', emoji: '🏫',
     words: [
-      { text: 'مَسْجِد', sub: 'بيت الله المبارك', letters: 'م - س - ج - د' },
-      { text: 'مُصْحَف', sub: 'كتاب الله الكريم', letters: 'م - ص - ح - ف' },
-      { text: 'صَلَاة', sub: 'صلتي بربي', letters: 'ص - ل - ا - ة' },
-      { text: 'كَعْبَة', sub: 'قبلة المسلمين', letters: 'ك - ع - ب - ة' },
-      { text: 'دُعَاء', sub: 'سلاح المؤمن', letters: 'د - ع - ا - ء' },
-      { text: 'إِحْسَان', sub: 'طريق المحبة', letters: 'إ - ح - س - ا - ن' }
+      { text: 'كِتَاب', sub: 'كنز المعرفة ونور العقول', letters: 'ك - ت - ا - ب', emoji: '📖' },
+      { text: 'قَلَم', sub: 'يكتب المستقبل ويبني الأمم', letters: 'ق - ل - م', emoji: '✏️' },
+      { text: 'دَفْتَر', sub: 'أسجل فيه دروسي بخط جميل', letters: 'د - ف - ت - ر', emoji: '📓' },
+      { text: 'مُعَلِّم', sub: 'يبني الأجيال ويهدي إلى الخير', letters: 'م - ع - ل - م', emoji: '👨‍🏫' },
+      { text: 'طَالِب', sub: 'يسعى بالجد نحو التفوق والنجاح', letters: 'ط - ا - ل - ب', emoji: '🧑‍🎓' },
+      { text: 'مَدْرَسَة', sub: 'بيتي الثاني وميدان انطلاقي', letters: 'م - د - ر - س - ة', emoji: '🏫' },
+      { text: 'مِسْطَرَة', sub: 'تسطر خطوطي بدقة ونظام', letters: 'م - س - ط - ر - ة', emoji: '📏' },
+      { text: 'مِمْحَاة', sub: 'تمسح الخطأ لأتعلم الصواب', letters: 'م - م - ح - ا - ة', emoji: '🧼' },
+      { text: 'مِقَصّ', sub: 'أقص به الورق بحذر وأمان', letters: 'م - ق - ص', emoji: '✂️' },
+      { text: 'أَلْوَان', sub: 'أرسم بها أزهى اللوحات', letters: 'أ - ل - و - ا - ن', emoji: '🎨' },
+      { text: 'حَقِيبَة', sub: 'تحمل أدواتي المدرسية بترتيب', letters: 'ح - ق - ي - ب - ة', emoji: '🎒' },
+      { text: 'سَبُّورَة', sub: 'تشرح عليها المعلمة الدروس', letters: 'س - ب - و - ر - ة', emoji: '📋' },
+      { text: 'مَكْتَبَة', sub: 'واحة القراءة واكتشاف القصص', letters: 'م - ك - ت - ب - ة', emoji: '📚' },
+      { text: 'حَاسُوب', sub: 'أتعلم به البرمجة والتقنية الحديثة', letters: 'ح - ا - س - و - ب', emoji: '💻' },
+      { text: 'شَهَادَة', sub: 'ثمرة الاجتهاد والتفوق المشرف', letters: 'ش - هـ - ا - د - ة', emoji: '📜' }
+    ]
+  },
+  {
+    id: 'transport', name: 'وسائل النقل والمغامرات', icon: 'fa-truck-fast', emoji: '🚗',
+    words: [
+      { text: 'سَيَّارَة', sub: 'تنقلنا براحة وأمان في المدينة', letters: 'س - ي - ا - ر - ة', emoji: '🚗' },
+      { text: 'حَافِلَة', sub: 'تتسع للأصدقاء في طريق المدرسة', letters: 'ح - ا - ف - ل - ة', emoji: '🚌' },
+      { text: 'قِطَار', sub: 'سريع يسير على السكة الحديدية', letters: 'ق - ط - ا - ر', emoji: '🚆' },
+      { text: 'طَائِرَة', sub: 'تحلق في السحاب فوق القارات', letters: 'ط - ا - ئ - ر - ة', emoji: '✈️' },
+      { text: 'سَفِينَة', sub: 'تمخر عباب البحر الواسع بثبات', letters: 'س - ف - ي - ن - ة', emoji: '🚢' },
+      { text: 'دَرَّاجَة', sub: 'رياضة ممتعة وتقوي العضلات', letters: 'د - ر - ا - ج - ة', emoji: '🚲' },
+      { text: 'صَارُوخ', sub: 'ينطلق إلى الفضاء بين الكواكب', letters: 'ص - ا - ر - و - خ', emoji: '🚀' },
+      { text: 'مِرْوَحِيَّة', sub: 'تهبط عمودياً وتساعد في الإنقاذ', letters: 'م - ر - و - ح - ي - ة', emoji: '🚁' },
+      { text: 'شَاحِنَة', sub: 'تنقل البضائع والمؤن للمدن', letters: 'ش - ا - ح - ن - ة', emoji: '🚛' },
+      { text: 'غَوَّاصَة', sub: 'تغوص في أعماق المحيط السحيقة', letters: 'غ - و - ا - ص - ة', emoji: '🤿' },
+      { text: 'قَارِب', sub: 'صغير يبحر بمجدافين في البحيرة', letters: 'ق - ا - ر - ب', emoji: '🛶' },
+      { text: 'إِسْعَاف', sub: 'تسارع لإنقاذ المرضى بالصفارة', letters: 'إ - س - ع - ا - ف', emoji: '🚑' },
+      { text: 'إِطْفَاء', sub: 'سيارة الشجعان لإخماد الحرائق', letters: 'إ - ط - ف - ا - ء', emoji: '🚒' },
+      { text: 'شُرْطَة', sub: 'تحفظ الأمن والنظام في كل شارع', letters: 'ش - ر - ط - ة', emoji: '🚓' },
+      { text: 'مِنْطَاد', sub: 'يطير بالهواء الساخن فوق الحقول', letters: 'م - ن - ط - ا - د', emoji: '🎈' }
+    ]
+  },
+  {
+    id: 'nature', name: 'الطبيعة والكون وفصول السنة', icon: 'fa-earth-africa', emoji: '🌦️',
+    words: [
+      { text: 'شَمْس', sub: 'ضياء ودفء وطاقة لكل الكائنات', letters: 'ش - م - س', emoji: '☀️' },
+      { text: 'قَمَر', sub: 'نور في السماء ويهتدي به الساري', letters: 'ق - م - ر', emoji: '🌙' },
+      { text: 'نَجْم', sub: 'يتلألأ في الليل كأنه ألماسة', letters: 'ن - ج - م', emoji: '⭐' },
+      { text: 'سَحَاب', sub: 'يحمل قطرات المطر العذب', letters: 'س - ح - ا - ب', emoji: '☁️' },
+      { text: 'مَطَر', sub: 'غيث مبارك يحيي الأرض الميتة', letters: 'م - ط - ر', emoji: '🌧️' },
+      { text: 'قَوْسُ قُزَح', sub: 'ألوان سبعة تبهر الناظرين', letters: 'ق - و - س - ق - ز - ح', emoji: '🌈' },
+      { text: 'رَبِيع', sub: 'تتفتح فيه الأزهار وتغرد الطيور', letters: 'ر - ب - ي - ع', emoji: '🌸' },
+      { text: 'صَيْف', sub: 'شمس مشرقة ومرح على شاطئ البحر', letters: 'ص - ي - ف', emoji: '🏖️' },
+      { text: 'خَرِيف', sub: 'تتساقط فيه أوراق الشجر الذهبية', letters: 'خ - ر - ي - ف', emoji: '🍂' },
+      { text: 'شِتَاء', sub: 'مطر ودفء في البيت مع الأسرة', letters: 'ش - ت - ا - ء', emoji: '❄️' },
+      { text: 'جَبَل', sub: 'أوتاد راسخة وقمم شامخة', letters: 'ج - ب - ل', emoji: '⛰️' },
+      { text: 'نَهْر', sub: 'ماء عذب يجري ويسقي الحقول', letters: 'ن - هـ - ر', emoji: '🌊' },
+      { text: 'بَحْر', sub: 'عالم واسع من الأسماك والخيرات', letters: 'ب - ح - ر', emoji: '🏖️' },
+      { text: 'غَابَة', sub: 'أشجار خضراء ومأوى للحيوانات', letters: 'غ - ا - ب - ة', emoji: '🌲' },
+      { text: 'بَرْق', sub: 'وميض ساطع ينير ظلمة السحاب', letters: 'ب - ر - ق', emoji: '⚡' }
+    ]
+  },
+  {
+    id: 'islamic', name: 'القيم والمعاني الإسلامية', icon: 'fa-mosque', emoji: '🕌',
+    words: [
+      { text: 'مَسْجِد', sub: 'بيت الله ومكان الصلاة المبارك', letters: 'م - س - ج - د', emoji: '🕌' },
+      { text: 'مُصْحَف', sub: 'كتاب الله الكريم ونور صدورنا', letters: 'م - ص - ح - ف', emoji: '📖' },
+      { text: 'صَلَاة', sub: 'صلتي بربي وخمس صلوات في اليوم', letters: 'ص - ل - ا - ة', emoji: '🤲' },
+      { text: 'كَعْبَة', sub: 'قبلة المسلمين المشرفة بمكة', letters: 'ك - ع - ب - ة', emoji: '🕋' },
+      { text: 'وُضُوء', sub: 'طهارة ونور لصلاتنا', letters: 'و - ض - و - ء', emoji: '💧' },
+      { text: 'صَدَقَة', sub: 'تطهر النفس وتساعد المحتاجين', letters: 'ص - د - ق - ة', emoji: '🎁' },
+      { text: 'صَوْم', sub: 'صبر وطاعة في شهر رمضان المبارك', letters: 'ص - و - م', emoji: '🌙' },
+      { text: 'حَجّ', sub: 'رحلة الإيمان إلى بيت الله الحرام', letters: 'ح - ج', emoji: '🕋' },
+      { text: 'دُعَاء', sub: 'نناجي به الله ونسأله الخير', letters: 'د - ع - ا - ء', emoji: '🤲' },
+      { text: 'إِحْسَان', sub: 'أن تعبد الله كأنك تراه', letters: 'إ - ح - س - ا - ن', emoji: '💖' },
+      { text: 'أَمَانَة', sub: 'خلق النبي الأمين وحفظ الودائع', letters: 'أ - م - ا - ن - ة', emoji: '🛡️' },
+      { text: 'صِدْق', sub: 'قول الحق والنجاة في الدنيا والآخرة', letters: 'ص - د - ق', emoji: '✨' },
+      { text: 'بِرّ', sub: 'طاعة الوالدين وإدخال الفرح عليهما', letters: 'ب - ر', emoji: '❤️' },
+      { text: 'سَلَام', sub: 'تحية الإسلام وناشر المحبة', letters: 'س - ل - ا - م', emoji: '🤝' },
+      { text: 'شُكْر', sub: 'حمد الله على نعمه الكثيرة', letters: 'ش - ك - ر', emoji: '🌟' }
+    ]
+  },
+  {
+    id: 'body', name: 'جسمي وصحتي ونظافتي', icon: 'fa-heart-pulse', emoji: '🩺',
+    words: [
+      { text: 'عَيْن', sub: 'أرى بها جمال الكون وخلق الله', letters: 'ع - ي - ن', emoji: '👀' },
+      { text: 'أُذُن', sub: 'أستمع بها للقرآن وكلام والديّ', letters: 'أ - ذ - ن', emoji: '👂' },
+      { text: 'أَنْف', sub: 'أشم به عبير الزهور والرياحين', letters: 'أ - ن - ف', emoji: '👃' },
+      { text: 'فَم', sub: 'أنطق به الصدق وأذكر الله به', letters: 'ف - م', emoji: '👄' },
+      { text: 'يَد', sub: 'أكتب بها وأساعد بها الآخرين', letters: 'ي - د', emoji: '✋' },
+      { text: 'قَدَم', sub: 'أمشي بها إلى المسجد والمدرسة', letters: 'ق - د - م', emoji: '🦶' },
+      { text: 'قَلْب', sub: 'ينبض بالحياة ويمتلئ بالإيمان', letters: 'ق - ل - ب', emoji: '❤️' },
+      { text: 'أَسْنَان', sub: 'أنظفها بالفرشاة والسواك كل يوم', letters: 'أ - س - ن - ا - ن', emoji: '🦷' },
+      { text: 'عَقْل', sub: 'أفكر به وأبدع وأتعلم العلوم', letters: 'ع - ق - ل', emoji: '🧠' },
+      { text: 'شَعْر', sub: 'أمشطه وأعتني بنظافته وأناقته', letters: 'ش - ع - ر', emoji: '💇' },
+      { text: 'طَبِيب', sub: 'يعالج المرضى بإذن الله برحمة', letters: 'ط - ب - ي - ب', emoji: '👨‍⚕️' },
+      { text: 'دَوَاء', sub: 'سبب للشفاء بإذن الله تعالى', letters: 'د - و - ا - ء', emoji: '💊' },
+      { text: 'صَابُون', sub: 'يقضي على الجراثيم ويمنحنا النظافة', letters: 'ص - ا - ب - و - ن', emoji: '🧼' },
+      { text: 'مَاء', sub: 'سر الحياة وأعذب شراب', letters: 'م - ا - ء', emoji: '💧' },
+      { text: 'نَوْم', sub: 'راحة للبدن ونمو للعقل والجسد', letters: 'ن - و - م', emoji: '😴' }
     ]
   }
 ]
+
+// ══════════════════════════════════════════════════════
+// STORIES OF THE PROPHETS FOR YOUNG MUSLIMS
+// ══════════════════════════════════════════════════════
+export const PROPHETS_STORIES = [
+  {
+    id: 'adam',
+    title: 'قصة أبينا آدم (عليه السلام)',
+    subtitle: 'أول الأنبياء وخليفة الله في الأرض',
+    emoji: '🌱',
+    period: 'بداية الخلق ونفخة الروح',
+    summary: 'خلق الله تعالى أبانا آدم من طين ونفخ فيه من روحه، وعلمه الأسماء كلها، ثم أسكنه الجنة مع أمنا حواء مكرمين. وعندما وسوس لهما الشيطان بالأكل من الشجرة، ندم آدم واستغفر ربه بقلب خاشع: «رَبَّنَا ظَلَمْنَا أَنفُسَنَا وَإِن لَّمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ الْخَاسِرِينَ»، فتاب الله عليه وجعله أول الأنبياء ليعمر الأرض بالخير.',
+    moral: 'العلم يرفع مكانة الإنسان، والاعتراف بالخطأ والمسارعة للتوبة يفتح أبواب رحمة الله تعالى.'
+  },
+  {
+    id: 'nuh',
+    title: 'قصة سيدنا نوح والسفينة (عليه السلام)',
+    subtitle: 'شيخ المرسلين ورمز الصبر العظيم',
+    emoji: '🚢',
+    period: 'صاحب السفينة والنجاة بالحق',
+    summary: 'دعا سيدنا نوح قومه إلى عبادة الله الواحد مئات السنين بالصبر والرفق واللين. وعندما استكبروا، أمره الله بصنع سفينة ضخمة في قلب الصحراء، وسخر منه قومه، لكنه وثق بوعد ربه. وعندما جاء الطوفان، حمل نوح في السفينة المؤمنين ومن كل صنف من الحيوانات والطيور زوجين اثنين، فنجاهم الله بأمان واستقرت السفينة على جبل الجودي.',
+    moral: 'الصبر في دعوة الخير، والتوكل على الله في الشدائد، واليقين بأن النجاة تكون دائماً مع الصادقين.'
+  },
+  {
+    id: 'ibrahim',
+    title: 'قصة سيدنا إبراهيم خليل الله (عليه السلام)',
+    subtitle: 'باني الكعبة المشرفة وإمام الحنفاء',
+    emoji: '🕋',
+    period: 'التفكر في الملكوت وبناء البيت الحرام',
+    summary: 'تفكر سيدنا إبراهيم في ملكوت السماوات، فنظر إلى الكوكب والقمر والشمس وقال: «إِنِّي وَجَّهْتُ وَجْهِيَ لِلَّذِي فَطَرَ السَّمَاوَاتِ وَالأَرْضَ حَنِيفاً». حطم أصنام قومه بالحجة والبرهان، وعندما ألقوه في النار قال: «حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ» فأمر الله النار: «يَا نَارُ كُونِي بَرْداً وَسَلاماً عَلَى إِبْرَاهِيمَ». ثم بنى الكعبة المشرفة مع ابنه إسماعيل لتبقى قبلة للمسلمين.',
+    moral: 'إعمال العقل والتفكر في خلق الله، والشجاعة في قول الحق، والتوكل التام على حفظ الله ورعايته.'
+  },
+  {
+    id: 'yusuf',
+    title: 'قصة سيدنا يوسف الصدّيق (عليه السلام)',
+    subtitle: 'أحسن القصص ومثال الصبر والعفو',
+    emoji: '👑',
+    period: 'من غيابة الجب إلى خزائن مصر',
+    summary: 'رأى يوسف في صغره أحد عشر كوكباً والشمس والقمر له ساجدين. حسده إخوته وألقوه في بئر عميقة، لكن الله حفظه وانتقل إلى مصر. وصبر على السجن ظلماً حتى فسر رؤيا الملك بحكمة وأنقذ البلاد من القحط. وعندما مكنه الله وأصبح عزيز مصر، جاء إخوته معتذرين فقال لهم بخلق نبيل كريم: «لا تَثْرِيبَ عَلَيْكُمُ الْيَوْمَ يَغْفِرُ اللَّهُ لَكُمْ وَهُوَ أَرْحَمُ الرَّاحِمِينَ».',
+    moral: 'الصبر مفتاح الفرج، وحسن الخلق يرفع صاحبه لأعلى الدرجات، والعفو والتسامح عند المقدرة من شيم العظماء.'
+  },
+  {
+    id: 'yunus',
+    title: 'قصة سيدنا يونس ذي النون (عليه السلام)',
+    subtitle: 'صاحب الحوت ودعوة الاستغفار العظيمة',
+    emoji: '🐋',
+    period: 'في ظلمات البحر والبطن والليل',
+    summary: 'ركب سيدنا يونس السفينة في البحر، فهاجت الأمواج واضطروا لإجراء القرعة فوقعت عليه وأُلقي في الماء، فالتقمه حوت عظيم بأمر الله دون أن يكسر له عظماً أو يجرح له لحماً. وفي ظلمات البحر وبطن الحوت نادى ربه بخشوع وتضرع: «لا إِلَهَ إِلا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ»، فاستجاب الله دعاءه وأمر الحوت فقذفه على الشاطئ وأنبت عليه شجرة يقطين.',
+    moral: 'التسبيح والاستغفار يفرجان أصعب الكروب، وباب الأمل في رحمة الله لا يغلق أبداً أمام المؤمن.'
+  },
+  {
+    id: 'muhammad',
+    title: 'قصة خاتم الأنبياء محمد ﷺ',
+    subtitle: 'رحمة للعالمين وسيد الأخلاق',
+    emoji: '🌸',
+    period: 'النور المبين والهدى الشامل',
+    summary: 'ولد يتيماً في مكة المكرمة، ونشأ طاهراً عفيفاً حتى لقبه قومه بـ «الصادق الأمين». نزل عليه أمين الوحي جبريل عليه السلام في غار حراء بأول آية: «اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ». حمل أمانة الإسلام برحمة وصبر وحكمة، وكان أرحم الناس بالصغار يمازحهم ويحملهم في صلاته، ويعطف على الضعفاء والحيوانات، حتى أتم الله به الدين وأخرج الناس من الظلمات إلى النور.',
+    moral: 'الصدق والأمانة، الرحمة بكل الكائنات، التواضع، ومحبة رسول الله ﷺ والاقتداء بسيرته الشريفة في كل يوم.'
+  }
+]
+
+// ══════════════════════════════════════════════════════
+// HADITH & PROPHETIC MORALS FOR YOUNG MUSLIMS
+// ══════════════════════════════════════════════════════
+export const HADITH_LIST = [
+  {
+    id: 1,
+    hadith: '«تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ»',
+    source: 'رواه الترمذي وقال حديث حسن',
+    theme: 'البشاشة ونشر السرور',
+    emoji: '😊',
+    meaning: 'الابتسامة الصادقة والوجه المنبسط يدخلان الفرح على قلوب الآخرين، ويكتب الله لك بها أجر صدقة كاملة دون أن تنفق مالاً!',
+    action: 'سأبتسم في وجه والدي وإخوتي ومعلمي وزملائي عند كل لقاء وتحية.'
+  },
+  {
+    id: 2,
+    hadith: '«إِمَاطَةُ الْأَذَى عَنِ الطَّرِيقِ صَدَقَةٌ»',
+    source: 'صحيح البخاري ومسلم',
+    theme: 'النظافة وحماية البيئة',
+    emoji: '🧹',
+    meaning: 'إبعاد الحجارة أو الزجاج أو قشور الفواكه أو النفايات عن طريق الناس خلق إسلامي عظيم يحمي الجميع وينال فاعله محبة الله.',
+    action: 'إذا رأيت قشرة أو منديلاً أو حجراً في طريقي أرفعه بحذر وأضعه في سلة المهملات.'
+  },
+  {
+    id: 3,
+    hadith: '«لَا تَغْضَبْ»',
+    source: 'صحيح البخاري',
+    theme: 'الحلم والتحكم في النفس',
+    emoji: '🕊️',
+    meaning: 'أوصى رسول الله ﷺ رجلاً كرر طلب النصيحة بقوله: «لا تغضب». فالغضب يوقع في الخطأ، والشجاع الحقيقي هو من يملك نفسه عند الغضب.',
+    action: 'عندما أغضب أستعيذ بالله من الشيطان الرجيم، وأتنفس بعمق، وأتوضأ بالماء البارد ليهدأ قلبي.'
+  },
+  {
+    id: 4,
+    hadith: '«الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ»',
+    source: 'صحيح البخاري ومسلم',
+    theme: 'حفظ اللسان والتعامل الراقي',
+    emoji: '🤝',
+    meaning: 'المسلم الحق لا يتلفظ بكلمة سوء تؤذي مشاعر أصحابه، ولا يمد يده بضرب أو إتلاف، بل ينشر الأمان والاطمئنان أينما حل.',
+    action: 'أحافظ على نظافة لساني فلا أسب ولا أسخر، وأستعمل يدي في المساعدة والمصافحة والإحسان.'
+  },
+  {
+    id: 5,
+    hadith: '«أَحَبُّ الْأَعْمَالِ إِلَى اللَّهِ تَعَالَى أَدْوَمُهَا وَإِنْ قَلَّ»',
+    source: 'صحيح مسلم',
+    theme: 'المثابرة والاستمرار',
+    emoji: '⭐',
+    meaning: 'أن تقرأ صفحة من القرآن كل يوم باستمرار، خير من أن تقرأ جزءاً كاملاً ثم تنقطع شهراً. الاستمرار هو سر التفوق والبركة.',
+    action: 'سأحدد ورداً يومياً صغيراً من الحفظ والتعلم لا أتركه أبداً حتى أكبر.'
+  },
+  {
+    id: 6,
+    hadith: '«يَا غُلَامُ، سَمِّ اللَّهَ، وَكُلْ بِيَمِينِكَ، وَكُلْ مِمَّا يَلِيكَ»',
+    source: 'صحيح البخاري ومسلم',
+    theme: 'آداب الطعام النبوية المباركة',
+    emoji: '🍽️',
+    meaning: 'علم رسول الله ﷺ عمر بن أبي سلمة ثلاث قواعد ذهبية في الطعام: التسمية في البدء، الأكل باليد اليمنى، والأكل من الجانب القريب منك.',
+    action: 'قبل كل وجبة أقول «بِسْمِ اللَّهِ»، وآكل بيميني وأحمد الله تعالى في النهاية.'
+  }
+]
+
+// ══════════════════════════════════════════════════════
+// LITTLE EXPLORER SCIENCE & DISCOVERIES FOR KIDS
+// ══════════════════════════════════════════════════════
+export const SCIENCE_TOPICS = [
+  {
+    id: 'rain',
+    title: 'كيف يتكون المطر والغيث المبارك؟ 🌧️',
+    subtitle: 'دورة الماء المدهشة في الطبيعة',
+    emoji: '💧',
+    fact: 'تسخن حرارة الشمس مياه البحار والأنهار فيتبخر الماء ويصعد إلى السماء على شكل بخار خفيف لا نراه. وعندما يصعد لطبقات الجو العليا الباردة، يتكثف ويتحول إلى سحب بيضاء جميلة. وعندما تتجمع قطرات الماء وتثقل، تسقط مطراً عذباً يسقي الأرض الميتة ويزهر النبات والورود!',
+    qaQuestion: 'ما هي الفائدة الكبرى للمطر في حياتنا؟',
+    qaAnswer: 'يروي الإنسان والحيوان والنبات، ويملأ الأنهار والآبار بماء عذب زلال للشرب والنماء.'
+  },
+  {
+    id: 'stars',
+    title: 'لماذا تتلألأ النجوم في السماء ليلاً؟ ⭐',
+    subtitle: 'أسرار الفضاء والكون البديع',
+    emoji: '✨',
+    fact: 'النجوم التي نراها مثل نقاط صغيرة لامعة هي في الحقيقة كرات غازية عملاقة شديدة الحرارة والضخامة تشبه شمسنا! لكنها تبعد عنا مسافات خيالية بملايين السنين الضوئية، فيصلنا وميضها كأنه حبات لؤلؤ تزين سماء الليل ويهتدي بها المسافرون في الصحراء والبحر.',
+    qaQuestion: 'ما هو أقرب نجم إلى كوكب الأرض؟',
+    qaAnswer: 'الشمس هي أقرب نجم إلينا، وهي تمد كوكبنا بالدفء والضوء اللازم للحياة.'
+  },
+  {
+    id: 'honey',
+    title: 'عالم النحل المعجز وصناعة العسل 🐝',
+    subtitle: 'هندسة سداسية وشفاء للناس',
+    emoji: '🍯',
+    fact: 'أوحى الله إلى النحل أن يتخذ من الجبال والشجر بيوتاً في قمة الإتقان. تبني النحلة خلاياها على شكل سداسي هندسي يحفظ أكبر قدر من العسل بأقل استهلاك للشمع. تطير النحلة لتمتص رحيق آلاف الزهور العطرة، وتخرج لنا عسلاً شهياً فيه طاقة وفيتامينات وشفاء للناس!',
+    qaQuestion: 'لماذا تبني النحلة بيتها بشكل سداسي تحديداً؟',
+    qaAnswer: 'لأنه أفضل شكل هندسي يملأ المساحة بدون أي فراغات ويتحمل وزناً كبيراً.'
+  },
+  {
+    id: 'sleep',
+    title: 'لماذا نحتاج إلى النوم المبكر؟ 😴',
+    subtitle: 'راحة البدن وقوة الذاكرة ونمو العظام',
+    emoji: '🌙',
+    fact: 'عندما تنام في وقت مبكر، تبدأ خلايا جسمك بالعمل كأبطال خارقين! يقوم دماغك بترتيب كل المعلومات والدروس والكلمات التي تعلمتها خلال يومك وحفظها في الذاكرة الدائمة، كما يفرز جسمك هرمون النمو لتصبح أطول وأقوى، وتستيقظ نشيطاً ومبتسماً.',
+    qaQuestion: 'كم ساعة يحتاج البطل الصغير من النوم كل ليلة؟',
+    qaAnswer: 'يحتاج من 8 إلى 10 ساعات نوم هادئ ومريح في غرفة مظلمة ومعتدلة الحرارة.'
+  },
+  {
+    id: 'earth',
+    title: 'تعاقب الليل والنهار ودوران الأرض 🌍',
+    subtitle: 'آية ربانية وساعة كونية دقيقة',
+    emoji: '☀️',
+    fact: 'كوكب الأرض الجميل يدور حول نفسه دورة كاملة كل 24 ساعة. عندما يكون نصف الكرة الأرضية مواجهاً للشمس، يكون الوقت هناك نهاراً مشرقاً نذهب فيه إلى المدرسة والعمل. بينما يكون النصف الآخر في الظل ليلاً ينام فيه الناس ويرتاحون في نظام بديع ومحكم.',
+    qaQuestion: 'كم يستغرق دوران الأرض حول نفسها؟',
+    qaAnswer: '24 ساعة كاملة وهي تمثل يوماً واحداً بليله ونهاره.'
+  },
+  {
+    id: 'rainbow',
+    title: 'كيف يتكون قوس قزح في السماء؟ 🌈',
+    subtitle: 'ألوان الضوء المبهجة وسحر الطبيعة',
+    emoji: '🎨',
+    fact: 'ضوء الشمس يبدو لنا أبيض وشفافاً، لكنه في الحقيقة يتكون من سبعة ألوان بديعة مجتمعة معاً! عندما تسطع الشمس بعد المطر، تمر أشعتها عبر قطرات الماء الدقيقة العالقة في الهواء، فتنكسر الأشعة وتتفكك إلى ألوانها السبعة: الأحمر، البرتقالي، الأصفر، الأخضر، الأزرق، النيلي، والبنفسجي!',
+    qaQuestion: 'كم عدد ألوان قوس قزح الأساسية؟',
+    qaAnswer: 'سبعة ألوان ساحرة تظهر متناسقة في السماء.'
+  }
+]
+
 
 // First Sentences for Karaoke Read-Along
 export const FIRST_SENTENCES = [
@@ -377,6 +676,18 @@ export function KidsHub({ user }: { user?: UserSession }) {
             <span class="nav-tab-emoji">🕌</span>
             <span>تحفيظ القرآن (المنشاوي المعلم)</span>
           </button>
+          <button class="kids-nav-tab" data-tab="prophets" role="tab" aria-selected="false">
+            <span class="nav-tab-emoji">📜</span>
+            <span>قصص الأنبياء</span>
+          </button>
+          <button class="kids-nav-tab" data-tab="hadith" role="tab" aria-selected="false">
+            <span class="nav-tab-emoji">💚</span>
+            <span>علمني رسول الله ﷺ</span>
+          </button>
+          <button class="kids-nav-tab" data-tab="science" role="tab" aria-selected="false">
+            <span class="nav-tab-emoji">🔬</span>
+            <span>المستكشف الصغير</span>
+          </button>
           <button class="kids-nav-tab" data-tab="numbers" role="tab" aria-selected="false">
             <span class="nav-tab-emoji">🔢</span>
             <span>الأرقام والحساب</span>
@@ -391,7 +702,7 @@ export function KidsHub({ user }: { user?: UserSession }) {
           </button>
           <button class="kids-nav-tab" data-tab="games" role="tab" aria-selected="false">
             <span class="nav-tab-emoji">🎮</span>
-            <span>ألعاب وتحديات الذكاء</span>
+            <span>ألعاب وتحديات الذكاء (12 لعبة)</span>
           </button>
           <button class="kids-nav-tab" data-tab="stars" role="tab" aria-selected="false">
             <span class="nav-tab-emoji">🏆</span>
@@ -719,6 +1030,8 @@ export function KidsHub({ user }: { user?: UserSession }) {
 
             {/* Prominent Al-Minshawi Audio Player Bar */}
             <div class="minshawi-player-dock" id="minshawiPlayerDock">
+              <audio id="kidsQuranAudio" preload="auto" playsinline></audio>
+
               <div class="player-left-meta">
                 <span class="reciter-tag">🕌 تلاوة المعلم • الشيخ محمد صديق المنشاوي</span>
                 <strong id="currentPlayingVerseLabel">الآية ١ من سورة الفاتحة</strong>
@@ -741,6 +1054,130 @@ export function KidsHub({ user }: { user?: UserSession }) {
               </div>
             </div>
           </main>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          TAB: STORIES OF THE PROPHETS (قصص الأنبياء للأشبال)
+      ══════════════════════════════════════════════════════ */}
+      <section class="kids-tab-view" id="panel-prophets">
+        <header class="section-title-wrap">
+          <span class="sub-kicker"><i class="fa-solid fa-scroll"></i> قدوة الصالحين</span>
+          <h2>قصص الأنبياء <span>المصورة والمسموعة للأطفال</span></h2>
+          <p>سير مباركة مليئة بالعبر والصبر وحسن الخلق، صُممت بأسلوب مشوق وسرد فصيح مسموع للأبطال الصغار.</p>
+        </header>
+
+        <div class="prophets-stories-grid">
+          {PROPHETS_STORIES.map((story) => (
+            <article class="prophet-story-card" key={story.id} id={`storyCard_${story.id}`}>
+              <div class="story-card-top">
+                <span class="story-giant-emoji">{story.emoji}</span>
+                <div class="story-meta-text">
+                  <span class="story-period-tag">{story.period}</span>
+                  <h3>{story.title}</h3>
+                  <small>{story.subtitle}</small>
+                </div>
+              </div>
+
+              <p class="story-narrative-p">{story.summary}</p>
+
+              <div class="story-moral-banner">
+                <span class="moral-icon">💎</span>
+                <div class="moral-text">
+                  <strong>الدرس المستفاد:</strong> {story.moral}
+                </div>
+              </div>
+
+              <div class="story-actions-footer">
+                <button type="button" class="story-listen-btn" data-story-id={story.id}>
+                  <i class="fa-solid fa-volume-high"></i> استمع للقصة بصوت فصيح
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          TAB: HADITH & PROPHETIC MORALS (علمني رسول الله ﷺ)
+      ══════════════════════════════════════════════════════ */}
+      <section class="kids-tab-view" id="panel-hadith">
+        <header class="section-title-wrap">
+          <span class="sub-kicker emerald"><i class="fa-solid fa-heart"></i> السراج المنير</span>
+          <h2>علمني رسول الله ﷺ <span>(أحاديث وآداب نبوية للأشبال)</span></h2>
+          <p>كلمات شريفة جامعة ومواقف نبوية تربوية تبني شخصية المسلم الصغير وتزرع فيه المحبة والنقاء.</p>
+        </header>
+
+        <div class="hadith-cards-grid">
+          {HADITH_LIST.map((item) => (
+            <div class="hadith-interactive-card" key={item.id} id={`hadithCard_${item.id}`}>
+              <div class="hadith-card-header">
+                <span class="hadith-emoji-badge">{item.emoji}</span>
+                <div class="hadith-theme-info">
+                  <span class="hadith-theme-pill">{item.theme}</span>
+                  <small class="hadith-source">{item.source}</small>
+                </div>
+              </div>
+
+              <blockquote class="hadith-quote-text">{item.hadith}</blockquote>
+
+              <p class="hadith-meaning-p">{item.meaning}</p>
+
+              <div class="hadith-action-box">
+                <span class="action-icon">🌟</span>
+                <div class="action-details">
+                  <strong>ماذا أفعل لأطبق الحديث؟</strong>
+                  <p>{item.action}</p>
+                </div>
+              </div>
+
+              <button type="button" class="hadith-listen-action-btn" data-hadith-id={item.id}>
+                <i class="fa-solid fa-volume-high"></i> استمع للحديث الشريف
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          TAB: SCIENCE & DISCOVERIES (المستكشف الصغير)
+      ══════════════════════════════════════════════════════ */}
+      <section class="kids-tab-view" id="panel-science">
+        <header class="section-title-wrap">
+          <span class="sub-kicker purple"><i class="fa-solid fa-atom"></i> عجائب خلق الله</span>
+          <h2>المستكشف الصغير <span>(واحة العلوم والاكتشاف)</span></h2>
+          <p>اكتشف أسرار الكون، وحقائق الحيوانات، وكيف تعمل الأشياء من حولنا بأسلوب علمي ممتع ومبهر.</p>
+        </header>
+
+        <div class="science-topics-grid">
+          {SCIENCE_TOPICS.map((topic) => (
+            <div class="science-topic-card" key={topic.id} id={`scienceCard_${topic.id}`}>
+              <div class="science-card-head">
+                <span class="science-giant-emoji">{topic.emoji}</span>
+                <div>
+                  <span class="science-tag">{topic.subtitle}</span>
+                  <h3>{topic.title}</h3>
+                </div>
+              </div>
+
+              <p class="science-fact-content">{topic.fact}</p>
+
+              <div class="science-qa-accordion">
+                <div class="qa-question-line">
+                  <span class="qa-badge">❓ سؤال الذكاء:</span>
+                  <strong>{topic.qaQuestion}</strong>
+                </div>
+                <div class="qa-answer-line">
+                  <span class="qa-badge answer">💡 الإجابة:</span>
+                  <span>{topic.qaAnswer}</span>
+                </div>
+              </div>
+
+              <button type="button" class="science-listen-btn" data-science-id={topic.id}>
+                <i class="fa-solid fa-volume-high"></i> استمع للمعلومة العلمية
+              </button>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -1043,28 +1480,43 @@ export function KidsHub({ user }: { user?: UserSession }) {
           </button>
         </div>
 
-        {/* Sub-Games Navigation Chips */}
+        {/* Sub-Games Navigation Chips (12 Full Interactive Games) */}
         <div class="sub-mode-row games-nav-row">
           <button class="sub-tab-chip active" data-sub="game-memory">
-            <span>🧠</span> لعبة الذاكرة الخارقة
+            <span>🧠</span> لعبة الذاكرة
           </button>
           <button class="sub-tab-chip" data-sub="game-balloons">
-            <span>🎈</span> صائد البالونات والحروف
+            <span>🎈</span> صائد البالونات
           </button>
           <button class="sub-tab-chip" data-sub="game-math-blitz">
-            <span>⚡</span> تحدي سرعة الحساب
+            <span>⚡</span> سرعة الحساب
           </button>
           <button class="sub-tab-chip" data-sub="game-emoji-match">
-            <span>🧩</span> لغز الكلمة والصورة
+            <span>🧩</span> الكلمة والصورة
           </button>
           <button class="sub-tab-chip" data-sub="game-scramble">
-            <span>🔤</span> ترتيب الحروف والكلمات
+            <span>🔤</span> رتّب الحروف
           </button>
           <button class="sub-tab-chip" data-sub="game-missing">
-            <span>🎯</span> صائد الحرف الناقص
+            <span>🎯</span> الحرف الناقص
           </button>
           <button class="sub-tab-chip" data-sub="game-muslim-quiz">
-            <span>🕌</span> مسابقة الشبل المسلم
+            <span>🕌</span> الشبل المسلم
+          </button>
+          <button class="sub-tab-chip" data-sub="game-space">
+            <span>🪐</span> رحلة الفضاء
+          </button>
+          <button class="sub-tab-chip" data-sub="game-animal-riddles">
+            <span>🐾</span> حزازير الكائنات
+          </button>
+          <button class="sub-tab-chip" data-sub="game-healthy-food">
+            <span>🍎</span> الغذاء الصحي
+          </button>
+          <button class="sub-tab-chip" data-sub="game-clock">
+            <span>⏰</span> ساعة الذكاء
+          </button>
+          <button class="sub-tab-chip" data-sub="game-landmarks">
+            <span>🌍</span> معالم العالم
           </button>
         </div>
 
@@ -1263,6 +1715,140 @@ export function KidsHub({ user }: { user?: UserSession }) {
             </div>
           </div>
         </div>
+
+        {/* ─── Game 8: Space & Planets Explorer ─── */}
+        <div class="sub-panel" id="subview-game-space">
+          <div class="space-game-panel">
+            <div class="game-header-bar">
+              <span class="stat-pill"><i class="fa-solid fa-user-astronaut"></i> رائد الفضاء الصغير</span>
+              <span class="stat-pill"><i class="fa-solid fa-star"></i> نجوم الفضاء: <strong id="spaceGameScore">0</strong></span>
+              <span class="stat-pill" id="spaceGameRound">المحطة 1 من 6</span>
+            </div>
+
+            <div class="space-planet-arena">
+              <div class="planet-display-box">
+                <span class="space-giant-emoji" id="spacePlanetEmoji">🪐</span>
+                <h3 class="space-question-text" id="spaceQuestionText">أي كوكب يلقب بالكوكب الأحمر وبه صخور حمراء؟</h3>
+              </div>
+
+              <div class="space-choices-grid" id="spaceChoicesGrid">
+                {/* 4 Choices */}
+              </div>
+
+              <div class="exercise-feedback" id="spaceFeedback"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Game 9: Animal Riddles (Who Am I?) ─── */}
+        <div class="sub-panel" id="subview-game-animal-riddles">
+          <div class="riddles-game-panel">
+            <div class="game-header-bar">
+              <span class="stat-pill"><i class="fa-solid fa-paw"></i> حزازير الكائنات (من أنا؟)</span>
+              <span class="stat-pill"><i class="fa-solid fa-star"></i> نقاط الذكاء: <strong id="riddlesScore">0</strong></span>
+              <button type="button" class="game-reset-btn" id="btnNextRiddle">لغز كائن آخر <i class="fa-solid fa-arrow-left"></i></button>
+            </div>
+
+            <div class="riddle-arena-card">
+              <div class="riddle-clue-header">
+                <span class="riddle-icon">❓</span>
+                <h3 id="riddleClueText">أنا سفينة الصحراء، أتحمل العطش وأمشي على الرمال برفق، فمن أكون؟</h3>
+                <button type="button" class="riddle-listen-btn" id="btnListenRiddle"><i class="fa-solid fa-volume-high"></i> استمع للغز بصوت فصيح</button>
+              </div>
+
+              <div class="riddle-answers-grid" id="riddleChoicesGrid">
+                {/* 4 animal cards */}
+              </div>
+
+              <div class="exercise-feedback" id="riddleFeedback"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Game 10: Healthy Food Sorter ─── */}
+        <div class="sub-panel" id="subview-game-healthy-food">
+          <div class="food-game-panel">
+            <div class="game-header-bar">
+              <span class="stat-pill"><i class="fa-solid fa-apple-whole"></i> بطل الغذاء الصحي</span>
+              <span class="stat-pill"><i class="fa-solid fa-star"></i> الصحة: <strong id="foodScore">0</strong></span>
+              <span class="stat-pill" id="foodRoundIndicator">العنصر 1 من 10</span>
+            </div>
+
+            <div class="food-arena-card">
+              <div class="food-item-spotlight">
+                <span class="food-giant-emoji" id="foodItemEmoji">🍎</span>
+                <h3 id="foodItemName">تُفَّاح طازج ومقرمش</h3>
+                <p id="foodItemHint">غني بالألياف والفيتامينات ويحمي الأسنان والقلب</p>
+              </div>
+
+              <div class="food-decide-buttons">
+                <button type="button" class="food-btn healthy" id="btnChooseHealthy">
+                  <span class="btn-emoji">✅</span>
+                  <strong>طعام صحي ومفيد للبطل</strong>
+                </button>
+                <button type="button" class="food-btn junk" id="btnChooseJunk">
+                  <span class="btn-emoji">❌</span>
+                  <strong>طعام غير صحي وضار</strong>
+                </button>
+              </div>
+
+              <div class="exercise-feedback" id="foodFeedback"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Game 11: Clock & Time Challenge ─── */}
+        <div class="sub-panel" id="subview-game-clock">
+          <div class="clock-game-panel">
+            <div class="game-header-bar">
+              <span class="stat-pill"><i class="fa-solid fa-clock"></i> ساعة الذكاء والوقت</span>
+              <span class="stat-pill"><i class="fa-solid fa-star"></i> النقاط: <strong id="clockGameScore">0</strong></span>
+              <button type="button" class="game-reset-btn" id="btnNextClock">وقت جديد <i class="fa-solid fa-arrow-left"></i></button>
+            </div>
+
+            <div class="clock-arena-card">
+              <div class="clock-face-container">
+                <div class="digital-clock-display" id="digitalClockText">03:00</div>
+                <div class="clock-prayer-hint" id="clockPrayerHint">🕌 موعد صلاة العصر في المسجد</div>
+              </div>
+
+              <div class="clock-question-prompt">
+                <h3>كم تشير الساعة الآن باللغة العربية الفصيحة؟</h3>
+              </div>
+
+              <div class="clock-choices-grid" id="clockChoicesGrid">
+                {/* 4 choices */}
+              </div>
+
+              <div class="exercise-feedback" id="clockFeedback"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Game 12: Islamic Landmarks Explorer ─── */}
+        <div class="sub-panel" id="subview-game-landmarks">
+          <div class="landmarks-game-panel">
+            <div class="game-header-bar">
+              <span class="stat-pill"><i class="fa-solid fa-earth-africa"></i> معالم بلادنا المباركة</span>
+              <span class="stat-pill"><i class="fa-solid fa-star"></i> النقاط: <strong id="landmarkScore">0</strong></span>
+              <span class="stat-pill" id="landmarkRound">المعلم 1 من 6</span>
+            </div>
+
+            <div class="landmark-arena-card">
+              <div class="landmark-header-visual">
+                <span class="landmark-giant-emoji" id="landmarkEmoji">🕋</span>
+                <h3 id="landmarkTitle">الكعبة المشرفة والمسجد الحرام</h3>
+                <p id="landmarkDescription">قبلة المسلمين في كل صلاة ويطوف حولها الحجاج والمعتمرون، في أي مدينة مباركة تقع؟</p>
+              </div>
+
+              <div class="landmark-choices-grid" id="landmarkChoicesGrid">
+                {/* 4 choices */}
+              </div>
+
+              <div class="exercise-feedback" id="landmarkFeedback"></div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════
@@ -1455,7 +2041,7 @@ export function KidsHub({ user }: { user?: UserSession }) {
       <div id="kidsConfettiOverlay" class="confetti-overlay" pointer-events="none"></div>
 
       {/* Interactive Script */}
-      <script src="/static/kids.js?v=2.4.0"></script>
+      <script src="/static/kids.js?v=3.0.0"></script>
     </Layout>
   )
 }

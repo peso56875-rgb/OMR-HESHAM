@@ -341,4 +341,79 @@ quranApi.get('/radio/:id', async (c) => {
   return c.redirect(streamUrls[0], 302)
 })
 
+// 4. Stream endpoint for Sheikh Al-Minshawi Teacher Ayah Audio (with children repetition)
+quranApi.get('/audio/teacher/:surah/:ayah', async (c) => {
+  const surah = parseInt(c.req.param('surah'), 10)
+  const ayah = parseInt(c.req.param('ayah'), 10)
+  if (isNaN(surah) || isNaN(ayah) || surah < 1 || surah > 114) {
+    return c.json({ success: false, error: 'بيانات غير صالحة' }, 400)
+  }
+
+  const s = String(surah).padStart(3, '0')
+  const a = String(ayah).padStart(3, '0')
+
+  const urls = [
+    `https://everyayah.com/data/Minshawy_Teacher_128kbps/${s}${a}.mp3`,
+    `https://verses.quran.com/Minshawi/Mujawwad/mp3/${s}${a}.mp3`,
+    `https://everyayah.com/data/Minshawy_Murattal_128kbps/${s}${a}.mp3`
+  ]
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(4000)
+      })
+      if (res.ok && res.body) {
+        return new Response(res.body, {
+          status: 200,
+          headers: {
+            'Content-Type': 'audio/mpeg',
+            'Cache-Control': 'public, max-age=604800, immutable',
+            'Access-Control-Allow-Origin': '*'
+          }
+        })
+      }
+    } catch (_) {}
+  }
+
+  // Fallback redirect
+  return c.redirect(urls[0], 302)
+})
+
+// 5. Stream endpoint for Sheikh Al-Minshawi Teacher Full Surah (with children repetition)
+quranApi.get('/audio/teacher-surah/:surah', async (c) => {
+  const surah = parseInt(c.req.param('surah'), 10)
+  if (isNaN(surah) || surah < 1 || surah > 114) {
+    return c.json({ success: false, error: 'رقم السورة غير صالح' }, 400)
+  }
+
+  const s = String(surah).padStart(3, '0')
+  const urls = [
+    `https://server10.mp3quran.net/minsh/Almusshaf-Al-Mo-lim/${s}.mp3`,
+    `https://server10.mp3quran.net/minsh/${s}.mp3`,
+    `https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/${s}.mp3`
+  ]
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(4000)
+      })
+      if (res.ok && res.body) {
+        return new Response(res.body, {
+          status: 200,
+          headers: {
+            'Content-Type': 'audio/mpeg',
+            'Cache-Control': 'public, max-age=604800, immutable',
+            'Access-Control-Allow-Origin': '*'
+          }
+        })
+      }
+    } catch (_) {}
+  }
+
+  return c.redirect(urls[0], 302)
+})
+
 export { quranApi }
+

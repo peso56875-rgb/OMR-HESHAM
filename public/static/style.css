@@ -13434,6 +13434,645 @@ body.dark .dua-content { color: var(--mint); }
   cursor: crosshair;
 }
 
+/* ─── TAB: PROPHETS STORIES ─── */
+.prophets-stories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+.prophet-story-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s ease;
+}
+.prophet-story-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(12, 74, 63, 0.1);
+  border-color: rgba(22, 138, 112, 0.35);
+}
+.story-card-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.story-giant-emoji {
+  font-size: 3rem;
+  line-height: 1;
+  background: #f0fdf4;
+  border-radius: 18px;
+  padding: 12px;
+  border: 1px solid #bbf7d0;
+}
+.story-meta-text .story-period-tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #168a70;
+  background: rgba(22, 138, 112, 0.1);
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 4px;
+}
+.story-meta-text h3 {
+  font-size: 1.25rem;
+  margin: 0;
+  color: #0f172a;
+  font-weight: 800;
+}
+.story-meta-text small {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+.story-narrative-p {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: #334155;
+  margin-bottom: 16px;
+  flex-grow: 1;
+}
+.story-moral-banner {
+  background: #fefce8;
+  border: 1px dashed #fde047;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  color: #854d0e;
+}
+.story-moral-banner .moral-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.story-actions-footer {
+  display: flex;
+  gap: 10px;
+}
+.story-listen-btn {
+  width: 100%;
+  background: #0c4a3f;
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+.story-listen-btn:hover {
+  background: #168a70;
+  transform: translateY(-2px);
+}
+
+/* ─── TAB: HADITH & PROPHETIC MORALS ─── */
+.hadith-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+.hadith-interactive-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s ease;
+}
+.hadith-interactive-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(22, 138, 112, 0.12);
+  border-color: rgba(22, 138, 112, 0.4);
+}
+.hadith-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.hadith-emoji-badge {
+  font-size: 2.2rem;
+  line-height: 1;
+  background: #f0fdf4;
+  border-radius: 14px;
+  padding: 8px;
+}
+.hadith-theme-pill {
+  display: inline-block;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.hadith-source {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+.hadith-quote-text {
+  font-family: 'Amiri', 'Noto Naskh Arabic', serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.8;
+  color: #0c4a3f;
+  background: #f8fafc;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border-right: 4px solid #168a70;
+  margin: 0 0 14px;
+}
+.hadith-meaning-p {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: #475569;
+  margin-bottom: 14px;
+  flex-grow: 1;
+}
+.hadith-action-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  color: #1e40af;
+}
+.hadith-action-box strong {
+  display: block;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+.hadith-action-box p {
+  margin: 0;
+  line-height: 1.5;
+}
+.hadith-listen-action-btn {
+  background: #168a70;
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+.hadith-listen-action-btn:hover {
+  background: #0c4a3f;
+  transform: translateY(-2px);
+}
+
+/* ─── TAB: SCIENCE & LITTLE EXPLORER ─── */
+.science-topics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+.science-topic-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s ease;
+}
+.science-topic-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+.science-card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.science-giant-emoji {
+  font-size: 2.8rem;
+  line-height: 1;
+  background: #ede9fe;
+  border-radius: 16px;
+  padding: 10px;
+}
+.science-tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #7c3aed;
+  background: #f5f3ff;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 4px;
+}
+.science-card-head h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.science-fact-content {
+  font-size: 0.92rem;
+  line-height: 1.8;
+  color: #334155;
+  margin-bottom: 16px;
+  flex-grow: 1;
+}
+.science-qa-accordion {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+}
+.qa-question-line {
+  margin-bottom: 8px;
+  color: #0f172a;
+}
+.qa-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #d97706;
+  margin-inline-end: 4px;
+}
+.qa-badge.answer {
+  color: #16a34a;
+}
+.qa-answer-line {
+  color: #166534;
+  font-weight: 700;
+}
+.science-listen-btn {
+  background: #6366f1;
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+.science-listen-btn:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
+}
+
+/* ─── GAME 8: SPACE EXPLORER ─── */
+.space-planet-arena {
+  background: linear-gradient(135deg, #0b132b, #1c2541);
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(11, 19, 43, 0.3);
+}
+.planet-display-box {
+  margin-bottom: 24px;
+}
+.space-giant-emoji {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 12px;
+  animation: floatPlanet 3s ease-in-out infinite alternate;
+}
+@keyframes floatPlanet {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-10px) rotate(6deg); }
+}
+.space-question-text {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+}
+.space-choices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.space-choice-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  padding: 14px 20px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.space-choice-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  border-color: #38bdf8;
+}
+.space-choice-btn.correct {
+  background: #10b981 !important;
+  border-color: #059669 !important;
+}
+.space-choice-btn.wrong {
+  background: #ef4444 !important;
+  border-color: #dc2626 !important;
+}
+
+/* ─── GAME 9: ANIMAL RIDDLES ─── */
+.riddle-arena-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 26px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+.riddle-clue-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.riddle-clue-header .riddle-icon {
+  font-size: 2.6rem;
+  display: block;
+  margin-bottom: 10px;
+}
+.riddle-clue-header h3 {
+  font-size: 1.35rem;
+  line-height: 1.7;
+  color: #0f172a;
+  margin: 0 0 14px;
+}
+.riddle-listen-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #334155;
+  cursor: pointer;
+}
+.riddle-answers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 14px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.riddle-animal-tile {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.riddle-animal-tile .r-emoji {
+  font-size: 2.8rem;
+  line-height: 1;
+}
+.riddle-animal-tile strong {
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+.riddle-animal-tile:hover {
+  transform: scale(1.06);
+  border-color: #168a70;
+  background: #f0fdf4;
+}
+.riddle-animal-tile.correct {
+  background: #dcfce7 !important;
+  border-color: #16a34a !important;
+}
+.riddle-animal-tile.wrong {
+  background: #fee2e2 !important;
+  border-color: #ef4444 !important;
+}
+
+/* ─── GAME 10: HEALTHY FOOD SORTER ─── */
+.food-arena-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  max-width: 560px;
+  margin: 0 auto;
+}
+.food-item-spotlight {
+  margin-bottom: 24px;
+}
+.food-giant-emoji {
+  font-size: 4.5rem;
+  display: block;
+  margin-bottom: 12px;
+  animation: pulseScale 2s infinite ease-in-out alternate;
+}
+@keyframes pulseScale {
+  0% { transform: scale(0.95); }
+  100% { transform: scale(1.08); }
+}
+.food-item-spotlight h3 {
+  font-size: 1.4rem;
+  margin: 0 0 6px;
+  color: #0f172a;
+}
+.food-item-spotlight p {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0;
+}
+.food-decide-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.food-btn {
+  border: none;
+  border-radius: 16px;
+  padding: 16px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.food-btn .btn-emoji {
+  font-size: 1.8rem;
+}
+.food-btn.healthy {
+  background: #dcfce7;
+  color: #15803d;
+}
+.food-btn.healthy:hover {
+  background: #bbf7d0;
+  transform: translateY(-2px);
+}
+.food-btn.junk {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.food-btn.junk:hover {
+  background: #fecaca;
+  transform: translateY(-2px);
+}
+
+/* ─── GAME 11: CLOCK & TIME CHALLENGE ─── */
+.clock-arena-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  max-width: 580px;
+  margin: 0 auto;
+}
+.clock-face-container {
+  background: #0f172a;
+  color: #38bdf8;
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.digital-clock-display {
+  font-family: monospace, sans-serif;
+  font-size: 3.5rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+}
+.clock-prayer-hint {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  margin-top: 6px;
+}
+.clock-choices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.clock-choice-btn {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.clock-choice-btn:hover {
+  border-color: #168a70;
+  background: #f0fdf4;
+}
+.clock-choice-btn.correct {
+  background: #dcfce7 !important;
+  border-color: #16a34a !important;
+  color: #15803d !important;
+}
+.clock-choice-btn.wrong {
+  background: #fee2e2 !important;
+  border-color: #ef4444 !important;
+}
+
+/* ─── GAME 12: ISLAMIC LANDMARKS EXPLORER ─── */
+.landmark-arena-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  max-width: 620px;
+  margin: 0 auto;
+}
+.landmark-giant-emoji {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 12px;
+}
+.landmark-header-visual h3 {
+  font-size: 1.35rem;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+.landmark-header-visual p {
+  font-size: 0.95rem;
+  color: #475569;
+  line-height: 1.7;
+  margin: 0 0 20px;
+}
+.landmark-choices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+.landmark-choice-btn {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.landmark-choice-btn:hover {
+  border-color: #d97706;
+  background: #fffbeb;
+}
+.landmark-choice-btn.correct {
+  background: #dcfce7 !important;
+  border-color: #16a34a !important;
+  color: #15803d !important;
+}
+.landmark-choice-btn.wrong {
+  background: #fee2e2 !important;
+  border-color: #ef4444 !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .tracer-layout-clean { grid-template-columns: 1fr; }

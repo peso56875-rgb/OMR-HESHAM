@@ -742,39 +742,143 @@
     })
   }
 
-  // Words Catalog
+  // Words Catalog (Expanded 120+ Rich Vocabulary Words across 8 Worlds)
   const WORDS_CATALOG = {
-    family: [
-      { text: 'أَبِي', sub: 'السند والعطاء 🧔', letters: 'أ - ب - ي' },
-      { text: 'أُمِّي', sub: 'ينبوع الحنان 🧕', letters: 'أ - م - ي' },
-      { text: 'أَخِي', sub: 'رفيق دربي 👦', letters: 'أ - خ - ي' },
-      { text: 'أُخْتِي', sub: 'نور دارنا 👧', letters: 'أ - خ - ت - ي' },
-      { text: 'جَدِّي', sub: 'بركة البيت 👴', letters: 'ج - د - ي' },
-      { text: 'بَيْتِي', sub: 'سكن وأمان 🏠', letters: 'ب - ي - ت - ي' }
+    animals: [
+      { text: 'أَسَد', sub: 'ملك الغابة الشجاع 🦁', letters: 'أ - س - د' },
+      { text: 'نَمِر', sub: 'سريع وقوي ومخطط 🐯', letters: 'ن - م - ر' },
+      { text: 'فِيل', sub: 'ضخم وصاحب خرطوم طويل 🐘', letters: 'ف - ي - ل' },
+      { text: 'زَرَافَة', sub: 'أطول كائن بعنق جميل 🦒', letters: 'ز - ر - ا - ف - ة' },
+      { text: 'جَمَل', sub: 'سفينة الصحراء الصبورة 🐪', letters: 'ج - م - ل' },
+      { text: 'حِصَان', sub: 'رمز الأصالة والسرعة 🐎', letters: 'ح - ص - ا - ن' },
+      { text: 'صَقْر', sub: 'حامي السماء وحاد البصر 🦅', letters: 'ص - ق - ر' },
+      { text: 'حَمَامَة', sub: 'رمز السلام والهدوء 🕊️', letters: 'ح - م - ا - م - ة' },
+      { text: 'هُدْهُد', sub: 'طائر ذكي ذكره القرآن 🪶', letters: 'هـ - د - هـ - د' },
+      { text: 'نَحْلَة', sub: 'تصنع العسل اللذيذ بنشاط 🐝', letters: 'ن - ح - ل - ة' },
+      { text: 'فَرَاشَة', sub: 'ألوان زاهية تطير بخفة 🦋', letters: 'ف - ر - ا - ش - ة' },
+      { text: 'أَرْنَب', sub: 'يقفز بمرح ويحب الجزر 🐰', letters: 'أ - ر - ن - ب' },
+      { text: 'قِرْد', sub: 'رشيق ومرح ويتسلق الأشجار 🐒', letters: 'ق - ر - د' },
+      { text: 'سُلَحْفَاة', sub: 'صبورة وتحمل بيتها على ظهرها 🐢', letters: 'س - ل - ح - ف - ا - ة' },
+      { text: 'قِطَّة', sub: 'أليفة ونظيفة وتحب اللعب 🐱', letters: 'ق - ط - ة' }
     ],
-    nature: [
-      { text: 'شَمْس', sub: 'ضياء ودفء ☀️', letters: 'ش - م - س' },
-      { text: 'قَمَر', sub: 'نور في السماء 🌙', letters: 'ق - م - ر' },
-      { text: 'نَجْم', sub: 'يهتدي به الساري ⭐', letters: 'ن - ج - م' },
-      { text: 'سَحَاب', sub: 'يحمل المطر ☁️', letters: 'س - ح - ا - ب' },
-      { text: 'مَطَر', sub: 'غيث ورحمة 🌧️', letters: 'م - ط - ر' },
-      { text: 'شَجَرَة', sub: 'ظل وثمر 🌳', letters: 'ش - ج - ر - ة' }
+    fruits: [
+      { text: 'تُفَّاح', sub: 'فاكهة الصحة والقوة 🍎', letters: 'ت - ف - ا - ح' },
+      { text: 'مَوْز', sub: 'طاقة ومذاق حلو رائع 🍌', letters: 'م - و - ز' },
+      { text: 'بُرْتُقَال', sub: 'غني بفيتامين ج المنعش 🍊', letters: 'ب - ر - ت - ق - ا - ل' },
+      { text: 'عِنَب', sub: 'عناقيد حلوة مباركة 🍇', letters: 'ع - ن - ب' },
+      { text: 'فَرَاوْلَة', sub: 'حمراء جميلة يحبها الأطفال 🍓', letters: 'ف - ر - ا - و - ل - ة' },
+      { text: 'رُمَّان', sub: 'حبات ياقوتية مذكورة في القرآن 🍒', letters: 'ر - م - ا - ن' },
+      { text: 'تِين', sub: 'فاكهة مباركة ومغذية 🫐', letters: 'ت - ي - ن' },
+      { text: 'زَيْتُون', sub: 'شجرة مباركة وزيت نافع 🫒', letters: 'ز - ي - ت - و - ن' },
+      { text: 'بَطِّيخ', sub: 'منعش ولذيذ في الصيف 🍉', letters: 'ب - ط - ي - خ' },
+      { text: 'جَزَر', sub: 'يقوي النظر ومقرمش ولذيذ 🥕', letters: 'ج - ز - ر' },
+      { text: 'خِيَار', sub: 'رطب ومنعش في كل سلطة 🥒', letters: 'خ - ي - ا - ر' },
+      { text: 'طَمَاطِم', sub: 'حمراء شهية وغنية بالفوائد 🍅', letters: 'ط - م - ا - ط - م' },
+      { text: 'ذُرَة', sub: 'حبات صفراء ذهبية لذيذة 🌽', letters: 'ذ - ر - ة' },
+      { text: 'أَنَانَاس', sub: 'تاج الفواكه الاستوائية 🍍', letters: 'أ - ن - ا - ن - ا - س' },
+      { text: 'كُمَّثْرَى', sub: 'حلوة وعصيرية ومفيدة 🍐', letters: 'ك - م - ث - ر - ى' }
+    ],
+    family: [
+      { text: 'أَبِي', sub: 'السند والعطاء والأمان 🧔', letters: 'أ - ب - ي' },
+      { text: 'أُمِّي', sub: 'ينبوع الحنان والجنة تحت قدميها 🧕', letters: 'أ - م - ي' },
+      { text: 'أَخِي', sub: 'رفيق دربي وسندي 👦', letters: 'أ - خ - ي' },
+      { text: 'أُخْتِي', sub: 'نور دارنا وبهجتها 👧', letters: 'أ - خ - ت - ي' },
+      { text: 'جَدِّي', sub: 'بركة البيت وحكايات الحكمة 👴', letters: 'ج - د - ي' },
+      { text: 'جَدَّتِي', sub: 'قلب دافئ ودعاء مستجاب 👵', letters: 'ج - د - ت - ي' },
+      { text: 'بَيْتِي', sub: 'سكن وأمان واجتماع الأحباب 🏡', letters: 'ب - ي - ت - ي' },
+      { text: 'غُرْفَة', sub: 'مكاني الهادئ للنوم والدراسة 🚪', letters: 'غ - ر - ف - ة' },
+      { text: 'نَافِذَة', sub: 'يدخل منها ضوء الشمس العليل 🪟', letters: 'ن - ا - ف - ذ - ة' },
+      { text: 'سَرِير', sub: 'أنام عليه وأحلم أحلاماً سعيدة 🛏️', letters: 'س - ر - ي - ر' },
+      { text: 'مَائِدَة', sub: 'نجتمع حولها ونسمي الله 🍽️', letters: 'م - ا - ئ - د - ة' },
+      { text: 'مَطْبَخ', sub: 'تصنع فيه أمي أشهى الوجبات 🍳', letters: 'م - ط - ب - خ' },
+      { text: 'حَدِيقَة', sub: 'زهور عطرة ولعب ومرح 🪴', letters: 'ح - د - ي - ق - ة' },
+      { text: 'بَاب', sub: 'أستأذن قبله وأفتحه بابتسامة 🚪', letters: 'ب - ا - ب' },
+      { text: 'سَاعَة', sub: 'تنظم أوقات صلاتنا ويومنا ⏰', letters: 'س - ا - ع - ة' }
     ],
     school: [
-      { text: 'كِتَاب', sub: 'كنز المعرفة 📖', letters: 'ك - ت - ا - ب' },
-      { text: 'قَلَم', sub: 'يكتب المستقبل ✏️', letters: 'ق - ل - م' },
-      { text: 'دَفْتَر', sub: 'أدون فيه علمي 📓', letters: 'د - ف - ت - ر' },
-      { text: 'مُعَلِّم', sub: 'يبني العقول 👨‍🏫', letters: 'م - ع - ل - م' },
-      { text: 'طَالِب', sub: 'يسعى للنجاح 🎒', letters: 'ط - ا - ل - ب' },
-      { text: 'مَدْرَسَة', sub: 'بيتي الثاني 🏫', letters: 'م - د - ر - س - ة' }
+      { text: 'كِتَاب', sub: 'كنز المعرفة ونور العقول 📖', letters: 'ك - ت - ا - ب' },
+      { text: 'قَلَم', sub: 'يكتب المستقبل ويبني الأمم ✏️', letters: 'ق - ل - م' },
+      { text: 'دَفْتَر', sub: 'أسجل فيه دروسي بخط جميل 📓', letters: 'د - ف - ت - ر' },
+      { text: 'مُعَلِّم', sub: 'يبني الأجيال ويهدي إلى الخير 👨‍🏫', letters: 'م - ع - ل - م' },
+      { text: 'طَالِب', sub: 'يسعى بالجد نحو التفوق 🧑‍🎓', letters: 'ط - ا - ل - ب' },
+      { text: 'مَدْرَسَة', sub: 'بيتي الثاني وميدان انطلاقي 🏫', letters: 'م - د - ر - س - ة' },
+      { text: 'مِسْطَرَة', sub: 'تسطر خطوطي بدقة ونظام 📏', letters: 'م - س - ط - ر - ة' },
+      { text: 'مِمْحَاة', sub: 'تمسح الخطأ لأتعلم الصواب 🧼', letters: 'م - م - ح - ا - ة' },
+      { text: 'مِقَصّ', sub: 'أقص به الورق بحذر وأمان ✂️', letters: 'م - ق - ص' },
+      { text: 'أَلْوَان', sub: 'أرسم بها أزهى اللوحات 🎨', letters: 'أ - ل - و - ا - ن' },
+      { text: 'حَقِيبَة', sub: 'تحمل أدواتي المدرسية بترتيب 🎒', letters: 'ح - ق - ي - ب - ة' },
+      { text: 'سَبُّورَة', sub: 'تشرح عليها المعلمة الدروس 📋', letters: 'س - ب - و - ر - ة' },
+      { text: 'مَكْتَبَة', sub: 'واحة القراءة واكتشاف القصص 📚', letters: 'م - ك - ت - ب - ة' },
+      { text: 'حَاسُوب', sub: 'أتعلم به البرمجة والتقنية الحديثة 💻', letters: 'ح - ا - س - و - ب' },
+      { text: 'شَهَادَة', sub: 'ثمرة الاجتهاد والتفوق المشرف 📜', letters: 'ش - هـ - ا - د - ة' }
+    ],
+    transport: [
+      { text: 'سَيَّارَة', sub: 'تنقلنا براحة وأمان في المدينة 🚗', letters: 'س - ي - ا - ر - ة' },
+      { text: 'حَافِلَة', sub: 'تتسع للأصدقاء في طريق المدرسة 🚌', letters: 'ح - ا - ف - ل - ة' },
+      { text: 'قِطَار', sub: 'سريع يسير على السكة الحديدية 🚆', letters: 'ق - ط - ا - ر' },
+      { text: 'طَائِرَة', sub: 'تحلق في السحاب فوق القارات ✈️', letters: 'ط - ا - ئ - ر - ة' },
+      { text: 'سَفِينَة', sub: 'تمخر عباب البحر الواسع بثبات 🚢', letters: 'س - ف - ي - ن - ة' },
+      { text: 'دَرَّاجَة', sub: 'رياضة ممتعة وتقوي العضلات 🚲', letters: 'د - ر - ا - ج - ة' },
+      { text: 'صَارُوخ', sub: 'ينطلق إلى الفضاء بين الكواكب 🚀', letters: 'ص - ا - ر - و - خ' },
+      { text: 'مِرْوَحِيَّة', sub: 'تهبط عمودياً وتساعد في الإنقاذ 🚁', letters: 'م - ر - و - ح - ي - ة' },
+      { text: 'شَاحِنَة', sub: 'تنقل البضائع والمؤن للمدن 🚛', letters: 'ش - ا - ح - ن - ة' },
+      { text: 'غَوَّاصَة', sub: 'تغوص في أعماق المحيط السحيقة 🤿', letters: 'غ - و - ا - ص - ة' },
+      { text: 'قَارِب', sub: 'صغير يبحر بمجدافين في البحيرة 🛶', letters: 'ق - ا - ر - ب' },
+      { text: 'إِسْعَاف', sub: 'تسارع لإنقاذ المرضى بالصفارة 🚑', letters: 'إ - س - ع - ا - ف' },
+      { text: 'إِطْفَاء', sub: 'سيارة الشجعان لإخماد الحرائق 🚒', letters: 'إ - ط - ف - ا - ء' },
+      { text: 'شُرْطَة', sub: 'تحفظ الأمن والنظام في كل شارع 🚓', letters: 'ش - ر - ط - ة' },
+      { text: 'مِنْطَاد', sub: 'يطير بالهواء الساخن فوق الحقول 🎈', letters: 'م - ن - ط - ا - د' }
+    ],
+    nature: [
+      { text: 'شَمْس', sub: 'ضياء ودفء وطاقة لكل الكائنات ☀️', letters: 'ش - م - س' },
+      { text: 'قَمَر', sub: 'نور في السماء ويهتدي به الساري 🌙', letters: 'ق - م - ر' },
+      { text: 'نَجْم', sub: 'يتلألأ في الليل كأنه ألماسة ⭐', letters: 'ن - ج - م' },
+      { text: 'سَحَاب', sub: 'يحمل قطرات المطر العذب ☁️', letters: 'س - ح - ا - ب' },
+      { text: 'مَطَر', sub: 'غيث مبارك يحيي الأرض الميتة 🌧️', letters: 'م - ط - ر' },
+      { text: 'قَوْسُ قُزَح', sub: 'ألوان سبعة تبهر الناظرين 🌈', letters: 'ق - و - س - ق - ز - ح' },
+      { text: 'رَبِيع', sub: 'تتفتح فيه الأزهار وتغرد الطيور 🌸', letters: 'ر - ب - ي - ع' },
+      { text: 'صَيْف', sub: 'شمس مشرقة ومرح على شاطئ البحر 🏖️', letters: 'ص - ي - ف' },
+      { text: 'خَرِيف', sub: 'تتساقط فيه أوراق الشجر الذهبية 🍂', letters: 'خ - ر - ي - ف' },
+      { text: 'شِتَاء', sub: 'مطر ودفء في البيت مع الأسرة ❄️', letters: 'ش - ت - ا - ء' },
+      { text: 'جَبَل', sub: 'أوتاد راسخة وقمم شامخة ⛰️', letters: 'ج - ب - ل' },
+      { text: 'نَهْر', sub: 'ماء عذب يجري ويسقي الحقول 🌊', letters: 'ن - هـ - ر' },
+      { text: 'بَحْر', sub: 'عالم واسع من الأسماك والخيرات 🏖️', letters: 'ب - ح - ر' },
+      { text: 'غَابَة', sub: 'أشجار خضراء ومأوى للحيوانات 🌲', letters: 'غ - ا - ب - ة' },
+      { text: 'بَرْق', sub: 'وميض ساطع ينير ظلمة السحاب ⚡', letters: 'ب - ر - ق' }
     ],
     islamic: [
-      { text: 'مَسْجِد', sub: 'بيت الله المبارك 🕌', letters: 'م - س - ج - د' },
-      { text: 'مُصْحَف', sub: 'كتاب الله الكريم 📖', letters: 'م - ص - ح - ف' },
-      { text: 'صَلَاة', sub: 'صلتي بربي 🤲', letters: 'ص - ل - ا - ة' },
-      { text: 'كَعْبَة', sub: 'قبلة المسلمين 🕋', letters: 'ك - ع - ب - ة' },
-      { text: 'دُعَاء', sub: 'سلاح المؤمن 🤲', letters: 'د - ع - ا - ء' },
-      { text: 'إِحْسَان', sub: 'طريق المحبة 💖', letters: 'إ - ح - س - ا - ن' }
+      { text: 'مَسْجِد', sub: 'بيت الله ومكان الصلاة المبارك 🕌', letters: 'م - س - ج - د' },
+      { text: 'مُصْحَف', sub: 'كتاب الله الكريم ونور صدورنا 📖', letters: 'م - ص - ح - ف' },
+      { text: 'صَلَاة', sub: 'صلتي بربي وخمس صلوات في اليوم 🤲', letters: 'ص - ل - ا - ة' },
+      { text: 'كَعْبَة', sub: 'قبلة المسلمين المشرفة بمكة 🕋', letters: 'ك - ع - ب - ة' },
+      { text: 'وُضُوء', sub: 'طهارة ونور لصلاتنا 💧', letters: 'و - ض - و - ء' },
+      { text: 'صَدَقَة', sub: 'تطهر النفس وتساعد المحتاجين 🎁', letters: 'ص - د - ق - ة' },
+      { text: 'صَوْم', sub: 'صبر وطاعة في شهر رمضان 🌙', letters: 'ص - و - م' },
+      { text: 'حَجّ', sub: 'رحلة الإيمان إلى بيت الله الحرام 🕋', letters: 'ح - ج' },
+      { text: 'دُعَاء', sub: 'نناجي به الله ونسأله الخير 🤲', letters: 'د - ع - ا - ء' },
+      { text: 'إِحْسَان', sub: 'أن تعبد الله كأنك تراه 💖', letters: 'إ - ح - س - ا - ن' },
+      { text: 'أَمَانَة', sub: 'خلق النبي الأمين وحفظ الودائع 🛡️', letters: 'أ - م - ا - ن - ة' },
+      { text: 'صِدْق', sub: 'قول الحق والنجاة في الدارين ✨', letters: 'ص - د - ق' },
+      { text: 'بِرّ', sub: 'طاعة الوالدين وإدخال الفرح عليهما ❤️', letters: 'ب - ر' },
+      { text: 'سَلَام', sub: 'تحية الإسلام وناشر المحبة 🤝', letters: 'س - ل - ا - م' },
+      { text: 'شُكْر', sub: 'حمد الله على نعمه الكثيرة 🌟', letters: 'ش - ك - ر' }
+    ],
+    body: [
+      { text: 'عَيْن', sub: 'أرى بها جمال الكون وخلق الله 👀', letters: 'ع - ي - ن' },
+      { text: 'أُذُن', sub: 'أستمع بها للقرآن وكلام والديّ 👂', letters: 'أ - ذ - ن' },
+      { text: 'أَنْف', sub: 'أشم به عبير الزهور والرياحين 👃', letters: 'أ - ن - ف' },
+      { text: 'فَم', sub: 'أنطق به الصدق وأذكر الله به 👄', letters: 'ف - م' },
+      { text: 'يَد', sub: 'أكتب بها وأساعد بها الآخرين ✋', letters: 'ي - د' },
+      { text: 'قَدَم', sub: 'أمشي بها إلى المسجد والمدرسة 🦶', letters: 'ق - د - م' },
+      { text: 'قَلْب', sub: 'ينبض بالحياة ويمتلئ بالإيمان ❤️', letters: 'ق - ل - ب' },
+      { text: 'أَسْنَان', sub: 'أنظفها بالفرشاة والسواك كل يوم 🦷', letters: 'أ - س - ن - ا - ن' },
+      { text: 'عَقْل', sub: 'أفكر به وأبدع وأتعلم العلوم 🧠', letters: 'ع - ق - ل' },
+      { text: 'شَعْر', sub: 'أمشطه وأعتني بنظافته وأناقته 💇', letters: 'ش - ع - ر' },
+      { text: 'طَبِيب', sub: 'يعالج المرضى بإذن الله برحمة 👨‍⚕️', letters: 'ط - ب - ي - ب' },
+      { text: 'دَوَاء', sub: 'سبب للشفاء بإذن الله تعالى 💊', letters: 'د - و - ا - ء' },
+      { text: 'صَابُون', sub: 'يقضي على الجراثيم ويمنحنا النظافة 🧼', letters: 'ص - ا - ب - و - ن' },
+      { text: 'مَاء', sub: 'سر الحياة وأعذب شراب 💧', letters: 'م - ا - ء' },
+      { text: 'نَوْم', sub: 'راحة للبدن ونمو للعقل والجسد 😴', letters: 'ن - و - م' }
     ]
   }
 
@@ -1088,7 +1192,12 @@
   let isMaskMode = false
 
   // Dedicated HTML5 audio instance for Holy Quran recitation
-  const quranAudio = new Audio()
+  let quranAudio = document.getElementById('kidsQuranAudio')
+  if (!quranAudio) {
+    quranAudio = new Audio()
+    quranAudio.id = 'kidsQuranAudio'
+    document.body.appendChild(quranAudio)
+  }
   quranAudio.preload = 'auto'
 
   // Preloaded common Juz Amma surahs for instantaneous zero-latency offline loading
@@ -1456,6 +1565,7 @@
     const a = String(target.num).padStart(3, '0')
 
     const mirrors = [
+      `/api/quran/audio/teacher/${currentSurahId}/${target.num}`,
       `https://everyayah.com/data/Minshawy_Teacher_128kbps/${s}${a}.mp3`,
       `https://verses.quran.com/Minshawi/Mujawwad/mp3/${s}${a}.mp3`,
       `https://everyayah.com/data/Minshawy_Murattal_128kbps/${s}${a}.mp3`
@@ -1464,14 +1574,10 @@
     let mirrorIdx = 0
 
     function attemptPlay() {
-      quranAudio.pause()
-      quranAudio.onended = null
-      quranAudio.onerror = null
-
-      quranAudio.onerror = () => {
+      quranAudio.onerror = (e) => {
+        console.warn(`Quran mirror ${mirrorIdx} (${mirrors[mirrorIdx]}) failed. Trying next mirror...`, e)
         mirrorIdx++
         if (mirrorIdx < mirrors.length) {
-          console.warn(`Quran mirror ${mirrorIdx} failed, trying mirror ${mirrorIdx + 1}...`)
           attemptPlay()
         } else {
           console.error('All Quran mirrors failed for', s, a)
@@ -1489,10 +1595,17 @@
           updatePlayButtonIcon()
           setSoundwaveActive(true)
         }).catch(err => {
-          console.warn('Playback deferred or interrupted:', err)
-          isVersePlaying = false
-          updatePlayButtonIcon()
-          setSoundwaveActive(false)
+          console.warn('Playback caught error:', err)
+          if (err.name !== 'AbortError') {
+            mirrorIdx++
+            if (mirrorIdx < mirrors.length) {
+              attemptPlay()
+            } else {
+              isVersePlaying = false
+              updatePlayButtonIcon()
+              setSoundwaveActive(false)
+            }
+          }
         })
       }
     }
@@ -1508,6 +1621,7 @@
     
     // Sheikh Al-Minshawi Authentic Teacher Surah (المصحف المعلم مع الأطفال)
     const mirrors = [
+      `/api/quran/audio/teacher-surah/${currentSurahId}`,
       `https://server10.mp3quran.net/minsh/Almusshaf-Al-Mo-lim/${sStr}.mp3`,
       `https://server10.mp3quran.net/minsh/${sStr}.mp3`,
       `https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/${sStr}.mp3`
@@ -1516,14 +1630,10 @@
     let mIdx = 0
 
     function attemptFullSurah() {
-      quranAudio.pause()
-      quranAudio.onended = null
-      quranAudio.onerror = null
-
       quranAudio.onerror = () => {
         mIdx++
         if (mIdx < mirrors.length) {
-          console.warn(`Full surah mirror ${mIdx} failed, trying next mirror...`)
+          console.warn(`Full surah mirror ${mIdx} failed, trying next mirror: ${mirrors[mIdx]}...`)
           attemptFullSurah()
         } else {
           isVersePlaying = false
@@ -1540,10 +1650,11 @@
           updatePlayButtonIcon()
           setSoundwaveActive(true)
         }).catch(err => {
-          console.warn('Full surah play deferred:', err)
-          isVersePlaying = false
-          updatePlayButtonIcon()
-          setSoundwaveActive(false)
+          console.warn('Full surah play caught error:', err)
+          if (err.name !== 'AbortError') {
+            mIdx++
+            if (mIdx < mirrors.length) attemptFullSurah()
+          }
         })
       }
     }
@@ -3173,6 +3284,546 @@
     })
   }
 
+  // ─── TAB: PROPHETS STORIES AUDIO & INTERACTION ───
+  const PROPHET_STORIES_DATA = {
+    adam: { title: 'قصة أبينا آدم عليه السلام', speech: 'قصة أبينا آدم عليه السلام. خلق الله تعالى أبانا آدم من طين ونفخ فيه من روحه، وعلمه الأسماء كلها، وأسكنه الجنة مكرمًا. وعندما ندم على الأكل من الشجرة تاب الله عليه وجعله أول الأنبياء ليعمر الأرض بالإيمان والعمل الصالح. الدرس المستفاد: العلم يرفع مكانة الإنسان، والمسارعة إلى التوبة والاستغفار تفتح أبواب رحمة الله.' },
+    nuh: { title: 'قصة سيدنا نوح والسفينة عليه السلام', speech: 'قصة سيدنا نوح والسفينة عليه السلام. دعا نوح قومه مئات السنين بالصبر والرفق، وصنع سفينة عظيمة في الصحراء بوحي من الله، وحمل فيها المؤمنين ومن كل صنف زوجين اثنين فنجاهم الله برحمته. الدرس المستفاد: الصبر في دعوة الخير والتوكل على الله في الشدائد.' },
+    ibrahim: { title: 'قصة سيدنا إبراهيم خليل الله عليه السلام', speech: 'قصة سيدنا إبراهيم خليل الله عليه السلام. تفكر في خلق السماوات والأرض، وحطم الأصنام بالحجة والبرهان. وعندما ألقي في النار قال: حسبنا الله ونعم الوكيل، فجعلها الله بردًا وسلامًا. وبنى الكعبة المشرفة مع ابنه إسماعيل. الدرس المستفاد: إعمال العقل والشجاعة في قول الحق.' },
+    yusuf: { title: 'قصة سيدنا يوسف الصديق عليه السلام', speech: 'قصة سيدنا يوسف الصديق عليه السلام. رأى في صغره أحد عشر كوكبًا والشمس والقمر له ساجدين. صبر على غيابة الجب والسجن ظلمًا حتى مكنه الله في خزائن مصر، وعفا عن إخوته وقال: لا تثريب عليكم اليوم يغفر الله لكم. الدرس المستفاد: الصبر مفتاح الفرج والعفو عند المقدرة.' },
+    yunus: { title: 'قصة سيدنا يونس ذي النون عليه السلام', speech: 'قصة سيدنا يونس ذي النون عليه السلام. التقمه الحوت العظيم في ظلمات البحر، فنادى ربه خاشعًا: لا إله إلا أنت سبحانك إني كنت من الظالمين، فاستجاب الله له ونجاه من الكرب وأعاده لقومه. الدرس المستفاد: التسبيح والاستغفار يفرجان أصعب الشدائد.' },
+    muhammad: { title: 'قصة خاتم الأنبياء محمد ﷺ', speech: 'قصة خاتم الأنبياء والمرسلين محمد صلى الله عليه وسلم. ولد يتيمًا وعرف بالصادق الأمين، وأنزل الله عليه القرآن الكريم في غار حراء. كان أرحم الناس بالصغار والضعفاء والحيوانات ونشر رسالة النور والهدى للعالمين. الدرس المستفاد: الصدق والأمانة والرحمة بالخلق والاقتداء بسنته الشريفة.' }
+  }
+
+  function initProphetsStories() {
+    document.querySelectorAll('.story-listen-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        sfx.tap()
+        const id = btn.getAttribute('data-story-id')
+        const st = PROPHET_STORIES_DATA[id]
+        if (st) {
+          speech.speak(st.speech)
+          progress.addStars(2, false)
+        }
+      })
+    })
+  }
+
+  // ─── TAB: HADITH & PROPHETIC MORALS ───
+  const HADITHS_DATA = {
+    1: 'قال رسول الله صلى الله عليه وسلم: تبسمك في وجه أخيك لك صدقة. رواه الترمذي. معناه: الابتسامة الطيبة صدقة تدخل الفرح على الناس ويكتب الله لك بها أجرًا عظيمًا.',
+    2: 'قال رسول الله صلى الله عليه وسلم: إماطة الأذى عن الطريق صدقة. متفق عليه. معناه: إبعاد الحجارة أو النفايات عن طريق الناس خلق إسلامي عظيم يحمي الجميع وينال فاعله محبة الله.',
+    3: 'قال رسول الله صلى الله عليه وسلم: لا تغضب. رواه البخاري. معناه: الشجاع الحقيقي هو من يملك نفسه عند الغضب، وإذا غضبت فاستعذ بالله وتوضأ بهدوء.',
+    4: 'قال رسول الله صلى الله عليه وسلم: المسلم من سلم المسلمون من لسانه ويده. متفق عليه. معناه: المسلم الصادق لا يؤذي أحدًا بكلام سيئ ولا يمد يده بضرب بل ينشر الأمان والمحبة.',
+    5: 'قال رسول الله صلى الله عليه وسلم: أحب الأعمال إلى الله تعالى أدومها وإن قل. صحيح مسلم. معناه: القليل الدائم خير من الكثير المنقطع، استمر في قراءة صفحة قرآن وتعلم حرف كل يوم.',
+    6: 'قال رسول الله صلى الله عليه وسلم: يا غلام، سمّ الله، وكل بيمينك، وكل مما يليك. متفق عليه. آداب الطعام النبوية: التسمية في أوله، الأكل باليمين، والأكل من القريب.'
+  }
+
+  function initHadithSection() {
+    document.querySelectorAll('.hadith-listen-action-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        sfx.tap()
+        const id = btn.getAttribute('data-hadith-id')
+        const txt = HADITHS_DATA[id]
+        if (txt) {
+          speech.speak(txt)
+          progress.addStars(2, false)
+        }
+      })
+    })
+  }
+
+  // ─── TAB: SCIENCE & LITTLE EXPLORER ───
+  const SCIENCE_DATA = {
+    rain: 'كيف يتكون المطر والغيث؟ تسخن حرارة الشمس مياه البحار والأنهار فيتبخر الماء ويصعد إلى السماء. وفي طبقات الجو العليا الباردة يتكثف في سحب بيضاء، وعندما تثقل القطرات تسقط مطرًا عذبًا يسقي الأرض والنبات.',
+    stars: 'لماذا تتلألأ النجوم في السماء ليلاً؟ النجوم هي كرات غازية عملاقة شديدة الحرارة والضخامة تشبه شمسنا! لكنها تبعد عنا مسافات شاسعة بملايين السنين، فيصلنا وميضها كأنه نقاط فضية تزين السماء ونهتدي بها.',
+    honey: 'عالم النحل وصناعة العسل. أوحى الله إلى النحل أن يتخذ من الجبال بيوتًا سداسية هندسية متقنة تحفظ أكبر قدر من العسل. تطير النحلة لتمتص رحيق آلاف الزهور وتخرج عسلًا شهيًا فيه شفاء للناس.',
+    sleep: 'لماذا نحتاج إلى النوم المبكر؟ أثناء نومك يفرز جسمك هرمونات النمو لتصبح أطول وأقوى، ويقوم عقلك بترتيب كل ما تعلمته خلال النهار وحفظه في الذاكرة الدائمة وتجديد نشاط خلاياك.',
+    earth: 'تعاقب الليل والنهار. يدور كوكب الأرض حول نفسه دورة كاملة كل أربع وعشرين ساعة. عندما يكون نصف الأرض مواجهًا للشمس يكون نهارًا، بينما يكون النصف الآخر ليلاً للنوم والراحة في نظام بديع.',
+    rainbow: 'كيف يتكون قوس قزح؟ ضوء الشمس يتكون من سبعة ألوان بديعة. عندما تسطع الشمس بعد المطر تمر أشعتها عبر قطرات الماء العالقة فتنكسر وتتفصل إلى ألوانها السبعة الساحرة.'
+  }
+
+  function initScienceSection() {
+    document.querySelectorAll('.science-listen-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        sfx.tap()
+        const id = btn.getAttribute('data-science-id')
+        const txt = SCIENCE_DATA[id]
+        if (txt) {
+          speech.speak(txt)
+          progress.addStars(2, false)
+        }
+      })
+    })
+  }
+
+  // ─── GAME 8: SPACE EXPLORER ───
+  const SPACE_QUESTIONS = [
+    {
+      emoji: '🪐',
+      question: 'أي كوكب في مجموعتنا الشمسية يلقب بـ (الكوكب الأحمر)؟',
+      choices: ['كوكب المريخ', 'كوكب المشترى', 'كوكب عطارد', 'كوكب الزهرة'],
+      correct: 0,
+      speech: 'كوكب المريخ هو الكوكب الأحمر لاحتواء تربته على أكاسيد الحديد.'
+    },
+    {
+      emoji: '🌍',
+      question: 'ما هو الكوكب المائي الجميل الذي نعيش عليه؟',
+      choices: ['كوكب الأرض', 'كوكب زحل', 'كوكب أورانوس', 'كوكب نبتون'],
+      correct: 0,
+      speech: 'كوكب الأرض هو كوكب الحياة الذي هيأه الله لنا بالماء والهواء.'
+    },
+    {
+      emoji: '☀️',
+      question: 'ما هو النجم العملاق الذي يضيء مجموعتنا الشمسية ويمدنا بالدفء؟',
+      choices: ['الشمس', 'القمر', 'النجم القطبي', 'شهاب الفضاء'],
+      correct: 0,
+      speech: 'الشمس هي النجم الأقرب والأكبر الذي يمنح كوكبنا الضوء والحرارة.'
+    },
+    {
+      emoji: '🌙',
+      question: 'ما هو التابع الطبيعي الصغير الذي يدور حول الأرض وينير لنا الليل؟',
+      choices: ['القمر', 'المريخ', 'المشترى', 'الزهرة'],
+      correct: 0,
+      speech: 'القمر هو تابع الأرض الذي يتغير شكله من هلال إلى بدر منير.'
+    },
+    {
+      emoji: '🪐',
+      question: 'ما هو الكوكب المشهور بحلقاته الجليدية الذهبية البديعة حوله؟',
+      choices: ['كوكب زحل', 'كوكب عطارد', 'كوكب الأرض', 'كوكب المريخ'],
+      correct: 0,
+      speech: 'كوكب زحل يتميز بأجمل حلقات فلكية تدور حوله في منظر ساحر.'
+    },
+    {
+      emoji: '🚀',
+      question: 'ما هو الكائن الذي يحلق به العلماء للوصول إلى محطة الفضاء الدولية؟',
+      choices: ['الصاروخ الفضائي', 'السيارة', 'القطار السريع', 'المنطاد'],
+      correct: 0,
+      speech: 'الصاروخ الفضائي ينطلق بقوة دفع هائلة ليخترق الغلاف الجوي.'
+    }
+  ]
+  let spaceRoundIdx = 0
+  let spaceScore = 0
+
+  function initSpaceGame() {
+    loadSpaceQuestion()
+  }
+
+  function loadSpaceQuestion() {
+    const q = SPACE_QUESTIONS[spaceRoundIdx]
+    const emojiEl = document.getElementById('spacePlanetEmoji')
+    const textEl = document.getElementById('spaceQuestionText')
+    const grid = document.getElementById('spaceChoicesGrid')
+    const roundEl = document.getElementById('spaceGameRound')
+    const scoreEl = document.getElementById('spaceGameScore')
+    const feedback = document.getElementById('spaceFeedback')
+
+    if (emojiEl) emojiEl.textContent = q.emoji
+    if (textEl) textEl.textContent = q.question
+    if (roundEl) roundEl.textContent = `المحطة ${spaceRoundIdx + 1} من ${SPACE_QUESTIONS.length}`
+    if (scoreEl) scoreEl.textContent = spaceScore
+    if (feedback) feedback.textContent = ''
+    if (!grid) return
+
+    grid.innerHTML = ''
+    q.choices.forEach((choice, idx) => {
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'space-choice-btn'
+      btn.textContent = choice
+      btn.addEventListener('click', () => {
+        if (idx === q.correct) {
+          btn.classList.add('correct')
+          sfx.correct()
+          spaceScore += 15
+          if (scoreEl) scoreEl.textContent = spaceScore
+          feedback.textContent = `إجابة عبقرية يا رائد الفضاء! 🚀 ${q.speech}`
+          feedback.className = 'exercise-feedback success'
+          progress.addStars(3, false)
+          speech.speak('إجابة عبقرية! ' + choice)
+          setTimeout(() => {
+            spaceRoundIdx = (spaceRoundIdx + 1) % SPACE_QUESTIONS.length
+            loadSpaceQuestion()
+          }, 2000)
+        } else {
+          btn.classList.add('wrong')
+          sfx.wrong()
+          feedback.textContent = 'حاول ثانية يا بطل الفضاء!'
+          feedback.className = 'exercise-feedback error'
+        }
+      })
+      grid.appendChild(btn)
+    })
+  }
+
+  // ─── GAME 9: ANIMAL RIDDLES (من أنا؟) ───
+  const ANIMAL_RIDDLES = [
+    {
+      clue: 'أنا سفينة الصحراء، أتحمل العطش وأمشي على الرمال برفق وذكرني القرآن الكريم، فمن أنا؟',
+      options: [
+        { name: 'جَمَل', emoji: '🐪', correct: true },
+        { name: 'أَسَد', emoji: '🦁', correct: false },
+        { name: 'قِرْد', emoji: '🐒', correct: false },
+        { name: 'أَرْنَب', emoji: '🐰', correct: false }
+      ]
+    },
+    {
+      clue: 'أنا ملك الغابة القوي، أملك زئيراً يهز المكان وشعراً كثيفاً حول عنقي، فمن أنا؟',
+      options: [
+        { name: 'أَسَد', emoji: '🦁', correct: true },
+        { name: 'فِيل', emoji: '🐘', correct: false },
+        { name: 'زَرَافَة', emoji: '🦒', correct: false },
+        { name: 'حِصَان', emoji: '🐎', correct: false }
+      ]
+    },
+    {
+      clue: 'أنا أضخم كائن على اليابسة، أملك خرطوماً طويلاً وأذنين كبيرتين، فمن أنا؟',
+      options: [
+        { name: 'فِيل', emoji: '🐘', correct: true },
+        { name: 'جَمَل', emoji: '🐪', correct: false },
+        { name: 'نَمِر', emoji: '🐯', correct: false },
+        { name: 'ذِئْب', emoji: '🐺', correct: false }
+      ]
+    },
+    {
+      clue: 'أنا طائر جارح حاد البصر، أحلق في أعالي السماء رمزاً للشجاعة والقوة، فمن أنا؟',
+      options: [
+        { name: 'صَقْر', emoji: '🦅', correct: true },
+        { name: 'حَمَامَة', emoji: '🕊️', correct: false },
+        { name: 'بَطَّة', emoji: '🦆', correct: false },
+        { name: 'عُصْفُور', emoji: '🐦', correct: false }
+      ]
+    },
+    {
+      clue: 'أنا حشرة نشيطة، أطير بين الزهور وأصنع لكم العسل اللذيذ المبارك، فمن أنا؟',
+      options: [
+        { name: 'نَحْلَة', emoji: '🐝', correct: true },
+        { name: 'فَرَاشَة', emoji: '🦋', correct: false },
+        { name: 'نَمْلَة', emoji: '🐜', correct: false },
+        { name: 'دُعْسُوقَة', emoji: '🐞', correct: false }
+      ]
+    }
+  ]
+  let riddleIdx = 0
+  let riddleScore = 0
+
+  function initAnimalRiddles() {
+    const listenBtn = document.getElementById('btnListenRiddle')
+    const nextBtn = document.getElementById('btnNextRiddle')
+
+    if (listenBtn) {
+      listenBtn.addEventListener('click', () => {
+        speech.speak(ANIMAL_RIDDLES[riddleIdx].clue)
+      })
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        sfx.tap()
+        riddleIdx = (riddleIdx + 1) % ANIMAL_RIDDLES.length
+        loadRiddle()
+      })
+    }
+    loadRiddle()
+  }
+
+  function loadRiddle() {
+    const r = ANIMAL_RIDDLES[riddleIdx]
+    const clueEl = document.getElementById('riddleClueText')
+    const grid = document.getElementById('riddleChoicesGrid')
+    const scoreEl = document.getElementById('riddlesScore')
+    const feedback = document.getElementById('riddleFeedback')
+
+    if (clueEl) clueEl.textContent = r.clue
+    if (scoreEl) scoreEl.textContent = riddleScore
+    if (feedback) feedback.textContent = ''
+    if (!grid) return
+
+    grid.innerHTML = ''
+    r.options.forEach(opt => {
+      const card = document.createElement('button')
+      card.type = 'button'
+      card.className = 'riddle-animal-tile'
+      card.innerHTML = `<span class="r-emoji">${opt.emoji}</span><strong>${opt.name}</strong>`
+      card.addEventListener('click', () => {
+        if (opt.correct) {
+          card.classList.add('correct')
+          sfx.correct()
+          riddleScore += 20
+          if (scoreEl) scoreEl.textContent = riddleScore
+          feedback.textContent = `أحسنت يا بطل! أنا ${opt.name} ${opt.emoji}!`
+          feedback.className = 'exercise-feedback success'
+          progress.addStars(2, false)
+          speech.speak(`إجابة ممتازة! أنا ${opt.name}`)
+          setTimeout(() => {
+            riddleIdx = (riddleIdx + 1) % ANIMAL_RIDDLES.length
+            loadRiddle()
+          }, 1800)
+        } else {
+          card.classList.add('wrong')
+          sfx.wrong()
+          feedback.textContent = 'لستُ أنا، فكر مرة ثانية!'
+          feedback.className = 'exercise-feedback error'
+        }
+      })
+      grid.appendChild(card)
+    })
+  }
+
+  // ─── GAME 10: HEALTHY FOOD SORTER ───
+  const FOOD_ITEMS = [
+    { name: 'تُفَّاح طازج 🍎', hint: 'غني بالألياف والفيتامينات ويحمي الأسنان', healthy: true },
+    { name: 'مشروب غازي سكري 🥤', hint: 'يحتوي على سكريات ضارة تضر بالأسنان والمعدة', healthy: false },
+    { name: 'حليب كامل الدسم 🥛', hint: 'غني بالكالسيوم لبناء عظام وأسنان قوية', healthy: true },
+    { name: 'حلوى ملوثة وملونة 🍭', hint: 'تسبب تسوس الأسنان ولا تفيد الجسم', healthy: false },
+    { name: 'سمك مشوي غني بالأوميغا 🐟', hint: 'يقوي الذاكرة والذكاء وصحة القلب', healthy: true },
+    { name: 'بطاطس مقلية ممتلئة بالزيوت 🍟', hint: 'دهون غير صحية تثقل المعدة وتسبب الكسل', healthy: false },
+    { name: 'جزر مقرمش لذيذ 🥕', hint: 'يقوي النظر ويمد الجسم بفيتامين أ', healthy: true },
+    { name: 'دونات مغطاة بالشوكولاتة 🍩', hint: 'سكريات مفرطة تسبب الخمول وزيادة الوزن', healthy: false },
+    { name: 'ماء نقي عذب 💧', hint: 'سر الحياة ينظف الجسم ويرطب الخلايا', healthy: true },
+    { name: 'بروكلي وخضار طازجة 🥦', hint: 'مضادات أكسدة ومعادن تحمي مناعتنا', healthy: true }
+  ]
+  let foodIdx = 0
+  let foodScore = 0
+
+  function initHealthyFoodGame() {
+    const btnHealthy = document.getElementById('btnChooseHealthy')
+    const btnJunk = document.getElementById('btnChooseJunk')
+
+    if (btnHealthy) {
+      btnHealthy.addEventListener('click', () => checkFoodDecision(true))
+    }
+    if (btnJunk) {
+      btnJunk.addEventListener('click', () => checkFoodDecision(false))
+    }
+    loadFoodItem()
+  }
+
+  function loadFoodItem() {
+    const item = FOOD_ITEMS[foodIdx]
+    const emojiEl = document.getElementById('foodItemEmoji')
+    const nameEl = document.getElementById('foodItemName')
+    const hintEl = document.getElementById('foodItemHint')
+    const progEl = document.getElementById('foodRoundIndicator')
+    const scoreEl = document.getElementById('foodScore')
+    const feedback = document.getElementById('foodFeedback')
+
+    if (emojiEl) emojiEl.textContent = item.name.split(' ').pop() || '🍎'
+    if (nameEl) nameEl.textContent = item.name
+    if (hintEl) hintEl.textContent = item.hint
+    if (progEl) progEl.textContent = `العنصر ${foodIdx + 1} من ${FOOD_ITEMS.length}`
+    if (scoreEl) scoreEl.textContent = foodScore
+    if (feedback) feedback.textContent = ''
+  }
+
+  function checkFoodDecision(choseHealthy) {
+    const item = FOOD_ITEMS[foodIdx]
+    const feedback = document.getElementById('foodFeedback')
+    const scoreEl = document.getElementById('foodScore')
+
+    if (choseHealthy === item.healthy) {
+      sfx.correct()
+      foodScore += 10
+      if (scoreEl) scoreEl.textContent = foodScore
+      feedback.textContent = choseHealthy ? 'قرار رائع! هذا طعام صحي يبني جسم البطل! 💚' : 'أحسنت! هذا طعام ضار يجب الابتعاد عنه! 👍'
+      feedback.className = 'exercise-feedback success'
+      progress.addStars(2, false)
+      setTimeout(() => {
+        foodIdx = (foodIdx + 1) % FOOD_ITEMS.length
+        loadFoodItem()
+      }, 1500)
+    } else {
+      sfx.wrong()
+      feedback.textContent = item.healthy ? 'بل هذا طعام صحي ومفيد جداً لجسمك!' : 'انتبه، هذا طعام غير صحي وضار بالصحة!'
+      feedback.className = 'exercise-feedback error'
+    }
+  }
+
+  // ─── GAME 11: CLOCK & TIME CHALLENGE ───
+  const CLOCK_PUZZLES = [
+    {
+      digital: '03:00',
+      hint: '🕌 موعد صلاة العصر في المسجد',
+      options: ['الساعة الثالثة تماماً', 'الساعة الثانية والنصف', 'الساعة الرابعة تماماً', 'الساعة الواحدة والنصف'],
+      correct: 0
+    },
+    {
+      digital: '04:30',
+      hint: '🌙 أذان صلاة الفجر المباركة',
+      options: ['الساعة الرابعة والنصف فجراً', 'الساعة الخامسة تماماً', 'الساعة الثالثة والنصف', 'الساعة السادسة صباحاً'],
+      correct: 0
+    },
+    {
+      digital: '12:00',
+      hint: '☀️ وقت صلاة الظهر واعتدال الشمس',
+      options: ['الساعة الثانية عشرة ظهراً', 'الساعة الحادية عشرة', 'الساعة العاشرة والنصف', 'الساعة الواحدة ظهراً'],
+      correct: 0
+    },
+    {
+      digital: '06:00',
+      hint: '🌅 الاستيقاظ بنشاط لمدرسة الغد',
+      options: ['الساعة السادسة صباحاً', 'الساعة السابعة صباحاً', 'الساعة الثامنة صباحاً', 'الساعة الخامسة تماماً'],
+      correct: 0
+    },
+    {
+      digital: '08:30',
+      hint: '😴 وقت النوم المبكر للأبطال الصغار',
+      options: ['الساعة الثامنة والنصف مساءً', 'الساعة التاسعة تماماً', 'الساعة السابعة والنصف', 'الساعة العاشرة تماماً'],
+      correct: 0
+    }
+  ]
+  let clockIdx = 0
+  let clockScore = 0
+
+  function initClockGame() {
+    const nextBtn = document.getElementById('btnNextClock')
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        sfx.tap()
+        clockIdx = (clockIdx + 1) % CLOCK_PUZZLES.length
+        loadClockPuzzle()
+      })
+    }
+    loadClockPuzzle()
+  }
+
+  function loadClockPuzzle() {
+    const p = CLOCK_PUZZLES[clockIdx]
+    const textEl = document.getElementById('digitalClockText')
+    const hintEl = document.getElementById('clockPrayerHint')
+    const grid = document.getElementById('clockChoicesGrid')
+    const scoreEl = document.getElementById('clockGameScore')
+    const feedback = document.getElementById('clockFeedback')
+
+    if (textEl) textEl.textContent = p.digital
+    if (hintEl) hintEl.textContent = p.hint
+    if (scoreEl) scoreEl.textContent = clockScore
+    if (feedback) feedback.textContent = ''
+    if (!grid) return
+
+    grid.innerHTML = ''
+    p.options.forEach((opt, idx) => {
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'clock-choice-btn'
+      btn.textContent = opt
+      btn.addEventListener('click', () => {
+        if (idx === p.correct) {
+          btn.classList.add('correct')
+          sfx.correct()
+          clockScore += 15
+          if (scoreEl) scoreEl.textContent = clockScore
+          feedback.textContent = `ممتاز يا ذكي الوقت! ${opt} (${p.digital})!`
+          feedback.className = 'exercise-feedback success'
+          progress.addStars(2, false)
+          speech.speak('صحيح، ' + opt)
+          setTimeout(() => {
+            clockIdx = (clockIdx + 1) % CLOCK_PUZZLES.length
+            loadClockPuzzle()
+          }, 1800)
+        } else {
+          btn.classList.add('wrong')
+          sfx.wrong()
+          feedback.textContent = 'تأمل الأرقام جيداً وحاول ثانية!'
+          feedback.className = 'exercise-feedback error'
+        }
+      })
+      grid.appendChild(btn)
+    })
+  }
+
+  // ─── GAME 12: ISLAMIC LANDMARKS EXPLORER ───
+  const LANDMARKS_DATA = [
+    {
+      emoji: '🕋',
+      title: 'الكعبة المشرفة والمسجد الحرام',
+      desc: 'قبلة المسلمين في كل صلاة ويطوف حولها ملايين الحجاج، في أي مدينة مباركة تقع؟',
+      options: ['مكة المكرمة بالمملكة العربية السعودية', 'المدينة المنورة', 'القدس الشريف', 'القاهرة المعز'],
+      correct: 0
+    },
+    {
+      emoji: '🕌',
+      title: 'المسجد النبوي الشريف وقبة رسول الله ﷺ الخضراء',
+      desc: 'ثاني أقدس المساجد وفيه روضة شريفة وقبر الحبيب المصطفى ﷺ، أين يقع؟',
+      options: ['المدينة المنورة', 'مكة المكرمة', 'دمشق', 'بغداد'],
+      correct: 0
+    },
+    {
+      emoji: '🕌',
+      title: 'المسجد الأقصى المبارك وقبة الصخرة المشرفة',
+      desc: 'أولى القبلتين وثالث الحرمين الشريفين ومسرى نبينا محمد ﷺ، في أي مدينة مباركة يقع؟',
+      options: ['مدينة القدس الشريف في فلسطين', 'عمان بالأردن', 'بيروت بلبنان', 'تونس الخضراء'],
+      correct: 0
+    },
+    {
+      emoji: '🇪🇬',
+      title: 'نهر النيل العذب والأهرامات الشامخة وجامع الأزهر',
+      desc: 'أطول أنهار العالم ومنارة العلم في الأزهر الشريف، في أي بلد عريق تقع هذه المعالم؟',
+      options: ['جمهورية مصر العربية', 'السودان الشقيق', 'المملكة المغربية', 'الجمهورية الجزائرية'],
+      correct: 0
+    },
+    {
+      emoji: '⛰️',
+      title: 'جبل أُحُد الذي قال عنه النبي ﷺ: جبل يحبنا ونحبه',
+      desc: 'جبل عظيم شهد بطولة الصحابة رضوان الله عليهم في غزوة أحد، أين يقع؟',
+      options: ['شمال المدينة المنورة', 'شرق مكة المكرمة', 'في بلاد الشام', 'في صحراء سيناء'],
+      correct: 0
+    }
+  ]
+  let landmarkIdx = 0
+  let landmarkScore = 0
+
+  function initLandmarksGame() {
+    loadLandmarkQuestion()
+  }
+
+  function loadLandmarkQuestion() {
+    const l = LANDMARKS_DATA[landmarkIdx]
+    const emojiEl = document.getElementById('landmarkEmoji')
+    const titleEl = document.getElementById('landmarkTitle')
+    const descEl = document.getElementById('landmarkDescription')
+    const grid = document.getElementById('landmarkChoicesGrid')
+    const progEl = document.getElementById('landmarkRound')
+    const scoreEl = document.getElementById('landmarkScore')
+    const feedback = document.getElementById('landmarkFeedback')
+
+    if (emojiEl) emojiEl.textContent = l.emoji
+    if (titleEl) titleEl.textContent = l.title
+    if (descEl) descEl.textContent = l.desc
+    if (progEl) progEl.textContent = `المعلم ${landmarkIdx + 1} من ${LANDMARKS_DATA.length}`
+    if (scoreEl) scoreEl.textContent = landmarkScore
+    if (feedback) feedback.textContent = ''
+    if (!grid) return
+
+    grid.innerHTML = ''
+    l.options.forEach((opt, idx) => {
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'landmark-choice-btn'
+      btn.textContent = opt
+      btn.addEventListener('click', () => {
+        if (idx === l.correct) {
+          btn.classList.add('correct')
+          sfx.correct()
+          landmarkScore += 20
+          if (scoreEl) scoreEl.textContent = landmarkScore
+          feedback.textContent = `ما شاء الله يا باحث الجغرافيا! إجابة صحيحة: ${opt}! 🌟`
+          feedback.className = 'exercise-feedback success'
+          progress.addStars(3, false)
+          speech.speak('إجابة صحيحة مباركة! ' + opt)
+          setTimeout(() => {
+            landmarkIdx = (landmarkIdx + 1) % LANDMARKS_DATA.length
+            loadLandmarkQuestion()
+          }, 2000)
+        } else {
+          btn.classList.add('wrong')
+          sfx.wrong()
+          feedback.textContent = 'فكر في الموقع التاريخي والمعلم الجغرافي وحاول مجدداً!'
+          feedback.className = 'exercise-feedback error'
+        }
+      })
+      grid.appendChild(btn)
+    })
+  }
+
   // ─── TAB 7: OFFICIAL CERTIFICATE MODAL & PRINTING ───
   function initCertificate() {
     const openBtn = document.getElementById('btnOpenCertModal')
@@ -3223,6 +3874,9 @@
     initTabs()
     initLetters()
     initQuran()
+    initProphetsStories()
+    initHadithSection()
+    initScienceSection()
     initNumbers()
     initDuas()
     initDrawing()
@@ -3233,6 +3887,11 @@
     initWordScramble()
     initMissingLetterGame()
     initMuslimQuiz()
+    initSpaceGame()
+    initAnimalRiddles()
+    initHealthyFoodGame()
+    initClockGame()
+    initLandmarksGame()
     initCertificate()
     initParentDashboard()
 
