@@ -70,23 +70,6 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
           </div>
         </header>
 
-        {data.isQuotaExceeded && (
-          <div style="margin: 16px 24px; padding: 18px 24px; background: rgba(245, 158, 11, 0.12); border: 1.5px solid #f59e0b; border-radius: 16px; display: flex; align-items: flex-start; gap: 16px; color: var(--text)">
-            <div style="font-size: 1.6rem; color: #f59e0b; flex-shrink: 0; line-height: 1;">
-              {icon('fa-triangle-exclamation')}
-            </div>
-            <div style="font-size: 0.92rem; line-height: 1.7;">
-              <strong style="display: block; font-size: 1.05rem; color: #f59e0b; margin-bottom: 4px;">
-                تنبيه أمان: تم الوصول للحد الأقصى اليومي المجاني لقراءات Firebase (50,000 قراءة)
-              </strong>
-              <span>
-                بياناتك وسجلاتك (المستخدمين، المتطوعين، الخزنة، الأخبار) <strong>محفوظة وآمنة تماماً 100% في السيرفر</strong> ولم يُحذف أي شيء مطلقاً.
-                توقفت جوجل مؤقتاً عن تمرير القراءات لحين تصفير العداد اليومي تلقائياً من طرفها، أو يمكنك ترقية الخطة إلى <strong>Blaze (Pay as you go)</strong> من لوحة تحكم Firebase Console لرفع الحظر فوراً وبدون أي توقف.
-              </span>
-            </div>
-          </div>
-        )}
-
         {view === 'overview' && <DashOverview stats={data.stats} recentDonations={data.recentDonations} />}
         {view === 'notifications' && <DashNotifications list={data.list || []} stats={data.stats || {}} pushConfigured={data.pushConfigured || false} user={user} />}
         {view === 'treasury' && <DashTreasury summary={data.summary} incomeList={data.incomeList} expenseList={data.expenseList} campaigns={data.campaigns} user={user} />}
