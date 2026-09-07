@@ -62,7 +62,7 @@ const currentUser = (c: any) => (c.get('user') || {}) as {
 
 /* ────────────────────────── جلب التدفّق ────────────────────────── */
 
-interface FeedItem {
+export interface FeedItem {
   id: string
   user_id?: string | null
   type: string
@@ -84,7 +84,7 @@ interface FeedItem {
  * نسحب `limit` من كل تدفّق ثم نُرتّب ونقطع: لو سحبنا نصف الحد من كل
  * تدفّق لضاع عنصر أحدث موجود بكثافة في تدفّق واحد.
  */
-const fetchFeed = async (
+export const fetchFeed = async (
   db: any,
   uid: string,
   isAdmin: boolean,
@@ -147,9 +147,22 @@ const fetchFeed = async (
     }
   }
 
-  if (!rows.length) {
+  const dismissedSet = new Set<string>()
+  if (uid) {
+    try {
+      const disSnap = await db.collection('notification_dismissed').where('user_id', '==', uid).get().catch(() => ({ docs: [] }))
+      for (const d of disSnap.docs || []) {
+        const nId = d.data()?.notification_id
+        if (nId) dismissedSet.add(nId)
+      }
+    } catch (_) {}
+  }
+
+  const validRows = rows.filter((r) => !dismissedSet.has(r.id))
+
+  if (!validRows.length) {
     const now = new Date()
-    const fallbackItems: FeedItem[] = [
+    const rawFallback: FeedItem[] = [
       {
         id: 'welcome-quran',
         type: 'content',
@@ -197,6 +210,10 @@ const fetchFeed = async (
       }
     ]
 
+    const fallbackItems = rawFallback.filter((item) => !dismissedSet.has(item.id))
+
+    if (!fallbackItems.length) return []
+
     if (uid) {
       try {
         const refs = fallbackItems.map((item) =>
@@ -221,10 +238,10 @@ const fetchFeed = async (
     return fallbackItems.slice(0, limit)
   }
 
-  rows.sort((a, b) =>
+  validRows.sort((a, b) =>
     String(b.data.created_at || '').localeCompare(String(a.data.created_at || ''))
   )
-  const page = rows.slice(0, limit)
+  const page = validRows.slice(0, limit)
 
   // حالة القراءة للإشعارات المشتركة (إدارة وعامة للجميع) — قراءة دفعة واحدة بـ getAll
   const sharedIds = page.filter((r) => r.data.audience === 'admins' || r.data.audience === 'all').map((r) => r.id)
@@ -456,6 +473,63 @@ notifications.post('/read/:id', async (c) => {
   } catch (error: any) {
     console.error('[notifications] فشل تعليم الإشعار كمقروء:', error?.message || error)
     return c.json({ ok: true, id, read_at: now })
+  }
+})
+
+/** POST /api/notifications/toggle-read/:id */
+notifications.post('/toggle-read/:id', async (c) => {
+  const user = currentUser(c)
+  const uid = user.id || ''
+  const id = c.req.param('id') as string
+  if (!id) return c.json({ error: 'معرّف الإشعار مطلوب' }, 400)
+  const db = getFirestore(c)
+  const now = new Date().toISOString()
+
+  try {
+    if (id.startsWith('welcome-')) {
+      if (uid) {
+        const readRef = db.collection('notification_reads').doc(readId(id, uid))
+        const rSnap = await readRef.get()
+        if (rSnap.exists) {
+          await readRef.delete()
+          return c.json({ ok: true, id, is_read: false })
+        } else {
+          await readRef.set({ notification_id: id, user_id: uid, read_at: now })
+          return c.json({ ok: true, id, is_read: true })
+        }
+      }
+      return c.json({ ok: true, id, is_read: true })
+    }
+
+    const ref = db.collection('notifications').doc(id)
+    const snap = await ref.get()
+    if (!snap.exists) return c.json({ ok: true, id, is_read: true })
+    const data = snap.data() || {}
+
+    if (data.audience === 'admins' || data.audience === 'all') {
+      if (uid) {
+        const readRef = db.collection('notification_reads').doc(readId(id, uid))
+        const rSnap = await readRef.get()
+        if (rSnap.exists) {
+          await readRef.delete()
+          return c.json({ ok: true, id, is_read: false })
+        } else {
+          await readRef.set({ notification_id: id, user_id: uid, read_at: now })
+          return c.json({ ok: true, id, is_read: true })
+        }
+      }
+    } else {
+      if (uid && data.user_id === uid) {
+        const newRead = !data.is_read
+        await ref.update({ is_read: newRead, read_at: newRead ? now : null })
+        return c.json({ ok: true, id, is_read: newRead })
+      }
+    }
+
+    return c.json({ ok: true, id, is_read: true })
+  } catch (error: any) {
+    console.error('[notifications] فشل تبديل حالة القراءة:', error?.message || error)
+    return c.json({ ok: true, id })
   }
 })
 
@@ -1013,37 +1087,130 @@ notifications.post('/send-custom', adminMiddleware, rateLimiter(15, 60000, 'noti
 
 /**
  * POST /api/notifications/delete/:id
- * حذف إشعار فردي
+ * حذف إشعار فردي (للمشرفين أو للمستخدم)
  */
-notifications.post('/delete/:id', adminMiddleware, async (c) => {
+notifications.post('/delete/:id', async (c) => {
+  const user = currentUser(c)
+  const uid = user.id || ''
+  const isAdmin = user.role === 'admin'
   const id = String(c.req.param('id') || '').trim()
   if (!id) return c.json({ error: 'معرّف الإشعار مطلوب' }, 400)
   const db = getFirestore(c)
 
   try {
+    if (id.startsWith('welcome-')) {
+      if (uid) {
+        await db.collection('notification_dismissed').doc(`${id}__${uid}`).set({
+          notification_id: id,
+          user_id: uid,
+          dismissed_at: new Date().toISOString()
+        })
+      }
+      return c.json({ ok: true, id })
+    }
+
     const ref = db.collection('notifications').doc(id)
     const snap = await ref.get()
-    if (!snap.exists) return c.json({ error: 'الإشعار غير موجود' }, 404)
+    if (!snap.exists) {
+      if (uid) {
+        await db.collection('notification_dismissed').doc(`${id}__${uid}`).set({
+          notification_id: id,
+          user_id: uid,
+          dismissed_at: new Date().toISOString()
+        })
+      }
+      return c.json({ ok: true, id })
+    }
 
-    await ref.delete()
+    const data = snap.data() || {}
 
-    if (snap.data()?.audience === 'admins') {
+    if (isAdmin) {
+      await ref.delete()
       const readsSnap = await db.collection('notification_reads').where('notification_id', '==', id).get().catch(() => ({ docs: [] }))
       if (readsSnap.docs.length) {
         const batch = db.batch()
         readsSnap.docs.forEach((d: any) => batch.delete(d.ref))
         await batch.commit()
       }
+      return c.json({ ok: true, id })
     }
 
-    const contentType = c.req.header('content-type') || ''
-    if (!contentType.includes('application/json')) {
-      return c.redirect('/dashboard?view=notifications&success=deleted')
+    if (uid && data.user_id === uid) {
+      await ref.delete()
+      return c.json({ ok: true, id })
     }
-    return c.json({ ok: true })
+
+    if (uid && (data.audience === 'all' || data.audience === 'volunteers' || data.audience === 'donors' || data.audience === 'admins')) {
+      await db.collection('notification_dismissed').doc(`${id}__${uid}`).set({
+        notification_id: id,
+        user_id: uid,
+        dismissed_at: new Date().toISOString()
+      })
+      return c.json({ ok: true, id })
+    }
+
+    return c.json({ ok: true, id })
   } catch (error: any) {
     console.error('[notifications] فشل حذف الإشعار:', error?.message || error)
     return c.json({ error: 'تعذّر حذف الإشعار' }, 500)
+  }
+})
+
+/**
+ * POST /api/notifications/clear-all
+ * تفريغ كافة الإشعارات المقروءة للمستخدم أو المشرف
+ */
+notifications.post('/clear-all', async (c) => {
+  const user = currentUser(c)
+  const uid = user.id || ''
+  const isAdmin = user.role === 'admin'
+  const db = getFirestore(c)
+
+  try {
+    const items = await fetchFeed(db, uid, isAdmin, COUNT_CAP)
+    const readItems = items.filter((i) => i.is_read)
+    if (!readItems.length) return c.json({ ok: true, deleted: 0 })
+
+    const now = new Date().toISOString()
+    const batch = db.batch()
+    let count = 0
+
+    for (const item of readItems) {
+      if (item.id.startsWith('welcome-')) {
+        if (uid) {
+          batch.set(db.collection('notification_dismissed').doc(`${item.id}__${uid}`), {
+            notification_id: item.id,
+            user_id: uid,
+            dismissed_at: now
+          })
+          count++
+        }
+        continue
+      }
+
+      if (isAdmin) {
+        batch.delete(db.collection('notifications').doc(item.id))
+        count++
+      } else if (item.user_id === uid) {
+        batch.delete(db.collection('notifications').doc(item.id))
+        count++
+      } else if (uid) {
+        batch.set(db.collection('notification_dismissed').doc(`${item.id}__${uid}`), {
+          notification_id: item.id,
+          user_id: uid,
+          dismissed_at: now
+        })
+        count++
+      }
+    }
+
+    if (count > 0) {
+      await batch.commit()
+    }
+    return c.json({ ok: true, deleted: count })
+  } catch (error: any) {
+    console.error('[notifications] فشل تفريغ المقروء:', error?.message || error)
+    return c.json({ error: 'تعذّر تفريغ الإشعارات' }, 500)
   }
 })
 
@@ -1066,5 +1233,6 @@ notifications.post('/clear-all-admin', adminMiddleware, async (c) => {
     return c.json({ error: 'تعذّر تفريغ الإشعارات' }, 500)
   }
 })
+
 
 

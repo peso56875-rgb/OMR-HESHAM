@@ -14,6 +14,7 @@ import { Login, Profile } from './components/Auth'
 import { Achievements, Volunteers, Contact, FAQ, Transparency, Gallery, GenericNotFound } from './components/Pages'
 import { Dashboard } from './components/Dashboard'
 import { NotificationsPage } from './components/Notifications'
+import { fetchFeed } from './api/notifications'
 import { ZakatCalculator } from './components/Zakat'
 import { QuranHub } from './components/Quran'
 import { KidsHub } from './components/KidsHub'
@@ -544,103 +545,55 @@ app.get('/profile', async (c) => {
 app.get('/notifications', async (c) => {
   const user = (c as any).get('user')
   const category = (c.req.query('category') || '').trim()
-  let items: any[] = []
-  let unreadCount = 0
+  const filter = (c.req.query('filter') || 'all').trim()
+  const q = (c.req.query('q') || '').trim().toLowerCase()
+  let allItems: any[] = []
 
   try {
     const db = getFirestore(c)
-    const isAdmin = user?.role === 'admin'
-    const limit = 50
-
-    const queries: Promise<any>[] = []
-
-    if (user?.id) {
-      queries.push(
-        db.collection('notifications')
-          .where('user_id', '==', user.id)
-          .orderBy('created_at', 'desc')
-          .limit(limit)
-          .get()
-          .catch(() => ({ docs: [] }))
-      )
-    }
-
-    // Public announcements & broadcasts
-    queries.push(
-      db.collection('notifications')
-        .where('audience', '==', 'all')
-        .orderBy('created_at', 'desc')
-        .limit(limit)
-        .get()
-        .catch(() => ({ docs: [] }))
-    )
-
-    if (isAdmin) {
-      queries.push(
-        db.collection('notifications')
-          .where('audience', '==', 'admins')
-          .orderBy('created_at', 'desc')
-          .limit(limit)
-          .get()
-          .catch(() => ({ docs: [] }))
-      )
-    }
-
-    const snaps = await Promise.all(queries)
-    const rows: Array<{ id: string; data: any }> = []
-    const seen = new Set<string>()
-
-    for (const snap of snaps) {
-      for (const doc of snap.docs || []) {
-        if (!seen.has(doc.id)) {
-          seen.add(doc.id)
-          rows.push({ id: doc.id, data: doc.data() || {} })
-        }
-      }
-    }
-
-    rows.sort((a, b) => String(b.data.created_at || '').localeCompare(String(a.data.created_at || '')))
-
-    // Read state for admin notifications
-    const sharedIds = rows.filter(r => r.data.audience === 'admins').map(r => r.id)
-    const readSet = new Set<string>()
-
-    if (sharedIds.length && user?.id) {
-      try {
-        const refs = sharedIds.map(nid => db.collection('notification_reads').doc(`${nid}__${user.id}`))
-        const docs = await db.getAll(...refs)
-        for (const d of docs) {
-          if (d.exists) readSet.add(d.data()?.notification_id)
-        }
-      } catch (e) {}
-    }
-
-    items = rows.map(({ id, data }) => {
-      const isShared = data.audience === 'admins'
-      const isRead = isShared ? readSet.has(id) : Boolean(data.is_read)
-      return {
-        id,
-        ...data,
-        is_read: isRead
-      }
-    })
-
-    if (category) {
-      items = items.filter(i => i.category === category)
-    }
-
-    unreadCount = items.filter(i => !i.is_read).length
+    allItems = await fetchFeed(db, user?.id || '', user?.role === 'admin', 100)
   } catch (error: any) {
     console.error('Error loading notifications page:', error?.message)
+  }
+
+  const totalCount = allItems.length
+  const unreadCount = allItems.filter((i) => !i.is_read).length
+  const highCount = allItems.filter((i) => i.priority === 'high').length
+
+  const catCounts: Record<string, number> = {}
+  for (const item of allItems) {
+    catCounts[item.category] = (catCounts[item.category] || 0) + 1
+  }
+
+  let filteredItems = allItems
+  if (category) {
+    filteredItems = filteredItems.filter((i) => i.category === category)
+  }
+  if (filter === 'unread') {
+    filteredItems = filteredItems.filter((i) => !i.is_read)
+  } else if (filter === 'high') {
+    filteredItems = filteredItems.filter((i) => i.priority === 'high')
+  }
+  if (q) {
+    filteredItems = filteredItems.filter((i) =>
+      (i.title || '').toLowerCase().includes(q) ||
+      (i.body || '').toLowerCase().includes(q) ||
+      (i.actor_name || '').toLowerCase().includes(q)
+    )
   }
 
   return c.html(
     <NotificationsPage
       user={user}
-      items={items}
+      items={filteredItems}
+      totalCount={totalCount}
       unreadCount={unreadCount}
+      highCount={highCount}
+      catCounts={catCounts}
       pushAvailable={isPushConfigured(c)}
       selectedCategory={category}
+      selectedFilter={filter}
+      searchQuery={q}
     />
   )
 })

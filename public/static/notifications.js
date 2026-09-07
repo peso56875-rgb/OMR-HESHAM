@@ -372,7 +372,7 @@
     loadDropdownFeed();
   }
 
-  // ────────────────────────── تهيئة زر وقائمة الجرس ──────────────────────────
+  // ────────────────────────── تهيئة زر الجرس والصفحة ──────────────────────────
 
   function closeAllDropdowns() {
     var dropdowns = document.querySelectorAll('.notif-dropdown');
@@ -382,7 +382,6 @@
     dropdowns.forEach(function (d) {
       d.classList.remove('open');
       d.setAttribute('aria-hidden', 'true');
-      d.style.transform = '';
     });
     bells.forEach(function (b) {
       b.setAttribute('aria-expanded', 'false');
@@ -394,174 +393,306 @@
     document.body.style.overflow = '';
   }
 
-  function checkPushBanner() {
-    var optinBoxes = document.querySelectorAll('.notif-push-optin-box, #notifPushOptinBox');
-    if (!('Notification' in window)) {
-      optinBoxes.forEach(function (b) { b.style.display = 'none'; });
-      return;
-    }
-    if (Notification.permission === 'granted') {
-      optinBoxes.forEach(function (b) { b.style.display = 'none'; });
-    } else {
-      optinBoxes.forEach(function (b) { b.style.display = 'flex'; });
-    }
-  }
-
-  function openDropdown(dropdown, bellBtn) {
-    if (!dropdown) return;
-    dropdown.classList.add('open');
-    dropdown.setAttribute('aria-hidden', 'false');
-    if (bellBtn) bellBtn.setAttribute('aria-expanded', 'true');
-
-    var header = dropdown.closest('.site-header, .dash-topbar') || document.querySelector('.site-header, .dash-topbar');
-    if (header) header.classList.add('notif-open');
-
-    if (window.innerWidth <= 780) {
-      var bd = document.getElementById('notifBackdrop');
-      if (!bd) {
-        bd = document.createElement('div');
-        bd.className = 'notif-backdrop';
-        bd.id = 'notifBackdrop';
-        bd.setAttribute('aria-hidden', 'true');
-        document.body.appendChild(bd);
-        bd.onclick = function (e) {
-          e.preventDefault();
-          closeAllDropdowns();
-        };
-      }
-      bd.classList.add('open');
-      document.body.style.overflow = 'hidden';
-    } else {
-      // شاشات سطح المكتب والكمبيوتر: ضبط موضع القائمة لمنع أي اقتطاع للشاشة نهائياً
-      requestAnimationFrame(function () {
-        var rect = dropdown.getBoundingClientRect();
-        if (rect.left < 16) {
-          var offset = 16 - rect.left;
-          dropdown.style.transform = 'translateX(' + offset + 'px)';
-        } else if (rect.right > window.innerWidth - 16) {
-          var offset = rect.right - (window.innerWidth - 16);
-          dropdown.style.transform = 'translateX(-' + offset + 'px)';
-        } else {
-          dropdown.style.transform = '';
-        }
-      });
-    }
-    checkPushBanner();
-    loadDropdownFeed(dropdown);
-  }
-
   function initBellHandlers() {
-    var backdrop = document.getElementById('notifBackdrop');
-    var dropdowns = document.querySelectorAll('.notif-dropdown');
-
-    // إغلاق عبر الخلفية (Backdrop)
-    if (backdrop) {
-      backdrop.onclick = function (e) {
-        e.preventDefault();
-        closeAllDropdowns();
-      };
-    }
-
-    // أزرار الإغلاق الصريحة في الهواتف
-    document.querySelectorAll('.notif-close-mobile-btn, .notif-close-btn').forEach(function (btn) {
-      btn.onclick = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        closeAllDropdowns();
-      };
-    });
-
-    // تفويض نقر الجرس على مستوى الـ document ليعمل في كافة الشاشات ولوحة التحكم وتحديثات الـ DOM
-    document.addEventListener('click', function (e) {
-      var bellBtn = e.target.closest('.notif-bell-btn, #notifBellBtn, #dashNotifBellBtn');
-      if (bellBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        var container = bellBtn.closest('.notif-bell-container');
-        var dropdown = container ? container.querySelector('.notif-dropdown') : document.querySelector('.notif-dropdown');
-        if (!dropdown) return;
-
-        var isOpen = dropdown.classList.contains('open');
-        if (isOpen) {
-          closeAllDropdowns();
-        } else {
-          closeAllDropdowns();
-          openDropdown(dropdown, bellBtn);
-        }
-        return;
-      }
-
-      // إغلاق عند النقر بالخارج
-      var inDropdown = e.target.closest('.notif-dropdown');
-      var inContainer = e.target.closest('.notif-bell-container');
-      var inBackdrop = e.target.closest('.notif-backdrop');
-      if (!inDropdown && !inContainer && !inBackdrop) {
-        closeAllDropdowns();
-      }
-    });
-
-    // إغلاق بزر Escape
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') {
-        closeAllDropdowns();
-      }
-    });
-
-    // أزرار التبويبات (الكل / غير المقروءة)
-    dropdowns.forEach(function (dropdown) {
-      dropdown.querySelectorAll('.notif-tab').forEach(function (tab) {
-        tab.onclick = function (e) {
-          e.stopPropagation();
-          dropdown.querySelectorAll('.notif-tab').forEach(function (t) { t.classList.remove('active'); });
-          tab.classList.add('active');
-          currentTab = tab.getAttribute('data-tab') || 'all';
-          loadDropdownFeed(dropdown);
-        };
-      });
-    });
-
-    // زر قراءة الكل في القائمة
-    document.querySelectorAll('.notif-mark-all-btn, #notifMarkAllBtn').forEach(function (btn) {
-      btn.onclick = function (e) {
-        e.stopPropagation();
-        markAllAsRead();
-      };
-    });
-
-    // زر تفعيل الـ Push من داخل القائمة
-    document.querySelectorAll('.notif-push-optin-action-btn, #notifDropdownEnablePushBtn').forEach(function (btn) {
-      btn.onclick = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        requestPushPermission();
-      };
-    });
+    // زر الجرس ينقل مباشرة إلى صفحة الإشعارات /notifications دون أي اعتراض
+    // نترك السلوك الطبيعي للرابط ليفتح الصفحة فوراً كما طلب المستخدم
   }
 
   // ────────────────────────── تهيئة أحداث الصفحة المستقلة واللوحة ──────────────────────────
 
   function initPageHandlers() {
-    // صفحة /notifications: تحديد الكل كمقروء
-    var pageMarkAll = document.getElementById('notifPageMarkAll');
-    if (pageMarkAll) {
-      pageMarkAll.onclick = function () { markAllAsRead(); };
+    // 1. البحث الحي الفوري والفلترة المتزامنة
+    var searchInput = document.getElementById('notifSearchInput');
+    var searchClear = document.getElementById('notifSearchClear');
+    var resetSearchBtn = document.getElementById('notifResetSearchBtn');
+    var zeroSearchBox = document.getElementById('notifZeroSearch');
+    var listCard = document.getElementById('notifListCard');
+
+    function applyFilterAndSearch() {
+      var query = (searchInput ? searchInput.value : '').trim().toLowerCase();
+      var activeTab = document.querySelector('.notif-filter-tab.active');
+      var filterType = activeTab ? (activeTab.getAttribute('data-filter') || 'all') : 'all';
+      var categoryFilter = activeTab ? (activeTab.getAttribute('data-category') || '') : '';
+
+      var items = document.querySelectorAll('#notifFeedList .notif-feed-item');
+      var visibleCount = 0;
+
+      items.forEach(function (item) {
+        var text = (item.innerText || item.textContent || '').toLowerCase();
+        var matchesQuery = !query || text.includes(query);
+
+        var itemCat = item.getAttribute('data-category') || '';
+        var matchesCategory = !categoryFilter || itemCat === categoryFilter;
+
+        var isRead = item.getAttribute('data-read') === '1' || item.classList.contains('is-read');
+        var isHigh = item.getAttribute('data-priority') === 'high' || item.classList.contains('priority-high');
+
+        var matchesFilter = true;
+        if (filterType === 'unread') {
+          matchesFilter = !isRead;
+        } else if (filterType === 'high') {
+          matchesFilter = isHigh;
+        }
+
+        if (matchesQuery && matchesCategory && matchesFilter) {
+          item.style.display = 'flex';
+          visibleCount++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      if (searchClear) {
+        searchClear.style.display = query ? 'flex' : 'none';
+      }
+
+      if (zeroSearchBox) {
+        if (visibleCount === 0 && items.length > 0) {
+          zeroSearchBox.style.display = 'block';
+          if (listCard) listCard.style.display = 'none';
+        } else {
+          zeroSearchBox.style.display = 'none';
+          if (listCard) listCard.style.display = 'block';
+        }
+      }
     }
 
-    // صفحة /notifications: قراءة إشعار فردي
-    document.querySelectorAll('.notif-single-read-btn, .dash-single-read-btn').forEach(function (btn) {
-      btn.onclick = async function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var id = btn.getAttribute('data-id');
-        if (id) {
-          await markAsRead(id);
-          var row = btn.closest('.notif-feed-item') || btn.closest('tr');
-          if (row) {
-            row.classList.remove('is-unread');
-            row.classList.add('is-read');
-            btn.remove();
-          }
+    if (searchInput) {
+      searchInput.addEventListener('input', applyFilterAndSearch);
+    }
+
+    if (searchClear) {
+      searchClear.onclick = function () {
+        if (searchInput) {
+          searchInput.value = '';
+          searchInput.focus();
         }
+        applyFilterAndSearch();
+      };
+    }
+
+    if (resetSearchBtn) {
+      resetSearchBtn.onclick = function () {
+        if (searchInput) searchInput.value = '';
+        var allTab = document.querySelector('.notif-filter-tab[data-filter="all"]');
+        if (allTab) {
+          document.querySelectorAll('.notif-filter-tab').forEach(function (t) { t.classList.remove('active'); });
+          allTab.classList.add('active');
+        }
+        applyFilterAndSearch();
+      };
+    }
+
+    // 2. فلاتر التبويبات والتصنيفات (Client-side smooth filtering)
+    document.querySelectorAll('.notif-filter-tab').forEach(function (tab) {
+      tab.onclick = function (e) {
+        e.preventDefault();
+        document.querySelectorAll('.notif-filter-tab').forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        applyFilterAndSearch();
+        var href = tab.getAttribute('href');
+        if (href && window.history && window.history.pushState) {
+          window.history.pushState(null, '', href);
+        }
+      };
+    });
+
+    // 3. زر تبديل حالة القراءة الفردي (مقروء / غير مقروء)
+    document.addEventListener('click', async function (e) {
+      var toggleBtn = e.target.closest('.notif-toggle-read-btn');
+      if (!toggleBtn) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      var id = toggleBtn.getAttribute('data-id');
+      if (!id) return;
+
+      var card = toggleBtn.closest('.notif-feed-item');
+      var isCurrentlyRead = toggleBtn.getAttribute('data-status') === 'read';
+      var newStatus = isCurrentlyRead ? 'unread' : 'read';
+
+      toggleBtn.setAttribute('data-status', newStatus);
+
+      if (card) {
+        if (newStatus === 'read') {
+          card.classList.remove('is-unread');
+          card.classList.add('is-read');
+          card.setAttribute('data-read', '1');
+          toggleBtn.innerHTML = '<i class="fa-solid fa-envelope"></i>';
+          toggleBtn.title = 'تحديد كغير مقروء';
+          toggleBtn.classList.remove('is-unread-btn');
+          toggleBtn.classList.add('is-read-btn');
+          var dot = card.querySelector('.notif-item-unread-dot');
+          if (dot) dot.style.display = 'none';
+        } else {
+          card.classList.remove('is-read');
+          card.classList.add('is-unread');
+          card.setAttribute('data-read', '0');
+          toggleBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+          toggleBtn.title = 'تحديد كمقروء';
+          toggleBtn.classList.remove('is-read-btn');
+          toggleBtn.classList.add('is-unread-btn');
+          var dot = card.querySelector('.notif-item-unread-dot');
+          if (dot) dot.style.display = 'block';
+        }
+      }
+
+      try {
+        await fetch('/api/notifications/toggle-read/' + id, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' }
+        });
+      } catch (_) {}
+
+      updateUnreadCount();
+      var unreadCount = document.querySelectorAll('#notifFeedList .notif-feed-item.is-unread').length;
+      var unreadTotal = document.getElementById('notifPageUnreadTotal');
+      if (unreadTotal) unreadTotal.textContent = String(unreadCount);
+      var tabUnread = document.querySelector('.notif-filter-tab .unread-badge');
+      if (tabUnread) tabUnread.textContent = String(unreadCount);
+    });
+
+    // 4. زر حذف الإشعار الفردي مع حركة انزلاق احترافية
+    document.addEventListener('click', async function (e) {
+      var delBtn = e.target.closest('.notif-delete-card-btn');
+      if (!delBtn) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      var id = delBtn.getAttribute('data-id');
+      if (!id) return;
+
+      var card = delBtn.closest('.notif-feed-item');
+      if (card) {
+        card.style.transition = 'opacity 0.25s ease, transform 0.25s ease, max-height 0.35s ease, margin 0.35s ease, padding 0.35s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(30px)';
+        setTimeout(function () {
+          card.style.maxHeight = '0';
+          card.style.paddingTop = '0';
+          card.style.paddingBottom = '0';
+          card.style.borderBottom = 'none';
+          card.style.overflow = 'hidden';
+          setTimeout(function () {
+            card.remove();
+            var remaining = document.querySelectorAll('#notifFeedList .notif-feed-item');
+            var totNum = document.getElementById('notifTotalNum');
+            if (totNum) totNum.textContent = String(remaining.length);
+            if (remaining.length === 0) window.location.reload();
+          }, 350);
+        }, 250);
+      }
+
+      try {
+        await fetch('/api/notifications/delete/' + id, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' }
+        });
+        if (window.showToast) window.showToast('تم حذف الإشعار بنجاح', 'success');
+      } catch (_) {}
+
+      updateUnreadCount();
+      var unreadCount = document.querySelectorAll('#notifFeedList .notif-feed-item.is-unread').length;
+      var unreadTotal = document.getElementById('notifPageUnreadTotal');
+      if (unreadTotal) unreadTotal.textContent = String(unreadCount);
+    });
+
+    // 5. النقر على البطاقة يفتح الرابط الخاص بها مباشرة
+    document.addEventListener('click', function (e) {
+      var btnOrLink = e.target.closest('button, a, input, label');
+      if (btnOrLink) return;
+      var card = e.target.closest('.notif-feed-item');
+      if (!card) return;
+      var link = card.getAttribute('data-link');
+      if (link && link !== '#' && link !== '') {
+        window.location.href = link;
+      }
+    });
+
+    // 6. صفحة /notifications: تحديد الكل كمقروء
+    var pageMarkAll = document.getElementById('notifPageMarkAll');
+    if (pageMarkAll) {
+      pageMarkAll.onclick = async function () {
+        var unreadItems = document.querySelectorAll('#notifFeedList .notif-feed-item.is-unread');
+        if (unreadItems.length === 0) {
+          if (window.showToast) window.showToast('جميع الإشعارات محددة كمقروءة بالفعل', 'info');
+          return;
+        }
+
+        unreadItems.forEach(function (card) {
+          card.classList.remove('is-unread');
+          card.classList.add('is-read');
+          card.setAttribute('data-read', '1');
+          var dot = card.querySelector('.notif-item-unread-dot');
+          if (dot) dot.style.display = 'none';
+          var toggleBtn = card.querySelector('.notif-toggle-read-btn');
+          if (toggleBtn) {
+            toggleBtn.setAttribute('data-status', 'read');
+            toggleBtn.innerHTML = '<i class="fa-solid fa-envelope"></i>';
+            toggleBtn.title = 'تحديد كغير مقروء';
+            toggleBtn.classList.remove('is-unread-btn');
+            toggleBtn.classList.add('is-read-btn');
+          }
+        });
+
+        var unreadTotal = document.getElementById('notifPageUnreadTotal');
+        if (unreadTotal) unreadTotal.textContent = '0';
+        var tabUnread = document.querySelector('.notif-filter-tab .unread-badge');
+        if (tabUnread) tabUnread.textContent = '0';
+
+        try {
+          await fetch('/api/notifications/read-all', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' }
+          });
+        } catch (_) {}
+
+        if (window.showToast) window.showToast('تم تحديد جميع الإشعارات كمقروءة', 'success');
+        updateUnreadCount();
+      };
+    }
+
+    // 7. صفحة /notifications: تفريغ الإشعارات المقروءة
+    var pageClearRead = document.getElementById('notifPageClearRead');
+    if (pageClearRead) {
+      pageClearRead.onclick = async function () {
+        var readItems = document.querySelectorAll('#notifFeedList .notif-feed-item.is-read');
+        if (readItems.length === 0) {
+          if (window.showToast) window.showToast('لا توجد إشعارات مقروءة لتفريغها', 'info');
+          return;
+        }
+        if (!confirm('هل أنت متأكد من تفريغ كافة الإشعارات المقروءة؟')) return;
+
+        readItems.forEach(function (card) {
+          card.style.transition = 'opacity 0.25s, transform 0.25s, max-height 0.35s';
+          card.style.opacity = '0';
+          card.style.transform = 'translateX(25px)';
+          setTimeout(function () { card.remove(); }, 300);
+        });
+
+        try {
+          var res = await fetch('/api/notifications/clear-all', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' }
+          });
+          var data = await res.json();
+          if (window.showToast) window.showToast('تم تفريغ ' + (data.deleted || readItems.length) + ' إشعار مقروء بنجاح', 'success');
+        } catch (_) {}
+
+        setTimeout(function () {
+          var remaining = document.querySelectorAll('#notifFeedList .notif-feed-item');
+          var totNum = document.getElementById('notifTotalNum');
+          if (totNum) totNum.textContent = String(remaining.length);
+          if (remaining.length === 0) window.location.reload();
+        }, 350);
+      };
+    }
+
+    // 8. زر تفعيل التنبيهات وإشعارات الشاشة
+    var pushEnableBtns = document.querySelectorAll('#notifEnablePushBtn, .push-enable-btn');
+    pushEnableBtns.forEach(function (btn) {
+      btn.onclick = function () {
+        requestPushPermission();
       };
     });
 
