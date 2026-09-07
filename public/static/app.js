@@ -75,21 +75,95 @@
   backdrop?.addEventListener('click', () => setDrawer(false))
   addEventListener('keydown', e => e.key === 'Escape' && setDrawer(false))
 
-  // Mobile Dashboard Sidebar Drawer
-  const dashSidebar = $('.dash-sidebar')
-  const dashBackdrop = $('.dash-backdrop')
-  const setDashSidebar = (open) => {
-    dashSidebar?.classList.toggle('open', open)
-    dashBackdrop?.classList.toggle('open', open)
-    dashSidebar?.setAttribute('aria-hidden', String(!open))
-    $('#dash-menu-toggle')?.setAttribute('aria-expanded', String(open))
-    document.body.style.overflow = open ? 'hidden' : ''
+  // Mobile Dashboard Sidebar Drawer Controller (Global Event Delegation)
+  function setDashSidebar(open) {
+    const sidebar = document.querySelector('.dash-sidebar')
+    const backdrop = document.querySelector('.dash-backdrop')
+    const toggle = document.querySelector('#dash-menu-toggle')
+    if (!sidebar) return
+
+    const isOpen = typeof open === 'boolean' ? open : !sidebar.classList.contains('open')
+
+    sidebar.classList.toggle('open', isOpen)
+    backdrop?.classList.toggle('open', isOpen)
+    sidebar.setAttribute('aria-hidden', String(!isOpen))
+    toggle?.setAttribute('aria-expanded', String(isOpen))
+    document.body.classList.toggle('dash-sidebar-open', isOpen)
+
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+      setTimeout(() => document.getElementById('dash-menu-close')?.focus(), 80)
+    } else {
+      document.body.style.overflow = ''
+    }
   }
-  $('#dash-menu-toggle')?.addEventListener('click', () => setDashSidebar(true))
-  $('#dash-menu-close')?.addEventListener('click', () => setDashSidebar(false))
-  dashBackdrop?.addEventListener('click', () => setDashSidebar(false))
-  $$('.dash-sidebar nav a').forEach(a => a.addEventListener('click', () => setDashSidebar(false)))
-  addEventListener('keydown', e => e.key === 'Escape' && setDashSidebar(false))
+  window.setDashSidebar = setDashSidebar
+  window.setDashMenu = setDashSidebar // backwards-compatible alias
+
+  // Global delegation for all mobile dashboard sidebar triggers
+  document.addEventListener('click', (e) => {
+    // Open trigger
+    const openBtn = e.target.closest('#dash-menu-toggle, .dash-menu-button')
+    if (openBtn) {
+      e.preventDefault()
+      e.stopPropagation()
+      setDashSidebar(true)
+      return
+    }
+
+    // Close trigger
+    const closeBtn = e.target.closest('#dash-menu-close')
+    if (closeBtn) {
+      e.preventDefault()
+      e.stopPropagation()
+      setDashSidebar(false)
+      return
+    }
+
+    // Backdrop trigger
+    const backdrop = e.target.closest('.dash-backdrop')
+    if (backdrop) {
+      e.preventDefault()
+      e.stopPropagation()
+      setDashSidebar(false)
+      return
+    }
+
+    // Auto-close on link click on mobile
+    const navLink = e.target.closest('.dash-sidebar nav a, .dash-sidebar-footer a')
+    if (navLink && window.innerWidth <= 820) {
+      setDashSidebar(false)
+    }
+  })
+
+  // Escape key support
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setDashSidebar(false)
+  })
+
+  // Smooth swipe to close on touch devices (Swipe right in RTL)
+  let touchStartX = 0
+  let touchStartY = 0
+  document.addEventListener('touchstart', (e) => {
+    if (!e.touches || !e.touches[0]) return
+    touchStartX = e.touches[0].clientX
+    touchStartY = e.touches[0].clientY
+  }, { passive: true })
+
+  document.addEventListener('touchend', (e) => {
+    const sidebar = document.querySelector('.dash-sidebar.open')
+    if (!sidebar || !e.changedTouches || !e.changedTouches[0]) return
+
+    const touchEndX = e.changedTouches[0].clientX
+    const touchEndY = e.changedTouches[0].clientY
+    const deltaX = touchEndX - touchStartX
+    const deltaY = Math.abs(touchEndY - touchStartY)
+
+    // RTL drawer on right edge: swiping towards right (deltaX > 50) closes it
+    if (deltaX > 50 && deltaY < 80) {
+      setDashSidebar(false)
+    }
+  }, { passive: true })
 
   const savedTheme = localStorage.getItem('omar-theme')
   if (savedTheme === 'dark') document.body.classList.add('dark')
@@ -117,11 +191,6 @@
     const isCurrent = href === '/' ? location.pathname === '/' : location.pathname.startsWith(href)
     if (isCurrent) link.setAttribute('aria-current', 'page')
   })
-
-  const setDashMenu = open => { $('.dash-sidebar')?.classList.toggle('open',open); $('.dash-backdrop')?.classList.toggle('open',open) }
-  $('#dash-menu-toggle')?.addEventListener('click', () => setDashMenu(true))
-  $('#dash-menu-close')?.addEventListener('click', () => setDashMenu(false))
-  $('.dash-backdrop')?.addEventListener('click', () => setDashMenu(false))
 
   const revealObserver = new IntersectionObserver(entries => {
     entries.forEach(entry => {
@@ -1629,7 +1698,7 @@
     const dashMain = $('.dash-main')
     if (!dashMain) return
 
-    setDashMenu(false)
+    setDashSidebar(false)
 
     dashMain.classList.add('view-transitioning')
 

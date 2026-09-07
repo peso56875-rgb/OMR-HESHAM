@@ -58,16 +58,16 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
       <div class="dash-main">
         <header class="dash-topbar">
           <button class="dash-menu-button" id="dash-menu-toggle" type="button" aria-label="فتح القائمة" aria-expanded="false">{icon('fa-bars-staggered')}</button>
-          <div><p>{dateStr}</p><h1>مرحبًا، {user.name}</h1></div>
+          <div class="dash-top-title"><p>{dateStr}</p><h1>مرحبًا، {user.name}</h1></div>
           <div class="dash-top-actions">
-            <div style="display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--border); padding:6px 14px; border-radius:12px; gap:8px; margin-inline-end:10px">
+            <div class="dash-top-search">
               <span style="color:var(--muted)">{icon('fa-magnifying-glass')}</span>
-              <input type="text" id="dash-search-input" placeholder="بحث في الجدول..." style="border:none; background:transparent; outline:none; font-size:.88rem; width:140px; color:var(--text)" />
+              <input type="text" id="dash-search-input" placeholder="بحث في الجدول..." />
             </div>
             <NotificationBell user={user} isDashboard={true} />
             <button id="theme-toggle" type="button" aria-label="تغيير المظهر">{icon('fa-moon')}</button>
-            <span>{icon('fa-user-shield')}</span>
-            <b>{user.name}</b>
+            <span class="dash-admin-badge">{icon('fa-user-shield')}</span>
+            <b class="dash-user-name">{user.name}</b>
           </div>
         </header>
 
