@@ -80,12 +80,57 @@ contacts.post('/status/:id', adminMiddleware, async (c) => {
   const id = c.req.param('id') as string
   const body = await c.req.parseBody()
   const status = body.status as string
+  const isAjax = c.req.header('x-requested-with') === 'XMLHttpRequest' || (c.req.header('content-type') || '').includes('application/json')
 
   try {
-    await db.collection('contacts').doc(id).update({ status })
+    await db.collection('contacts').doc(id).update({ 
+      status,
+      updated_at: new Date().toISOString()
+    })
+    if (isAjax) {
+      return c.json({ success: true, message: 'تم تحديث حالة الرسالة بنجاح' })
+    }
     return c.redirect('/dashboard?view=contacts&success=1')
   } catch (error: any) {
     console.error('Error updating contact status:', error.message)
+    if (isAjax) {
+      return c.json({ error: error.message }, 500)
+    }
     return c.redirect('/dashboard?view=contacts&error=1')
+  }
+})
+
+// Delete contact message (Admin only)
+contacts.post('/delete/:id', adminMiddleware, async (c) => {
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
+  const contentType = c.req.header('content-type') || ''
+  const isAjax = c.req.header('x-requested-with') === 'XMLHttpRequest' || contentType.includes('application/json')
+
+  try {
+    await db.collection('contacts').doc(id).delete()
+    if (isAjax) {
+      return c.json({ success: true, message: 'تم حذف الرسالة بنجاح' })
+    }
+    return c.redirect('/dashboard?view=contacts&deleted=1')
+  } catch (error: any) {
+    console.error('Error deleting contact message:', error.message)
+    if (isAjax) {
+      return c.json({ error: error.message }, 500)
+    }
+    return c.redirect('/dashboard?view=contacts&error=delete_failed')
+  }
+})
+
+// Support REST DELETE method as well
+contacts.delete('/:id', adminMiddleware, async (c) => {
+  const db = getFirestore(c)
+  const id = c.req.param('id') as string
+  try {
+    await db.collection('contacts').doc(id).delete()
+    return c.json({ success: true, message: 'تم حذف الرسالة بنجاح' })
+  } catch (error: any) {
+    console.error('Error deleting contact message:', error.message)
+    return c.json({ error: error.message }, 500)
   }
 })

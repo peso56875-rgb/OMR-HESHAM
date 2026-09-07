@@ -1502,8 +1502,11 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
 
 export function DashContacts({ list = [] }: { list: any[] }) {
   return <section class="dash-table">
-    <header style="display:flex; justify-content:space-between; align-items:center">
-      <h3>الرسائل الواردة</h3>
+    <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+      <div>
+        <h3>الرسائل الواردة ({list.length})</h3>
+        <p style="color:var(--muted); font-size:.82rem; margin-top:2px">جميع الرسائل والاستفسارات الواردة من زوار الموقع عبر صفحة تواصل معنا.</p>
+      </div>
       <a href="/api/export/contacts" download class="export-excel-btn">
         {icon('fa-file-excel')} تصدير Excel
       </a>
@@ -1511,33 +1514,82 @@ export function DashContacts({ list = [] }: { list: any[] }) {
     <table>
       <thead>
         <tr>
-          <th>الاسم</th>
-          <th>الهاتف / الإيميل</th>
-          <th>الموضوع</th>
-          <th>الرسالة</th>
+          <th>المرسل</th>
+          <th>بيانات التواصل</th>
+          <th>الموضوع والتاريخ</th>
+          <th>نص الرسالة</th>
           <th>الحالة</th>
           <th>الإجراءات</th>
         </tr>
       </thead>
       <tbody>
-        {list.map((c: any) => {
-          const isRead = c.status === 'read'
-          return <tr>
-            <td>{c.name}</td>
-            <td>{c.phone} / {c.email}</td>
-            <td>{c.subject}</td>
-            <td style="max-width:300px; white-space:pre-wrap">{c.message}</td>
-            <td>{isRead ? 'مقروءة' : 'جديدة'}</td>
-            <td>
-              {!isRead && (
-                <form action={`/api/contacts/status/${c.id}`} method="post" style="display:inline">
-                  <input type="hidden" name="status" value="read" />
-                  <button type="submit" style="background:var(--blue-600); color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer">تحديد كمقروءة</button>
-                </form>
-              )}
+        {list.length === 0 ? (
+          <tr>
+            <td colSpan={6} style="text-align:center; padding:3rem 1rem; color:var(--muted)">
+              <div style="font-size:2.2rem; margin-bottom:.5rem; color:var(--emerald)">{icon('fa-inbox')}</div>
+              <strong style="display:block; font-size:1.05rem; color:var(--heading)">لا توجد رسائل واردة حتى الآن</strong>
+              <p style="font-size:.84rem; margin-top:4px; color:var(--muted)">ستظهر هنا تلقائياً أي رسائل أو استفسارات يرسلها الزوار عبر الموقع.</p>
             </td>
           </tr>
-        })}
+        ) : (
+          list.map((c: any) => {
+            const isRead = c.status === 'read'
+            const dateDisplay = c.created_at ? new Date(c.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''
+
+            return <tr>
+              <td>
+                <strong>{c.name}</strong>
+              </td>
+              <td>
+                <div style="display:flex; flex-direction:column; gap:3px">
+                  {c.phone && (
+                    <a href={`tel:${c.phone}`} style="display:inline-flex; align-items:center; gap:6px; font-size:.84rem; color:var(--text); text-decoration:none; direction:ltr; text-align:right">
+                      <span style="color:var(--emerald)">{icon('fa-phone')}</span> <span>{c.phone}</span>
+                    </a>
+                  )}
+                  {c.email && (
+                    <a href={`mailto:${c.email}`} style="display:inline-flex; align-items:center; gap:6px; font-size:.82rem; color:var(--muted); text-decoration:none; direction:ltr; text-align:right">
+                      <span>{icon('fa-envelope')}</span> <span>{c.email}</span>
+                    </a>
+                  )}
+                </div>
+              </td>
+              <td>
+                <strong>{c.subject || 'استفسار عام'}</strong>
+                {dateDisplay && <small style="display:block; color:var(--muted); font-size:.74rem; margin-top:3px">{dateDisplay}</small>}
+              </td>
+              <td style="max-width:320px; white-space:pre-wrap; line-height:1.45; font-size:.86rem">
+                {c.message}
+              </td>
+              <td>
+                <span style={`display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:8px; font-weight:700; font-size:.78rem; ${isRead ? 'background:rgba(16,185,129,.12); color:#10b981' : 'background:rgba(232,111,81,.12); color:#e86f51'}`}>
+                  {isRead ? icon('fa-envelope-open') : icon('fa-envelope')}
+                  <span>{isRead ? 'مقروءة' : 'جديدة'}</span>
+                </span>
+              </td>
+              <td>
+                <div style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap">
+                  <form action={`/api/contacts/status/${c.id}`} method="post" class="dash-action-form" style="display:inline">
+                    <input type="hidden" name="status" value={isRead ? 'unread' : 'read'} />
+                    <button
+                      type="submit"
+                      class="dash-edit-btn"
+                      style={isRead ? 'background:#64748b !important; border-color:#475569 !important' : 'background:#10b981 !important; border-color:#059669 !important'}
+                      title={isRead ? 'تحديد كرسالة جديدة' : 'تحديد كرسالة مقروءة'}
+                    >
+                      {isRead ? <>{icon('fa-envelope')} غير مقروءة</> : <>{icon('fa-check')} مقروءة</>}
+                    </button>
+                  </form>
+                  <form action={`/api/contacts/delete/${c.id}`} method="post" class="dash-action-form" data-confirm={`هل أنت متأكد من حذف رسالة "${c.name}" نهائياً؟`} style="display:inline">
+                    <button type="submit" class="dash-delete-btn" title="حذف هذه الرسالة">
+                      {icon('fa-trash-can')} حذف
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          })
+        )}
       </tbody>
     </table>
   </section>
