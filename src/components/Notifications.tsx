@@ -106,7 +106,7 @@ export function NotificationsPage({
         <div class="notif-page-container">
           
           {/* ══════ شريط الحالة اللحظية وبطاقات المؤشرات (KPIs) ══════ */}
-          <div class="notif-kpi-banner reveal">
+          <div class="notif-kpi-banner">
             <div class="notif-live-status-chip">
               <span class="status-pulse-dot"></span>
               <span>مزامنة الإشعارات نشطة لحظياً</span>
@@ -154,7 +154,7 @@ export function NotificationsPage({
           </div>
 
           {/* ══════ شريط الأدوات والبحث والإجراءات السريعة ══════ */}
-          <div class="notif-page-toolbar reveal">
+          <div class="notif-page-toolbar">
             {/* البحث الحي الفوري */}
             <div class="notif-search-wrapper">
               <span class="notif-search-icon">{icon('fa-magnifying-glass')}</span>
@@ -223,7 +223,7 @@ export function NotificationsPage({
           </div>
 
           {/* ══════ فلاتر التبويبات والتصنيفات ══════ */}
-          <div class="notif-tabs-bar reveal">
+          <div class="notif-tabs-bar">
             <div class="notif-filters-scroll" id="notifFiltersContainer">
               {/* تبويب: الكل */}
               <a
@@ -288,7 +288,7 @@ export function NotificationsPage({
           </div>
 
           {/* ══════ قائمة بطاقات الإشعارات الرئيسية ══════ */}
-          <div class="notif-page-list-card reveal" id="notifListCard">
+          <div class="notif-page-list-card" id="notifListCard">
             {items.length === 0 ? (
               <div class="notif-page-empty">
                 <div class="notif-page-empty-icon">
@@ -417,7 +417,7 @@ export function NotificationsPage({
           </div>
 
           {/* ══════ قسم التفضيلات أو دعوة تسجيل الدخول للزوار ══════ */}
-          <div class="notif-page-prefs-wrapper reveal" style="margin-top: 2.5rem">
+          <div class="notif-page-prefs-wrapper" style="margin-top: 2.5rem">
             {user ? (
               <NotificationPrefsSection user={user} pushAvailable={pushAvailable} />
             ) : (
