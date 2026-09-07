@@ -10,6 +10,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
     ['fa-arrow-down', 'الإيرادات (الوارد)', 'income'],
     ['fa-arrow-up', 'المصروفات (المنصرف)', 'expenses'],
     ['fa-bullseye', 'الحملات', 'campaigns'],
+    ['fa-door-open', 'برامج العطاء (الأبواب)', 'programs'],
     ['fa-hand-holding-dollar', 'التبرعات', 'donations'],
     ['fa-people-group', 'المتطوعون', 'volunteers'],
     ['fa-users-gear', 'المستخدمون', 'users'],
@@ -76,6 +77,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
         {view === 'income' && <DashIncome list={data.list} campaigns={data.campaigns} user={user} />}
         {view === 'expenses' && <DashExpenses list={data.list} campaigns={data.campaigns} user={user} />}
         {view === 'campaigns' && <DashCampaigns list={data.list} />}
+        {view === 'programs' && <DashPrograms list={data.list} />}
         {view === 'donations' && <DashDonations list={data.list} />}
         {view === 'volunteers' && <DashVolunteers list={data.list} />}
         {view === 'contacts' && <DashContacts list={data.list} />}
@@ -517,11 +519,23 @@ export function DashExpenses({ list = [], campaigns = [], user }: { list: any[],
 export function DashCampaigns({ list = [] }: { list: any[] }) {
   return <>
     <section class="dash-table">
-      <header style="display:flex; justify-content:space-between; align-items:center">
-        <h3>الحملات الحالية</h3>
-        <a href="/api/export/campaigns" download class="export-excel-btn">
-          {icon('fa-file-excel')} تصدير Excel
-        </a>
+      <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+        <div>
+          <h3>الحملات الحالية («اختر القصة التي تريد أن تغيّر نهايتها»)</h3>
+          <p style="color:var(--muted); font-size:.82rem; margin-top:2px">تتحكم هذه القائمة في الحملات المعروضة على الصفحة الرئيسية وصفحة الحملات.</p>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center">
+          {list.length === 0 && (
+            <form action="/api/campaigns/seed-defaults" method="post" class="dash-action-form" data-confirm="هل تريد استيراد الحملات الافتراضية لقاعدة البيانات للبدء منها وتعديلها أو حذفها؟">
+              <button type="submit" class="outline-btn" style="padding:6px 12px; font-size:.82rem">
+                {icon('fa-wand-magic-sparkles')} استيراد الحملات الافتراضية
+              </button>
+            </form>
+          )}
+          <a href="/api/export/campaigns" download class="export-excel-btn">
+            {icon('fa-file-excel')} تصدير Excel
+          </a>
+        </div>
       </header>
       <table>
         <thead>
@@ -535,35 +549,43 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
           </tr>
         </thead>
         <tbody>
-          {list.map((c: any) => (
+          {list.length === 0 ? (
             <tr>
-              <td>{c.title}</td>
-              <td>{c.category}</td>
-              <td>{Number(c.goal).toLocaleString('ar-EG')} ج.م</td>
-              <td>{Number(c.raised || 0).toLocaleString('ar-EG')} ج.م</td>
-              <td>{c.is_urgent ? 'نعم' : 'لا'}</td>
-              <td>
-                <div style="display:flex; gap:6px; align-items:center">
-                  <button
-                    type="button"
-                    class="edit-campaign-btn dash-edit-btn"
-                    data-id={c.id}
-                    data-title={c.title}
-                    data-category={c.category}
-                    data-goal={c.goal}
-                    data-raised={c.raised || 0}
-                    data-urgent={c.is_urgent ? 'true' : 'false'}
-                    data-icon={c.icon || 'fa-heart'}
-                    data-description={c.description || ''}
-                    data-image={c.image_url || ''}
-                  >{icon('fa-pen-to-square')} تعديل</button>
-                  <form action={`/api/campaigns/delete/${c.id}`} method="post" class="dash-action-form" data-confirm="هل أنت متأكد من حذف هذه الحملة؟">
-                    <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')} حذف</button>
-                  </form>
-                </div>
+              <td colspan={6} style="text-align:center; padding:2.5rem 1rem; color:var(--muted)">
+                لا توجد حملات مضافة حتى الآن. يمكنك إضافة أول حملة حقيقية بالنموذج أدناه أو استيراد النماذج الافتراضية.
               </td>
             </tr>
-          ))}
+          ) : (
+            list.map((c: any) => (
+              <tr>
+                <td>{c.title}</td>
+                <td>{c.category}</td>
+                <td>{Number(c.goal).toLocaleString('ar-EG')} ج.م</td>
+                <td>{Number(c.raised || 0).toLocaleString('ar-EG')} ج.م</td>
+                <td>{c.is_urgent ? 'نعم' : 'لا'}</td>
+                <td>
+                  <div style="display:flex; gap:6px; align-items:center">
+                    <button
+                      type="button"
+                      class="edit-campaign-btn dash-edit-btn"
+                      data-id={c.id}
+                      data-title={c.title}
+                      data-category={c.category}
+                      data-goal={c.goal}
+                      data-raised={c.raised || 0}
+                      data-urgent={c.is_urgent ? 'true' : 'false'}
+                      data-icon={c.icon || 'fa-heart'}
+                      data-description={c.description || ''}
+                      data-image={c.image_url || ''}
+                    >{icon('fa-pen-to-square')} تعديل</button>
+                    <form action={`/api/campaigns/delete/${c.id}`} method="post" class="dash-action-form" data-confirm="هل أنت متأكد من حذف هذه الحملة؟">
+                      <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')} حذف</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </section>
@@ -611,6 +633,168 @@ export function DashCampaigns({ list = [] }: { list: any[] }) {
       </form>
     </section>
 
+  </>
+}
+
+export function DashPrograms({ list = [] }: { list: any[] }) {
+  const toneNames: Record<string, string> = {
+    gold: 'ذهبي (Gold)',
+    coral: 'مرجاني (Coral)',
+    blue: 'أزرق (Blue)',
+    emerald: 'زمردي (Emerald)',
+    violet: 'بنفسجي (Violet)',
+    cyan: 'سماوي (Cyan)'
+  }
+
+  const toneHex: Record<string, string> = {
+    gold: '#e0ae4c',
+    coral: '#e86f51',
+    blue: '#3d98df',
+    emerald: '#29ab83',
+    violet: '#8b6cc9',
+    cyan: '#40b8be'
+  }
+
+  const presetIcons = [
+    'fa-cow', 'fa-bowl-food', 'fa-heart-pulse', 'fa-book-quran',
+    'fa-graduation-cap', 'fa-people-roof', 'fa-hand-holding-heart',
+    'fa-seedling', 'fa-stethoscope', 'fa-gift', 'fa-kit-medical', 'fa-house-chimney-medical'
+  ]
+
+  return <>
+    <section class="dash-table">
+      <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+        <div>
+          <h3>أبواب العطاء ومساحات الخير («ستةُ أبواب، ووجهةٌ واحدة: الإنسان»)</h3>
+          <p style="color:var(--muted); font-size:.82rem; margin-top:2px">تتحكم هذه القائمة في بطاقات البرامج والأبواب المعروضة في الصفحة الرئيسية.</p>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center">
+          {list.length === 0 && (
+            <form action="/api/programs/seed-defaults" method="post" class="dash-action-form" data-confirm="هل تريد استيراد الأبواب الستة الافتراضية لقاعدة البيانات للبدء منها وتعديلها أو حذفها؟">
+              <button type="submit" class="outline-btn" style="padding:6px 12px; font-size:.82rem">
+                {icon('fa-wand-magic-sparkles')} استيراد الأبواب الستة الافتراضية
+              </button>
+            </form>
+          )}
+        </div>
+      </header>
+
+      <table>
+        <thead>
+          <tr>
+            <th>الترتيب</th>
+            <th>الأيقونة</th>
+            <th>العنوان</th>
+            <th>الوصف</th>
+            <th>النغمة اللونية</th>
+            <th>الرابط</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.length === 0 ? (
+            <tr>
+              <td colspan={7} style="text-align:center; padding:2.5rem 1rem; color:var(--muted)">
+                لا توجد أبواب أو برامج مضافة حتى الآن. يمكنك إضافة باب جديد بالنموذج أدناه أو استيراد الأبواب الستة الافتراضية.
+              </td>
+            </tr>
+          ) : (
+            list.map((p: any, idx: number) => (
+              <tr>
+                <td><strong>{p.order ?? idx + 1}</strong></td>
+                <td>
+                  <span style={`display:inline-grid; place-items:center; width:34px; height:34px; border-radius:10px; background:color-mix(in srgb, ${toneHex[p.tone] || '#29ab83'} 15%, transparent); color:${toneHex[p.tone] || '#29ab83'}; font-size:1.1rem`}>
+                    {icon(p.icon || 'fa-hand-holding-heart')}
+                  </span>
+                </td>
+                <td><strong>{p.title}</strong></td>
+                <td style="max-width:280px; white-space:normal; line-height:1.4">{p.description}</td>
+                <td>
+                  <span style={`display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:6px; font-size:.78rem; font-weight:700; background:color-mix(in srgb, ${toneHex[p.tone] || '#29ab83'} 18%, transparent); color:${toneHex[p.tone] || '#29ab83'}`}>
+                    <i style={`width:8px; height:8px; border-radius:50%; background:${toneHex[p.tone] || '#29ab83'}`}></i>
+                    {toneNames[p.tone] || p.tone || 'ذهبي'}
+                  </span>
+                </td>
+                <td style="font-size:.82rem; color:var(--muted)">{p.link || '/campaigns'}</td>
+                <td>
+                  <div style="display:flex; gap:6px; align-items:center">
+                    <button
+                      type="button"
+                      class="edit-program-btn dash-edit-btn"
+                      data-id={p.id}
+                      data-title={p.title}
+                      data-description={p.description || ''}
+                      data-icon={p.icon || 'fa-hand-holding-heart'}
+                      data-tone={p.tone || 'gold'}
+                      data-link={p.link || '/campaigns'}
+                      data-order={p.order ?? idx + 1}
+                    >{icon('fa-pen-to-square')} تعديل</button>
+                    <form action={`/api/programs/delete/${p.id}`} method="post" class="dash-action-form" data-confirm="هل أنت متأكد من حذف هذا الباب؟">
+                      <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')} حذف</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section-pad" style="padding-top:2rem">
+      <form action="/api/programs/add" method="post" style="background:var(--surface); border:1px solid var(--border); padding:2rem; border-radius:16px; max-width:640px; display:flex; flex-direction:column; gap:1.2rem">
+        <h3>إضافة باب / مسار عطاء جديد</h3>
+        <label>عنوان الباب أو المسار<input name="title" placeholder="مثال: كفالة علاجية، مائدة إطعام، حقيبة علم" required /></label>
+        <label>الوصف المختصر<textarea name="description" rows={2} placeholder="موجز يوضح أثر هذا الباب ويظهر في البطاقة على الصفحة الرئيسية" required></textarea></label>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
+          <label>
+            النغمة اللونية للبطاقة
+            <select name="tone" style="width:100%; padding:9px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); margin-top:4px">
+              <option value="gold">ذهبي (Gold)</option>
+              <option value="coral">مرجاني (Coral)</option>
+              <option value="blue">أزرق (Blue)</option>
+              <option value="emerald">زمردي (Emerald)</option>
+              <option value="violet">بنفسجي (Violet)</option>
+              <option value="cyan">سماوي (Cyan)</option>
+            </select>
+          </label>
+          <label>
+            رقم الترتيب
+            <input type="number" name="order" value={list.length + 1} style="margin-top:4px" />
+          </label>
+        </div>
+
+        <label>
+          رابط الانتقال عند النقر (اختياري)
+          <input name="link" placeholder="/campaigns أو /donate أو رابط صفحة مخصصة" value="/campaigns" />
+        </label>
+
+        <label>
+          أيقونة البرنامج <span>(اختر من المقترحات أو اكتب اسم رمز FontAwesome)</span>
+          <div style="display:flex; gap:8px; align-items:center; margin-top:4px">
+            <span id="program-icon-badge" style="width:40px; height:40px; border-radius:8px; background:var(--gold-600); color:#fff; display:grid; place-items:center; font-size:1.2rem">
+              <i class="fa-solid fa-hand-holding-heart"></i>
+            </span>
+            <input name="icon" id="program-icon-input" value="fa-hand-holding-heart" placeholder="fa-cow" style="flex:1" />
+          </div>
+          <div class="icon-presets" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px">
+            {presetIcons.map(ic => (
+              <button
+                type="button"
+                class="program-icon-preset-btn"
+                data-icon={ic}
+                style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-2); color:var(--text); cursor:pointer; font-size:1.1rem"
+              >
+                {icon(ic)}
+              </button>
+            ))}
+          </div>
+        </label>
+
+        <button class="primary-btn" type="submit">حفظ وإضافة الباب</button>
+      </form>
+    </section>
   </>
 }
 

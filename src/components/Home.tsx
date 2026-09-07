@@ -2,8 +2,7 @@ import { icon, Layout, SectionHead, CampaignCard, cssBackground } from './shared
 import { defaultPrograms, defaultCampaigns, defaultNews } from '../defaults'
 import type { UserSession } from '../types'
 
-export function Home({ campaigns = [], news = [], stories = [], user }: { campaigns?: any[], news?: any[], stories?: any[], user?: UserSession }) {
-  const renderCampaigns = campaigns.length > 0 ? campaigns : defaultCampaigns
+export function Home({ campaigns = [], programs = [], news = [], stories = [], user }: { campaigns?: any[], programs?: any[], news?: any[], stories?: any[], user?: UserSession }) {
   const renderNews = news.length > 0 ? news : defaultNews
 
   return <Layout user={user} showFooter>
@@ -60,14 +59,85 @@ export function Home({ campaigns = [], news = [], stories = [], user }: { campai
 
     <section class="programs section-pad">
       <SectionHead kicker="مساحات العطاء" title={'ستةُ أبواب،<br/><em>ووجهةٌ واحدة: الإنسان.</em>'} text="نصل إلى الإنسان في صحته وتعليمه وغذائه وروحه؛ لأن التنمية الحقيقية لا تترك جانبًا من الحياة خلفها." />
-      <div class="program-grid">{defaultPrograms.map((p, i) => <article class={`program-card reveal tone-${p[3]}`} style={`--delay:${i * 70}ms`}><span class="program-index">0{i + 1}</span><div class="program-icon">{icon(p[0])}</div><h3>{p[1]}</h3><p>{p[2]}</p><a href="/achievements" aria-label={`اعرف المزيد عن ${p[1]}`}><i class="fa-solid fa-arrow-left"></i></a></article>)}</div>
+      <div class="program-grid">
+        {programs.length > 0 ? (
+          programs.map((p: any, i: number) => {
+            const tone = p.tone || 'gold'
+            const ic = p.icon || 'fa-hand-holding-heart'
+            const link = p.link || '/campaigns'
+            const num = String(p.order ?? i + 1).padStart(2, '0')
+            return <article class={`program-card reveal tone-${tone}`} style={`--delay:${i * 70}ms`}>
+              <span class="program-index">{num}</span>
+              <div class="program-icon">{icon(ic)}</div>
+              <h3>{p.title}</h3>
+              <p>{p.description}</p>
+              <a href={link} aria-label={`اعرف المزيد عن ${p.title}`}><i class="fa-solid fa-arrow-left"></i></a>
+            </article>
+          })
+        ) : (
+          <div style="grid-column:1/-1; text-align:center; padding:3.5rem 1.5rem; background:var(--paper); border:1px dashed var(--line); border-radius:var(--radius)">
+            <div style="width:56px; height:56px; border-radius:16px; background:rgba(214,166,75,0.12); color:var(--gold); display:grid; place-items:center; font-size:1.6rem; margin:0 auto 1rem">
+              {icon('fa-door-open')}
+            </div>
+            {user?.role === 'admin' ? (
+              <>
+                <h4 style="margin:0 0 8px; font-size:1.2rem">لم تُضف أي أبواب أو مسارات بعد</h4>
+                <p style="color:var(--muted); max-width:500px; margin:0 auto 1.5rem; font-size:.92rem">
+                  تم إخلاء الصفحة الرئيسية من البيانات التجريبية كما طلبت. يمكنك الآن إضافة الأبواب الحقيقية أو استيراد الأبواب الستة بنقرة واحدة من لوحة التحكم.
+                </p>
+                <a class="primary-btn" href="/dashboard?view=programs" style="display:inline-flex; align-items:center; gap:8px">
+                  {icon('fa-plus')} إدارة أبواب العطاء من لوحة التحكم
+                </a>
+              </>
+            ) : (
+              <>
+                <h4 style="margin:0 0 8px; font-size:1.15rem">أبواب العطاء ومساحات الخير</h4>
+                <p style="color:var(--muted); margin:0; font-size:.95rem">
+                  نصل إلى الإنسان في صحته وتعليمه وغذائه وروحه — ترقبوا تفاصيل برامجنا قريبًا.
+                </p>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </section>
 
     <section class="verse-break"><div class="verse-stars"></div><p class="reveal">﴿ مَثَلُ الَّذِينَ يُنفِقُونَ أَمْوَالَهُمْ فِي سَبِيلِ اللَّهِ كَمَثَلِ حَبَّةٍ أَنبَتَتْ سَبْعَ سَنَابِلَ ﴾</p><span>البقرة — ٢٦١</span></section>
 
     <section class="campaigns-preview section-pad">
-      <div class="head-row"><SectionHead kicker="الأثر ينتظرك" title={'اختر القصة التي<br/><em>تريد أن تغيّر نهايتها.</em>'} /><a class="outline-btn" href="/campaigns">كل الحملات {icon('fa-arrow-left')}</a></div>
-      <div class="campaign-grid">{renderCampaigns.slice(0, 3).map(c => <CampaignCard c={c} />)}</div>
+      <div class="head-row">
+        <SectionHead kicker="الأثر ينتظرك" title={'اختر القصة التي<br/><em>تريد أن تغيّر نهايتها.</em>'} />
+        {campaigns.length > 0 && <a class="outline-btn" href="/campaigns">كل الحملات {icon('fa-arrow-left')}</a>}
+      </div>
+      <div class="campaign-grid">
+        {campaigns.length > 0 ? (
+          campaigns.slice(0, 3).map(c => <CampaignCard c={c} />)
+        ) : (
+          <div style="grid-column:1/-1; width:100%; text-align:center; padding:3.5rem 1.5rem; background:var(--paper); border:1px dashed var(--line); border-radius:var(--radius)">
+            <div style="width:56px; height:56px; border-radius:16px; background:rgba(67,160,71,0.12); color:var(--emerald-600); display:grid; place-items:center; font-size:1.6rem; margin:0 auto 1rem">
+              {icon('fa-bullseye')}
+            </div>
+            {user?.role === 'admin' ? (
+              <>
+                <h4 style="margin:0 0 8px; font-size:1.2rem">لا توجد حملات منشورة حاليًا</h4>
+                <p style="color:var(--muted); max-width:500px; margin:0 auto 1.5rem; font-size:.92rem">
+                  تم إخلاء الصفحة الرئيسية من الحملات التجريبية. يمكنك الآن نشر أول حملة حقيقية بالاسم والهدف والأيقونة من لوحة التحكم.
+                </p>
+                <a class="primary-btn" href="/dashboard?view=campaigns" style="display:inline-flex; align-items:center; gap:8px">
+                  {icon('fa-plus')} إضافة حملة جديدة من لوحة التحكم
+                </a>
+              </>
+            ) : (
+              <>
+                <h4 style="margin:0 0 8px; font-size:1.15rem">حملات الأثر القادمة</h4>
+                <p style="color:var(--muted); margin:0; font-size:.95rem">
+                  نعمل حاليًا على إعداد وتوثيق الحالات الجديدة — ترقبوا إطلاق حملاتنا قريبًا.
+                </p>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </section>
 
     <section class="process section-pad"><div class="process-bg-word">أثر</div><SectionHead kicker="من يدك إلى مستحقه" title={'طريقٌ واضح،<br/><em>وأمانةٌ محفوظة.</em>'} /><div class="steps">{[['fa-hand-holding-heart', 'تتبرّع', 'اختر المسار والمبلغ الذي يناسبك.'], ['fa-magnifying-glass-chart', 'نبحث', 'ندرس الحالات ميدانيًا بعناية.'], ['fa-box-open', 'نُوصل', 'نقدم الدعم بكرامة وخصوصية.'], ['fa-chart-line', 'نُوثّق', 'نشاركك أين وكيف صُنع الأثر.']].map((s, i) => <article class="step reveal"><span>0{i + 1}</span><div>{icon(s[0])}</div><h3>{s[1]}</h3><p>{s[2]}</p>{i < 3 && <i class="step-line"></i>}</article>)}</div></section>

@@ -93,21 +93,22 @@ app.get('/', async (c) => {
   let campaigns: any[] = []
   let news: any[] = []
   let stories: any[] = []
+  let programs: any[] = []
   try {
     const db = getFirestore(c)
-    const [cSnap, nSnap, sSnap] = await Promise.all([
-      db.collection('campaigns').where('is_published', '==', true).limit(3).get(),
+    const [cSnap, nSnap, sSnap, pSnap] = await Promise.all([
+      db.collection('campaigns').where('is_published', '==', true).orderBy('created_at', 'desc').limit(6).get().catch(() => db.collection('campaigns').where('is_published', '==', true).limit(6).get()),
       db.collection('news').where('is_published', '==', true).orderBy('publish_date', 'desc').limit(3).get(),
-      db.collection('stories').where('is_published', '==', true).limit(3).get()
+      db.collection('stories').where('is_published', '==', true).limit(3).get(),
+      db.collection('programs').where('is_published', '==', true).get().catch(() => ({ docs: [] }))
     ])
     campaigns = cSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
     news = nSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
     stories = sSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+    programs = pSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+    programs.sort((a: any, b: any) => (Number(a.order) || 0) - (Number(b.order) || 0))
   } catch (e) { }
 
-  if (!campaigns.length) {
-    campaigns = defaultCampaigns.slice(0, 3)
-  }
   if (!news.length) {
     news = defaultNews.map((n, idx) => ({
       id: `default-news-${idx}`,
@@ -118,7 +119,7 @@ app.get('/', async (c) => {
       icon: n[3]
     }))
   }
-  return c.html(<Home campaigns={campaigns} news={news} stories={stories} user={(c as any).get('user')} />)
+  return c.html(<Home campaigns={campaigns} programs={programs} news={news} stories={stories} user={(c as any).get('user')} />)
 })
 
 app.get('/about', (c) => c.html(<About user={(c as any).get('user')} />))
@@ -127,12 +128,9 @@ app.get('/campaigns', async (c) => {
   let campaigns: any[] = []
   try {
     const db = getFirestore(c)
-    const snap = await db.collection('campaigns').where('is_published', '==', true).get()
+    const snap = await db.collection('campaigns').where('is_published', '==', true).orderBy('created_at', 'desc').get().catch(() => db.collection('campaigns').where('is_published', '==', true).get())
     campaigns = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
   } catch (e) { }
-  if (!campaigns.length) {
-    campaigns = defaultCampaigns
-  }
   return c.html(<Campaigns campaigns={campaigns} user={(c as any).get('user')} />)
 })
 
@@ -146,8 +144,7 @@ app.get('/campaigns/:id', async (c) => {
       return c.html(<CampaignDetail c={campaign} user={(c as any).get('user')} />)
     }
   } catch (e) { }
-  const def = defaultCampaigns.find(camp => camp.id === id) || defaultCampaigns[0]
-  return c.html(<CampaignDetail c={def} user={(c as any).get('user')} />)
+  return c.html(<GenericNotFound title="الحملة غير موجودة" message="عذرًا، لم يتم العثور على الحملة المطلوبة أو قد تكون انتهت." user={(c as any).get('user')} />, 404)
 })
 
 app.get('/donate', async (c) => {
@@ -157,9 +154,6 @@ app.get('/donate', async (c) => {
     const snap = await db.collection('campaigns').where('is_published', '==', true).get()
     campaigns = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
   } catch (e) { }
-  if (!campaigns.length) {
-    campaigns = defaultCampaigns
-  }
   const selectedCampaignId = c.req.query('campaign') || ''
   return c.html(<Donate campaigns={campaigns} selectedCampaignId={selectedCampaignId} user={(c as any).get('user')} />)
 })
@@ -741,10 +735,20 @@ app.get('/dashboard', async (c) => {
         campaigns: campSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
       }
     } else if (view === 'campaigns') {
-      const snap = await db.collection('campaigns').orderBy('created_at', 'desc').get()
+      const snap = await db.collection('campaigns').orderBy('created_at', 'desc').get().catch(() => db.collection('campaigns').get())
       viewData = {
         list: snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
       }
+    } else if (view === 'programs') {
+      let snap
+      try {
+        snap = await db.collection('programs').orderBy('order', 'asc').get()
+      } catch {
+        snap = await db.collection('programs').get()
+      }
+      const list = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      list.sort((a: any, b: any) => (Number(a.order) || 0) - (Number(b.order) || 0))
+      viewData = { list }
     } else if (view === 'donations') {
       const snap = await db.collection('donations').orderBy('created_at', 'desc').get()
       viewData = {
@@ -895,8 +899,8 @@ app.get('/dashboard', async (c) => {
         },
         recentDonations: []
       }
-    } else if (view === 'campaigns') {
-      viewData = { list: defaultCampaigns }
+    } else if (view === 'campaigns' || view === 'programs') {
+      viewData = { list: [] }
     } else if (view === 'news') {
       viewData = {
         list: defaultNews.map((n, idx) => ({

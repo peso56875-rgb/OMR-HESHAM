@@ -144,6 +144,7 @@
 
     const titlesMap = {
       campaigns: 'تعديل بيانات الحملة',
+      programs: 'تعديل باب / مسار العطاء',
       news: 'تعديل بيانات الخبر',
       events: 'تعديل بيانات الفعالية',
       stories: 'تعديل قصة النجاح',
@@ -204,6 +205,47 @@
         ${uploadFieldHtml('صورة الحملة', data.image)}
         <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer"><input type="checkbox" name="is_urgent" value="true" ${data.urgent === 'true' ? 'checked' : ''} /> حملة عاجلة؟</label>
         <label>الوصف<textarea name="description" rows="3">${escHtml(data.description)}</textarea></label>
+      `
+    } else if (type === 'programs') {
+      const presetIcons = ['fa-cow', 'fa-bowl-food', 'fa-heart-pulse', 'fa-book-quran', 'fa-graduation-cap', 'fa-people-roof', 'fa-hand-holding-heart', 'fa-seedling', 'fa-stethoscope', 'fa-gift', 'fa-kit-medical', 'fa-house-chimney-medical']
+      const iconValue = escAttr(data.icon || 'fa-hand-holding-heart')
+      const currentTone = data.tone || 'gold'
+      formFieldsHtml = `
+        <label>عنوان الباب أو المسار<input type="text" name="title" value="${escAttr(data.title)}" required /></label>
+        <label>الوصف المختصر<textarea name="description" rows="2" required>${escHtml(data.description)}</textarea></label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
+          <label>
+            النغمة اللونية للبطاقة
+            <select name="tone" style="width:100%; padding:9px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); margin-top:4px">
+              <option value="gold" ${currentTone === 'gold' ? 'selected' : ''}>ذهبي (Gold)</option>
+              <option value="coral" ${currentTone === 'coral' ? 'selected' : ''}>مرجاني (Coral)</option>
+              <option value="blue" ${currentTone === 'blue' ? 'selected' : ''}>أزرق (Blue)</option>
+              <option value="emerald" ${currentTone === 'emerald' ? 'selected' : ''}>زمردي (Emerald)</option>
+              <option value="violet" ${currentTone === 'violet' ? 'selected' : ''}>بنفسجي (Violet)</option>
+              <option value="cyan" ${currentTone === 'cyan' ? 'selected' : ''}>سماوي (Cyan)</option>
+            </select>
+          </label>
+          <label>
+            رقم الترتيب
+            <input type="number" name="order" value="${escAttr(data.order || 1)}" style="margin-top:4px" />
+          </label>
+        </div>
+        <label>
+          رابط الانتقال
+          <input type="text" name="link" value="${escAttr(data.link || '/campaigns')}" />
+        </label>
+        <label>
+          أيقونة البرنامج
+          <div style="display:flex; gap:8px; align-items:center; margin-top:4px">
+            <span id="modal-icon-badge" style="width:40px; height:40px; border-radius:8px; background:var(--gold-600); color:#fff; display:grid; place-items:center; font-size:1.2rem">
+              <i class="fa-solid ${iconValue}"></i>
+            </span>
+            <input type="text" name="icon" id="modal-icon-input" value="${iconValue}" style="flex:1" />
+          </div>
+          <div class="icon-presets" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px">
+            ${presetIcons.map(ic => `<button type="button" class="modal-icon-preset-btn" data-icon="${ic}" style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--ivory); cursor:pointer; font-size:1.1rem"><i class="fa-solid ${ic}"></i></button>`).join('')}
+          </div>
+        </label>
       `
     } else if (type === 'news') {
       formFieldsHtml = `
@@ -417,11 +459,12 @@
     }
 
     // 4. Edit buttons — Open Executive Modal Dialog
-    $$('.edit-campaign-btn, .edit-news-btn, .edit-event-btn, .edit-story-btn, .edit-job-btn').forEach(btn => {
+    $$('.edit-campaign-btn, .edit-program-btn, .edit-news-btn, .edit-event-btn, .edit-story-btn, .edit-job-btn').forEach(btn => {
       if (btn.dataset.bound === 'true') return
       btn.dataset.bound = 'true'
       btn.addEventListener('click', function() {
         const type = this.classList.contains('edit-campaign-btn') ? 'campaigns'
+          : this.classList.contains('edit-program-btn') ? 'programs'
           : this.classList.contains('edit-news-btn') ? 'news'
           : this.classList.contains('edit-event-btn') ? 'events'
           : this.classList.contains('edit-story-btn') ? 'stories' : 'jobs'
@@ -430,7 +473,7 @@
       })
     })
 
-    // 5. Icon presets & Input
+    // 5. Icon presets & Input (Campaigns & Programs)
     $$('.icon-preset-btn').forEach(btn => {
       if (btn.dataset.bound === 'true') return
       btn.dataset.bound = 'true'
@@ -447,6 +490,26 @@
       iconInput.addEventListener('input', function() {
         const badge = document.getElementById('icon-preview-badge')
         if (badge) badge.innerHTML = `<i class="fa-solid ${this.value.trim() || 'fa-heart'}"></i>`
+      })
+    }
+
+    // Program Icon presets & Input
+    $$('.program-icon-preset-btn').forEach(btn => {
+      if (btn.dataset.bound === 'true') return
+      btn.dataset.bound = 'true'
+      btn.addEventListener('click', function() {
+        const input = document.getElementById('program-icon-input')
+        const badge = document.getElementById('program-icon-badge')
+        if (input) input.value = this.dataset.icon
+        if (badge) badge.innerHTML = `<i class="fa-solid ${this.dataset.icon}"></i>`
+      })
+    })
+    const programIconInput = document.getElementById('program-icon-input')
+    if (programIconInput && !programIconInput.dataset.bound) {
+      programIconInput.dataset.bound = 'true'
+      programIconInput.addEventListener('input', function() {
+        const badge = document.getElementById('program-icon-badge')
+        if (badge) badge.innerHTML = `<i class="fa-solid ${this.value.trim() || 'fa-hand-holding-heart'}"></i>`
       })
     }
 

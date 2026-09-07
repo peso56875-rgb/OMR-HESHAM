@@ -3,6 +3,7 @@ import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
 import { normalizeMediaUrl } from '../lib/storage'
 import { notifyAdmins, notifyInBackground, notifyMoney, dashLink } from '../lib/notifications'
+import { defaultCampaigns } from '../defaults'
 
 export const campaigns = new Hono()
 
@@ -70,6 +71,7 @@ campaigns.post('/add', adminMiddleware, async (c) => {
       goal,
       raised: 0,
       image_url: normalizeMediaUrl(body.image_url),
+      icon: (body.icon as string || 'fa-heart').trim(),
       is_urgent,
       is_published: true,
       description: body.description || '',
@@ -131,6 +133,7 @@ campaigns.post('/edit/:id', adminMiddleware, async (c) => {
       category: category || 'عام',
       goal,
       image_url: normalizeMediaUrl(body.image_url),
+      icon: (body.icon as string || 'fa-heart').trim(),
       is_urgent,
       description: body.description || ''
     }
@@ -173,5 +176,41 @@ campaigns.post('/delete/:id', adminMiddleware, async (c) => {
       return c.json({ error: error.message }, 500)
     }
     return c.redirect('/dashboard?view=campaigns&error=db_error')
+  }
+})
+
+// Seed default campaigns (Admin only helper)
+campaigns.post('/seed-defaults', adminMiddleware, async (c) => {
+  const db = getFirestore(c)
+  const contentType = c.req.header('content-type') || ''
+
+  try {
+    const batch = db.batch()
+    defaultCampaigns.forEach((camp) => {
+      const docRef = db.collection('campaigns').doc()
+      batch.set(docRef, {
+        title: camp.title,
+        category: camp.cat || 'عام',
+        goal: camp.goal,
+        raised: camp.raised || 0,
+        icon: camp.icon || 'fa-heart',
+        is_urgent: camp.urgent || false,
+        is_published: true,
+        description: camp.text || '',
+        created_at: new Date().toISOString()
+      })
+    })
+    await batch.commit()
+
+    if (contentType.includes('application/json')) {
+      return c.json({ success: true, message: 'تم استيراد الحملات الافتراضية بنجاح' })
+    }
+    return c.redirect('/dashboard?view=campaigns&success=seeded')
+  } catch (error: any) {
+    console.error('Error seeding campaigns:', error.message)
+    if (contentType.includes('application/json')) {
+      return c.json({ error: error.message }, 500)
+    }
+    return c.redirect('/dashboard?view=campaigns&error=seed_failed')
   }
 })

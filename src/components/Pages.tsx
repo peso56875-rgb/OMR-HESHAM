@@ -343,12 +343,12 @@ export function Gallery({ user, items }: { user?: UserSession, items?: any[] }) 
   </Layout>
 }
 
-export function GenericNotFound({ user }: { user?: UserSession }) {
-  return <Layout user={user} title="الصفحة غير موجودة | مؤسسة الدكتور عمر هشام">
+export function GenericNotFound({ user, title, message }: { user?: UserSession, title?: string, message?: string }) {
+  return <Layout user={user} title={`${title || 'الصفحة غير موجودة'} | مؤسسة الدكتور عمر هشام`}>
     <section class="empty-state section-pad" style="min-height:70vh; display:flex; flex-direction:column; justify-content:center; align-items:center">
       <div>{icon('fa-compass')}<span></span></div>
-      <h2>عذرًا، الصفحة غير موجودة (404)</h2>
-      <p>قد يكون الرابط خاطئًا أو تم نقل الصفحة إلى مكان آخر.</p>
+      <h2>{title || 'عذرًا، الصفحة غير موجودة (404)'}</h2>
+      <p>{message || 'قد يكون الرابط خاطئًا أو تم نقل الصفحة إلى مكان آخر.'}</p>
       <a class="primary-btn" href="/">العودة للرئيسية {icon('fa-arrow-left')}</a>
     </section>
   </Layout>

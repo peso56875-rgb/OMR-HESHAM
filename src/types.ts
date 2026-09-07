@@ -24,6 +24,18 @@ export interface Campaign {
   created_at?: string
 }
 
+export interface Program {
+  id?: string
+  title: string
+  description: string
+  icon: string
+  tone: 'gold' | 'coral' | 'blue' | 'emerald' | 'violet' | 'cyan' | string
+  link?: string
+  order?: number
+  is_published?: boolean
+  created_at?: string
+}
+
 export interface Donation {
   id?: string
   profile_id?: string | null
