@@ -2082,6 +2082,31 @@
       });
     }
 
+    var rewindBtn = document.getElementById('floatingRewindBtn');
+    var forwardBtn = document.getElementById('floatingForwardBtn');
+
+    if (rewindBtn) {
+      rewindBtn.onclick = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (state.audioElement && state.audioElement.src) {
+          var cur = state.audioElement.currentTime || 0;
+          applySeekToAudio(cur - 10);
+        }
+      };
+    }
+
+    if (forwardBtn) {
+      forwardBtn.onclick = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (state.audioElement && state.audioElement.src) {
+          var cur = state.audioElement.currentTime || 0;
+          applySeekToAudio(cur + 10);
+        }
+      };
+    }
+
     if (muteBtn) {
       muteBtn.onclick = function () {
         state.audioElement.muted = !state.audioElement.muted;

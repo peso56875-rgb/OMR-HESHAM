@@ -757,41 +757,51 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
       {/* ─── Floating Persistent Audio Player Bar ─── */}
       <div class="quran-floating-player" id="quranFloatingPlayer" style="display: none;">
         <div class="floating-player-inner">
-          <div class="player-track-info">
-            <div class="player-icon-pulse">
-              {icon('fa-compact-disc')}
+          <div class="floating-player-main-row">
+            <div class="player-track-info">
+              <div class="player-icon-pulse">
+                {icon('fa-compact-disc')}
+              </div>
+              <div class="player-text">
+                <strong id="floatingPlayerSurah">سورة الفاتحة</strong>
+                <small id="floatingPlayerReciter">الشيخ محمد صديق المنشاوي</small>
+              </div>
             </div>
-            <div class="player-text">
-              <strong id="floatingPlayerSurah">سورة الفاتحة</strong>
-              <small id="floatingPlayerReciter">الشيخ محمد صديق المنشاوي</small>
+
+            <div class="player-controls">
+              <button type="button" class="player-ctrl-btn skip-btn" id="floatingRewindBtn" title="ترجيع ١٠ ثوانٍ" aria-label="ترجيع ١٠ ثوانٍ">
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+              <button type="button" class="player-ctrl-btn" id="floatingPrevBtn" title="السورة السابقة" aria-label="السورة السابقة">
+                {icon('fa-backward-step')}
+              </button>
+              <button type="button" class="player-ctrl-btn play-pause-btn" id="floatingPlayPauseBtn" title="تشغيل / إيقاف" aria-label="تشغيل أو إيقاف التلاوة">
+                {icon('fa-play')}
+              </button>
+              <button type="button" class="player-ctrl-btn" id="floatingNextBtn" title="السورة التالية" aria-label="السورة التالية">
+                {icon('fa-forward-step')}
+              </button>
+              <button type="button" class="player-ctrl-btn skip-btn" id="floatingForwardBtn" title="تقديم ١٠ ثوانٍ" aria-label="تقديم ١٠ ثوانٍ">
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+            </div>
+
+            <div class="player-actions">
+              <button type="button" class="player-vol-btn" id="floatingMuteBtn" title="كتم الصوت" aria-label="كتم أو تشغيل الصوت">
+                {icon('fa-volume-high')}
+              </button>
+              <button type="button" class="player-close-btn" id="floatingCloseBtn" title="إغلاق المشغل" aria-label="إغلاق المشغل">
+                {icon('fa-xmark')}
+              </button>
             </div>
           </div>
 
-          <div class="player-controls">
-            <button type="button" class="player-ctrl-btn" id="floatingPrevBtn" title="السابق">
-              {icon('fa-backward-step')}
-            </button>
-            <button type="button" class="player-ctrl-btn play-pause-btn" id="floatingPlayPauseBtn" title="تشغيل / إيقاف">
-              {icon('fa-play')}
-            </button>
-            <button type="button" class="player-ctrl-btn" id="floatingNextBtn" title="التالي">
-              {icon('fa-forward-step')}
-            </button>
-          </div>
-
-          <div class="player-timeline">
+          <div class="player-timeline" id="floatingPlayerTimeline">
             <span class="time-current" id="floatingCurrentTime">00:00</span>
-            <input type="range" class="player-scrubber" id="floatingScrubber" min="0" max="100" value="0" />
+            <div class="player-scrubber-track">
+              <input type="range" class="player-scrubber" id="floatingScrubber" min="0" max="100" value="0" step="0.1" aria-label="شريط تقديم وترجيع التلاوة" />
+            </div>
             <span class="time-total" id="floatingTotalTime">00:00</span>
-          </div>
-
-          <div class="player-actions">
-            <button type="button" class="player-vol-btn" id="floatingMuteBtn" title="كتم الصوت">
-              {icon('fa-volume-high')}
-            </button>
-            <button type="button" class="player-close-btn" id="floatingCloseBtn" title="إغلاق المشغل">
-              {icon('fa-xmark')}
-            </button>
           </div>
         </div>
       </div>
