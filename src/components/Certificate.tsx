@@ -459,7 +459,9 @@ export function CertificateView({
               }
             } catch (err) {
               console.error('Error generating certificate image:', err);
-              alert('تعذر تحميل الشهادة كصورة مباشرة، يمكنك استخدام زر "طباعة / حفظ كـ PDF".');
+              if (typeof window.showToast === 'function') {
+                window.showToast('تعذر تحميل الشهادة كصورة مباشرة، يمكنك استخدام زر "طباعة / حفظ كـ PDF".', 'warning');
+              }
               if (btn) {
                 btn.innerHTML = originalHTML;
                 btn.disabled = false;

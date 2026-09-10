@@ -1069,8 +1069,6 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
           function notify(msg, type) {
             if (typeof window.showToast === 'function') {
               window.showToast(msg, type || 'success');
-            } else {
-              alert(msg);
             }
           }
 
@@ -1250,7 +1248,17 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
           }
 
           async function releasePart(part) {
-            if (!confirm('هل تريد إلغاء حجز الجزء ' + Number(part).toLocaleString('ar-EG') + ' وإتاحته لمتطوع آخر لتلاوته؟')) return;
+            const confirmed = typeof window.confirmAction === 'function'
+              ? await window.confirmAction({
+                  title: 'إلغاء حجز الجزء ' + Number(part).toLocaleString('ar-EG'),
+                  message: 'هل ترغب في إلغاء حجز هذا الجزء وإتاحته لمتطوع آخر لتلاوته صدقة جارية لروح د. عمر هشام؟',
+                  confirmText: 'نعم، إلغاء الحجز',
+                  cancelText: 'تراجع والإبقاء عليه',
+                  icon: 'fa-rotate-left',
+                  variant: 'warning'
+                })
+              : true;
+            if (!confirmed) return;
 
             try {
               const res = await fetch('/api/quran/khatma/release', {
@@ -1272,7 +1280,17 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
           }
 
           async function completePart(part) {
-            if (!confirm('هل أتممت تلاوة الجزء ' + Number(part).toLocaleString('ar-EG') + ' كاملاً بحمد الله وفضله؟')) return;
+            const confirmed = typeof window.confirmAction === 'function'
+              ? await window.confirmAction({
+                  title: 'إتمام تلاوة الجزء ' + Number(part).toLocaleString('ar-EG'),
+                  message: 'تقبل الله طاعتكم! هل أتممت تلاوة الجزء كاملاً بحمد الله وفضله لتسجيله في الختمة المباركة؟',
+                  confirmText: 'نعم، أتممت القراءة بحمد الله',
+                  cancelText: 'ليس بعد',
+                  icon: 'fa-book-quran',
+                  variant: 'success'
+                })
+              : true;
+            if (!confirmed) return;
 
             try {
               const res = await fetch('/api/quran/khatma/complete', {

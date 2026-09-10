@@ -661,7 +661,17 @@
           if (window.showToast) window.showToast('لا توجد إشعارات مقروءة لتفريغها', 'info');
           return;
         }
-        if (!confirm('هل أنت متأكد من تفريغ كافة الإشعارات المقروءة؟')) return;
+        if (window.confirmAction) {
+          var ok = await window.confirmAction({
+            title: 'تفريغ الإشعارات المقروءة',
+            message: 'هل أنت متأكد من رغبتك في تفريغ كافة الإشعارات المقروءة؟',
+            confirmText: 'نعم، تفريغ الكل',
+            cancelText: 'إلغاء',
+            icon: 'fa-trash-can',
+            variant: 'warning'
+          });
+          if (!ok) return;
+        }
 
         readItems.forEach(function (card) {
           card.style.transition = 'opacity 0.25s, transform 0.25s, max-height 0.35s';
@@ -706,7 +716,7 @@
     var dashClearReadBtn = document.getElementById('dashClearReadNotifsBtn');
     if (dashClearReadBtn) {
       dashClearReadBtn.onclick = async function () {
-        if (!confirm('هل أنت متأكد من رغبتك في تفريغ الإشعارات المقروءة؟')) return;
+        if (!(await window.confirmAction({ title: 'تفريغ الإشعارات', message: 'هل أنت متأكد من رغبتك في تفريغ الإشعارات المقروءة؟', confirmText: 'تفريغ', cancelText: 'إلغاء', icon: 'fa-broom', variant: 'warning' }))) return;
         try {
           var res = await fetch('/api/notifications/clear-all-admin', { method: 'POST' });
           var data = await res.json();
@@ -727,7 +737,7 @@
         e.stopPropagation();
         var id = btn.getAttribute('data-id');
         if (!id) return;
-        if (!confirm('هل تريد حذف هذا الإشعار نهائياً من السجل؟')) return;
+        if (!(await window.confirmAction({ title: 'حذف الإشعار', message: 'هل تريد حذف هذا الإشعار نهائياً من السجل؟', confirmText: 'حذف', cancelText: 'إلغاء', icon: 'fa-trash-can', variant: 'danger' }))) return;
 
         try {
           var res = await fetch('/api/notifications/delete/' + id, { method: 'POST' });

@@ -17,8 +17,23 @@
   }
   const hideToast = () => $('#toast')?.classList.remove('show')
   const toast = (message, type = 'success') => {
-    const box = $('#toast')
-    if (!box) return
+    let box = $('#toast')
+    if (!box) {
+      box = document.createElement('div')
+      box.className = 'toast'
+      box.id = 'toast'
+      box.setAttribute('role', 'status')
+      box.setAttribute('aria-live', 'polite')
+      box.setAttribute('aria-atomic', 'true')
+      box.innerHTML = `
+        <span class="toast-icon"><i class="fa-solid fa-check"></i></span>
+        <span class="toast-content"><strong>تم بنجاح</strong><span class="toast-message"></span></span>
+        <button class="toast-close" type="button" aria-label="إغلاق الإشعار"><i class="fa-solid fa-xmark"></i></button>
+        <span class="toast-progress" aria-hidden="true"></span>
+      `
+      document.body.appendChild(box)
+      $('.toast-close', box)?.addEventListener('click', hideToast)
+    }
     const kind = toastConfig[type] ? type : 'info'
     const [iconName, titleText] = toastConfig[kind]
     clearTimeout(window.__toastTimer)
@@ -35,15 +50,71 @@
   window.showToast = toast
   $('.toast-close')?.addEventListener('click', hideToast)
 
-  window.confirmAction = message => new Promise(resolve => {
-    const modal = $('#confirm-modal'), text = $('#confirm-message'), accept = $('.confirm-accept'), cancel = $('.confirm-cancel')
-    if (!modal || !accept || !cancel) return resolve(false)
+  window.confirmAction = param => new Promise(resolve => {
+    const isObj = typeof param === 'object' && param !== null
+    const message = isObj ? (param.message || '') : String(param || '')
+    const title = isObj && param.title ? param.title : 'تأكيد الإجراء'
+    const confirmText = isObj && param.confirmText ? param.confirmText : 'تأكيد'
+    const cancelText = isObj && param.cancelText ? param.cancelText : 'إلغاء'
+    const iconName = isObj && param.icon ? param.icon : 'fa-triangle-exclamation'
+    const variant = isObj && param.variant ? param.variant : 'danger'
+
+    let modal = $('#confirm-modal')
+    if (!modal) {
+      modal = document.createElement('div')
+      modal.id = 'confirm-modal'
+      modal.className = 'confirm-modal'
+      modal.setAttribute('role', 'dialog')
+      modal.setAttribute('aria-modal', 'true')
+      modal.setAttribute('aria-hidden', 'true')
+      modal.innerHTML = `
+        <div class="confirm-card">
+          <span class="confirm-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+          <h2 id="confirm-title">تأكيد الإجراء</h2>
+          <p id="confirm-message"></p>
+          <div>
+            <button type="button" class="confirm-cancel">إلغاء</button>
+            <button type="button" class="confirm-accept">تأكيد</button>
+          </div>
+        </div>
+      `
+      document.body.appendChild(modal)
+    }
+
+    const text = $('#confirm-message', modal)
+    const titleEl = $('#confirm-title', modal)
+    const iconEl = $('.confirm-icon', modal)
+    const accept = $('.confirm-accept', modal)
+    const cancel = $('.confirm-cancel', modal)
+
     if (text) text.textContent = message
-    modal.classList.add('open'); modal.setAttribute('aria-hidden','false')
-    const finish = value => { modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); accept.onclick = null; cancel.onclick = null; resolve(value) }
-    accept.onclick = () => finish(true); cancel.onclick = () => finish(false)
-    modal.onclick = event => event.target === modal && finish(false)
-    accept.focus()
+    if (titleEl) titleEl.textContent = title
+    if (accept) {
+      accept.textContent = confirmText
+      accept.className = 'confirm-accept btn-variant-' + variant
+    }
+    if (cancel) cancel.textContent = cancelText
+    if (iconEl) {
+      iconEl.className = 'confirm-icon variant-' + variant
+      iconEl.innerHTML = `<i class="fa-solid ${iconName}"></i>`
+    }
+
+    modal.classList.add('open')
+    modal.setAttribute('aria-hidden', 'false')
+
+    const finish = value => {
+      modal.classList.remove('open')
+      modal.setAttribute('aria-hidden', 'true')
+      if (accept) accept.onclick = null
+      if (cancel) cancel.onclick = null
+      modal.onclick = null
+      resolve(value)
+    }
+
+    if (accept) accept.onclick = () => finish(true)
+    if (cancel) cancel.onclick = () => finish(false)
+    modal.onclick = event => { if (event.target === modal) finish(false) }
+    accept?.focus()
   })
 
   window.addEventListener('load', () => {

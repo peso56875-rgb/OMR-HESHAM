@@ -453,12 +453,13 @@
       }
     }
 
-    reset() {
-      if (confirm('هل ترغب في تصفير سجل إنجازات الطفل والبدء من جديد؟')) {
+    async reset() {
+      const confirmed = await window.confirmAction({ title: 'تصفير السجل', message: 'هل ترغب في تصفير سجل إنجازات الطفل والبدء من جديد؟', confirmText: 'تصفير', cancelText: 'إلغاء', icon: 'fa-rotate-left', variant: 'warning' })
+      if (confirmed) {
         localStorage.removeItem(this.STORAGE_KEY)
         this.data = this.load()
         this.updateUI()
-        alert('تم تصفير السجل بنجاح! وفقكم الله.')
+        window.showToast('تم تصفير السجل بنجاح! وفقكم الله.', 'success')
       }
     }
   }
@@ -1982,7 +1983,7 @@
         const t = btn.getAttribute('data-copy') || ''
         if (navigator.clipboard) {
           navigator.clipboard.writeText(t).then(() => {
-            alert('تم نسخ نص الدعاء المبارك.')
+            window.showToast('تم نسخ نص الدعاء المبارك.', 'success')
           })
         }
       })
@@ -2086,9 +2087,10 @@
 
     const clearBtn = document.getElementById('btnClearDraw')
     if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
+      clearBtn.addEventListener('click', async () => {
         sfx.tap()
-        if (confirm('هل ترغب في مسح محتوى اللوحة؟')) {
+        const confirmed = await window.confirmAction({ title: 'مسح اللوحة', message: 'هل ترغب في مسح محتوى اللوحة؟', confirmText: 'مسح', cancelText: 'إلغاء', icon: 'fa-eraser', variant: 'warning' })
+        if (confirmed) {
           drawCtx.fillStyle = '#ffffff'
           drawCtx.fillRect(0, 0, drawCanvas.width, drawCanvas.height)
           undoStack = []
@@ -2101,7 +2103,7 @@
       saveBtn.addEventListener('click', () => {
         const dataUrl = drawCanvas.toDataURL('image/png')
         progress.saveDrawing(dataUrl, 'لوحة الفنان الصغير')
-        alert('تم حفظ اللوحة في معرض رسوماتك بنجاح.')
+        window.showToast('تم حفظ اللوحة في معرض رسوماتك بنجاح.', 'success')
         renderSavedGallery()
       })
     }
@@ -2281,7 +2283,7 @@
         if (!emojiCanvas) return
         const dataUrl = emojiCanvas.toDataURL('image/png')
         progress.saveDrawing(dataUrl, `تلوين ${EMOJI_TEMPLATES[currentEmojiTemplate]?.name || 'رسمة'}`)
-        alert('تم حفظ لوحتك الملوّنة في معرض رسوماتك! 🎨')
+        window.showToast('تم حفظ لوحتك الملوّنة في معرض رسوماتك! 🎨', 'success')
         renderSavedGallery()
       })
     }
@@ -2802,9 +2804,10 @@
           <button type="button" class="gallery-icon-action delete" data-id="${d.id}" title="حذف"><i class="fa-solid fa-trash-can"></i></button>
         </div>
       `
-      card.querySelector('.delete').addEventListener('click', () => {
+      card.querySelector('.delete').addEventListener('click', async () => {
         sfx.tap()
-        if (confirm('هل ترغب في حذف هذه الرسمة؟')) {
+        const confirmed = await window.confirmAction({ title: 'حذف الرسمة', message: 'هل ترغب في حذف هذه الرسمة؟', confirmText: 'حذف', cancelText: 'إلغاء', icon: 'fa-trash-can', variant: 'danger' })
+        if (confirmed) {
           progress.deleteDrawing(d.id)
           renderSavedGallery()
         }

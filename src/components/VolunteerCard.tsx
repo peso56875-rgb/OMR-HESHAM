@@ -445,7 +445,9 @@ export function VolunteerCardView({
               }
             } catch (err) {
               console.error('Error generating card image:', err);
-              alert('تعذر تحميل الكارنيه كصورة، يمكنك استخدام زر الطباعة.');
+              if (typeof window.showToast === 'function') {
+                window.showToast('تعذر تحميل الكارنيه كصورة، يمكنك استخدام زر الطباعة.', 'warning');
+              }
               if (btn) {
                 btn.innerHTML = originalHTML;
                 btn.disabled = false;
