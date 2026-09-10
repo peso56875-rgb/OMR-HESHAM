@@ -30,6 +30,7 @@ export function Header({ user }: { user?: UserSession }) {
         <a href="/" class="nav-item">الرئيسية</a>
         <a href="/campaigns" class="nav-item">الحملات</a>
         <a href="/cases" class="nav-item">الحالات</a>
+        <a href="/medical-equipment" class="nav-item nav-badge-medical">{icon('fa-stethoscope')} <span>الأجهزة الطبية</span></a>
         <a href="/kids" class="nav-item nav-badge-kids">{icon('fa-child-reaching')} <span>أطفالنا</span></a>
         <a href="/quran" class="nav-item nav-badge-quran">{icon('fa-book-quran')} <span>القرآن</span></a>
         <a href="/zakat-calculator" class="nav-item nav-badge-zakat">{icon('fa-scale-balanced')} <span>الزكاة</span></a>
@@ -79,14 +80,16 @@ export function Header({ user }: { user?: UserSession }) {
       </div>
       <nav>
         <a href="/">{icon('fa-house')} الرئيسية <i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/medical-equipment" style="color:var(--blue-600);font-weight:bold">{icon('fa-stethoscope')} بنك الأجهزة الطبية <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/kids" style="color:#f59e0b;font-weight:bold">{icon('fa-child-reaching')} واحة الأطفال (تعلم ولعب) <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/quran" style="color:var(--emerald);font-weight:bold">{icon('fa-book-quran')} القرآن الكريم والأذكار <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/campaigns">{icon('fa-seedling')} حملات الخير <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/cases">{icon('fa-hand-holding-heart')} الحالات الإنسانية <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/zakat-calculator" style="color:var(--gold-600);font-weight:bold">{icon('fa-scale-balanced')} حاسبة الزكاة الذكية <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/volunteer-portal">{icon('fa-id-card-clip')} بوابة المتطوعين <i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/donor-statement" style="color:var(--emerald-600);font-weight:bold">{icon('fa-file-invoice-dollar')} شهادة العطاء السنوية <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/notifications" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-bell"></i> مركز الإشعارات <i class="fa-solid fa-arrow-left"></i></a>
-        {Object.entries(routeNames).filter(([h]) => !['/campaigns', '/cases', '/kids', '/quran', '/zakat-calculator', '/volunteer-portal', '/notifications', '/login', '/profile', '/dashboard'].includes(h)).slice(0, 8).map(([href, label]) => <a href={href}>{label}<i class="fa-solid fa-arrow-left"></i></a>)}
+        {Object.entries(routeNames).filter(([h]) => !['/campaigns', '/cases', '/medical-equipment', '/kids', '/quran', '/zakat-calculator', '/volunteer-portal', '/notifications', '/login', '/profile', '/dashboard'].includes(h)).slice(0, 8).map(([href, label]) => <a href={href}>{label}<i class="fa-solid fa-arrow-left"></i></a>)}
         <div style="border-top:1px solid var(--border); margin:1rem 0; padding-top:1rem"></div>
         {user ? (
           <>
@@ -116,8 +119,8 @@ export function Footer() {
           <span class="reg-number">{icon('fa-file-contract')} رقم التشهير: <b>3115</b> لسنة <b>2026</b></span>
         </div>
       </article>
-      <nav class="footer-links"><h3>اكتشف</h3><a href="/about">قصة عمر</a><a href="/quran">القرآن والأذكار</a><a href="/campaigns">الحملات</a><a href="/zakat-calculator">حاسبة الزكاة</a><a href="/achievements">الإنجازات</a><a href="/gallery">معرض الصور</a><a href="/faq">الأسئلة الشائعة</a></nav>
-      <nav class="footer-links"><h3>شاركنا</h3><a href="/donate">تبرّع الآن</a><a href="/volunteers">كن متطوعًا</a><a href="/careers">الوظائف</a><a href="/transparency">الشفافية</a><a href="/contact">تواصل معنا</a></nav>
+      <nav class="footer-links"><h3>اكتشف</h3><a href="/about">قصة عمر</a><a href="/medical-equipment">الأجهزة الطبية</a><a href="/quran">القرآن والأذكار</a><a href="/campaigns">الحملات</a><a href="/zakat-calculator">حاسبة الزكاة</a><a href="/achievements">الإنجازات</a><a href="/gallery">معرض الصور</a><a href="/faq">الأسئلة الشائعة</a></nav>
+      <nav class="footer-links"><h3>شاركنا</h3><a href="/donate">تبرّع الآن</a><a href="/donor-statement">شهادة العطاء السنوية</a><a href="/volunteers">كن متطوعًا</a><a href="/careers">الوظائف</a><a href="/transparency">الشفافية</a><a href="/contact">تواصل معنا</a></nav>
       <article class="newsletter"><p class="eyebrow">رسالة أثر</p><h3>خيرٌ صغير في بريدك،<br />كل شهر.</h3><form class="ajax-form" data-endpoint="/api/newsletter"><label class="sr-only" for="newsletter-email">البريد الإلكتروني</label><div class="input-action"><input id="newsletter-email" name="email" type="email" placeholder="بريدك الإلكتروني" required /><button aria-label="اشتراك">{icon('fa-arrow-left')}</button></div></form><div class="socials"><a href="https://www.facebook.com/share/1Dj3HrELjY/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="صفحة المؤسسة على فيسبوك"><i class="fa-brands fa-facebook-f"></i></a><a href="https://www.instagram.com/dr.omarheshamfoundation?igsh=MWZiMXRjOTh2bm4zZA==" target="_blank" rel="noopener noreferrer" aria-label="حساب المؤسسة على إنستجرام"><i class="fa-brands fa-instagram"></i></a><a href="https://www.tiktok.com/@dr.omarfoundation?_r=1&_t=ZS-98FEn5WIdE4" target="_blank" rel="noopener noreferrer" aria-label="حساب المؤسسة على تيك توك"><i class="fa-brands fa-tiktok"></i></a></div></article>
     </section>
     <div class="footer-bottom"><p>© 2026 مؤسسة الدكتور عمر هشام الخيرية</p><div class="footer-signature"><a class="developer-credit" href="https://peso-is-here.vercel.app" target="_blank" rel="noopener noreferrer" aria-label="Visit PESO website"><span class="credit-label">Developed by</span><span class="credit-brand"><strong>PESO</strong><i class="fa-solid fa-heart" aria-hidden="true"></i></span><span class="credit-arrow"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></span></a></div></div>

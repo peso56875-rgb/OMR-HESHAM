@@ -23,6 +23,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
     ['fa-file-signature', 'طلبات التوظيف', 'job_applications'],
     ['fa-envelope-open-text', 'النشرة البريدية', 'newsletter'],
     ['fa-clipboard-list', 'الحالات والمستفيدون', 'cases'],
+    ['fa-stethoscope', 'بنك الأجهزة الطبية', 'medical'],
     ['fa-clipboard-check', 'سجل التدقيق', 'audit']
   ]
 
@@ -89,7 +90,8 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
         {view === 'job_applications' && <DashJobApplications list={data.list} />}
         {view === 'newsletter' && <DashNewsletter list={data.list} />}
         {view === 'users' && <DashUsers list={data.list} currentUserId={user.id} />}
-        {view === 'cases' && <DashCases groups={data.groups || []} stats={data.stats || {}} user={user} />}
+        {view === 'cases' && <DashCases groups={data.groups || []} cases={data.cases || []} stats={data.stats || {}} user={user} />}
+        {view === 'medical' && <DashMedical equipment={data.equipment || []} requests={data.requests || []} stats={data.stats || {}} />}
         {view === 'audit' && <DashAudit list={data.list || []} />}
       </div>
     </section>
@@ -2089,43 +2091,235 @@ export function DashUsers({ list = [], currentUserId }: { list: any[], currentUs
 // =====================================================================
 // نظام الحالات والمستفيدون
 // =====================================================================
-export function DashCases({ groups = [], stats = {}, user }: { groups: any[], stats: any, user: UserSession }) {
+export function DashCases({ groups = [], cases = [], stats = {}, user }: { groups: any[], cases?: any[], stats: any, user: UserSession }) {
   const totalGroups = stats.total_groups || 0
   const totalBeneficiaries = stats.total_beneficiaries || 0
+  const totalCases = stats.total_cases || (cases || []).length
+  const totalTarget = stats.total_target || (cases || []).reduce((sum: number, c: any) => sum + Number(c.target_amount || 0), 0)
+  const totalRaised = stats.total_raised || (cases || []).reduce((sum: number, c: any) => sum + Number(c.raised_amount || 0), 0)
+  const overallPercent = totalTarget > 0 ? Math.min(100, Math.round((totalRaised / totalTarget) * 100)) : 0
 
   return <>
-    {/* بطاقات إحصائية */}
-    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; margin-bottom: 2rem">
-      <article style="background: var(--paper); border: 2px solid #8b5cf6; border-radius: 20px; padding: 1.4rem">
+    {/* بطاقات إحصائية رئيسية */}
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.2rem; margin-bottom: 2rem">
+      <article style="background: var(--paper); border: 2px solid var(--emerald-600); border-radius: 20px; padding: 1.3rem">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <span style="font-size:1.6rem; color:var(--emerald-600)">{icon('fa-hand-holding-heart')}</span>
+          <small style="color:var(--muted); font-weight:700">الحالات الإنسانية المنشورة</small>
+        </div>
+        <b style="font-size:1.8rem; display:block; margin-top:.6rem; color:var(--emerald-600)">
+          {totalCases} حالة
+        </b>
+      </article>
+
+      <article style="background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 1.3rem">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <span style="font-size:1.6rem; color:var(--gold-600)">{icon('fa-sack-dollar')}</span>
+          <small style="color:var(--muted); font-weight:700">المحصل للحالات</small>
+        </div>
+        <b style="font-size:1.8rem; display:block; margin-top:.6rem; color:var(--gold-600)">
+          {totalRaised.toLocaleString('ar-EG')} ج.م
+        </b>
+        <small style="color:var(--muted); font-size:.8rem">من إجمالي مستهدف {totalTarget.toLocaleString('ar-EG')} ج.م ({overallPercent}%)</small>
+      </article>
+
+      <article style="background: var(--paper); border: 1px solid #8b5cf6; border-radius: 20px; padding: 1.3rem">
         <div style="display:flex; justify-content:space-between; align-items:center">
           <span style="font-size:1.6rem; color:#8b5cf6">{icon('fa-people-group')}</span>
-          <small style="color:var(--muted); font-weight:700">إجمالي الأسماء بالأرشيف العام</small>
+          <small style="color:var(--muted); font-weight:700">أرشيف أسماء المستفيدين</small>
         </div>
-        <b style="font-size:2rem; display:block; margin-top:.8rem; color:#8b5cf6">
+        <b style="font-size:1.8rem; display:block; margin-top:.6rem; color:#8b5cf6">
           {totalBeneficiaries.toLocaleString('ar-EG')} مستفيد
         </b>
-      </article>
-      <article style="background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 1.4rem">
-        <div style="display:flex; justify-content:space-between; align-items:center">
-          <span style="font-size:1.6rem; color:#06b6d4">{icon('fa-boxes-stacked')}</span>
-          <small style="color:var(--muted); font-weight:700">عدد دفعات الإدخال</small>
-        </div>
-        <b style="font-size:2rem; display:block; margin-top:.8rem; color:#06b6d4">
-          {totalGroups} دفعة
-        </b>
-      </article>
-      <article style="background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 1.4rem">
-        <div style="display:flex; justify-content:space-between; align-items:center">
-          <span style="font-size:1.6rem; color:var(--gold-600)">{icon('fa-file-excel')}</span>
-          <small style="color:var(--muted); font-weight:700">نظام استخراج ملفات Excel</small>
-        </div>
-        <b style="font-size:1.1rem; display:block; margin-top:.8rem; color:var(--gold-600)">
-          مع شعار المؤسسة والأسماء المخصصة
-        </b>
+        <small style="color:var(--muted); font-size:.8rem">في {totalGroups} دفعة مسجلة</small>
       </article>
     </div>
 
-    {/* واجهة الاستخراج العشوائي والتصدير */}
+    {/* ────────────────── القسم الأول: الحالات الإنسانية المنشورة للجمهور ────────────────── */}
+    <section class="section-pad" style="padding-top:0; margin-bottom:2.5rem">
+      <div style="background:var(--surface); border:1.5px solid var(--emerald-600); border-radius:20px; padding:1.8rem; box-shadow:0 4px 20px rgba(0,0,0,0.03); margin-bottom:2rem">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.2rem">
+          <div>
+            <h3 style="color:var(--emerald-600); font-size:1.3rem; font-weight:900; display:flex; align-items:center; gap:8px">
+              {icon('fa-square-plus')} إضافة حالة إنسانية جديدة للموقع
+            </h3>
+            <p style="font-size:.86rem; color:var(--muted); margin-top:4px">
+              تُنشر الحالة في صفحة الحالات العامة (/cases) وتتاح لكفالة وتبرع الزوار مباشرة
+            </p>
+          </div>
+          <a href="/cases" target="_blank" class="outline-btn" style="padding:6px 14px; font-size:.85rem; border-radius:10px">
+            {icon('fa-arrow-up-right-from-square')} معاينة صفحة الحالات
+          </a>
+        </div>
+
+        <form action="/api/cases/item/add" method="post" style="display:flex; flex-direction:column; gap:1.2rem">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1rem">
+            <label style="font-weight:700; font-size:.9rem">
+              عنوان الحالة *
+              <input name="title" required placeholder="مثال: كفالة علاج وجلسات غسيل كلوي لمسن" style="margin-top:6px" />
+            </label>
+            <label style="font-weight:700; font-size:.9rem">
+              كود الحالة <small style="font-weight:400; color:var(--muted)">(تلقائي إن تُرِك فارغاً)</small>
+              <input name="code" placeholder="مثال: حالة #105" style="margin-top:6px" />
+            </label>
+            <label style="font-weight:700; font-size:.9rem">
+              التصنيف *
+              <select name="category" style="padding:12px; border-radius:12px; border:1px solid var(--line); background:var(--ivory); margin-top:6px; width:100%">
+                <option value="صحة وعمليات">صحة وعمليات</option>
+                <option value="كفالة أيتام">كفالة أيتام</option>
+                <option value="سداد ديون">سداد ديون وغارمات</option>
+                <option value="تحسين مسكن">تحسين مسكن وأسقف</option>
+                <option value="أجهزة تعويضية">أجهزة تعويضية وتنفسية</option>
+                <option value="مساعدات عاجلة">مساعدات غذائية وعاجلة</option>
+              </select>
+            </label>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem">
+            <label style="font-weight:700; font-size:.9rem">
+              المبلغ المستهدف (ج.م) *
+              <input type="number" name="target_amount" min="1" required placeholder="مثال: 15000" style="margin-top:6px" />
+            </label>
+            <label style="font-weight:700; font-size:.9rem">
+              المبلغ المحصل مبدئياً (ج.م)
+              <input type="number" name="raised_amount" min="0" value="0" placeholder="0" style="margin-top:6px" />
+            </label>
+            <label style="font-weight:700; font-size:.9rem">
+              المحافظة / المدينة
+              <input name="beneficiary_city" placeholder="مثال: الدقهلية — شربين" style="margin-top:6px" />
+            </label>
+            <label style="font-weight:700; font-size:.9rem">
+              درجة الاستعجال *
+              <select name="urgency" style="padding:12px; border-radius:12px; border:1px solid var(--line); background:var(--ivory); margin-top:6px; width:100%">
+                <option value="critical">حرجة جدًا (تظهر أولاً مع وميض نبض)</option>
+                <option value="high">عالية الاستعجال</option>
+                <option value="normal" selected>عادية</option>
+              </select>
+            </label>
+          </div>
+
+          <label style="font-weight:700; font-size:.9rem">
+            وصف الحالة والظروف الاجتماعية *
+            <textarea name="description" required rows={3} placeholder="شرح تفصيلي وموجز بكرامة وخصوصية لحالة الأسرة والاحتياج الطبي أو المعيشي..." style="margin-top:6px; padding:12px; font-family:inherit; line-height:1.7"></textarea>
+          </label>
+
+          <div style="display:flex; justify-content:flex-end">
+            <button class="primary-btn" type="submit" style="padding:10px 26px; font-size:.95rem">
+              {icon('fa-paper-plane')} نشر الحالة في الموقع فوراً
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* جدول الحالات المنشورة */}
+      <div class="dash-table">
+        <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+          <h3>{icon('fa-list-check')} جدول الحالات الإنسانية المنشورة ({cases.length})</h3>
+          <span style="font-size:.82rem; color:var(--muted)">تحديث لحظي لتقدم التبرعات لكل حالة</span>
+        </header>
+
+        {cases.length === 0 ? (
+          <p style="padding:24px; text-align:center; color:var(--muted)">لا توجد حالات مسجلة بعد في قاعدة البيانات. أضف أول حالة أعلاه.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>كود الحالة</th>
+                <th>العنوان</th>
+                <th>التصنيف والمحافظة</th>
+                <th>درجة الاستعجال</th>
+                <th>التقدم المالي</th>
+                <th>حالة النشر</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cases.map((c: any) => {
+                const target = Number(c.target_amount || 0)
+                const raised = Number(c.raised_amount || 0)
+                const pct = target > 0 ? Math.min(100, Math.round((raised / target) * 100)) : 0
+                const isUrgent = c.urgency === 'critical'
+                const isHigh = c.urgency === 'high'
+
+                return <tr>
+                  <td>
+                    <b style="color:var(--emerald-600)">{c.code || `حالة #${c.id.slice(-4)}`}</b>
+                  </td>
+                  <td>
+                    <div style="font-weight:700; max-width:260px">{c.title}</div>
+                    <small style="color:var(--muted); font-size:.78rem; display:block; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">
+                      {c.description || 'لا يوجد وصف'}
+                    </small>
+                  </td>
+                  <td>
+                    <span style="display:inline-block; padding:2px 8px; border-radius:6px; background:rgba(22,138,112,.1); color:var(--emerald-600); font-size:.8rem; font-weight:700">
+                      {c.category || 'عام'}
+                    </span>
+                    {c.beneficiary_city && <small style="display:block; color:var(--muted); font-size:.76rem; margin-top:2px">{c.beneficiary_city}</small>}
+                  </td>
+                  <td>
+                    {isUrgent ? (
+                      <span style="background:#fee2e2; color:#b91c1c; padding:3px 10px; border-radius:999px; font-size:.75rem; font-weight:800">
+                        {icon('fa-bolt')} حرجة
+                      </span>
+                    ) : isHigh ? (
+                      <span style="background:#fef3c7; color:#b45309; padding:3px 10px; border-radius:999px; font-size:.75rem; font-weight:800">
+                        عالية
+                      </span>
+                    ) : (
+                      <span style="background:#e0f2fe; color:#0369a1; padding:3px 10px; border-radius:999px; font-size:.75rem; font-weight:700">
+                        عادية
+                      </span>
+                    )}
+                  </td>
+                  <td style="min-width:160px">
+                    <div style="display:flex; justify-content:space-between; font-size:.78rem; margin-bottom:4px">
+                      <b>{raised.toLocaleString('ar-EG')} ج.م</b>
+                      <small style="color:var(--muted)">من {target.toLocaleString('ar-EG')}</small>
+                    </div>
+                    <div style="width:100%; height:7px; background:var(--line); border-radius:999px; overflow:hidden">
+                      <div style={`width:${pct}%; height:100%; background:${pct >= 100 ? 'var(--emerald-600)' : 'var(--gold-600)'}`}></div>
+                    </div>
+                    <small style="font-size:.72rem; color:var(--muted); font-weight:700">{pct}% مكتمل</small>
+                  </td>
+                  <td>
+                    <form action={`/api/cases/item/toggle/${c.id}`} method="post" style="display:inline">
+                      <button type="submit" style={`background:${c.is_published ? 'rgba(22,138,112,.12)' : 'rgba(216,74,74,.12)'}; color:${c.is_published ? 'var(--emerald-600)' : 'var(--danger)'}; border:none; padding:4px 10px; border-radius:8px; font-size:.8rem; font-weight:700; cursor:pointer`}>
+                        {c.is_published ? 'منشورة بالموقع' : 'مسودة مخفية'}
+                      </button>
+                    </form>
+                  </td>
+                  <td>
+                    <div style="display:flex; gap:6px; align-items:center">
+                      <a href={`/cases/${c.id}`} target="_blank" class="outline-btn mini-btn" title="عرض في الموقع">
+                        {icon('fa-arrow-up-right-from-square')}
+                      </a>
+                      <a href={`/donate?case_id=${c.id}&case_code=${encodeURIComponent(c.code || c.title)}`} target="_blank" class="primary-btn mini-btn" title="رابط التبرع المباشر">
+                        {icon('fa-heart')}
+                      </a>
+                      <form action={`/api/cases/item/delete/${c.id}`} method="post" class="dash-action-form" data-confirm={`هل أنت متأكد من حذف ${c.title}؟`}>
+                        <button type="submit" class="dash-delete-btn">{icon('fa-trash-can')}</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </section>
+
+    {/* ────────────────── القسم الثاني: واجهة الاستخراج العشوائي وأرشيف المستفيدين ────────────────── */}
+    <div style="border-top:2px dashed var(--border); padding-top:2rem; margin-top:2rem; margin-bottom:1.5rem">
+      <h3 style="color:#8b5cf6; font-size:1.3rem; font-weight:900; display:flex; align-items:center; gap:8px">
+        {icon('fa-boxes-stacked')} أرشيف كشوفات المساعدات الميدانية (تصدير Excel)
+      </h3>
+      <p style="font-size:.88rem; color:var(--muted); margin-top:4px">
+        إدارة دفعات أسماء المستفيدين وتوليد كشوفات التوزيع وتصدير ملفات Excel الرسمية
+      </p>
+    </div>
+
     <section style="background: linear-gradient(135deg, rgba(139,92,246,.08) 0%, rgba(6,182,212,.06) 100%); border: 2px solid #8b5cf6; border-radius: 20px; padding: 2rem; margin-bottom: 2rem">
       <h3 style="font-size:1.25rem; font-weight:900; color:#8b5cf6; margin-bottom:.5rem; display:flex; align-items:center; gap:10px">
         {icon('fa-shuffle')} استخراج عينة عشوائية أو كاملة — تحميل ملف Excel المنسق
@@ -2505,5 +2699,324 @@ export function DashAudit({ list = [] }: { list: any[] }) {
         </tbody>
       </table>
     )}
+  </section>
+}
+
+export function DashMedical({ equipment = [], requests = [], stats = {} }: { equipment: any[], requests: any[], stats: any }) {
+  const totalDev = stats.total_devices ?? equipment.length
+  const availDev = stats.available_devices ?? equipment.filter((e: any) => e.status === 'available' || e.is_available !== false).length
+  const loanDev = stats.loaned_devices ?? equipment.filter((e: any) => e.status === 'loaned').length
+  const pendReq = stats.pending_requests ?? requests.filter((r: any) => r.status === 'pending').length
+
+  const STATUS_MAP: Record<string, [string, string]> = {
+    pending: ['قيد المراجعة', '#f59e0b'],
+    approved: ['موافقة مبدئية', '#3b82f6'],
+    active_loan: ['مُسلَّم قيد الإعارة', 'var(--emerald-600)'],
+    returned: ['تم الاسترداد والتعقيم', '#8b5cf6'],
+    rejected: ['مرفوض / غير مطابق', '#ef4444']
+  }
+
+  return <section class="dash-section">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem">
+      <div>
+        <h2 style="font-size:1.4rem; font-weight:900; color:var(--text); display:flex; align-items:center; gap:10px">
+          {icon('fa-stethoscope')} بنك الأجهزة الطبية والتنفسية المجاني
+        </h2>
+        <p style="color:var(--muted); font-size:.9rem; margin-top:4px">
+          إدارة أسطول الأجهزة الطبية المعارة لوجه الله، ومتابعة طلبات المرضى وأسطوانات الأكسجين والكراسي المتحركة.
+        </p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap">
+        <a href="/medical-equipment" target="_blank" class="dash-action-btn" style="text-decoration:none; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:10px; font-weight:700; font-size:.9rem; display:inline-flex; align-items:center; gap:8px">
+          {icon('fa-arrow-up-right-from-square')} عرض صفحة البنك للجمهور
+        </a>
+      </div>
+    </div>
+
+    {/* KPI Summary Cards */}
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem">
+      <article style="background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <span style="font-size: 1.4rem; color: var(--blue-600)">{icon('fa-boxes-stacked')}</span>
+          <small style="color: var(--muted); font-size: .8rem; font-weight:700">إجمالي وحدات الأسطول</small>
+        </div>
+        <b style="font-size: 1.8rem; margin-top: .6rem; color: var(--blue-600)">{totalDev}</b>
+      </article>
+
+      <article style="background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <span style="font-size: 1.4rem; color: var(--emerald-600)">{icon('fa-circle-check')}</span>
+          <small style="color: var(--muted); font-size: .8rem; font-weight:700">أجهزة متاحة للتسليم</small>
+        </div>
+        <b style="font-size: 1.8rem; margin-top: .6rem; color: var(--emerald-600)">{availDev}</b>
+      </article>
+
+      <article style="background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <span style="font-size: 1.4rem; color: var(--gold-600)">{icon('fa-hand-holding-medical')}</span>
+          <small style="color: var(--muted); font-size: .8rem; font-weight:700">قيد الإعارة لدى المرضى</small>
+        </div>
+        <b style="font-size: 1.8rem; margin-top: .6rem; color: var(--gold-600)">{loanDev}</b>
+      </article>
+
+      <article style="background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <span style="font-size: 1.4rem; color: #f59e0b">{icon('fa-clock-rotate-left')}</span>
+          <small style="color: var(--muted); font-size: .8rem; font-weight:700">طلبات جديدة معلقة</small>
+        </div>
+        <b style="font-size: 1.8rem; margin-top: .6rem; color: #f59e0b">{pendReq}</b>
+      </article>
+    </div>
+
+    {/* Section 1: Incoming Citizen Requests */}
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:1.5rem; margin-bottom:2.5rem">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.2rem">
+        <div>
+          <h3 style="font-size:1.2rem; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px">
+            {icon('fa-file-waveform')} طلبات استعارة الأجهزة الطبية ({requests.length})
+          </h3>
+          <p style="color:var(--muted); font-size:.85rem">الطلبات الواردة من المواطنين والأسر المتعففة عبر البوابة الإلكترونية</p>
+        </div>
+      </div>
+
+      {requests.length === 0 ? (
+        <div style="text-align:center; padding:3rem 1rem; color:var(--muted)">
+          <p style="font-size:2.5rem; margin-bottom:.5rem">{icon('fa-inbox')}</p>
+          <p style="font-weight:700">لا توجد طلبات استعارة معلقة حالياً بحمد الله</p>
+        </div>
+      ) : (
+        <div style="overflow-x:auto">
+          <table style="width:100%; border-collapse:collapse; min-width:850px">
+            <thead>
+              <tr style="border-bottom:2px solid var(--line); text-align:right">
+                <th style="padding:10px">المريض / مقدم الطلب</th>
+                <th style="padding:10px">الرقم القومي / الهاتف</th>
+                <th style="padding:10px">الجهاز المطلوب</th>
+                <th style="padding:10px">العنوان / المدينة</th>
+                <th style="padding:10px">التشخيص والمدة</th>
+                <th style="padding:10px">الحالة</th>
+                <th style="padding:10px">تحديث الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((r: any) => {
+                const [statusText, statusColor] = STATUS_MAP[r.status] || [r.status || 'معلق', '#999']
+                const cleanPhone = (r.requester_phone || '').replace(/\D/g, '')
+
+                return (
+                  <tr style="border-bottom:1px solid var(--line); vertical-align:middle">
+                    <td style="padding:12px 10px">
+                      <b>{r.patient_name || 'مريض'}</b>
+                      {r.requester_name && r.requester_name !== r.patient_name && (
+                        <div style="font-size:.78rem; color:var(--muted)">بواسطة: {r.requester_name}</div>
+                      )}
+                    </td>
+                    <td style="padding:12px 10px">
+                      <div style="direction:ltr; text-align:right; font-weight:600">
+                        <a href={`tel:${cleanPhone}`} style="color:var(--emerald-600); text-decoration:none">
+                          {icon('fa-phone')} {r.requester_phone || '-'}
+                        </a>
+                      </div>
+                      {cleanPhone && (
+                        <a href={`https://wa.me/2${cleanPhone.startsWith('0') ? cleanPhone.slice(1) : cleanPhone}`} target="_blank" rel="noopener" style="font-size:.75rem; color:#25D366; text-decoration:none; display:inline-flex; align-items:center; gap:4px">
+                          <i class="fa-brands fa-whatsapp"></i> مراسلة واتساب
+                        </a>
+                      )}
+                      {r.patient_national_id && (
+                        <div style="font-size:.75rem; color:var(--muted)">ق: {r.patient_national_id}</div>
+                      )}
+                    </td>
+                    <td style="padding:12px 10px">
+                      <span style="font-weight:700; color:var(--text)">{r.equipment_type || '-'}</span>
+                    </td>
+                    <td style="padding:12px 10px">
+                      <div>{r.city || 'غير محدد'}</div>
+                      <small style="color:var(--muted); font-size:.78rem">{r.address || '-'}</small>
+                    </td>
+                    <td style="padding:12px 10px; max-width:200px">
+                      <div style="font-size:.85rem">{r.diagnosis || 'رعاية منزلية'}</div>
+                      <small style="color:var(--muted)">المدة: {r.expected_duration || 'شهر'}</small>
+                    </td>
+                    <td style="padding:12px 10px">
+                      <span style={`display:inline-block; padding:4px 10px; border-radius:999px; font-size:.78rem; font-weight:700; color:#fff; background:${statusColor}`}>
+                        {statusText}
+                      </span>
+                    </td>
+                    <td style="padding:12px 10px">
+                      <form action={`/api/medical/requests/status/${r.id}`} method="post" style="display:flex; gap:6px; align-items:center">
+                        <select name="status" style="padding:6px 8px; border-radius:8px; border:1px solid var(--border); background:var(--surface); font-size:.82rem">
+                          <option value="pending" selected={r.status === 'pending'}>قيد المراجعة</option>
+                          <option value="approved" selected={r.status === 'approved'}>موافقة مبدئية</option>
+                          <option value="active_loan" selected={r.status === 'active_loan'}>تسليم وإعارة</option>
+                          <option value="returned" selected={r.status === 'returned'}>تم الاسترداد</option>
+                          <option value="rejected" selected={r.status === 'rejected'}>رفض</option>
+                        </select>
+                        <button type="submit" class="dash-action-btn" style="background:var(--emerald-600); color:#fff; border:none; padding:6px 10px; border-radius:8px; font-size:.8rem; cursor:pointer; font-weight:700">
+                          حفظ
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
+    {/* Section 2: Fleet Inventory & Add Device */}
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:1.5rem">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem">
+        <div>
+          <h3 style="font-size:1.2rem; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px">
+            {icon('fa-truck-medical')} أسطول الأجهزة والمعدات الطبية ({equipment.length})
+          </h3>
+          <p style="color:var(--muted); font-size:.85rem">سجل الأجهزة المملوكة للمؤسسة وجاهزيتها للتسليم الدوري</p>
+        </div>
+        <button
+          type="button"
+          id="btn-toggle-add-med"
+          style="background:var(--emerald-600); color:#fff; border:none; padding:8px 18px; border-radius:10px; font-weight:700; font-size:.9rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px"
+          onclick="document.getElementById('add-med-panel').style.display = document.getElementById('add-med-panel').style.display === 'none' ? 'block' : 'none'"
+        >
+          {icon('fa-plus')} إضافة جهاز طبي جديد
+        </button>
+      </div>
+
+      {/* Expandable Add Form */}
+      <div id="add-med-panel" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.5rem; margin-bottom:2rem">
+        <h4 style="margin-bottom:1rem; font-weight:800; display:flex; align-items:center; gap:8px">
+          {icon('fa-file-circle-plus')} تسجيل جهاز طبي جديد في أسطول المؤسسة
+        </h4>
+        <form action="/api/medical/items/add" method="post" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem">
+          <div>
+            <label style="display:block; font-size:.85rem; font-weight:700; margin-bottom:4px">اسم الجهاز *</label>
+            <input type="text" name="name" placeholder="مثال: مولد أكسجين 10 لتر Yuwell" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border)" />
+          </div>
+          <div>
+            <label style="display:block; font-size:.85rem; font-weight:700; margin-bottom:4px">التصنيف *</label>
+            <select name="category" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border)">
+              <option value="respiratory">أجهزة تنفسية وأكسجين</option>
+              <option value="mobility">كراسي متحركة وأجهزة حركية</option>
+              <option value="beds">أسرّة طبية ومستلزمات</option>
+              <option value="diagnostics">أجهزة قياس وفحص</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block; font-size:.85rem; font-weight:700; margin-bottom:4px">كود الجهاز / السيريال</label>
+            <input type="text" name="code" placeholder="مثال: OXY-10L-03" style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border)" />
+          </div>
+          <div>
+            <label style="display:block; font-size:.85rem; font-weight:700; margin-bottom:4px">الحالة الفنية</label>
+            <input type="text" name="condition" placeholder="ممتازة — فحص دوري" value="ممتازة" style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border)" />
+          </div>
+          <div>
+            <label style="display:block; font-size:.85rem; font-weight:700; margin-bottom:4px">أيقونة الجهاز (FontAwesome)</label>
+            <select name="image_icon" style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border)">
+              <option value="fa-lungs">رئة / أكسجين (fa-lungs)</option>
+              <option value="fa-bottle-water">أسطوانة غاز (fa-bottle-water)</option>
+              <option value="fa-wheelchair">كرسي متحرك (fa-wheelchair)</option>
+              <option value="fa-bed-pulse">سرير طبي (fa-bed-pulse)</option>
+              <option value="fa-heart-pulse">جهاز قياس وفحص (fa-heart-pulse)</option>
+            </select>
+          </div>
+          <div style="grid-column:1 / -1">
+            <label style="display:block; font-size:.85rem; font-weight:700; margin-bottom:4px">وصف ومواصفات الجهاز</label>
+            <textarea name="description" rows={2} placeholder="سعة الأكسجين، الملحقات المتوفرة، ماسكات، شروط الاستخدام..." style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border)"></textarea>
+          </div>
+          <div style="grid-column:1 / -1; display:flex; justify-content:flex-end; gap:8px">
+            <button type="button" onclick="document.getElementById('add-med-panel').style.display='none'" style="padding:8px 16px; border-radius:8px; border:1px solid var(--border); background:none; cursor:pointer">إلغاء</button>
+            <button type="submit" style="padding:8px 20px; border-radius:8px; background:var(--emerald-600); color:#fff; border:none; font-weight:700; cursor:pointer">حفظ الجهاز في الأسطول</button>
+          </div>
+        </form>
+      </div>
+
+      {/* Equipment Fleet Table */}
+      <div style="overflow-x:auto">
+        <table style="width:100%; border-collapse:collapse; min-width:800px">
+          <thead>
+            <tr style="border-bottom:2px solid var(--line); text-align:right">
+              <th style="padding:10px">الجهاز والموديل</th>
+              <th style="padding:10px">التصنيف</th>
+              <th style="padding:10px">الكود المرجعي</th>
+              <th style="padding:10px">الحالة الفنية</th>
+              <th style="padding:10px">عدد مرات الإعارة</th>
+              <th style="padding:10px">حالة التوفر</th>
+              <th style="padding:10px">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {equipment.map((item: any) => {
+              const isAvail = item.status === 'available' || (item.is_available !== false && item.status !== 'maintenance' && item.status !== 'loaned')
+
+              return (
+                <tr style="border-bottom:1px solid var(--line); vertical-align:middle">
+                  <td style="padding:12px 10px">
+                    <div style="display:flex; align-items:center; gap:10px">
+                      <div style="width:36px; height:36px; border-radius:8px; background:rgba(22,138,112,.12); color:var(--emerald-600); display:flex; align-items:center; justify-content:center; font-size:1.1rem">
+                        <i class={`fa-solid ${item.image_icon || 'fa-stethoscope'}`}></i>
+                      </div>
+                      <div>
+                        <b>{item.name}</b>
+                        {item.description && (
+                          <div style="font-size:.78rem; color:var(--muted); max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
+                            {item.description}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td style="padding:12px 10px">
+                    <span style="font-size:.82rem; background:var(--surface); border:1px solid var(--border); padding:3px 8px; border-radius:6px">
+                      {item.category_name || item.category || 'عام'}
+                    </span>
+                  </td>
+                  <td style="padding:12px 10px; font-family:monospace; font-weight:700; color:var(--muted)">
+                    {item.code || '-'}
+                  </td>
+                  <td style="padding:12px 10px">
+                    <span style="font-size:.82rem">{item.condition || 'ممتازة'}</span>
+                  </td>
+                  <td style="padding:12px 10px">
+                    <b>{(item.total_loans_count || 0).toLocaleString('ar-EG')}</b>
+                    <small style="color:var(--muted)"> مريض</small>
+                  </td>
+                  <td style="padding:12px 10px">
+                    {isAvail ? (
+                      <span style="background:rgba(22,138,112,.12); color:var(--emerald-600); padding:3px 10px; border-radius:999px; font-size:.78rem; font-weight:700">
+                        متاح للتسليم
+                      </span>
+                    ) : item.status === 'loaned' ? (
+                      <span style="background:rgba(217,119,6,.12); color:#d97706; padding:3px 10px; border-radius:999px; font-size:.78rem; font-weight:700">
+                        معار حالياً
+                      </span>
+                    ) : (
+                      <span style="background:rgba(239,68,68,.12); color:#ef4444; padding:3px 10px; border-radius:999px; font-size:.78rem; font-weight:700">
+                        صيانة وتعقيم
+                      </span>
+                    )}
+                  </td>
+                  <td style="padding:12px 10px">
+                    <div style="display:flex; gap:6px; align-items:center">
+                      <form action={`/api/medical/items/toggle/${item.id}`} method="post">
+                        <button type="submit" title="تبديل بين متاح وصيانة" style="padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface); cursor:pointer; font-size:.78rem">
+                          {icon('fa-arrows-rotate')} {isAvail ? 'إيقاف للصيانة' : 'تفعيل للإتاحة'}
+                        </button>
+                      </form>
+                      <form action={`/api/medical/items/delete/${item.id}`} method="post" data-confirm={`هل أنت متأكد من حذف ${item.name} من الأسطول؟`}>
+                        <button type="submit" class="dash-delete-btn" style="padding:5px 8px; border-radius:6px; border:none; background:rgba(239,68,68,.1); color:#ef4444; cursor:pointer; font-size:.78rem">
+                          {icon('fa-trash-can')}
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </section>
 }

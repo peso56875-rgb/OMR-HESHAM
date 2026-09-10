@@ -1,27 +1,89 @@
 import { icon, Layout, PageHero } from './shared'
 import type { UserSession } from '../types'
 
-export function Donate({ user, campaigns = [], selectedCampaignId }: { user?: UserSession, campaigns?: any[], selectedCampaignId?: string }) {
+export function Donate({
+  user,
+  campaigns = [],
+  selectedCampaignId,
+  selectedCaseId,
+  selectedCaseCode,
+  selectedCaseTitle,
+  initialAmount,
+  donationPurpose
+}: {
+  user?: UserSession
+  campaigns?: any[]
+  selectedCampaignId?: string
+  selectedCaseId?: string
+  selectedCaseCode?: string
+  selectedCaseTitle?: string
+  initialAmount?: number | string
+  donationPurpose?: string
+}) {
+  const defaultAmount = initialAmount ? Number(initialAmount) || 500 : 500
+
   return <Layout user={user} title="تبرّع الآن | مؤسسة الدكتور عمر هشام">
     <PageHero kicker="تبرّع الآن" title={'عطاؤك اليوم،<br/><em>قد يغيّر غدًا كاملًا.</em>'} text="اختر الطريقة الأنسب لك. كل مساهمة تصل لأصحابها بكرامة وخصوصية وتوثيق محكم." />
     <section class="donate-layout section-pad">
       <div class="donation-journey reveal">
         <p class="eyebrow"><span></span>حدد مساهمتك</p>
         <h2>كم تريد أن تزرع من الخير؟</h2>
-        <form class="donation-form ajax-form" data-endpoint="/api/donations/add" method="post">
-          <div class="amount-picks" id="amount-picks-container">
-            <button type="button" data-amount="100">١٠٠ ج.م</button>
-            <button type="button" class="active" data-amount="500">٥٠٠ ج.م</button>
-            <button type="button" data-amount="1000">١٬٠٠٠ ج.م</button>
-            <button type="button" data-amount="5000">٥٬٠٠٠ ج.م</button>
+
+        {selectedCaseId && (
+          <div class="dedicated-case-banner" style="background:rgba(22,138,112,.08); border:1.5px solid var(--emerald-600); border-radius:14px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:12px">
+              <div style="width:40px; height:40px; border-radius:10px; background:var(--emerald-600); color:#fff; display:grid; place-items:center; font-size:1.15rem">
+                {icon('fa-hand-holding-heart')}
+              </div>
+              <div>
+                <small style="color:var(--muted); font-size:.8rem; font-weight:700">تبرع مخصص لكفالة حالة إنسانية:</small>
+                <div style="font-weight:900; color:var(--heading); font-size:1.05rem">
+                  {selectedCaseCode || 'حالة خاصة'} {selectedCaseTitle ? `— ${selectedCaseTitle}` : ''}
+                </div>
+              </div>
+            </div>
+            <a href="/donate" class="outline-btn" style="font-size:.8rem; padding:4px 12px; border-radius:8px" title="إلغاء التخصيص والعودة للصندوق العام">
+              {icon('fa-xmark')} إلغاء التخصيص
+            </a>
           </div>
-          <label>مبلغ التبرّع <span>بالجنيه المصري</span><input type="number" name="amount" id="amount-input" value="500" min="1" required /></label>
+        )}
+
+        {donationPurpose && !selectedCaseId && (
+          <div class="dedicated-purpose-banner" style="background:rgba(217,119,6,.08); border:1.5px solid var(--gold-600); border-radius:14px; padding:12px 18px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap">
+            <div style="display:flex; align-items:center; gap:12px">
+              <div style="width:40px; height:40px; border-radius:10px; background:var(--gold-600); color:#fff; display:grid; place-items:center; font-size:1.15rem">
+                {icon('fa-scale-balanced')}
+              </div>
+              <div>
+                <small style="color:var(--muted); font-size:.8rem; font-weight:700">مصرف المساهمة الشرعية:</small>
+                <div style="font-weight:900; color:var(--heading); font-size:1.05rem">{donationPurpose}</div>
+              </div>
+            </div>
+            <a href="/donate" class="outline-btn" style="font-size:.8rem; padding:4px 12px; border-radius:8px">
+              {icon('fa-xmark')} مساهمة عامة
+            </a>
+          </div>
+        )}
+
+        <form class="donation-form ajax-form" data-endpoint="/api/donations/add" method="post">
+          <input type="hidden" name="case_id" value={selectedCaseId || ''} />
+          <input type="hidden" name="case_code" value={selectedCaseCode || ''} />
+          <input type="hidden" name="case_title" value={selectedCaseTitle || ''} />
+          <input type="hidden" name="donation_purpose" value={donationPurpose || ''} />
+
+          <div class="amount-picks" id="amount-picks-container">
+            <button type="button" class={defaultAmount === 100 ? 'active' : ''} data-amount="100">١٠٠ ج.م</button>
+            <button type="button" class={defaultAmount === 500 ? 'active' : ''} data-amount="500">٥٠٠ ج.م</button>
+            <button type="button" class={defaultAmount === 1000 ? 'active' : ''} data-amount="1000">١٬٠٠٠ ج.م</button>
+            <button type="button" class={defaultAmount === 5000 ? 'active' : ''} data-amount="5000">٥٬٠٠٠ ج.م</button>
+          </div>
+          <label>مبلغ التبرّع <span>بالجنيه المصري</span><input type="number" name="amount" id="amount-input" value={String(defaultAmount)} min="1" required /></label>
           <div class="form-grid">
             <label>الاسم الكريم<input name="name" required placeholder="الاسم بالكامل" /></label>
             <label>رقم الهاتف<input name="phone" required inputmode="tel" placeholder="01xxxxxxxxx" /></label>
           </div>
           <label>البريد الإلكتروني <span>اختياري</span><input type="email" name="email" placeholder="name@example.com" /></label>
-          {campaigns.length > 0 && <label>الحملة المستهدفة <span>اختياري</span><select name="campaign_id"><option value="">الصندوق العام (لكل أعمال الخير)</option>{campaigns.map((cp: any) => <option value={cp.id} selected={cp.id === selectedCampaignId}>{cp.title}</option>)}</select></label>}
+          {campaigns.length > 0 && !selectedCaseId && <label>الحملة المستهدفة <span>اختياري</span><select name="campaign_id"><option value="">الصندوق العام (لكل أعمال الخير)</option>{campaigns.map((cp: any) => <option value={cp.id} selected={cp.id === selectedCampaignId}>{cp.title}</option>)}</select></label>}
           
           <fieldset class="payment-methods-fieldset">
             <legend>طريقة التبرّع والتحويل</legend>
@@ -128,6 +190,19 @@ export function Donate({ user, campaigns = [], selectedCampaignId }: { user?: Us
             <h3>شارك في فرحة الموسم</h3>
             <p><b>٥٠٠ ج.م</b> صك خيري <i></i> <b>١١٬٠٠٠ ج.م</b> أضحية كاملة</p>
           </div>
+        </article>
+
+        <article class="donor-certificate-aside-card" style="margin-top:16px; background:linear-gradient(135deg, rgba(22,138,112,0.08), rgba(217,119,6,0.08)); border:1px solid rgba(22,138,112,0.25); border-radius:14px; padding:16px; display:flex; gap:12px; align-items:center">
+          <div style="width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg, var(--emerald-600), var(--emerald-800)); color:#fff; display:grid; place-items:center; font-size:1.15rem; flex-shrink:0">
+            {icon('fa-file-invoice-dollar')}
+          </div>
+          <div style="flex:1">
+            <strong style="display:block; font-size:.9rem; color:var(--heading); margin-bottom:2px">شهادة العطاء السنوية</strong>
+            <small style="color:var(--muted); display:block; font-size:.78rem; line-height:1.4">استخرج كشف حساب تبرعاتك السنوي الموثق رسمياً برقم التشهير 3115</small>
+          </div>
+          <a href="/donor-statement" class="outline-btn" style="padding:6px 12px; font-size:.78rem; white-space:nowrap; border-radius:8px">
+            استخراج {icon('fa-arrow-left')}
+          </a>
         </article>
       </aside>
     </section>

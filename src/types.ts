@@ -73,6 +73,7 @@ export interface Volunteer {
   certificate_allowed?: boolean
   certificate_allowed_at?: string
   certificate_allowed_by?: string
+  active_missions?: string[]
   created_at?: string
 }
 

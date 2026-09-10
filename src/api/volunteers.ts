@@ -1054,3 +1054,208 @@ volunteers.post('/delete/:id', adminMiddleware, async (c) => {
     return fail(c, `تعذر حذف المتطوع: ${error.message}`, 500)
   }
 })
+
+// ──────────────────────────── المهام الميدانية وتسجيل الحضور الميداني ────────────────────────────
+
+export const defaultVolunteerMissions = [
+  {
+    id: 'mis_food_dist_01',
+    title: 'توزيع كراتين المواد الغذائية للأسر المتعففة',
+    category: 'إغاثة وإطعام',
+    category_icon: 'fa-basket-shopping',
+    location: 'كفر العنانية والقرى المجاورة',
+    hours: 4,
+    volunteers_needed: 8,
+    volunteers_joined: 5,
+    description: 'تعبئة وتوصيل الكراتين الغذائية الشهرية لمنازل الأسر غير القادرة مع مراعاة حفظ الكرامة والخصوصية.',
+    is_active: true
+  },
+  {
+    id: 'mis_med_device_02',
+    title: 'فحص وتسليم مولدات الأكسجين والأجهزة التنفسية',
+    category: 'صحة ورعاية',
+    category_icon: 'fa-lungs',
+    location: 'المنصورة والسنبلاوين',
+    hours: 3,
+    volunteers_needed: 4,
+    volunteers_joined: 2,
+    description: 'مرافقة الفني الطبي لتوصيل أسطوانات ومولدات الأكسجين وتدريب ذوي المريض على استخدامها ومتابعة الصيانة الدورية.',
+    is_active: true
+  },
+  {
+    id: 'mis_eid_clothes_03',
+    title: 'تنظيم معرض الكسوة وهدايا الأعياد للأطفال الأيتام',
+    category: 'كفالة أيتام',
+    category_icon: 'fa-shirt',
+    location: 'شربين ودكرنس',
+    hours: 5,
+    volunteers_needed: 10,
+    volunteers_joined: 6,
+    description: 'ترتيب واختيار الملابس الجديدة مع الأطفال الأيتام ورسم البهجة على وجوههم وتنسيق فقرات الأنشطة والترفيه.',
+    is_active: true
+  },
+  {
+    id: 'mis_quran_event_04',
+    title: 'التنظيم والإشراف على مسابقة القرآن الكريم السنوية',
+    category: 'تعليم وقرآن',
+    category_icon: 'fa-book-quran',
+    location: 'مسجد ومقر المؤسسة المركزي',
+    hours: 4,
+    volunteers_needed: 6,
+    volunteers_joined: 3,
+    description: 'استقبال المتسابقين الصغار وأولياء أمورهم، ترتيب لجان التحكيم، وتجهيز شهادات التقدير والجوائز العينية.',
+    is_active: true
+  }
+]
+
+export const calculateRankFromHours = (hours: number): string => {
+  if (hours >= 200) return 'سفير أثر المؤسسة'
+  if (hours >= 100) return 'قائد فريق ميداني'
+  if (hours >= 50) return 'متطوع متميز'
+  if (hours >= 20) return 'متطوع نشط'
+  return 'متطوع مبادر'
+}
+
+// جلب قائمة المهام الميدانية
+volunteers.get('/missions/list', async (c) => {
+  try {
+    const db = getFirestore(c)
+    const snap = await db.collection('volunteer_missions').where('is_active', '==', true).get().catch(() => ({ docs: [] }))
+    const dbMissions = (snap as any).docs.map((d: any) => ({ id: d.id, ...d.data() }))
+    return c.json({
+      success: true,
+      missions: dbMissions.length > 0 ? dbMissions : defaultVolunteerMissions
+    })
+  } catch (e: any) {
+    return c.json({ success: true, missions: defaultVolunteerMissions })
+  }
+})
+
+// انضمام متطوع لمهمة ميدانية
+volunteers.post('/missions/join', authMiddleware, async (c) => {
+  const user = (c as any).get('user')
+  const body = await c.req.json().catch(() => ({}))
+  const missionId = String(body.mission_id || '').trim()
+
+  if (!missionId) {
+    return c.json({ error: 'رقم المهمة مطلوب' }, 400)
+  }
+
+  try {
+    const db = getFirestore(c)
+    // البحث عن سجل المتطوع
+    const vSnap = await db.collection('volunteers').where('profile_id', '==', user.id).limit(1).get()
+    if (vSnap.empty) {
+      return c.json({ error: 'يجب أن تكون متطوعاً معتمداً لتسجيل الانضمام للمهمة' }, 403)
+    }
+
+    const volDoc = vSnap.docs[0]
+    const volData = volDoc.data()
+    const activeMissions = Array.isArray(volData.active_missions) ? volData.active_missions : []
+
+    if (!activeMissions.includes(missionId)) {
+      activeMissions.push(missionId)
+      await volDoc.ref.update({
+        active_missions: activeMissions,
+        updated_at: new Date().toISOString()
+      })
+    }
+
+    return c.json({
+      success: true,
+      message: 'تم تسجيل انضمامك للمهمة الميدانية بنجاح! ننتظر أثرك الطيب.'
+    })
+  } catch (e: any) {
+    console.error('[Mission Join Error]', e)
+    return c.json({ error: 'تعذر الانضمام للمهمة' }, 500)
+  }
+})
+
+// تسجيل الحضور الميداني وإنجاز المهمة وإضافة الساعات التطوعية تلقائياً
+volunteers.post('/missions/checkin', authMiddleware, async (c) => {
+  const user = (c as any).get('user')
+  const body = await c.req.json().catch(() => ({}))
+  const missionId = String(body.mission_id || '').trim()
+  const customHours = Number(body.hours) || 0
+  const notes = String(body.notes || 'إنجاز المهمة بنجاح والتواجد الميداني').trim()
+
+  if (!missionId) {
+    return c.json({ error: 'رقم المهمة مطلوب' }, 400)
+  }
+
+  try {
+    const db = getFirestore(c)
+    const vSnap = await db.collection('volunteers').where('profile_id', '==', user.id).limit(1).get()
+    if (vSnap.empty) {
+      return c.json({ error: 'لم يتم العثور على سجل تطوع معتمد لهذا الحساب' }, 403)
+    }
+
+    const volDoc = vSnap.docs[0]
+    const volId = volDoc.id
+    const before = volDoc.data()
+
+    // تحديد ساعات المهمة
+    let missionHours = customHours
+    if (!missionHours) {
+      const found = defaultVolunteerMissions.find(m => m.id === missionId)
+      missionHours = found ? found.hours : 3
+    }
+
+    const prevHours = Number(before.hours_count) || 0
+    const newHours = prevHours + missionHours
+    const prevRank = before.rank || 'متطوع مبادر'
+    const newRank = calculateRankFromHours(newHours)
+
+    const patch: Record<string, any> = {
+      hours_count: newHours,
+      updated_at: new Date().toISOString()
+    }
+
+    if (newRank !== prevRank) {
+      patch.rank = newRank
+    }
+
+    // إذا تجاوز 20 ساعة، تفعيل إمكانية الشهادة تلقائياً إن لم تكن مفعلة
+    if (newHours >= 20 && !before.certificate_allowed) {
+      patch.certificate_allowed = true
+    }
+
+    // إزالة المهمة من قائمة المهام الجارية وإضافتها لسجل المهام المنجزة
+    const activeMissions = (before.active_missions || []).filter((id: string) => id !== missionId)
+    patch.active_missions = activeMissions
+
+    await volDoc.ref.update(patch)
+
+    // تسجيل سجل الحضور في Firestore
+    await db.collection('volunteer_attendance').add({
+      volunteer_id: volId,
+      profile_id: user.id,
+      volunteer_name: before.full_name || user.name,
+      volunteer_code: before.volunteer_code || '',
+      mission_id: missionId,
+      hours_credited: missionHours,
+      notes,
+      created_at: new Date().toISOString()
+    })
+
+    // إرسال إشعارات الترقية وتحديث الساعات
+    await notifyVolunteerChanges(c, {
+      id: volId,
+      before,
+      patch
+    })
+
+    return c.json({
+      success: true,
+      message: `تقبل الله جهدكم وعطاءكم! تم تسجيل حضورك وإضافة ${missionHours} ساعات لرصيدك المعتمد.`,
+      added_hours: missionHours,
+      total_hours: newHours,
+      rank: newRank,
+      promoted: newRank !== prevRank,
+      certificate_allowed: patch.certificate_allowed || before.certificate_allowed
+    })
+  } catch (e: any) {
+    console.error('[Mission Checkin Error]', e)
+    return c.json({ error: 'حدث خطأ أثناء تسجيل الحضور الميداني' }, 500)
+  }
+})

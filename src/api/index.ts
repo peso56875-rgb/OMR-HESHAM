@@ -24,6 +24,7 @@ import { auditMiddleware } from '../lib/audit'
 import { audit } from './audit'
 import { quranApi } from './quran'
 import { programs } from './programs'
+import { medical } from './medical'
 
 const api = new Hono()
 
@@ -82,5 +83,6 @@ api.route('/search', searchApi)
 api.route('/audit', audit)
 api.route('/quran', quranApi)
 api.route('/programs', programs)
+api.route('/medical', medical)
 
 export { api }

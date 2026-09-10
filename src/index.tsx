@@ -19,9 +19,13 @@ import { ZakatCalculator } from './components/Zakat'
 import { QuranHub } from './components/Quran'
 import { KidsHub } from './components/KidsHub'
 import { CasesList, CaseDetail } from './components/Cases'
+import { MedicalEquipment } from './components/MedicalEquipment'
+import { defaultMedicalEquipment } from './api/medical'
 import { VolunteerPortal } from './components/VolunteerPortal'
+import { defaultVolunteerMissions } from './api/volunteers'
 import { CertificateView } from './components/Certificate'
 import { VolunteerCardView } from './components/VolunteerCard'
+import { DonorStatement } from './components/DonorStatement'
 
 import { Receipt, ReceiptVerification } from './components/Receipt'
 import { defaultCampaigns, defaultNews } from './defaults'
@@ -155,8 +159,39 @@ app.get('/donate', async (c) => {
     const snap = await db.collection('campaigns').where('is_published', '==', true).get()
     campaigns = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
   } catch (e) { }
+
   const selectedCampaignId = c.req.query('campaign') || ''
-  return c.html(<Donate campaigns={campaigns} selectedCampaignId={selectedCampaignId} user={(c as any).get('user')} />)
+  const selectedCaseId = c.req.query('case_id') || ''
+  let selectedCaseCode = c.req.query('case_code') || ''
+  let selectedCaseTitle = ''
+
+  if (selectedCaseId) {
+    try {
+      const db = getFirestore(c)
+      const doc = await db.collection('beneficiary_cases').doc(selectedCaseId).get()
+      if (doc.exists) {
+        const d = doc.data()
+        selectedCaseTitle = d?.title || ''
+        if (!selectedCaseCode && d?.code) selectedCaseCode = d.code
+      }
+    } catch (e) {}
+  }
+
+  const initialAmount = c.req.query('amount') || ''
+  const donationPurpose = c.req.query('purpose') || c.req.query('type') || ''
+
+  return c.html(
+    <Donate
+      campaigns={campaigns}
+      selectedCampaignId={selectedCampaignId}
+      selectedCaseId={selectedCaseId}
+      selectedCaseCode={selectedCaseCode}
+      selectedCaseTitle={selectedCaseTitle}
+      initialAmount={initialAmount}
+      donationPurpose={donationPurpose}
+      user={(c as any).get('user')}
+    />
+  )
 })
 
 app.get('/achievements', (c) => c.html(<Achievements user={(c as any).get('user')} />))
@@ -371,6 +406,23 @@ app.get('/cases/:id', async (c) => {
   return c.notFound()
 })
 
+app.get('/medical-equipment', async (c) => {
+  let equipmentList: any[] = []
+  try {
+    const db = getFirestore(c)
+    const snap = await db.collection('medical_equipment').where('is_published', '==', true).get().catch(() => ({ docs: [] }))
+    if (snap.docs && snap.docs.length > 0) {
+      equipmentList = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+    }
+  } catch (e) {}
+
+  if (equipmentList.length === 0) {
+    equipmentList = defaultMedicalEquipment
+  }
+
+  return c.html(<MedicalEquipment equipment={equipmentList} user={(c as any).get('user')} />)
+})
+
 app.get('/volunteer-portal', async (c) => {
   const user = (c as any).get('user')
   if (!user) {
@@ -378,11 +430,13 @@ app.get('/volunteer-portal', async (c) => {
   }
   let volunteer: any = null
   let events: any[] = []
+  let missions: any[] = []
   try {
     const db = getFirestore(c)
-    const [vSnap, eSnap] = await Promise.all([
+    const [vSnap, eSnap, mSnap] = await Promise.all([
       db.collection('volunteers').where('profile_id', '==', user.id).limit(1).get().catch(() => ({ empty: true, docs: [] })),
-      db.collection('events').where('is_published', '==', true).orderBy('event_date', 'asc').limit(4).get().catch(() => ({ docs: [] }))
+      db.collection('events').where('is_published', '==', true).orderBy('event_date', 'asc').limit(4).get().catch(() => ({ docs: [] })),
+      db.collection('volunteer_missions').where('is_active', '==', true).get().catch(() => ({ docs: [] }))
     ])
     if (!vSnap.empty && vSnap.docs && vSnap.docs.length > 0) {
       volunteer = { id: vSnap.docs[0].id, ...vSnap.docs[0].data() }
@@ -392,9 +446,14 @@ app.get('/volunteer-portal', async (c) => {
         volunteer = { id: fallbackSnap.docs[0].id, ...fallbackSnap.docs[0].data() }
       }
     }
-    events = eSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }))
+    events = (eSnap as any).docs.map((d: any) => ({ id: d.id, ...d.data() }))
+    const dbMissions = (mSnap as any).docs.map((d: any) => ({ id: d.id, ...d.data() }))
+    missions = dbMissions.length > 0 ? dbMissions : defaultVolunteerMissions
   } catch (e) {}
-  return c.html(<VolunteerPortal user={user} volunteer={volunteer} upcomingEvents={events} />)
+  if (missions.length === 0) {
+    missions = defaultVolunteerMissions
+  }
+  return c.html(<VolunteerPortal user={user} volunteer={volunteer} upcomingEvents={events} missions={missions} />)
 })
 
 app.get('/certificate/:id', async (c) => {
@@ -465,6 +524,48 @@ app.get('/certificate/:id', async (c) => {
       volunteer={volunteer}
       certCode={certCode}
       verificationUrl={verificationUrl}
+    />
+  )
+})
+
+// ──────────────────── شهادة العطاء السنوية وكشف حساب المتبرع ────────────────────
+app.get('/donor-statement', async (c) => {
+  const user = (c as any).get('user')
+  if (!user) return c.redirect('/login?error=unauthorized')
+
+  const year = c.req.query('year') || String(new Date().getFullYear())
+  let donations: any[] = []
+  let totalAmount = 0
+
+  try {
+    const db = getFirestore(c)
+    const startOfYear = `${year}-01-01T00:00:00.000Z`
+    const endOfYear = `${year}-12-31T23:59:59.999Z`
+
+    const snap = await db.collection('donations')
+      .where('profile_id', '==', user.id)
+      .where('status', '==', 'completed')
+      .where('created_at', '>=', startOfYear)
+      .where('created_at', '<=', endOfYear)
+      .orderBy('created_at', 'desc')
+      .get()
+
+    donations = snap.docs.map((d: any) => ({ id: d.id, ...d.data() }))
+    totalAmount = donations.reduce((sum: number, d: any) => sum + Number(d.amount || 0), 0)
+  } catch (e) {
+    console.error('[Donor Statement Error]', e)
+  }
+
+  const statementCode = `STMT-${year}-${user.id.slice(0, 6).toUpperCase()}`
+
+  return c.html(
+    <DonorStatement
+      user={user}
+      donations={donations}
+      year={year}
+      totalAmount={totalAmount}
+      totalDonations={donations.length}
+      statementCode={statementCode}
     />
   )
 })
@@ -758,8 +859,11 @@ app.get('/dashboard', async (c) => {
         list: snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
       }
     } else if (view === 'cases') {
-      const snap = await db.collection('beneficiary_groups').orderBy('created_at', 'desc').get()
-      const groups = snap.docs.map((doc: any) => {
+      const [groupsSnap, casesSnap] = await Promise.all([
+        db.collection('beneficiary_groups').orderBy('created_at', 'desc').get().catch(() => ({ docs: [] })),
+        db.collection('beneficiary_cases').orderBy('created_at', 'desc').get().catch(() => ({ docs: [] }))
+      ])
+      const groups = (groupsSnap as any).docs.map((doc: any) => {
         const d = doc.data()
         return {
           id: doc.id,
@@ -772,12 +876,45 @@ app.get('/dashboard', async (c) => {
           created_at: d.created_at
         }
       })
+      const casesList = (casesSnap as any).docs.map((doc: any) => ({
+        id: doc.id,
+        ...doc.data()
+      }))
       const totalBeneficiaries = groups.reduce((sum: number, g: any) => sum + (g.total_count || 0), 0)
+      const totalTarget = casesList.reduce((sum: number, c: any) => sum + Number(c.target_amount || 0), 0)
+      const totalRaised = casesList.reduce((sum: number, c: any) => sum + Number(c.raised_amount || 0), 0)
       viewData = {
         groups,
+        cases: casesList,
         stats: {
           total_groups: groups.length,
-          total_beneficiaries: totalBeneficiaries
+          total_beneficiaries: totalBeneficiaries,
+          total_cases: casesList.length,
+          total_target: totalTarget,
+          total_raised: totalRaised
+        }
+      }
+    } else if (view === 'medical') {
+      const [equipSnap, reqSnap] = await Promise.all([
+        db.collection('medical_equipment').orderBy('created_at', 'desc').get().catch(() => ({ docs: [] })),
+        db.collection('medical_requests').orderBy('created_at', 'desc').get().catch(() => ({ docs: [] }))
+      ])
+      const rawEquip = (equipSnap as any).docs.map((d: any) => ({ id: d.id, ...d.data() }))
+      const equipment = rawEquip.length > 0 ? rawEquip : defaultMedicalEquipment
+      const requests = (reqSnap as any).docs.map((d: any) => ({ id: d.id, ...d.data() }))
+      const totalDevices = equipment.length
+      const availableDevices = equipment.filter((e: any) => e.status === 'available' || e.is_available !== false).length
+      const loanedDevices = equipment.filter((e: any) => e.status === 'loaned').length
+      const pendingRequests = requests.filter((r: any) => r.status === 'pending').length
+
+      viewData = {
+        equipment,
+        requests,
+        stats: {
+          total_devices: totalDevices,
+          available_devices: availableDevices,
+          loaned_devices: loanedDevices,
+          pending_requests: pendingRequests
         }
       }
     } else if (view === 'notifications') {

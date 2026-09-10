@@ -372,11 +372,19 @@ export function ZakatCalculator({ user }: { user?: UserSession }) {
 
             // Update Donate Button Link
             const selectedCampaign = campaignSelect?.value || 'general_zakat';
+            const purposeMap = {
+              general_zakat: 'زكاة مال (الصندوق الشرعي العام)',
+              medicine: 'زكاة علاج المرضى والعمليات الجراحية',
+              food: 'زكاة إطعام الطعام وكراتين الأسر المتعففة',
+              school: 'زكاة كفالة طلبة العلم والتعليم',
+              debts: 'زكاة فك كرب الغارمين والغارمات'
+            };
+            const purposeLabel = (zakatDue > 0 ? (purposeMap[selectedCampaign] || 'زكاة مال') : (kaffarahTotal > 0 ? 'كفارات وفدية صيام' : 'زكاة مال'));
             if (donateBtn) {
               if (finalGrandTotal > 0) {
-                donateBtn.href = '/donate?amount=' + finalGrandTotal + '&type=' + encodeURIComponent('زكاة مال') + '&campaign=' + encodeURIComponent(selectedCampaign);
+                donateBtn.href = '/donate?amount=' + finalGrandTotal + '&purpose=' + encodeURIComponent(purposeLabel) + '&campaign=' + encodeURIComponent(selectedCampaign);
               } else {
-                donateBtn.href = '/donate?type=' + encodeURIComponent('زكاة مال');
+                donateBtn.href = '/donate?purpose=' + encodeURIComponent('زكاة مال');
               }
             }
           }

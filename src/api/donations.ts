@@ -37,7 +37,12 @@ const notifyNewDonation = (c: any, record: any): Promise<void> =>
     await notifyAdmins(c, {
       type: 'donation_new',
       title: `تبرع جديد: ${notifyMoney(record?.amount)}`,
-      body: [record?.donor_name || 'متبرع', record?.campaign_title, record?.payment_method]
+      body: [
+        record?.donor_name || 'متبرع',
+        record?.case_title ? `كفالة: ${record.case_title}` : record?.campaign_title,
+        record?.donation_purpose ? `مصرف: ${record.donation_purpose}` : null,
+        record?.payment_method
+      ]
         .filter(Boolean)
         .join(' — '),
       link: dashLink('donations'),
@@ -45,6 +50,7 @@ const notifyNewDonation = (c: any, record: any): Promise<void> =>
         donation_id: record?.id,
         amount: Number(record?.amount || 0),
         campaign_id: record?.campaign_id || '',
+        case_id: record?.case_id || '',
         payment_method: record?.payment_method || ''
       }
     })
@@ -61,7 +67,7 @@ donations.post('/', rateLimiter(10, 60000, 'donate'), async (c) => {
     return c.json({ error: 'بيانات غير صالحة' }, 400)
   }
 
-  const { amount, donation_type, campaign_id, donor_name, donor_phone, donor_email, payment_method } = body
+  const { amount, donation_type, campaign_id, case_id, case_code, donation_purpose, donor_name, donor_phone, donor_email, payment_method } = body
 
   if (!amount || !donor_name || !donor_phone || !payment_method) {
     return c.json({ error: 'الحقول المطلوبة غير مكتملة' }, 400)
@@ -83,11 +89,27 @@ donations.post('/', rateLimiter(10, 60000, 'donate'), async (c) => {
       }
     }
 
+    let case_title = ''
+    let resolved_case_code = case_code || ''
+    if (case_id) {
+      try {
+        const caseDoc = await db.collection('beneficiary_cases').doc(case_id).get()
+        if (caseDoc.exists) {
+          case_title = caseDoc.data()?.title || ''
+          if (!resolved_case_code) resolved_case_code = caseDoc.data()?.code || ''
+        }
+      } catch (e) {}
+    }
+
     const donationData = {
       profile_id,
       campaign_id: campaign_id || null,
       campaign_title: campaign_title || null,
       campaign_category: campaign_category || null,
+      case_id: case_id || null,
+      case_code: resolved_case_code || null,
+      case_title: case_title || null,
+      donation_purpose: donation_purpose || null,
       amount: Number(amount),
       donation_type: donation_type || 'once',
       donor_name,
@@ -170,18 +192,16 @@ donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
   const donor_email = (body.email || body.donor_email || '').toString().trim() || null
   const payment_method = (body.method || body.payment_method || 'instapay').toString()
   const requested_campaign_id = (body.campaign_id || '').toString().trim() || null
+  const requested_case_id = (body.case_id || '').toString().trim() || null
+  const requested_case_code = (body.case_code || '').toString().trim() || null
+  const requested_case_title = (body.case_title || '').toString().trim() || null
+  const donation_purpose = (body.donation_purpose || body.purpose || '').toString().trim() || null
 
   if (!amount || !donor_name || !donor_phone) {
     return c.json({ error: 'الحقول المطلوبة غير مكتملة (الاسم، الهاتف، المبلغ)' }, 400)
   }
 
   try {
-    // The public form (Donate.tsx) has always submitted a `campaign_id`, but
-    // this handler hardcoded null — so every donation made through the site was
-    // filed under the general fund and no campaign's `raised` total ever moved,
-    // leaving the progress bars permanently wrong. Resolve it here, and verify
-    // the campaign exists and is published so a tampered form value cannot
-    // attach money to a hidden or deleted campaign.
     let campaign_id: string | null = null
     let campaign_title = 'الصندوق العام'
     let campaign_category = 'عام'
@@ -198,11 +218,38 @@ donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
       }
     }
 
+    let case_id: string | null = null
+    let case_code: string | null = null
+    let case_title: string | null = null
+
+    if (requested_case_id) {
+      try {
+        const caseDoc = await db.collection('beneficiary_cases').doc(requested_case_id).get()
+        if (caseDoc.exists) {
+          case_id = caseDoc.id
+          case_title = caseDoc.data()?.title || requested_case_title
+          case_code = caseDoc.data()?.code || requested_case_code
+        } else {
+          case_id = requested_case_id
+          case_title = requested_case_title
+          case_code = requested_case_code
+        }
+      } catch (e) {
+        case_id = requested_case_id
+        case_title = requested_case_title
+        case_code = requested_case_code
+      }
+    }
+
     const donationData = {
       profile_id: null,
       campaign_id,
       campaign_title,
       campaign_category,
+      case_id: case_id || null,
+      case_code: case_code || null,
+      case_title: case_title || null,
+      donation_purpose: donation_purpose || null,
       amount,
       donation_type: 'once',
       donor_name,
@@ -249,24 +296,15 @@ donations.post('/status/:id', adminMiddleware, async (c) => {
     const oldStatus = donationData.status
     const amount = Number(donationData.amount || 0)
     const campaignId = donationData.campaign_id
+    const caseId = donationData.case_id
 
     // إصدار الإيصال قبل الـ transaction وليس داخلها.
-    //
-    // السبب التقني: mintReceiptNumber تشغّل transaction خاصة بها، و Firestore
-    // لا يسمح بتداخل الـ transactions.
-    //
-    // السبب المحاسبي: لو فشل تحديث الحالة بعد توليد الرقم نخسر رقمًا من
-    // التسلسل. وهذا مقبول — الفجوة يمكن تفسيرها للمراجع، أما تكرار نفس
-    // الرقم على إيصالين فهو خلل مراجعة حقيقي.
-    //
-    // يُصدر مرة واحدة فقط: لو أُلغي التأكيد ثم أُعيد، يحتفظ التبرع بإيصاله
-    // الأصلي لأن المستند المالي لا يُعاد إصداره.
     const isIssuing = newStatus === 'completed' && oldStatus !== 'completed'
     const receipt = isIssuing && !donationData.receipt_number
       ? await buildReceipt(db, donationData, c)
       : null
 
-    // Use transaction to update status and increment campaign raised amount if completed
+    // Use transaction to update status and increment campaign or case raised amount if completed
     await db.runTransaction(async (transaction) => {
       // 1. Update donation status
       transaction.update(donationRef, { 
@@ -275,23 +313,43 @@ donations.post('/status/:id', adminMiddleware, async (c) => {
         ...(receipt || {})
       })
 
-      // 2. If status is changing to completed, increment campaign raised progress
-      if (newStatus === 'completed' && oldStatus !== 'completed' && campaignId) {
-        const campaignRef = db.collection('campaigns').doc(campaignId)
-        const campaignDoc = await transaction.get(campaignRef)
-        if (campaignDoc.exists) {
-          const currentRaised = Number(campaignDoc.data()?.raised || 0)
-          transaction.update(campaignRef, { raised: currentRaised + amount })
+      // 2. If status is changing to completed, increment campaign or case raised progress
+      if (newStatus === 'completed' && oldStatus !== 'completed') {
+        if (campaignId) {
+          const campaignRef = db.collection('campaigns').doc(campaignId)
+          const campaignDoc = await transaction.get(campaignRef)
+          if (campaignDoc.exists) {
+            const currentRaised = Number(campaignDoc.data()?.raised || 0)
+            transaction.update(campaignRef, { raised: currentRaised + amount })
+          }
+        }
+        if (caseId) {
+          const caseRef = db.collection('beneficiary_cases').doc(caseId)
+          const caseDoc = await transaction.get(caseRef)
+          if (caseDoc.exists) {
+            const currentRaised = Number(caseDoc.data()?.raised_amount || 0)
+            transaction.update(caseRef, { raised_amount: currentRaised + amount })
+          }
         }
       }
       
-      // 3. If status is changing from completed to something else, decrement campaign raised progress
-      if (oldStatus === 'completed' && newStatus !== 'completed' && campaignId) {
-        const campaignRef = db.collection('campaigns').doc(campaignId)
-        const campaignDoc = await transaction.get(campaignRef)
-        if (campaignDoc.exists) {
-          const currentRaised = Number(campaignDoc.data()?.raised || 0)
-          transaction.update(campaignRef, { raised: Math.max(0, currentRaised - amount) })
+      // 3. If status is changing from completed to something else, decrement campaign or case raised progress
+      if (oldStatus === 'completed' && newStatus !== 'completed') {
+        if (campaignId) {
+          const campaignRef = db.collection('campaigns').doc(campaignId)
+          const campaignDoc = await transaction.get(campaignRef)
+          if (campaignDoc.exists) {
+            const currentRaised = Number(campaignDoc.data()?.raised || 0)
+            transaction.update(campaignRef, { raised: Math.max(0, currentRaised - amount) })
+          }
+        }
+        if (caseId) {
+          const caseRef = db.collection('beneficiary_cases').doc(caseId)
+          const caseDoc = await transaction.get(caseRef)
+          if (caseDoc.exists) {
+            const currentRaised = Number(caseDoc.data()?.raised_amount || 0)
+            transaction.update(caseRef, { raised_amount: Math.max(0, currentRaised - amount) })
+          }
         }
       }
     })
@@ -332,7 +390,9 @@ donations.post('/status/:id', adminMiddleware, async (c) => {
               user_id: targetId,
               type: 'donation_confirmed',
               title: `تم تأكيد تبرعك: ${notifyMoney(amount)}`,
-              body: donationData.campaign_title
+              body: donationData.case_title
+                ? `وصل تبرعك وسُجّل لكفالة «${donationData.case_title}». جزاك الله خيرًا وأثابك.`
+                : donationData.campaign_title
                 ? `وصل تبرعك وسُجّل لحملة «${donationData.campaign_title}». جزاك الله خيرًا.`
                 : 'وصل تبرعك وتم تسجيله رسميًا. جزاك الله خيرًا.',
               link: '/profile?tab=donations',

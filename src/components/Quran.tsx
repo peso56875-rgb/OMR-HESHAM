@@ -363,7 +363,52 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
               TAB 5: الورد اليومي ومتابع الختمة (Daily Wird & Khatmah Planner)
               ════════════════════════════════════════════════════════════════════ */}
           <div class="quran-tab-pane" id="tab-khatmah">
-            <div class="khatmah-grid-layout">
+
+            {/* ─── Community Quran Khatma Section (ختمة القرآن التشاركية لروح د. عمر هشام) ─── */}
+            <div class="community-khatma-section reveal">
+              <div class="comm-khatma-header-card">
+                <div class="comm-khatma-badges">
+                  <span class="comm-badge gold">
+                    {icon('fa-book-quran')} الختمة الحالية رقم <b id="commKhatmaNum">١</b>
+                  </span>
+                  <span class="comm-badge emerald">
+                    {icon('fa-award')} إجمالي الختمات المنجزة: <b id="commTotalCompleted">٠</b> ختمة مباركة
+                  </span>
+                  <span class="comm-badge blue">
+                    {icon('fa-users')} صدقة جارية تشاركية
+                  </span>
+                </div>
+                <h2>الختمة القرآنية التشاركية المهداة لروح د. عمر هشام وموتى المسلمين</h2>
+                <p>
+                  "اقْرَءُوا الْقُرْآنَ فَإِنَّهُ يَأْتِي يَوْمَ الْقِيَامَةِ شَفِيعًا لِأَصْحَابِهِ" — اختر جزءاً لتلاوته واكتب اسمك لحجزه، وفور فراغك اضغط "أتممت القراءة" لتكتمل الختمة المباركة ويُرفع الدعاء بها.
+                </p>
+
+                {/* Progress bar */}
+                <div class="comm-progress-wrapper">
+                  <div class="comm-progress-meta">
+                    <span id="commProgressText">نسبة إنجاز الختمة: ٠٪ (٠ من ٣٠ جزء)</span>
+                    <span class="comm-legend-strip">
+                      <span class="comm-dot avail"></span> متاح (<b id="statAvail">٣٠</b>)
+                      <span class="comm-dot reading" style="margin-right:12px"></span> قيد القراءة (<b id="statReading">٠</b>)
+                      <span class="comm-dot done" style="margin-right:12px"></span> مكتمل (<b id="statDone">٠</b>)
+                    </span>
+                  </div>
+                  <div class="comm-progress-bar">
+                    <div class="comm-progress-fill" id="commProgressFill" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid of 30 Juz */}
+              <div class="comm-juz-grid" id="commJuzGrid">
+                <div class="quran-loading-box" style="grid-column:1 / -1; padding:3rem; text-align:center">
+                  <i class="fa-solid fa-circle-notch fa-spin" style="font-size:2rem; color:var(--emerald-600)"></i>
+                  <p style="margin-top:1rem; font-weight:700">جاري تحميل أجزاء الختمة التشاركية...</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="khatmah-grid-layout" style="margin-top:3rem">
               
               {/* Left: Khatmah Plan Calculator */}
               <div class="khatmah-calculator-card">
@@ -805,6 +850,387 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
           </div>
         </div>
       </div>
+
+      {/* ─── Community Quran Khatma Claim Modal ─── */}
+      <div class="khatma-modal-backdrop" id="khatmaClaimModal" style="display:none">
+        <div class="khatma-modal-card">
+          <div class="khatma-modal-header">
+            <h3>{icon('fa-book-open-reader')} حجز جزء للتلاوة في الختمة المباركة</h3>
+            <button type="button" class="khatma-modal-close" id="closeClaimModalBtn">&times;</button>
+          </div>
+          <div class="khatma-modal-body">
+            <p id="claimPartDescription">أنت على وشك حجز الجزء للتلاوة صدقة جارية لروح د. عمر هشام وموتى المسلمين.</p>
+            <div class="khatma-form-group">
+              <label for="claimReaderName">اسمك الكريم (أو فاعل خير):</label>
+              <input type="text" id="claimReaderName" placeholder="مثال: أحمد محمد / محب للخير" maxLength={50} />
+            </div>
+            <input type="hidden" id="claimPartNumber" value="" />
+          </div>
+          <div class="khatma-modal-footer">
+            <button type="button" class="btn-cancel" id="cancelClaimBtn">إلغاء</button>
+            <button type="button" class="btn-confirm-claim" id="confirmClaimBtn">تأكيد حجز الجزء</button>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Khatma Completed Celebration Modal ─── */}
+      <div class="khatma-modal-backdrop" id="khatmaCelebrationModal" style="display:none">
+        <div class="khatma-modal-card celebration">
+          <div class="celebration-icon">{icon('fa-award')}</div>
+          <h3>هنيئاً لكم ومبارك!</h3>
+          <h4 id="celebrationKhatmaTitle">اكتملت ختمة القرآن الكريم كاملةً بفضل الله تعالى</h4>
+          <p>
+            تقبل الله من كل من تلا حرفاً وشارك في هذا الأجر العظيم، وجعلها في ميزان حسنات د. عمر هشام وموتى المسلمين جميعاً.
+          </p>
+          <blockquote class="khatm-dua-snippet">
+            "اللَّهُمَّ ارْحَمْنَا بِالقُرْآنِ، وَاجْعَلْهُ لَنَا إِمَاماً وَنُوراً وَهُدًى وَرَحْمَةً.. اللَّهُمَّ ذَكِّرْنَا مِنْهُ مَا نَسِينَا وَعَلِّمْنَا مِنْهُ مَا جَهِلْنَا."
+          </blockquote>
+          <button type="button" class="btn-celebration-close" id="closeCelebrationBtn">الحمد لله رب العالمين</button>
+        </div>
+      </div>
+
+      {/* Embedded Styles for Community Khatma */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .community-khatma-section { margin-bottom: 3rem; }
+        .comm-khatma-header-card {
+          background: linear-gradient(135deg, rgba(22, 138, 112, 0.08) 0%, rgba(212, 160, 23, 0.08) 100%), var(--paper);
+          border: 1px solid var(--line);
+          border-radius: 22px;
+          padding: 2rem;
+          margin-bottom: 2rem;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+        .comm-khatma-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1.2rem; }
+        .comm-badge {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 6px 14px; border-radius: 999px; font-size: .88rem; font-weight: 700;
+        }
+        .comm-badge.gold { background: rgba(212, 160, 23, 0.15); color: var(--gold-600); border: 1px solid rgba(212, 160, 23, 0.3); }
+        .comm-badge.emerald { background: rgba(22, 138, 112, 0.12); color: var(--emerald-600); border: 1px solid rgba(22, 138, 112, 0.25); }
+        .comm-badge.blue { background: rgba(59, 130, 246, 0.12); color: var(--blue-600); border: 1px solid rgba(59, 130, 246, 0.25); }
+        .comm-khatma-header-card h2 { font-size: 1.6rem; font-weight: 900; color: var(--text); margin-bottom: .6rem; }
+        .comm-khatma-header-card p { color: var(--muted); font-size: 1rem; line-height: 1.7; max-width: 900px; margin-bottom: 1.5rem; }
+        
+        .comm-progress-wrapper {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          padding: 1.2rem 1.4rem;
+        }
+        .comm-progress-meta {
+          display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+          margin-bottom: .8rem; font-size: .92rem; font-weight: 700; color: var(--text);
+        }
+        .comm-legend-strip { font-size: .84rem; display: flex; align-items: center; color: var(--muted); }
+        .comm-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 5px; }
+        .comm-dot.avail { background: #10b981; }
+        .comm-dot.reading { background: #f59e0b; }
+        .comm-dot.done { background: #8b5cf6; }
+
+        .comm-progress-bar {
+          height: 12px; background: rgba(0,0,0,0.06); border-radius: 999px; overflow: hidden;
+        }
+        .comm-progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #10b981, #059669);
+          border-radius: 999px;
+          transition: width .5s ease;
+        }
+
+        .comm-juz-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1.2rem;
+        }
+        .comm-juz-card {
+          background: var(--paper);
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          padding: 1.2rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          transition: transform .2s, box-shadow .2s, border-color .2s;
+        }
+        .comm-juz-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+        }
+        .comm-juz-card.status-available { border-right: 4px solid #10b981; }
+        .comm-juz-card.status-reading { border-right: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.02); }
+        .comm-juz-card.status-completed { border-right: 4px solid #8b5cf6; background: rgba(139, 92, 246, 0.02); }
+
+        .comm-juz-card-head {
+          display: flex; justify-content: space-between; align-items: center; margin-bottom: .6rem;
+        }
+        .juz-num-tag {
+          font-weight: 800; font-size: 1.1rem; color: var(--text);
+        }
+        .juz-status-tag {
+          font-size: .78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+        }
+        .status-available .juz-status-tag { background: rgba(16, 185, 129, 0.12); color: #059669; }
+        .status-reading .juz-status-tag { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        .status-completed .juz-status-tag { background: rgba(139, 92, 246, 0.15); color: #7c3aed; }
+
+        .juz-content-info {
+          font-size: .88rem; color: var(--muted); line-height: 1.5; margin-bottom: 1rem;
+        }
+        .juz-reader-meta {
+          font-size: .82rem; font-weight: 600; color: var(--text); margin-bottom: 1rem;
+          display: flex; align-items: center; gap: 6px;
+        }
+
+        .btn-juz-action {
+          width: 100%; padding: 9px 14px; border-radius: 10px; font-weight: 700; font-size: .88rem;
+          cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+          border: none; transition: background .2s, transform .1s;
+        }
+        .btn-juz-action:active { transform: scale(0.98); }
+        .btn-claim { background: var(--emerald-600); color: #fff; }
+        .btn-claim:hover { opacity: .92; }
+        .btn-complete { background: #f59e0b; color: #fff; }
+        .btn-complete:hover { background: #d97706; }
+        .btn-done { background: rgba(139, 92, 246, 0.15); color: #7c3aed; cursor: default; }
+
+        /* Modal Styles */
+        .khatma-modal-backdrop {
+          position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+          backdrop-filter: blur(4px); z-index: 99999;
+          display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+        }
+        .khatma-modal-card {
+          background: var(--paper); border: 1px solid var(--line);
+          border-radius: 20px; max-width: 480px; width: 100%;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.25); padding: 1.8rem;
+          animation: modalPop .25s ease-out;
+        }
+        @keyframes modalPop { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+        .khatma-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .khatma-modal-header h3 { font-size: 1.25rem; font-weight: 800; color: var(--text); }
+        .khatma-modal-close { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: var(--muted); }
+        .khatma-modal-body p { font-size: .95rem; color: var(--muted); margin-bottom: 1.2rem; }
+        .khatma-form-group label { display: block; font-size: .88rem; font-weight: 700; margin-bottom: 6px; }
+        .khatma-form-group input { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 1rem; }
+        .khatma-modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.5rem; }
+        .btn-cancel { padding: 9px 18px; border-radius: 10px; border: 1px solid var(--border); background: none; font-weight: 700; cursor: pointer; }
+        .btn-confirm-claim { padding: 9px 22px; border-radius: 10px; border: none; background: var(--emerald-600); color: #fff; font-weight: 800; cursor: pointer; }
+        
+        .khatma-modal-card.celebration { text-align: center; max-width: 520px; }
+        .celebration-icon { font-size: 3.5rem; color: var(--gold-600); margin-bottom: 1rem; }
+        .khatma-modal-card.celebration h3 { font-size: 1.8rem; font-weight: 900; color: var(--gold-600); margin-bottom: .4rem; }
+        .khatma-modal-card.celebration h4 { font-size: 1.2rem; font-weight: 800; color: var(--text); margin-bottom: 1rem; }
+        .khatm-dua-snippet {
+          background: rgba(212, 160, 23, 0.08); border-right: 3px solid var(--gold-600);
+          padding: 1rem; border-radius: 10px; font-family: 'Amiri', serif; font-size: 1.15rem;
+          color: var(--text); margin: 1.2rem 0; line-height: 1.8;
+        }
+        .btn-celebration-close {
+          width: 100%; padding: 12px; border-radius: 12px; border: none;
+          background: var(--gold-600); color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer;
+        }
+      `}}></style>
+
+      {/* Community Khatma Interactive Engine Script */}
+      <script dangerouslySetInnerHTML={{ __html: `
+        (function() {
+          let currentKhatmaData = null;
+
+          async function loadCommunityKhatma() {
+            try {
+              const res = await fetch('/api/quran/khatma/current');
+              const data = await res.json();
+              if (data && data.success && data.khatma) {
+                currentKhatmaData = data.khatma;
+                renderKhatmaUI(data.khatma);
+              }
+            } catch (err) {
+              console.error('[Khatma Load Error]', err);
+            }
+          }
+
+          function renderKhatmaUI(khatma) {
+            const numEl = document.getElementById('commKhatmaNum');
+            const compEl = document.getElementById('commTotalCompleted');
+            const fillEl = document.getElementById('commProgressFill');
+            const textEl = document.getElementById('commProgressText');
+            const gridEl = document.getElementById('commJuzGrid');
+
+            if (numEl) numEl.textContent = khatma.khatma_number || '١';
+            if (compEl) compEl.textContent = (khatma.total_completed || 0).toLocaleString('ar-EG');
+
+            const parts = khatma.parts || [];
+            const doneCount = parts.filter(p => p.status === 'completed').length;
+            const readingCount = parts.filter(p => p.status === 'reading').length;
+            const availCount = parts.filter(p => p.status === 'available' || !p.status).length;
+            const pct = Math.round((doneCount / 30) * 100);
+
+            const statAvail = document.getElementById('statAvail');
+            const statReading = document.getElementById('statReading');
+            const statDone = document.getElementById('statDone');
+            if (statAvail) statAvail.textContent = availCount;
+            if (statReading) statReading.textContent = readingCount;
+            if (statDone) statDone.textContent = doneCount;
+
+            if (fillEl) fillEl.style.width = pct + '%';
+            if (textEl) textEl.textContent = 'نسبة إنجاز الختمة: ' + pct + '٪ (' + doneCount + ' من ٣٠ جزء)';
+
+            if (!gridEl) return;
+            gridEl.innerHTML = '';
+
+            parts.forEach(p => {
+              const card = document.createElement('div');
+              const st = p.status || 'available';
+              card.className = 'comm-juz-card status-' + st;
+
+              let statusLabel = 'متاح للحجز';
+              if (st === 'reading') statusLabel = 'جاري تلاوته';
+              if (st === 'completed') statusLabel = 'مكتمل بحمد الله ✓';
+
+              let actionBtnHtml = '';
+              if (st === 'available') {
+                actionBtnHtml = '<button type="button" class="btn-juz-action btn-claim" data-claim-part="' + p.part + '"><i class="fa-solid fa-hand-holding-heart"></i> احجز لتلاوته</button>';
+              } else if (st === 'reading') {
+                actionBtnHtml = '<button type="button" class="btn-juz-action btn-complete" data-complete-part="' + p.part + '"><i class="fa-solid fa-circle-check"></i> أتممت القراءة</button>';
+              } else {
+                actionBtnHtml = '<div class="btn-juz-action btn-done"><i class="fa-solid fa-check-double"></i> أُنجزت تلاوته بحمد الله</div>';
+              }
+
+              let readerMetaHtml = '';
+              if (st === 'reading' && p.reader_name) {
+                readerMetaHtml = '<div class="juz-reader-meta"><i class="fa-solid fa-user-pen"></i> القارئ الحالي: ' + p.reader_name + '</div>';
+              } else if (st === 'completed' && p.reader_name) {
+                readerMetaHtml = '<div class="juz-reader-meta" style="color:var(--emerald-600)"><i class="fa-solid fa-check"></i> قرأه: ' + p.reader_name + '</div>';
+              }
+
+              card.innerHTML = 
+                '<div class="comm-juz-card-head">' +
+                  '<span class="juz-num-tag">الجزء ' + p.part + '</span>' +
+                  '<span class="juz-status-tag">' + statusLabel + '</span>' +
+                '</div>' +
+                '<div class="juz-content-info">' + p.title + '</div>' +
+                readerMetaHtml +
+                '<div class="juz-card-footer">' + actionBtnHtml + '</div>';
+
+              gridEl.appendChild(card);
+            });
+
+            // Bind claim clicks
+            gridEl.querySelectorAll('[data-claim-part]').forEach(btn => {
+              btn.addEventListener('click', function() {
+                const part = this.getAttribute('data-claim-part');
+                openClaimModal(part);
+              });
+            });
+
+            // Bind complete clicks
+            gridEl.querySelectorAll('[data-complete-part]').forEach(btn => {
+              btn.addEventListener('click', function() {
+                const part = this.getAttribute('data-complete-part');
+                completePart(part);
+              });
+            });
+          }
+
+          function openClaimModal(part) {
+            const modal = document.getElementById('khatmaClaimModal');
+            const partNumInput = document.getElementById('claimPartNumber');
+            const desc = document.getElementById('claimPartDescription');
+            const nameInput = document.getElementById('claimReaderName');
+            if (partNumInput) partNumInput.value = part;
+            if (desc) desc.textContent = 'أنت على وشك حجز (الجزء ' + part + ') لتلاوته صدقة جارية لروح د. عمر هشام وموتى المسلمين.';
+            if (modal) modal.style.display = 'flex';
+            if (nameInput) {
+              nameInput.focus();
+              const stored = localStorage.getItem('khatma_reader_name');
+              if (stored) nameInput.value = stored;
+            }
+          }
+
+          function closeClaimModal() {
+            const modal = document.getElementById('khatmaClaimModal');
+            if (modal) modal.style.display = 'none';
+          }
+
+          async function submitClaim() {
+            const part = document.getElementById('claimPartNumber')?.value;
+            const nameInput = document.getElementById('claimReaderName');
+            const readerName = (nameInput?.value || '').trim() || 'فاعل خير';
+            localStorage.setItem('khatma_reader_name', readerName);
+
+            try {
+              const res = await fetch('/api/quran/khatma/claim', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ part, reader_name: readerName })
+              });
+              const json = await res.json();
+              if (json && json.success) {
+                closeClaimModal();
+                if (window.toast) {
+                  window.toast('تقبل الله منك! تم حجز الجزء ' + part + ' لتلاوته.');
+                } else {
+                  alert('تقبل الله منك! تم حجز الجزء ' + part + ' لتلاوته.');
+                }
+                loadCommunityKhatma();
+              } else {
+                alert(json.error || 'تعذر حجز الجزء');
+              }
+            } catch (e) {
+              alert('حدث خطأ في الاتصال');
+            }
+          }
+
+          async function completePart(part) {
+            if (!confirm('هل أتممت تلاوة الجزء ' + part + ' كاملاً بحمد الله؟')) return;
+
+            try {
+              const res = await fetch('/api/quran/khatma/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ part })
+              });
+              const json = await res.json();
+              if (json && json.success) {
+                if (json.khatma_completed) {
+                  const celebModal = document.getElementById('khatmaCelebrationModal');
+                  if (celebModal) celebModal.style.display = 'flex';
+                } else {
+                  if (window.toast) {
+                    window.toast('جزاكم الله خيراً! تم تسجيل إتمام قراءة الجزء ' + part + '.');
+                  } else {
+                    alert('جزاكم الله خيراً! تم تسجيل إتمام قراءة الجزء ' + part + '.');
+                  }
+                }
+                loadCommunityKhatma();
+              }
+            } catch (e) {
+              alert('حدث خطأ في التسجيل');
+            }
+          }
+
+          // DOM Bindings
+          document.addEventListener('DOMContentLoaded', () => {
+            loadCommunityKhatma();
+
+            document.getElementById('closeClaimModalBtn')?.addEventListener('click', closeClaimModal);
+            document.getElementById('cancelClaimBtn')?.addEventListener('click', closeClaimModal);
+            document.getElementById('confirmClaimBtn')?.addEventListener('click', submitClaim);
+
+            document.getElementById('closeCelebrationBtn')?.addEventListener('click', () => {
+              const celebModal = document.getElementById('khatmaCelebrationModal');
+              if (celebModal) celebModal.style.display = 'none';
+            });
+          });
+
+          // Also reload when switching to khatmah tab
+          document.querySelectorAll('.quran-tab-btn[data-tab="khatmah"]').forEach(tab => {
+            tab.addEventListener('click', () => {
+              loadCommunityKhatma();
+            });
+          });
+        })();
+      `}}></script>
 
       {/* Script for Quran functionality */}
       <script src="/static/quran.js?v=4.6"></script>

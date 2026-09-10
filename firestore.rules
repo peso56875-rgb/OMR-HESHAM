@@ -79,6 +79,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Public beneficiary cases (Public read, Admin write)
+    match /beneficiary_cases/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Beneficiary groups — the most sensitive data the foundation holds (names,
     // conditions and circumstances of the families it supports). Admin-only for
     // both read and write; never exposed to the public site.

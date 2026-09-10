@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { getFirestore } from '../lib/firebase-admin'
 
 const quranApi = new Hono()
 
@@ -413,6 +414,186 @@ quranApi.get('/audio/teacher-surah/:surah', async (c) => {
   }
 
   return c.redirect(urls[0], 302)
+})
+
+// ────────────────── منظومة ختمة القرآن الكريم التشاركية المستمرة ──────────────────
+
+export const JUZ_NAMES = [
+  'الجزء ١ (الم - الفاتحة والبقرة)',
+  'الجزء ٢ (سيقول السفهاء - البقرة)',
+  'الجزء ٣ (تلك الرسل - البقرة وآل عمران)',
+  'الجزء ٤ (لن تنالوا البر - آل عمران والنساء)',
+  'الجزء ٥ (والمحصنات - النساء)',
+  'الجزء ٦ (لا يحب الله - النساء والمائدة)',
+  'الجزء ٧ (وإذا سمعوا - المائدة والأنعام)',
+  'الجزء ٨ (ولو أننا - الأنعام والأعراف)',
+  'الجزء ٩ (قال الملأ - الأعراف والأنفال)',
+  'الجزء ١٠ (واعلموا - الأنفال والتوبة)',
+  'الجزء ١١ (يعتذرون - التوبة ويونس وهود)',
+  'الجزء ١٢ (وما من دابة - هود ويوسف)',
+  'الجزء ١٣ (وما أبرئ نفسي - يوسف والرعد وإبراهيم)',
+  'الجزء ١٤ (ربما - الحجر والنحل)',
+  'الجزء ١٥ (سبحان الذي أسرى - الإسراء والكهف)',
+  'الجزء ١٦ (قال ألم - الكهف ومريم وطه)',
+  'الجزء ١٧ (اقترب للناس - الأنبياء والحج)',
+  'الجزء ١٨ (قد أفلح المؤمنون - المؤمنون والنور والفرقان)',
+  'الجزء ١٩ (وقال الذين لا يرجون - الفرقان والشعراء والنمل)',
+  'الجزء ٢٠ (أمن خلق - النمل والقصص والعنكبوت)',
+  'الجزء ٢١ (اتل ما أوحي - العنكبوت والروم ولقمان والسجدة والأحزاب)',
+  'الجزء ٢٢ (ومن يقنت - الأحزاب وسبأ وفاطر ويس)',
+  'الجزء ٢٣ (وما أنزلنا - يس والصافات وص والزمر)',
+  'الجزء ٢٤ (فمن أظلم - الزمر وغافر وفصلت)',
+  'الجزء ٢٥ (إليه يرد - فصلت والشورى والزخرف والدخان والجاثية)',
+  'الجزء ٢٦ (حم - الأحقاف ومحمد والفتح والحجرات وق والذاريات)',
+  'الجزء ٢٧ (قال فما خطبكم - الذاريات والطور والنجم والقمر والرحمن والواقعة والحديد)',
+  'الجزء ٢٨ (قد سمع الله - جزء قد سمع)',
+  'الجزء ٢٩ (تبارك الذي بيده الملك - جزء تبارك)',
+  'الجزء ٣٠ (عم يتساءلون - جزء عم)'
+]
+
+const initialKhatmaParts = () => JUZ_NAMES.map((title, idx) => ({
+  part: idx + 1,
+  title,
+  status: 'available', // available | reading | completed
+  reader_name: '',
+  updated_at: ''
+}))
+
+// Fallback in-memory state if DB offline
+let memoryKhatma = {
+  khatma_number: 14,
+  total_completed: 13,
+  parts: initialKhatmaParts()
+}
+
+// جلب حالة الختمة الحالية
+quranApi.get('/khatma/current', async (c) => {
+  try {
+    const db = getFirestore(c)
+    const doc = await db.collection('quran_khatmas').doc('active').get()
+    if (doc.exists) {
+      const data = doc.data()!
+      return c.json({ success: true, khatma: data })
+    }
+
+    // إنشاء أول ختمة إن لم تكن موجودة
+    const freshKhatma = {
+      khatma_number: 1,
+      total_completed: 0,
+      parts: initialKhatmaParts(),
+      created_at: new Date().toISOString()
+    }
+    await db.collection('quran_khatmas').doc('active').set(freshKhatma)
+    return c.json({ success: true, khatma: freshKhatma })
+  } catch (_) {
+    return c.json({ success: true, khatma: memoryKhatma })
+  }
+})
+
+// حجز قراءة جزء في الختمة
+quranApi.post('/khatma/claim', async (c) => {
+  try {
+    const body = await c.req.json()
+    const partNum = Number(body.part)
+    const readerName = String(body.reader_name || 'قارئ كريم').trim()
+
+    if (isNaN(partNum) || partNum < 1 || partNum > 30) {
+      return c.json({ success: false, error: 'رقم الجزء غير صالح' }, 400)
+    }
+
+    try {
+      const db = getFirestore(c)
+      const ref = db.collection('quran_khatmas').doc('active')
+      const doc = await ref.get()
+      let data = doc.exists ? doc.data()! : { khatma_number: 1, total_completed: 0, parts: initialKhatmaParts() }
+
+      const parts = data.parts || initialKhatmaParts()
+      const p = parts.find((x: any) => x.part === partNum)
+      if (p) {
+        p.status = 'reading'
+        p.reader_name = readerName || 'قارئ كريم'
+        p.updated_at = new Date().toISOString()
+      }
+
+      await ref.set({ ...data, parts }, { merge: true })
+      return c.json({ success: true, message: `تقبل الله منك! تم حجز الجزء ${partNum} لتلاوته.`, khatma: { ...data, parts } })
+    } catch (_) {
+      const p = memoryKhatma.parts.find(x => x.part === partNum)
+      if (p) {
+        p.status = 'reading'
+        p.reader_name = readerName || 'قارئ كريم'
+      }
+      return c.json({ success: true, message: `تقبل الله منك! تم حجز الجزء ${partNum}.`, khatma: memoryKhatma })
+    }
+  } catch (e: any) {
+    return c.json({ success: false, error: 'بيانات غير صالحة' }, 400)
+  }
+})
+
+// تأكيد إتمام قراءة الجزء
+quranApi.post('/khatma/complete', async (c) => {
+  try {
+    const body = await c.req.json()
+    const partNum = Number(body.part)
+
+    if (isNaN(partNum) || partNum < 1 || partNum > 30) {
+      return c.json({ success: false, error: 'رقم الجزء غير صالح' }, 400)
+    }
+
+    try {
+      const db = getFirestore(c)
+      const ref = db.collection('quran_khatmas').doc('active')
+      const doc = await ref.get()
+      let data = doc.exists ? doc.data()! : { khatma_number: 1, total_completed: 0, parts: initialKhatmaParts() }
+
+      const parts = data.parts || initialKhatmaParts()
+      const p = parts.find((x: any) => x.part === partNum)
+      if (p) {
+        p.status = 'completed'
+        p.updated_at = new Date().toISOString()
+      }
+
+      // هل اكتملت الـ 30 جزءاً بالكامل؟
+      const isAllDone = parts.every((x: any) => x.status === 'completed')
+
+      if (isAllDone) {
+        const finishedKhatmaNum = data.khatma_number || 1
+        const nextTotal = (Number(data.total_completed) || 0) + 1
+
+        // حفظ سجل الختمة المكتملة في الأرشيف
+        await db.collection('quran_khatmas_history').add({
+          khatma_number: finishedKhatmaNum,
+          completed_at: new Date().toISOString(),
+          parts
+        })
+
+        // فتح ختمة جديدة برقم تالي
+        const newKhatma = {
+          khatma_number: finishedKhatmaNum + 1,
+          total_completed: nextTotal,
+          parts: initialKhatmaParts(),
+          created_at: new Date().toISOString()
+        }
+        await ref.set(newKhatma)
+
+        return c.json({
+          success: true,
+          khatma_completed: true,
+          message: `هنيئاً لكم! اكتملت الختمة رقم ${finishedKhatmaNum} كاملة بفضل الله، وبدأت الختمة المباركة رقم ${finishedKhatmaNum + 1}.`,
+          khatma: newKhatma
+        })
+      }
+
+      await ref.set({ ...data, parts }, { merge: true })
+      return c.json({ success: true, message: `جزاك الله خيراً وأثابك! تم تسجيل إتمام قراءة الجزء ${partNum}.`, khatma: { ...data, parts } })
+    } catch (_) {
+      const p = memoryKhatma.parts.find(x => x.part === partNum)
+      if (p) p.status = 'completed'
+      return c.json({ success: true, message: 'تم تسجيل إتمام القراءة بحمد الله.', khatma: memoryKhatma })
+    }
+  } catch (e: any) {
+    return c.json({ success: false, error: 'بيانات غير صالحة' }, 400)
+  }
 })
 
 export { quranApi }
