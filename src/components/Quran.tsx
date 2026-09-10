@@ -377,6 +377,9 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
                   <span class="comm-badge blue">
                     {icon('fa-users')} صدقة جارية تشاركية
                   </span>
+                  <button type="button" class="comm-badge refresh-btn" id="commRefreshBtn" title="تحديث حالة أجزاء الختمة">
+                    {icon('fa-rotate')} تحديث الحالة
+                  </button>
                 </div>
                 <h2>الختمة القرآنية التشاركية المهداة لروح د. عمر هشام وموتى المسلمين</h2>
                 <p>
@@ -993,6 +996,33 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
         .btn-complete:hover { background: #d97706; }
         .btn-done { background: rgba(139, 92, 246, 0.15); color: #7c3aed; cursor: default; }
 
+        .comm-badge.refresh-btn {
+          background: var(--surface); color: var(--text); border: 1px solid var(--border);
+          cursor: pointer; transition: all .2s ease;
+        }
+        .comm-badge.refresh-btn:hover {
+          background: rgba(22, 138, 112, 0.12); color: var(--emerald-600); border-color: var(--emerald-600);
+        }
+
+        .btn-read-juz {
+          display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+          padding: 6px 12px; border-radius: 8px; font-size: .8rem; font-weight: 700;
+          color: var(--emerald-600); background: rgba(22, 138, 112, 0.08); border: 1px solid rgba(22, 138, 112, 0.2);
+          cursor: pointer; text-decoration: none; margin-bottom: .8rem; transition: background .2s; width: 100%;
+        }
+        .btn-read-juz:hover { background: rgba(22, 138, 112, 0.18); }
+
+        .juz-btn-row { display: flex; gap: 8px; width: 100%; }
+        .juz-btn-row .btn-complete { flex: 1; }
+        .btn-release {
+          background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25);
+          padding: 8px 12px; border-radius: 10px; font-weight: 700; font-size: .8rem; cursor: pointer;
+          white-space: nowrap; transition: all .2s; display: flex; align-items: center; gap: 4px;
+        }
+        .btn-release:hover { background: #dc2626; color: #fff; }
+
+        .btn-confirm-claim:disabled { opacity: 0.65; cursor: not-allowed; }
+
         /* Modal Styles */
         .khatma-modal-backdrop {
           position: fixed; inset: 0; background: rgba(0,0,0,0.65);
@@ -1034,14 +1064,21 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
       {/* Community Khatma Interactive Engine Script */}
       <script dangerouslySetInnerHTML={{ __html: `
         (function() {
-          let currentKhatmaData = null;
+          const JUZ_START_SURAHS = [1, 2, 2, 3, 4, 4, 5, 6, 7, 8, 9, 11, 12, 15, 17, 18, 21, 23, 25, 27, 29, 33, 36, 39, 41, 46, 51, 58, 67, 78];
+
+          function notify(msg, type) {
+            if (typeof window.showToast === 'function') {
+              window.showToast(msg, type || 'success');
+            } else {
+              alert(msg);
+            }
+          }
 
           async function loadCommunityKhatma() {
             try {
               const res = await fetch('/api/quran/khatma/current');
               const data = await res.json();
               if (data && data.success && data.khatma) {
-                currentKhatmaData = data.khatma;
                 renderKhatmaUI(data.khatma);
               }
             } catch (err) {
@@ -1056,7 +1093,7 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
             const textEl = document.getElementById('commProgressText');
             const gridEl = document.getElementById('commJuzGrid');
 
-            if (numEl) numEl.textContent = khatma.khatma_number || '١';
+            if (numEl) numEl.textContent = (khatma.khatma_number || 1).toLocaleString('ar-EG');
             if (compEl) compEl.textContent = (khatma.total_completed || 0).toLocaleString('ar-EG');
 
             const parts = khatma.parts || [];
@@ -1068,12 +1105,12 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
             const statAvail = document.getElementById('statAvail');
             const statReading = document.getElementById('statReading');
             const statDone = document.getElementById('statDone');
-            if (statAvail) statAvail.textContent = availCount;
-            if (statReading) statReading.textContent = readingCount;
-            if (statDone) statDone.textContent = doneCount;
+            if (statAvail) statAvail.textContent = availCount.toLocaleString('ar-EG');
+            if (statReading) statReading.textContent = readingCount.toLocaleString('ar-EG');
+            if (statDone) statDone.textContent = doneCount.toLocaleString('ar-EG');
 
             if (fillEl) fillEl.style.width = pct + '%';
-            if (textEl) textEl.textContent = 'نسبة إنجاز الختمة: ' + pct + '٪ (' + doneCount + ' من ٣٠ جزء)';
+            if (textEl) textEl.textContent = 'نسبة إنجاز الختمة: ' + pct.toLocaleString('ar-EG') + '٪ (' + doneCount.toLocaleString('ar-EG') + ' من ٣٠ جزء)';
 
             if (!gridEl) return;
             gridEl.innerHTML = '';
@@ -1091,7 +1128,11 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
               if (st === 'available') {
                 actionBtnHtml = '<button type="button" class="btn-juz-action btn-claim" data-claim-part="' + p.part + '"><i class="fa-solid fa-hand-holding-heart"></i> احجز لتلاوته</button>';
               } else if (st === 'reading') {
-                actionBtnHtml = '<button type="button" class="btn-juz-action btn-complete" data-complete-part="' + p.part + '"><i class="fa-solid fa-circle-check"></i> أتممت القراءة</button>';
+                actionBtnHtml = 
+                  '<div class="juz-btn-row">' +
+                    '<button type="button" class="btn-juz-action btn-complete" data-complete-part="' + p.part + '"><i class="fa-solid fa-circle-check"></i> أتممت القراءة</button>' +
+                    '<button type="button" class="btn-release" data-release-part="' + p.part + '" title="إلغاء حجز هذا الجزء وإتاحته للآخرين"><i class="fa-solid fa-rotate-left"></i> إلغاء</button>' +
+                  '</div>';
               } else {
                 actionBtnHtml = '<div class="btn-juz-action btn-done"><i class="fa-solid fa-check-double"></i> أُنجزت تلاوته بحمد الله</div>';
               }
@@ -1103,12 +1144,16 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
                 readerMetaHtml = '<div class="juz-reader-meta" style="color:var(--emerald-600)"><i class="fa-solid fa-check"></i> قرأه: ' + p.reader_name + '</div>';
               }
 
+              const startSurah = JUZ_START_SURAHS[p.part - 1] || 1;
+              const readLinkHtml = '<a href="/quran/' + startSurah + '" class="btn-read-juz"><i class="fa-solid fa-book-open"></i> تلاوة هذا الجزء في المصحف</a>';
+
               card.innerHTML = 
                 '<div class="comm-juz-card-head">' +
-                  '<span class="juz-num-tag">الجزء ' + p.part + '</span>' +
+                  '<span class="juz-num-tag">الجزء ' + p.part.toLocaleString('ar-EG') + '</span>' +
                   '<span class="juz-status-tag">' + statusLabel + '</span>' +
                 '</div>' +
                 '<div class="juz-content-info">' + p.title + '</div>' +
+                readLinkHtml +
                 readerMetaHtml +
                 '<div class="juz-card-footer">' + actionBtnHtml + '</div>';
 
@@ -1130,6 +1175,14 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
                 completePart(part);
               });
             });
+
+            // Bind release clicks
+            gridEl.querySelectorAll('[data-release-part]').forEach(btn => {
+              btn.addEventListener('click', function() {
+                const part = this.getAttribute('data-release-part');
+                releasePart(part);
+              });
+            });
           }
 
           function openClaimModal(part) {
@@ -1138,12 +1191,12 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
             const desc = document.getElementById('claimPartDescription');
             const nameInput = document.getElementById('claimReaderName');
             if (partNumInput) partNumInput.value = part;
-            if (desc) desc.textContent = 'أنت على وشك حجز (الجزء ' + part + ') لتلاوته صدقة جارية لروح د. عمر هشام وموتى المسلمين.';
+            if (desc) desc.textContent = 'أنت على وشك حجز (الجزء ' + Number(part).toLocaleString('ar-EG') + ') لتلاوته صدقة جارية لروح د. عمر هشام وموتى المسلمين.';
             if (modal) modal.style.display = 'flex';
             if (nameInput) {
-              nameInput.focus();
               const stored = localStorage.getItem('khatma_reader_name');
               if (stored) nameInput.value = stored;
+              setTimeout(() => nameInput.focus(), 100);
             }
           }
 
@@ -1153,42 +1206,79 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
           }
 
           async function submitClaim() {
-            const part = document.getElementById('claimPartNumber')?.value;
+            const partInput = document.getElementById('claimPartNumber');
+            const part = partInput ? partInput.value : '';
             const nameInput = document.getElementById('claimReaderName');
-            const readerName = (nameInput?.value || '').trim() || 'فاعل خير';
+            const readerName = (nameInput ? nameInput.value : '').trim() || 'فاعل خير';
+            const confirmBtn = document.getElementById('confirmClaimBtn');
+
+            if (!part) {
+              notify('يرجى اختيار الجزء أولاً', 'error');
+              return;
+            }
+
             localStorage.setItem('khatma_reader_name', readerName);
+
+            if (confirmBtn) {
+              confirmBtn.disabled = true;
+              confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحجز...';
+            }
 
             try {
               const res = await fetch('/api/quran/khatma/claim', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ part, reader_name: readerName })
+                body: JSON.stringify({ part: Number(part), reader_name: readerName })
               });
               const json = await res.json();
               if (json && json.success) {
                 closeClaimModal();
-                if (window.toast) {
-                  window.toast('تقبل الله منك! تم حجز الجزء ' + part + ' لتلاوته.');
-                } else {
-                  alert('تقبل الله منك! تم حجز الجزء ' + part + ' لتلاوته.');
-                }
-                loadCommunityKhatma();
+                notify('تقبل الله منك! تم حجز الجزء ' + Number(part).toLocaleString('ar-EG') + ' لتلاوته مباركاً.', 'success');
+                await loadCommunityKhatma();
               } else {
-                alert(json.error || 'تعذر حجز الجزء');
+                notify(json?.error || 'تعذر حجز الجزء حالياً', 'error');
               }
             } catch (e) {
-              alert('حدث خطأ في الاتصال');
+              console.error('[Khatma Claim Error]', e);
+              notify('تعذر الاتصال بالخادم، يرجى المحاولة مرة أخرى.', 'error');
+            } finally {
+              if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = 'تأكيد حجز الجزء';
+              }
+            }
+          }
+
+          async function releasePart(part) {
+            if (!confirm('هل تريد إلغاء حجز الجزء ' + Number(part).toLocaleString('ar-EG') + ' وإتاحته لمتطوع آخر لتلاوته؟')) return;
+
+            try {
+              const res = await fetch('/api/quran/khatma/release', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ part: Number(part) })
+              });
+              const json = await res.json();
+              if (json && json.success) {
+                notify('تم إلغاء الحجز وأصبح الجزء متاحاً للقراء الآخرين.', 'info');
+                await loadCommunityKhatma();
+              } else {
+                notify(json?.error || 'تعذر إلغاء حجز الجزء', 'error');
+              }
+            } catch (e) {
+              console.error('[Khatma Release Error]', e);
+              notify('تعذر الاتصال بالخادم لإلغاء الحجز', 'error');
             }
           }
 
           async function completePart(part) {
-            if (!confirm('هل أتممت تلاوة الجزء ' + part + ' كاملاً بحمد الله؟')) return;
+            if (!confirm('هل أتممت تلاوة الجزء ' + Number(part).toLocaleString('ar-EG') + ' كاملاً بحمد الله وفضله؟')) return;
 
             try {
               const res = await fetch('/api/quran/khatma/complete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ part })
+                body: JSON.stringify({ part: Number(part) })
               });
               const json = await res.json();
               if (json && json.success) {
@@ -1196,16 +1286,15 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
                   const celebModal = document.getElementById('khatmaCelebrationModal');
                   if (celebModal) celebModal.style.display = 'flex';
                 } else {
-                  if (window.toast) {
-                    window.toast('جزاكم الله خيراً! تم تسجيل إتمام قراءة الجزء ' + part + '.');
-                  } else {
-                    alert('جزاكم الله خيراً! تم تسجيل إتمام قراءة الجزء ' + part + '.');
-                  }
+                  notify('جزاك الله خيراً وأثابك! تم تسجيل إتمام قراءة الجزء ' + Number(part).toLocaleString('ar-EG') + '.', 'success');
                 }
-                loadCommunityKhatma();
+                await loadCommunityKhatma();
+              } else {
+                notify(json?.error || 'تعذر تسجيل الإتمام', 'error');
               }
             } catch (e) {
-              alert('حدث خطأ في التسجيل');
+              console.error('[Khatma Complete Error]', e);
+              notify('حدث خطأ في الاتصال بالخادم أثناء التسجيل', 'error');
             }
           }
 
@@ -1216,6 +1305,23 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
             document.getElementById('closeClaimModalBtn')?.addEventListener('click', closeClaimModal);
             document.getElementById('cancelClaimBtn')?.addEventListener('click', closeClaimModal);
             document.getElementById('confirmClaimBtn')?.addEventListener('click', submitClaim);
+
+            // Submit on Enter in reader name input
+            document.getElementById('claimReaderName')?.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                submitClaim();
+              }
+            });
+
+            // Refresh button
+            document.getElementById('commRefreshBtn')?.addEventListener('click', async function() {
+              const icon = this.querySelector('i');
+              if (icon) icon.classList.add('fa-spin');
+              await loadCommunityKhatma();
+              notify('تم تحديث حالة الختمة بنجاح', 'info');
+              if (icon) icon.classList.remove('fa-spin');
+            });
 
             document.getElementById('closeCelebrationBtn')?.addEventListener('click', () => {
               const celebModal = document.getElementById('khatmaCelebrationModal');

@@ -510,6 +510,9 @@ quranApi.post('/khatma/claim', async (c) => {
       const parts = data.parts || initialKhatmaParts()
       const p = parts.find((x: any) => x.part === partNum)
       if (p) {
+        if (p.status === 'completed') {
+          return c.json({ success: false, error: 'هذا الجزء مكتمل بالفعل في الختمة الحالية.' }, 400)
+        }
         p.status = 'reading'
         p.reader_name = readerName || 'قارئ كريم'
         p.updated_at = new Date().toISOString()
@@ -520,10 +523,55 @@ quranApi.post('/khatma/claim', async (c) => {
     } catch (_) {
       const p = memoryKhatma.parts.find(x => x.part === partNum)
       if (p) {
+        if (p.status === 'completed') {
+          return c.json({ success: false, error: 'هذا الجزء مكتمل بالفعل في الختمة الحالية.' }, 400)
+        }
         p.status = 'reading'
         p.reader_name = readerName || 'قارئ كريم'
       }
       return c.json({ success: true, message: `تقبل الله منك! تم حجز الجزء ${partNum}.`, khatma: memoryKhatma })
+    }
+  } catch (e: any) {
+    return c.json({ success: false, error: 'بيانات غير صالحة' }, 400)
+  }
+})
+
+// إلغاء حجز جزء وإتاحته للقراء الآخرين
+quranApi.post('/khatma/release', async (c) => {
+  try {
+    const body = await c.req.json()
+    const partNum = Number(body.part)
+
+    if (isNaN(partNum) || partNum < 1 || partNum > 30) {
+      return c.json({ success: false, error: 'رقم الجزء غير صالح' }, 400)
+    }
+
+    try {
+      const db = getFirestore(c)
+      const ref = db.collection('quran_khatmas').doc('active')
+      const doc = await ref.get()
+      let data = doc.exists ? doc.data()! : { khatma_number: 1, total_completed: 0, parts: initialKhatmaParts() }
+
+      const parts = data.parts || initialKhatmaParts()
+      const p = parts.find((x: any) => x.part === partNum)
+      if (p) {
+        if (p.status === 'completed') {
+          return c.json({ success: false, error: 'لا يمكن إلغاء حجز جزء مكتمل بالفعل.' }, 400)
+        }
+        p.status = 'available'
+        p.reader_name = ''
+        p.updated_at = new Date().toISOString()
+      }
+
+      await ref.set({ ...data, parts }, { merge: true })
+      return c.json({ success: true, message: `تم إلغاء حجز الجزء ${partNum} وأصبح متاحاً للآخرين.`, khatma: { ...data, parts } })
+    } catch (_) {
+      const p = memoryKhatma.parts.find(x => x.part === partNum)
+      if (p) {
+        p.status = 'available'
+        p.reader_name = ''
+      }
+      return c.json({ success: true, message: `تم إلغاء حجز الجزء ${partNum}.`, khatma: memoryKhatma })
     }
   } catch (e: any) {
     return c.json({ success: false, error: 'بيانات غير صالحة' }, 400)
