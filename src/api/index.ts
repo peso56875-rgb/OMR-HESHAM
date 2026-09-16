@@ -30,7 +30,14 @@ const api = new Hono()
 
 // Global CORS middleware
 api.use('*', cors({
-  origin: ['https://omarhesham.org', 'https://www.omarhesham.org', 'http://localhost:5173', 'http://localhost:3000'],
+  origin: [
+    'https://omarhesham-foundation.com',
+    'https://www.omarhesham-foundation.com',
+    'https://omarhesham.org',
+    'https://www.omarhesham.org',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400,

@@ -1137,7 +1137,7 @@ app.get('/receipt/verify/:number', rateLimiter(30, 60000, 'receipt-verify'), asy
  * lastmod so crawlers can tell what has changed since their last visit.
  */
 app.get('/sitemap.xml', async (c) => {
-  const ORIGIN = 'https://omarhesham.org'
+  const ORIGIN = SITE_ORIGIN
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
 
   const entry = (path: string, opts: { lastmod?: string, priority?: string, changefreq?: string } = {}) =>

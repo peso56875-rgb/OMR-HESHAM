@@ -24,7 +24,7 @@ const ORG = {
   registration: '3115 لسنة 2026',
   supervisor: 'وزارة التضامن الاجتماعي',
   address: 'كفر العنانية، مركز أجا، الدقهلية، جمهورية مصر العربية',
-  site: 'omarhesham.org',
+  site: 'omarhesham-foundation.com',
 }
 
 const C = {

@@ -14,7 +14,7 @@
 import { tryGetContext } from 'hono/context-storage'
 
 /** Production origin. Used when the request origin can't be determined. */
-export const SITE_ORIGIN = 'https://omarhesham.org'
+export const SITE_ORIGIN = 'https://omarhesham-foundation.com'
 
 /** Paths that must never be indexed or advertised as canonical. */
 const NOINDEX_PREFIXES = ['/dashboard', '/login', '/profile']

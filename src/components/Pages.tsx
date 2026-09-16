@@ -1264,7 +1264,7 @@ export function Contact({ user }: { user?: UserSession }) {
         <p class="eyebrow">بيانات التواصل</p>
         <h2>بابنا مفتوح،<br />وقلوبنا كذلك.</h2>
         <a href="tel:01060920249">{icon('fa-phone')}<span><small>اتصل بنا</small><b dir="ltr">01060920249</b></span></a>
-        <a href="mailto:info@omarhesham.org">{icon('fa-envelope')}<span><small>راسلنا</small><b>info@omarhesham.org</b></span></a>
+        <a href="mailto:info@omarhesham-foundation.com">{icon('fa-envelope')}<span><small>راسلنا</small><b>info@omarhesham-foundation.com</b></span></a>
         <div>{icon('fa-location-dot')}<span><small>تفضل بزيارتنا</small><b>كفر العنانية، الدقهلية، مصر</b></span></div>
         <div>{icon('fa-clock')}<span><small>مواعيد العمل</small><b>متاحون لخدمتكم — الجمعة إجازة</b></span></div>
       </aside>

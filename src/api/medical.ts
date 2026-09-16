@@ -172,7 +172,7 @@ medical.post('/request', rateLimiter(5, 60000, 'med-request'), async (c) => {
       await contactAlert(cfg, {
         name: `طلب جهاز: ${requester_name} (للمريض: ${patient_name})`,
         phone: requester_phone,
-        email: 'info@omarhesham.org',
+        email: 'info@omarhesham-foundation.com',
         subject: `طلب استعارة جهاز طبي عاجل: ${equipment_type}`,
         message: `الجهاز المطلوب: ${equipment_type}\nاسم المريض: ${patient_name}\nالعنوان: ${city} - ${address}\nالتشخيص: ${diagnosis}\nالمدة المتوقعة: ${expected_duration}`
       })

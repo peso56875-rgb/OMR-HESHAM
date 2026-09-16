@@ -28,7 +28,7 @@ function getLogoImgSrc(c: Context): string {
     return `${reqUrl.protocol}//${reqUrl.host}/static/foundation-export-logo.png`
   } catch (e) {}
 
-  return 'https://omarhesham.org/static/foundation-export-logo.png'
+  return 'https://omarhesham-foundation.com/static/foundation-export-logo.png'
 }
 
 type ColumnDef = {
@@ -143,7 +143,7 @@ function buildExcelHtml(opts: ExcelTemplateOpts): string {
     <tr>
       <td colspan="${opts.colCount}" style="background-color:#f4f8f6; border-top:2px solid #d4a63b; padding:11px 24px; text-align:center;">
         <div style="font-size:8.5pt; color:#0b5145; font-weight:800;">صادر آلياً من لوحة تحكم مؤسسة الدكتور عمر هشام الخيرية</div>
-        <div style="font-size:7.5pt; color:#71817a; margin-top:3px;">omarhesham.org · للاستخدام الإداري الرسمي</div>
+        <div style="font-size:7.5pt; color:#71817a; margin-top:3px;">omarhesham-foundation.com · للاستخدام الإداري الرسمي</div>
       </td>
     </tr>
   </table>

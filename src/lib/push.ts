@@ -130,7 +130,7 @@ const siteOrigin = (c?: any): string => {
   const env = c?.env || {}
   const procEnv = typeof glob.process !== 'undefined' ? glob.process.env || {} : {}
   return String(
-    env.SITE_ORIGIN || procEnv.SITE_ORIGIN || 'https://omarhesham.org'
+    env.SITE_ORIGIN || procEnv.SITE_ORIGIN || 'https://omarhesham-foundation.com'
   ).replace(/\/+$/, '')
 }
 

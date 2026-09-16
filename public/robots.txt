@@ -9,4 +9,4 @@ Disallow: /login
 Disallow: /profile
 Disallow: /api/
 
-Sitemap: https://omarhesham.org/sitemap.xml
+Sitemap: https://omarhesham-foundation.com/sitemap.xml
