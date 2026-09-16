@@ -90,8 +90,44 @@ app.use('*', async (c, next) => {
   await next()
 })
 
+// Google Search Console file verification route
+app.get('/google3c693e7bb6fa3882.html', (c) => c.text('google-site-verification: google3c693e7bb6fa3882.html'))
+
+// Global error handler — prevents 500 crashes and shows a graceful branded page
+app.onError((err, c) => {
+  console.error('[Unhandled App Error]', err.message, err.stack)
+  return c.html(
+    <Layout title="مؤسسة الدكتور عمر هشام الخيرية">
+      <div style="padding: 6rem 1.5rem; max-width: 600px; margin: 0 auto; text-align: center;">
+        <i class="fa-solid fa-heart-pulse" style="font-size: 3.5rem; color: var(--gold); margin-bottom: 1.5rem;"></i>
+        <h2 style="font-size: 1.8rem; margin-bottom: 0.8rem;">نحن هنا لخدمتكم دائماً</h2>
+        <p style="color: var(--muted); margin-bottom: 2rem; line-height: 1.7;">يجري الآن تحديث وتجهيز بعض الخدمات الميدانية لتقديم أفضل تجربة لكم. يمكنك العودة للصفحة الرئيسية وتصفح البرامج والحملات.</p>
+        <a href="/" class="primary-btn" style="display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.8rem 1.8rem; border-radius: 99px;">
+          <i class="fa-solid fa-house"></i> العودة للرئيسية
+        </a>
+      </div>
+    </Layout>,
+    500
+  )
+})
+
+// Edge CDN Caching Header: Caches public responses at edge servers for 60s,
+// allowing thousands of concurrent users to load pages in sub-10ms without hitting Firestore.
+app.use('*', async (c, next) => {
+  await next()
+  const isAuth = c.req.header('Cookie')?.includes('fb-session=')
+  const path = c.req.path
+  if (c.req.method === 'GET' && !isAuth && !path.startsWith('/api') && !path.startsWith('/dashboard') && !path.startsWith('/profile') && c.res.status === 200) {
+    c.res.headers.set('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=600')
+  }
+})
+
 // Mount All API Endpoints
 app.route('/api', api)
+
+// High-performance in-memory cache for public homepage to survive traffic surges
+let homeCache: { campaigns: any[], news: any[], stories: any[], programs: any[], timestamp: number } | null = null
+const HOME_CACHE_TTL = 60 * 1000 // 60 seconds
 
 // Page Routes
 app.get('/', async (c) => {
@@ -99,20 +135,38 @@ app.get('/', async (c) => {
   let news: any[] = []
   let stories: any[] = []
   let programs: any[] = []
-  try {
-    const db = getFirestore(c)
-    const [cSnap, nSnap, sSnap, pSnap] = await Promise.all([
-      db.collection('campaigns').where('is_published', '==', true).orderBy('created_at', 'desc').limit(6).get().catch(() => db.collection('campaigns').where('is_published', '==', true).limit(6).get()),
-      db.collection('news').where('is_published', '==', true).orderBy('publish_date', 'desc').limit(3).get(),
-      db.collection('stories').where('is_published', '==', true).limit(3).get(),
-      db.collection('programs').where('is_published', '==', true).get().catch(() => ({ docs: [] }))
-    ])
-    campaigns = cSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
-    news = nSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
-    stories = sSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
-    programs = pSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
-    programs.sort((a: any, b: any) => (Number(a.order) || 0) - (Number(b.order) || 0))
-  } catch (e) { }
+
+  const now = Date.now()
+  if (homeCache && (now - homeCache.timestamp < HOME_CACHE_TTL)) {
+    campaigns = homeCache.campaigns
+    news = homeCache.news
+    stories = homeCache.stories
+    programs = homeCache.programs
+  } else {
+    try {
+      const db = getFirestore(c)
+      const [cSnap, nSnap, sSnap, pSnap] = await Promise.all([
+        db.collection('campaigns').where('is_published', '==', true).orderBy('created_at', 'desc').limit(6).get().catch(() => db.collection('campaigns').where('is_published', '==', true).limit(6).get()),
+        db.collection('news').where('is_published', '==', true).orderBy('publish_date', 'desc').limit(3).get(),
+        db.collection('stories').where('is_published', '==', true).limit(3).get(),
+        db.collection('programs').where('is_published', '==', true).get().catch(() => ({ docs: [] }))
+      ])
+      campaigns = cSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      news = nSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      stories = sSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      programs = pSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      programs.sort((a: any, b: any) => (Number(a.order) || 0) - (Number(b.order) || 0))
+
+      homeCache = { campaigns, news, stories, programs, timestamp: now }
+    } catch (e) {
+      if (homeCache) {
+        campaigns = homeCache.campaigns
+        news = homeCache.news
+        stories = homeCache.stories
+        programs = homeCache.programs
+      }
+    }
+  }
 
   if (!news.length) {
     news = defaultNews.map((n, idx) => ({
