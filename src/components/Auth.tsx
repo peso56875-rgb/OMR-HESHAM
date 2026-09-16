@@ -407,69 +407,69 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
                   const statusLabel = isRevoked ? 'ملغاة' : isFrozen ? 'مجمّدة' : isExpired ? 'منتهية' : 'سارية'
                   const statusIcon = isRevoked ? 'fa-ban' : isFrozen ? 'fa-snowflake' : isExpired ? 'fa-triangle-exclamation' : 'fa-circle-check'
                   return (
-                <div class="vol-id-card-wrapper">
-                  <div class={`vol-id-card${isInactive ? ' is-void' : ''}`} id="volunteerIdCard">
-                    <div class="vol-id-orbit" aria-hidden="true"></div>
-                    <img src="/static/foundation-logo.png" alt="" class="vol-id-watermark" aria-hidden="true" />
+                    <div class="vol-id-card-wrapper">
+                      <div class={`vol-id-card${isInactive ? ' is-void' : ''}`} id="volunteerIdCard">
+                        <div class="vol-id-orbit" aria-hidden="true"></div>
+                        <img src="/static/foundation-logo.png" alt="" class="vol-id-watermark" aria-hidden="true" />
 
-                    <div class="vol-id-card-header">
-                      <div class="vol-id-brand">
-                        <img src="/static/foundation-logo.png" alt="شعار المؤسسة" class="vol-id-logo" />
-                        <div class="vol-id-org">
-                          <span>مؤسسة الدكتور عمر هشام الخيرية</span>
-                          <small>VOLUNTEER ID · بطاقة متطوع</small>
+                        <div class="vol-id-card-header">
+                          <div class="vol-id-brand">
+                            <img src="/static/foundation-logo.png" alt="شعار المؤسسة" class="vol-id-logo" />
+                            <div class="vol-id-org">
+                              <span>مؤسسة الدكتور عمر هشام الخيرية</span>
+                              <small>VOLUNTEER ID · بطاقة متطوع</small>
+                            </div>
+                          </div>
+                          <div class={`vol-id-status ${statusClass}`}>{icon(statusIcon)} {statusLabel}</div>
+                        </div>
+
+                        {isInactive && (
+                          <div class="vol-id-alert">
+                            {icon(isRevoked ? 'fa-ban' : 'fa-snowflake')}
+                            {isRevoked ? 'هذه البطاقة ملغاة وغير صالحة للاستخدام' : 'هذه البطاقة مجمّدة مؤقتاً'}
+                          </div>
+                        )}
+
+                        <div class="vol-id-body">
+                          <div class="vol-id-avatar-ring">
+                            {(volunteer.avatar_url || user.avatar)
+                              ? <img src={volunteer.avatar_url || user.avatar} alt={volunteer.full_name} class="vol-id-avatar" />
+                              : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0, 2).map((n: string) => n[0]).join('')}</div>
+                            }
+                          </div>
+
+                          <div class="vol-id-info">
+                            <span class="vol-id-role">{volunteer.rank || 'متطوع معتمد'}</span>
+                            <h4 class="vol-id-name">{volunteer.full_name}</h4>
+                            <div class="vol-id-code-box">
+                              <span class="vol-id-code-label">رقم الهوية</span>
+                              <strong class="vol-id-code">{volunteer.volunteer_code}</strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class={`vol-id-footer${isInactive || isExpired ? ' is-expired' : ''}`}>
+                          <div class="vol-id-expiry-row">
+                            <span class="vol-id-expiry-label">صالحة حتى</span>
+                            <b class="vol-id-expiry-date">{expiryText}</b>
+                          </div>
+                          <div class="vol-id-verified">
+                            <span>{icon('fa-shield-halved')}</span>
+                            <small>هوية رقمية موثّقة</small>
+                          </div>
                         </div>
                       </div>
-                      <div class={`vol-id-status ${statusClass}`}>{icon(statusIcon)} {statusLabel}</div>
-                    </div>
 
-                    {isInactive && (
-                      <div class="vol-id-alert">
-                        {icon(isRevoked ? 'fa-ban' : 'fa-snowflake')}
-                        {isRevoked ? 'هذه البطاقة ملغاة وغير صالحة للاستخدام' : 'هذه البطاقة مجمّدة مؤقتاً'}
-                      </div>
-                    )}
-
-                    <div class="vol-id-body">
-                      <div class="vol-id-avatar-ring">
-                        {(volunteer.avatar_url || user.avatar)
-                          ? <img src={volunteer.avatar_url || user.avatar} alt={volunteer.full_name} class="vol-id-avatar" />
-                          : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0,2).map((n: string) => n[0]).join('')}</div>
-                        }
-                      </div>
-
-                      <div class="vol-id-info">
-                        <span class="vol-id-role">{volunteer.rank || 'متطوع معتمد'}</span>
-                        <h4 class="vol-id-name">{volunteer.full_name}</h4>
-                        <div class="vol-id-code-box">
-                          <span class="vol-id-code-label">رقم الهوية</span>
-                          <strong class="vol-id-code">{volunteer.volunteer_code}</strong>
-                        </div>
+                      {/* ID Action Buttons Bar */}
+                      <div class="vol-id-actions-bar">
+                        <button class="primary-btn" id="downloadVolCard" type="button" style="padding:13px 26px;font-size:.9rem;background:linear-gradient(135deg,#0c4a3f,#168a70);border-radius:16px">
+                          {icon('fa-download')} تحميل البطاقة
+                        </button>
+                        <button class="outline-btn" id="printVolCard" type="button" style="padding:13px 26px;font-size:.9rem;border-radius:16px">
+                          {icon('fa-print')} طباعة
+                        </button>
                       </div>
                     </div>
-
-                    <div class={`vol-id-footer${isInactive || isExpired ? ' is-expired' : ''}`}>
-                      <div class="vol-id-expiry-row">
-                        <span class="vol-id-expiry-label">صالحة حتى</span>
-                        <b class="vol-id-expiry-date">{expiryText}</b>
-                      </div>
-                      <div class="vol-id-verified">
-                        <span>{icon('fa-shield-halved')}</span>
-                        <small>هوية رقمية موثّقة</small>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ID Action Buttons Bar */}
-                  <div class="vol-id-actions-bar">
-                    <button class="primary-btn" id="downloadVolCard" type="button" style="padding:13px 26px;font-size:.9rem;background:linear-gradient(135deg,#0c4a3f,#168a70);border-radius:16px">
-                      {icon('fa-download')} تحميل البطاقة
-                    </button>
-                    <button class="outline-btn" id="printVolCard" type="button" style="padding:13px 26px;font-size:.9rem;border-radius:16px">
-                      {icon('fa-print')} طباعة
-                    </button>
-                  </div>
-                </div>
                   )
                 })()
               ) : (

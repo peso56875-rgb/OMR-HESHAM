@@ -163,27 +163,41 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
     <link rel="stylesheet" href="/static/style.css?v=3.9" />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
       '@context': 'https://schema.org',
-      '@type': 'NGO',
-      name: 'مؤسسة الدكتور عمر هشام الخيرية',
-      alternateName: 'Dr. Omar Hesham Charity Foundation',
-      url: SITE_ORIGIN,
-      logo: SITE_ORIGIN + '/static/foundation-logo.png',
-      image: ogImage,
-      description: 'مؤسسة أهلية مشهرة تعمل على تفريج الكرب ودعم المرضى ونشر العلم وتعليم القرآن.',
-      // The public registration number is what lets a donor verify this is a
-      // real licensed NGO — worth exposing as structured data.
-      identifier: 'رقم التشهير 3115 لسنة 2026',
-      telephone: '+201060920249',
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: 'كفر العنانية',
-        addressRegion: 'الدقهلية',
-        addressCountry: 'EG'
-      },
-      sameAs: [
-        'https://www.facebook.com/share/1Dj3HrELjY/?mibextid=wwXIfr',
-        'https://www.instagram.com/dr.omarheshamfoundation',
-        'https://www.tiktok.com/@dr.omarfoundation'
+      '@graph': [
+        {
+          '@type': 'NGO',
+          '@id': `${SITE_ORIGIN}/#organization`,
+          name: 'مؤسسة الدكتور عمر هشام الخيرية',
+          alternateName: 'Dr. Omar Hesham Charity Foundation',
+          url: SITE_ORIGIN,
+          logo: SITE_ORIGIN + '/static/foundation-logo.png',
+          image: ogImage,
+          description: 'مؤسسة أهلية مشهرة تعمل على تفريج الكرب ودعم المرضى ونشر العلم وتعليم القرآن.',
+          identifier: 'رقم التشهير 3115 لسنة 2026',
+          telephone: '+201060920249',
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: 'كفر العنانية',
+            addressRegion: 'الدقهلية',
+            addressCountry: 'EG'
+          },
+          sameAs: [
+            'https://www.facebook.com/share/1Dj3HrELjY/?mibextid=wwXIfr',
+            'https://www.instagram.com/dr.omarheshamfoundation',
+            'https://www.tiktok.com/@dr.omarfoundation'
+          ]
+        },
+        {
+          '@type': 'WebSite',
+          '@id': `${SITE_ORIGIN}/#website`,
+          url: SITE_ORIGIN,
+          name: 'مؤسسة الدكتور عمر هشام الخيرية',
+          description: 'الموقع الرسمي لمؤسسة الدكتور عمر هشام الخيرية - عطاء مستمر لتنمية الإنسان والمجتمع',
+          publisher: {
+            '@id': `${SITE_ORIGIN}/#organization`
+          },
+          inLanguage: 'ar-EG'
+        }
       ]
     }) }}></script>
   </head><body class={`page-${pageType}`}>

@@ -1147,19 +1147,23 @@ app.get('/sitemap.xml', async (c) => {
     (opts.priority ? `<priority>${opts.priority}</priority>` : '') +
     '</url>'
 
-  // Donation and campaign pages carry the highest priority — they are the ones
-  // the foundation actually needs found.
+  // Donation, cases, and core program hubs carry highest priority for Google search
   const statics: Array<[string, string, string]> = [
     ['/', '1.0', 'daily'],
     ['/campaigns', '0.9', 'daily'],
+    ['/cases', '0.9', 'daily'],
     ['/donate', '0.9', 'weekly'],
+    ['/medical-equipment', '0.9', 'weekly'],
+    ['/quran', '0.9', 'weekly'],
+    ['/zakat-calculator', '0.8', 'monthly'],
     ['/kids', '0.8', 'weekly'],
     ['/news', '0.8', 'daily'],
+    ['/volunteer-portal', '0.8', 'monthly'],
+    ['/volunteers', '0.7', 'monthly'],
     ['/about', '0.7', 'monthly'],
     ['/achievements', '0.7', 'monthly'],
     ['/success-stories', '0.7', 'weekly'],
     ['/events', '0.7', 'weekly'],
-    ['/volunteers', '0.7', 'monthly'],
     ['/transparency', '0.7', 'monthly'],
     ['/gallery', '0.6', 'weekly'],
     ['/careers', '0.6', 'weekly'],
@@ -1183,6 +1187,7 @@ app.get('/sitemap.xml', async (c) => {
     const db = getFirestore(c)
     const collections: Array<[string, string, string]> = [
       ['campaigns', '/campaigns/', '0.8'],
+      ['beneficiary_cases', '/cases/', '0.8'],
       ['news', '/news/', '0.7'],
       ['events', '/events/', '0.6']
     ]
