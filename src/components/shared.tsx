@@ -34,7 +34,6 @@ export function Header({ user }: { user?: UserSession }) {
         <a href="/kids" class="nav-item nav-badge-kids">{icon('fa-child-reaching')} <span>أطفالنا</span></a>
         <a href="/quran" class="nav-item nav-badge-quran">{icon('fa-book-quran')} <span>القرآن</span></a>
         <a href="/zakat-calculator" class="nav-item nav-badge-zakat">{icon('fa-scale-balanced')} <span>الزكاة</span></a>
-        <a href="/news" class="nav-item">الأخبار</a>
         <a href="/about" class="nav-item">من نحن</a>
         <a href="/contact" class="nav-item">تواصل</a>
         {user ? (
