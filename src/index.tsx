@@ -1285,6 +1285,24 @@ app.get('/sitemap.xml', async (c) => {
   )
 })
 
+app.get('/favicon.ico', async (c) => {
+  try {
+    const fs = await import('node:fs/promises')
+    const path = await import('node:path')
+    const icoPath = path.resolve(process.cwd(), 'public/favicon.ico')
+    const data = await fs.readFile(icoPath)
+    return new Response(data, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/x-icon',
+        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800'
+      }
+    })
+  } catch (e) {
+    return c.redirect('/static/foundation-logo-256.png', 301)
+  }
+})
+
 app.notFound(c => c.html(<GenericNotFound user={(c as any).get('user')} />, 404))
 
 export default app

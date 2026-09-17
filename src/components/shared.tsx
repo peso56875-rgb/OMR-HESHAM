@@ -155,8 +155,12 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
     <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Aref+Ruqaa:wght@400;700&family=Manrope:wght@400;600;700;800&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Scheherazade+New:wght@400;600;700&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="icon" type="image/png" href="/static/foundation-logo.png" />
-    <link rel="apple-touch-icon" href="/static/foundation-logo-256.png" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/foundation-logo-256.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="مؤسسة عمر هشام" />
@@ -172,7 +176,7 @@ export function Layout({ children, title = 'مؤسسة الدكتور عمر ه�
           name: 'مؤسسة الدكتور عمر هشام الخيرية',
           alternateName: 'Dr. Omar Hesham Charity Foundation',
           url: SITE_ORIGIN,
-          logo: SITE_ORIGIN + '/static/foundation-logo.png',
+          logo: `${SITE_ORIGIN}/static/foundation-logo-256.png`,
           image: ogImage,
           description: 'مؤسسة أهلية مشهرة تعمل على تفريج الكرب ودعم المرضى ونشر العلم وتعليم القرآن.',
           identifier: 'رقم التشهير 3115 لسنة 2026',
