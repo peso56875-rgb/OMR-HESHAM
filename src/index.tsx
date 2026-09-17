@@ -279,8 +279,10 @@ app.get('/news', async (c) => {
       title: n[0],
       category: n[1],
       summary: n[2],
-      publish_date: '2026-09-01',
-      icon: n[3]
+      excerpt: n[2],
+      publish_date: n[5] || '2026-09-01',
+      icon: n[3] || 'fa-newspaper',
+      image_url: n[4] || ''
     }))
   }
   return c.html(<News news={news} user={(c as any).get('user')} />)
@@ -296,8 +298,19 @@ app.get('/news/:id', async (c) => {
       return c.html(<NewsDetail n={item} user={(c as any).get('user')} />)
     }
   } catch (e) { }
-  const def = defaultNews[0]
-  return c.html(<NewsDetail n={{ id, title: def[0], category: def[1], summary: def[2], publish_date: '2026-09-01', content: def[2] }} user={(c as any).get('user')} />)
+  const matchIdx = id.startsWith('default-news-') ? parseInt(id.replace('default-news-', ''), 10) : -1
+  const def = (matchIdx >= 0 && defaultNews[matchIdx]) ? defaultNews[matchIdx] : defaultNews[0]
+  return c.html(<NewsDetail n={{
+    id,
+    title: def[0],
+    category: def[1],
+    summary: def[2],
+    excerpt: def[2],
+    publish_date: def[5] || '2026-09-01',
+    content: `${def[2]}\n\nتواصل مؤسسة الدكتور عمر هشام الخيرية جهودها الحثيثة في هذا المجال لضمان استدامة الأثر الإيجابي ووصول الدعم لمستحقيه بأعلى معايير الشفافية والكرامة الإنسانية، بفضل ثقة ودعم المتبرعين والشركاء المخلصين. تم تنفيذ هذا العمل الميداني بتنسيق كامل مع لجان المتابعة وفرق المتطوعين على الأرض.`,
+    image_url: def[4] || '',
+    icon: def[3] || 'fa-newspaper'
+  }} user={(c as any).get('user')} />)
 })
 
 app.get('/faq', (c) => c.html(<FAQ user={(c as any).get('user')} />))

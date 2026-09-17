@@ -34,6 +34,7 @@ export function Header({ user }: { user?: UserSession }) {
         <a href="/kids" class="nav-item nav-badge-kids">{icon('fa-child-reaching')} <span>أطفالنا</span></a>
         <a href="/quran" class="nav-item nav-badge-quran">{icon('fa-book-quran')} <span>القرآن</span></a>
         <a href="/zakat-calculator" class="nav-item nav-badge-zakat">{icon('fa-scale-balanced')} <span>الزكاة</span></a>
+        <a href="/news" class="nav-item">الأخبار</a>
         <a href="/about" class="nav-item">من نحن</a>
         <a href="/contact" class="nav-item">تواصل</a>
         {user ? (
@@ -85,11 +86,12 @@ export function Header({ user }: { user?: UserSession }) {
         <a href="/quran" style="color:var(--emerald);font-weight:bold">{icon('fa-book-quran')} القرآن الكريم والأذكار <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/campaigns">{icon('fa-seedling')} حملات الخير <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/cases">{icon('fa-hand-holding-heart')} الحالات الإنسانية <i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/news" style="color:#0284c7;font-weight:bold">{icon('fa-newspaper')} الأخبار والمستجدات <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/zakat-calculator" style="color:var(--gold-600);font-weight:bold">{icon('fa-scale-balanced')} حاسبة الزكاة الذكية <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/volunteer-portal">{icon('fa-id-card-clip')} بوابة المتطوعين <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/donor-statement" style="color:var(--emerald-600);font-weight:bold">{icon('fa-file-invoice-dollar')} شهادة العطاء السنوية <i class="fa-solid fa-arrow-left"></i></a>
         <a href="/notifications" style="color:var(--gold-600);font-weight:bold"><i class="fa-solid fa-bell"></i> مركز الإشعارات <i class="fa-solid fa-arrow-left"></i></a>
-        {Object.entries(routeNames).filter(([h]) => !['/campaigns', '/cases', '/medical-equipment', '/kids', '/quran', '/zakat-calculator', '/volunteer-portal', '/notifications', '/login', '/profile', '/dashboard'].includes(h)).slice(0, 8).map(([href, label]) => <a href={href}>{label}<i class="fa-solid fa-arrow-left"></i></a>)}
+        {Object.entries(routeNames).filter(([h]) => !['/campaigns', '/cases', '/medical-equipment', '/kids', '/quran', '/zakat-calculator', '/volunteer-portal', '/notifications', '/login', '/profile', '/dashboard', '/news'].includes(h)).slice(0, 8).map(([href, label]) => <a href={href}>{label}<i class="fa-solid fa-arrow-left"></i></a>)}
         <div style="border-top:1px solid var(--border); margin:1rem 0; padding-top:1rem"></div>
         {user ? (
           <>
