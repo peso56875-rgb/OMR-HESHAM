@@ -48,12 +48,18 @@ export function Home({ campaigns = [], programs = [], news = [], stories = [], u
             </a>
             <div class="news-pro-body">
               <time>{icon('fa-calendar-day')} {date}</time>
-              <h4>{title}</h4>
+              <h4><a href={href}>{title}</a></h4>
               <p>{excerpt}</p>
               <a href={href} class="news-pro-link">اقرأ المزيد {icon('fa-arrow-left')}</a>
             </div>
           </article>
         })}
+      </div>
+      <div class="news-home-mobile-cta">
+        <a href="/news" class="primary-btn">
+          <span>عرض جميع الأخبار والمستجدات</span>
+          {icon('fa-arrow-left')}
+        </a>
       </div>
     </section>
 

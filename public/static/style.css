@@ -2401,9 +2401,37 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
 .news-pro-card:hover .news-pro-art>i{transform:scale(1.18) rotate(-6deg)}
 .news-pro-body{padding:22px 24px 26px;display:flex;flex-direction:column;gap:10px;flex:1}
 .news-pro-body h4{margin:0;font-size:1.12rem;line-height:1.5}
+.news-pro-body h4 a{color:var(--ink);text-decoration:none;transition:color .2s}
+.news-pro-body h4 a:hover{color:var(--emerald)}
 .news-pro-body p{margin:0;color:var(--muted);font-size:.83rem;line-height:1.75;flex:1}
 .news-pro-link{display:inline-flex;align-items:center;gap:8px;color:var(--emerald);font-weight:900;font-size:.8rem;margin-top:4px;transition:gap .3s var(--ease)}
 .news-pro-card:hover .news-pro-link{gap:14px}
+.news-home-mobile-cta{display:none}
+
+/* Homepage News Section Responsive Breakpoints */
+@media(max-width:992px){
+  .news-pro-grid{grid-template-columns:repeat(2,1fr);gap:18px}
+}
+@media(max-width:768px){
+  .news-section.section-pad{padding:50px 16px 45px}
+  .news-section .head-row{flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:20px}
+  .news-section .head-row .section-head{margin-bottom:0}
+  .news-section .head-row .section-head h2{font-size:clamp(1.75rem,6.5vw,2.3rem);line-height:1.35}
+  .news-section .head-row .text-arrow{display:none}
+  .news-pro-grid{grid-template-columns:1fr;gap:16px}
+  .news-pro-card{border-radius:20px;box-shadow:0 4px 18px rgba(0,0,0,0.04)}
+  .news-pro-art{min-height:185px;height:185px}
+  .news-pro-art>i{font-size:2.6rem}
+  .news-chip.on-art{top:12px;right:12px;padding:4px 11px;font-size:0.72rem}
+  .news-pro-body{padding:16px 18px 20px;gap:8px}
+  .news-pro-body time{font-size:0.76rem}
+  .news-pro-body h4{font-size:1.12rem;line-height:1.45}
+  .news-pro-body p{font-size:0.85rem;line-height:1.65;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .news-pro-link{font-size:0.84rem;margin-top:4px;padding:2px 0}
+  .news-home-mobile-cta{display:block;margin-top:20px;width:100%}
+  .news-home-mobile-cta .primary-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 20px;font-size:0.92rem;font-weight:800;border-radius:999px;background:linear-gradient(135deg,var(--forest),var(--emerald));color:#fff;box-shadow:0 6px 20px rgba(12,74,63,0.22);text-decoration:none}
+  .news-home-mobile-cta .primary-btn:hover{background:linear-gradient(135deg,var(--gold-600),var(--gold));color:#fff}
+}
 
 /* Bottom CTA */
 .news-pro-cta{display:flex;align-items:center;gap:22px;background:linear-gradient(135deg,var(--forest),var(--ink));color:white;border-radius:28px;padding:34px 40px;flex-wrap:wrap}
@@ -3564,22 +3592,114 @@ button.pay-app-btn.vodafone-btn:hover{box-shadow:0 8px 22px rgba(230,0,0,.45)}
 }
 .btn-impact-more:hover{border-color:var(--emerald);color:var(--emerald)}
 
-/* Responsive adjustments */
+/* Responsive adjustments for Newsroom & Articles */
+@media(max-width:992px){
+  .newsroom-stats-col{gap:10px}
+  .news-stream-grid{grid-template-columns:repeat(2, 1fr);gap:18px}
+}
 @media(max-width:900px){
   .featured-story-card{grid-template-columns:1fr}
-  .featured-story-media{min-height:260px}
-  .newsroom-intro-row{flex-direction:column;align-items:flex-start}
+  .featured-story-media{min-height:240px;height:240px}
+  .newsroom-intro-row{flex-direction:column;align-items:stretch;gap:18px}
+  .featured-story-body{padding:26px 24px}
 }
-@media(max-width:680px){
-  .newsroom-header-wrap{padding:95px 16px 20px}
-  .newsroom-main-content{padding:25px 16px 60px}
-  .news-connect-card{padding:28px 20px}
-  .news-sub-input-wrap{flex-direction:column;border-radius:18px;padding:12px}
-  .news-sub-input-wrap input{width:100%}
-  .btn-subscribe{width:100%;justify-content:center}
-  .article-share-strip{flex-direction:column;align-items:flex-start}
-  .article-impact-callout{flex-direction:column;text-align:center}
-  .impact-buttons{width:100%;justify-content:center}
+@media(max-width:768px){
+  .newsroom-header-wrap{padding:85px 16px 20px}
+  .newsroom-header-container{gap:16px}
+  .newsroom-top-bar{gap:8px;justify-content:space-between}
+  .newsroom-breadcrumb{font-size:0.78rem}
+  .newsroom-live-badge{font-size:0.7rem;padding:4px 10px;gap:6px}
+  .newsroom-main-title{font-size:1.8rem;line-height:1.25;margin-bottom:6px}
+  .newsroom-subtitle{font-size:0.88rem;line-height:1.6}
+  .newsroom-stats-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-top:4px}
+  .newsroom-stat-card{padding:10px 12px;gap:10px;border-radius:14px}
+  .stat-icon-wrap{width:36px;height:36px;min-width:36px;border-radius:10px;font-size:1rem}
+  .stat-info strong{font-size:1.15rem}
+  .stat-info span{font-size:0.7rem}
+  .newsroom-ticker{padding:8px 10px;gap:8px;font-size:0.8rem;border-radius:12px}
+  .ticker-badge{padding:3px 8px;font-size:0.7rem;gap:4px}
+  .ticker-action{font-size:0.75rem;gap:4px}
+
+  /* Main Content Area */
+  .newsroom-main-content{padding:20px 16px 60px}
+  .newsroom-container{gap:20px}
+
+  /* Toolbar & Search on mobile */
+  .news-toolbar{flex-direction:column;align-items:stretch;gap:10px}
+  .news-search-box{min-width:0;width:100%;max-width:100%}
+  .news-search-input{padding:11px 40px 11px 36px;font-size:0.88rem;border-radius:12px}
+  .news-view-toggle{display:none !important}
+
+  /* Category Pills - Smooth horizontal touch scroll */
+  .news-categories-nav{margin:0 -16px;padding:4px 16px 8px;gap:8px;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .news-categories-nav::-webkit-scrollbar{display:none}
+  .news-cat-pill{padding:6px 14px;font-size:0.8rem;border-radius:999px;flex-shrink:0}
+  .pill-count{padding:1px 6px;font-size:0.68rem}
+  .news-results-status{font-size:0.8rem}
+
+  /* Featured Story Magazine on mobile */
+  .featured-story-card{grid-template-columns:1fr;border-radius:20px}
+  .featured-story-media{height:195px;min-height:195px}
+  .featured-art-fallback{width:64px;height:64px;font-size:1.8rem}
+  .featured-badges{top:12px;right:12px;gap:6px}
+  .featured-highlight-badge, .featured-category-badge{font-size:0.68rem;padding:3px 9px}
+  .featured-story-body{padding:18px 16px;gap:10px}
+  .story-meta-row{font-size:0.74rem;gap:12px}
+  .featured-story-title{font-size:1.25rem;line-height:1.4}
+  .featured-story-excerpt{font-size:0.85rem;line-height:1.65;-webkit-line-clamp:2;line-clamp:2}
+  .featured-story-actions{flex-direction:column;align-items:stretch;gap:10px;padding-top:12px;margin-top:4px}
+  .featured-read-btn{width:100%;justify-content:center;padding:11px 18px;font-size:0.88rem}
+  .story-share-actions{justify-content:center;gap:10px}
+  .btn-share-icon{width:38px;height:38px}
+
+  /* Stream Grid on mobile */
+  .news-stream-grid{grid-template-columns:1fr;gap:16px}
+  .news-stream-card{border-radius:18px}
+  .news-card-visual{height:180px;min-height:180px}
+  .card-art-fallback{width:56px;height:56px;font-size:1.5rem}
+  .card-category-badge{top:10px;right:10px;font-size:0.68rem;padding:3px 8px}
+  .card-read-badge{bottom:10px;left:10px;font-size:0.66rem}
+  .news-card-body{padding:15px 16px 18px;gap:8px}
+  .news-card-meta{font-size:0.72rem}
+  .news-card-title{font-size:1.05rem;line-height:1.45}
+  .news-card-excerpt{font-size:0.84rem;line-height:1.65;-webkit-line-clamp:2;line-clamp:2}
+  .news-card-footer{padding-top:10px;margin-top:4px}
+  .news-card-link{font-size:0.84rem}
+
+  /* Load More & Newsletter on mobile */
+  .btn-load-more{width:100%;justify-content:center;padding:12px 20px;font-size:0.88rem}
+  .news-connect-card{padding:24px 18px;border-radius:20px}
+  .news-connect-card h3{font-size:1.25rem;line-height:1.35}
+  .news-connect-card p{font-size:0.84rem;line-height:1.65;margin-bottom:16px}
+  .news-sub-input-wrap{flex-direction:column;border-radius:14px;padding:10px;gap:8px}
+  .news-sub-input-wrap input{width:100%;padding:6px 4px;font-size:0.88rem}
+  .btn-subscribe{width:100%;justify-content:center;padding:11px 18px;font-size:0.88rem;border-radius:10px}
+  .connect-socials{flex-direction:column;align-items:flex-start;gap:10px;margin-top:18px;font-size:0.8rem}
+  .social-links-pill{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%}
+  .social-links-pill a{justify-content:center;padding:7px 4px;font-size:0.72rem;border-radius:8px}
+
+  /* Article reading page on mobile */
+  .news-article-page{padding:85px 16px 50px}
+  .news-article-container{gap:18px}
+  .article-headline{font-size:1.45rem;line-height:1.35}
+  .article-lead-summary{font-size:0.94rem;line-height:1.7;padding-right:12px}
+  .article-author-row{flex-wrap:wrap;gap:10px}
+  .article-pub-date{width:100%;margin-inline-start:0;padding-top:4px;font-size:0.76rem}
+  .article-share-strip{flex-direction:column;align-items:stretch;gap:10px}
+  .share-strip-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;width:100%}
+  .share-pill{justify-content:center;padding:8px 10px;font-size:0.76rem}
+  .article-featured-figure{border-radius:16px}
+  .article-featured-img{max-height:240px}
+  .article-rich-body{font-size:1.02rem;line-height:1.9;gap:16px}
+  .article-impact-callout{padding:20px 16px;border-radius:18px;flex-direction:column;text-align:center;gap:14px}
+  .impact-text{min-width:0}
+  .impact-buttons{width:100%;flex-direction:column;gap:8px}
+  .btn-impact-donate, .btn-impact-more{width:100%;justify-content:center;padding:11px 18px}
+}
+@media(max-width:380px){
+  .newsroom-stats-col{grid-template-columns:1fr}
+  .social-links-pill{grid-template-columns:1fr}
+  .share-strip-btns{grid-template-columns:1fr}
 }
 
 /* Dark mode enhancements */
