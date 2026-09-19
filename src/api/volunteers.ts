@@ -635,7 +635,7 @@ volunteers.get('/my', authMiddleware, async (c) => {
 })
 
 // Public: Verify a volunteer by code
-volunteers.get('/verify/:code', async (c) => {
+volunteers.get('/verify/:code', rateLimiter(30, 60000, 'volunteer-verify'), async (c) => {
   const code = (c.req.param('code') || '').trim()
   const db = getFirestore(c)
 
@@ -670,14 +670,13 @@ volunteers.get('/verify/:code', async (c) => {
     // Note: /verify is PUBLIC, so no PII is returned here. The volunteer's name,
     // photo and preferred role are deliberately excluded — the response only
     // proves that a code is valid and shows the card's public identity fields
-    // (team/rank/hours) plus validity flags.
+    // (team/rank/hours) plus validity flags. Internal doc id is omitted.
     return c.json({
       found: true,
       revoked: isRevoked || isFrozen,
       expired: isExpired,
       status: vol.status,
       volunteer: {
-        id: snap.docs[0].id,
         volunteer_code: vol.volunteer_code,
         team: vol.team || vol.preferred_role,
         rank: vol.rank || 'متطوع مبادر',

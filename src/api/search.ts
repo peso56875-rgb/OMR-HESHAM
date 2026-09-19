@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
+import { rateLimiter } from './middleware'
 
 export const searchApi = new Hono()
 
@@ -80,7 +81,7 @@ const staticPages: SearchResult[] = [
   }
 ]
 
-searchApi.get('/', async (c) => {
+searchApi.get('/', rateLimiter(30, 60000, 'search-api'), async (c) => {
   const query = (c.req.query('q') || '').trim().toLowerCase()
   if (!query || query.length < 2) {
     return c.json({ results: [], query })

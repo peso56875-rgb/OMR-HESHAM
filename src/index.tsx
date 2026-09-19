@@ -508,9 +508,19 @@ app.get('/volunteer-portal', async (c) => {
     if (!vSnap.empty && vSnap.docs && vSnap.docs.length > 0) {
       volunteer = { id: vSnap.docs[0].id, ...vSnap.docs[0].data() }
     } else {
-      const fallbackSnap = await db.collection('volunteers').where('phone', '==', user.phone || '').limit(1).get().catch(() => ({ empty: true, docs: [] }))
-      if (!fallbackSnap.empty && fallbackSnap.docs && fallbackSnap.docs.length > 0) {
-        volunteer = { id: fallbackSnap.docs[0].id, ...fallbackSnap.docs[0].data() }
+      const userPhone = String(user.phone || '').trim()
+      const userEmail = String(user.email || '').trim().toLowerCase()
+      if (userPhone && userPhone.length >= 8) {
+        const fallbackSnap = await db.collection('volunteers').where('phone', '==', userPhone).limit(1).get().catch(() => ({ empty: true, docs: [] }))
+        if (!fallbackSnap.empty && fallbackSnap.docs && fallbackSnap.docs.length > 0) {
+          volunteer = { id: fallbackSnap.docs[0].id, ...fallbackSnap.docs[0].data() }
+        }
+      }
+      if (!volunteer && userEmail) {
+        const fallbackEmailSnap = await db.collection('volunteers').where('email', '==', userEmail).limit(1).get().catch(() => ({ empty: true, docs: [] }))
+        if (!fallbackEmailSnap.empty && fallbackEmailSnap.docs && fallbackEmailSnap.docs.length > 0) {
+          volunteer = { id: fallbackEmailSnap.docs[0].id, ...fallbackEmailSnap.docs[0].data() }
+        }
       }
     }
     events = (eSnap as any).docs.map((d: any) => ({ id: d.id, ...d.data() }))
@@ -545,13 +555,7 @@ app.get('/certificate/:id', async (c) => {
   }
 
   if (!volunteer) {
-    volunteer = {
-      id,
-      full_name: 'متطوع متميز بأسرة المؤسسة',
-      hours_count: 45,
-      rank: 'متطوع متميز ومبادر',
-      volunteer_code: `VOL-2026-${id.slice(0, 4).toUpperCase()}`
-    }
+    return c.redirect('/volunteer-portal')
   }
 
   const user = (c as any).get('user')
@@ -751,14 +755,30 @@ app.get('/profile', async (c) => {
 
   try {
     const db = getFirestore(c)
-    const [dSnap, vSnap] = await Promise.all([
-      db.collection('donations').where('donor_email', '==', user.email).orderBy('created_at', 'desc').get(),
-      db.collection('volunteers').where('profile_id', '==', user.id).limit(1).get()
+    const userEmail = String(user.email || '').trim().toLowerCase()
+    const [dProfileSnap, dEmailSnap, vSnap] = await Promise.all([
+      user.id
+        ? db.collection('donations').where('profile_id', '==', user.id).orderBy('created_at', 'desc').get().catch(() => ({ docs: [] }))
+        : Promise.resolve({ docs: [] }),
+      userEmail
+        ? db.collection('donations').where('donor_email', '==', userEmail).orderBy('created_at', 'desc').get().catch(() => ({ docs: [] }))
+        : Promise.resolve({ docs: [] }),
+      db.collection('volunteers').where('profile_id', '==', user.id).limit(1).get().catch(() => ({ empty: true, docs: [] }))
     ])
 
-    donations = dSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
-    if (!vSnap.empty) {
-      volunteer = { id: vSnap.docs[0].id, ...vSnap.docs[0].data() }
+    const donationMap = new Map<string, any>()
+    for (const doc of (dProfileSnap as any).docs || []) {
+      donationMap.set(doc.id, { id: doc.id, ...doc.data() })
+    }
+    for (const doc of (dEmailSnap as any).docs || []) {
+      if (!donationMap.has(doc.id)) {
+        donationMap.set(doc.id, { id: doc.id, ...doc.data() })
+      }
+    }
+    donations = Array.from(donationMap.values())
+
+    if (!vSnap.empty && (vSnap as any).docs && (vSnap as any).docs.length > 0) {
+      volunteer = { id: (vSnap as any).docs[0].id, ...(vSnap as any).docs[0].data() }
     }
   } catch (error: any) {
     console.error('Error fetching profile data:', error.message)
