@@ -202,7 +202,8 @@ const rateLimitMap = new Map<string, { count: number; reset: number }>()
  */
 const clientIp = (c: Context): string => {
   const forwarded = c.req.header('X-Forwarded-For') || ''
-  return forwarded.split(',')[0].trim() || 'unknown'
+  const first = forwarded.split(',')[0].trim().slice(0, 64)
+  return /^[0-9a-fA-F:.]+$/.test(first) ? first : 'unknown'
 }
 
 /**
@@ -234,9 +235,18 @@ export const rateLimiter = (maxRequests: number = 30, windowMs: number = 60000, 
 
     // Sweep expired entries. Threshold kept low because a serverless instance
     // has a small memory budget and gets recycled often anyway.
-    if (rateLimitMap.size > 5000) {
+    if (rateLimitMap.size > 2000) {
       for (const [k, val] of rateLimitMap) {
         if (now > val.reset) rateLimitMap.delete(k)
+      }
+      // Hard ceiling to protect against memory exhaustion under distributed flood
+      if (rateLimitMap.size > 5000) {
+        const toDelete = rateLimitMap.size - 5000
+        let i = 0
+        for (const k of rateLimitMap.keys()) {
+          if (i++ >= toDelete) break
+          rateLimitMap.delete(k)
+        }
       }
     }
 
