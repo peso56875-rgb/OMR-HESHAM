@@ -214,6 +214,7 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
   const completedDonations = donations.filter((d: any) => d.status === 'completed')
   const totalDonated = completedDonations.reduce((sum: number, d: any) => sum + Number(d.amount || 0), 0)
   const donationsCount = completedDonations.length
+  const volunteerPhotoUrl = volunteer?.id && volunteer?.avatar_url ? `/api/volunteers/photo/${volunteer.id}/view` : ''
 
   let tierName = 'صديق المؤسسة'
   let tierClass = 'none'
@@ -432,8 +433,8 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
 
                         <div class="vol-id-body">
                           <div class="vol-id-avatar-ring">
-                            {(volunteer.avatar_url || user.avatar)
-                              ? <img src={volunteer.avatar_url || user.avatar} alt={volunteer.full_name} class="vol-id-avatar" />
+                            {(volunteerPhotoUrl || user.avatar)
+                              ? <img src={volunteerPhotoUrl || user.avatar} alt={volunteer.full_name} class="vol-id-avatar" />
                               : <div class="vol-id-avatar-initials">{volunteer.full_name?.split(' ').slice(0, 2).map((n: string) => n[0]).join('')}</div>
                             }
                           </div>

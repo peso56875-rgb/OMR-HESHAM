@@ -16,6 +16,7 @@ export function VolunteerPortal({
   const hours = volunteer?.hours_count || 0
   const rank = volunteer?.rank || 'متطوع مبادر'
   const code = volunteer?.volunteer_code || `VOL-${user.id.slice(0, 6).toUpperCase()}`
+  const volunteerPhotoUrl = volunteer?.id && volunteer?.avatar_url ? `/api/volunteers/photo/${volunteer.id}/view` : ''
 
   // Rank thresholds
   const ranksList = [
@@ -74,7 +75,7 @@ export function VolunteerPortal({
                     <span class="id-official-badge">بطاقة متطوع رسمية</span>
                   </div>
                   <div class="id-card-avatar">
-                    <img src={volunteer.avatar_url || user.avatar || '/static/foundation-logo-256.png'} alt={user.name} />
+                    <img src={volunteerPhotoUrl || user.avatar || '/static/foundation-logo-256.png'} alt={user.name} />
                   </div>
                   <h3 class="id-card-name">{volunteer.full_name || user.name}</h3>
                   <div class="id-rank-pill">{icon('fa-medal')} {rank}</div>
@@ -110,7 +111,7 @@ export function VolunteerPortal({
                         data-vol-city={volunteer.city || 'الدقهلية'}
                         data-vol-rank={rank}
                         data-vol-hours={hours}
-                        data-vol-avatar={volunteer.avatar_url || user.avatar || ''}
+                        data-vol-avatar={volunteerPhotoUrl || user.avatar || ''}
                         data-vol-created={volunteer.approved_at ? new Date(volunteer.approved_at).toLocaleDateString('ar-EG') : '2026'}
                         data-vol-expiry={volunteer.expires_at ? new Date(volunteer.expires_at).toLocaleDateString('ar-EG') : 'صلاحية مفتوحة'}
                         style="width: 100%; background: #0c4a3f; color: #fff; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 14px rgba(12, 74, 63, 0.25);"
@@ -129,7 +130,7 @@ export function VolunteerPortal({
                         data-vol-rank={rank}
                         data-vol-hours={hours}
                         data-vol-code={code}
-                        data-vol-avatar={volunteer.avatar_url || user.avatar || ''}
+                        data-vol-avatar={volunteerPhotoUrl || user.avatar || ''}
                         data-vol-cert={volunteer.certificate_allowed ? `/certificate/${volunteer.id}` : ''}
                         data-vol-card={`/volunteers/card/${volunteer.id}`}
                         style="width: 100%; background: linear-gradient(135deg, #c59b27, #8c6d15); color: #fff; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 14px rgba(197, 155, 39, 0.25);"
@@ -148,7 +149,7 @@ export function VolunteerPortal({
                     data-vol-rank={rank}
                     data-vol-hours={hours}
                     data-vol-code={code}
-                    data-vol-avatar={volunteer.avatar_url || user.avatar || ''}
+                    data-vol-avatar={volunteerPhotoUrl || user.avatar || ''}
                     data-vol-cert={volunteer.certificate_allowed ? `/certificate/${volunteer.id}` : ''}
                     data-vol-card={`/volunteers/card/${volunteer.id}`}
                     style="display:none"
@@ -202,7 +203,7 @@ export function VolunteerPortal({
                         <b class="kpi-num">{Math.max(1, Math.floor(hours / 4))} <small>فعالية ميدانية</small></b>
                       </div>
                     </div>
-                    <div class="portal-kpi-card btn-trigger-celebration" style="cursor: pointer;" data-vol-id={volunteer.id} data-vol-name={volunteer.full_name || user.name} data-vol-rank={rank} data-vol-hours={hours} data-vol-code={code} data-vol-avatar={volunteer.avatar_url || user.avatar || ''} data-vol-cert={volunteer.certificate_allowed ? `/certificate/${volunteer.id}` : ''} data-vol-card={`/volunteers/card/${volunteer.id}`} title="اضغط للاحتفال برتبتك!">
+                    <div class="portal-kpi-card btn-trigger-celebration" style="cursor: pointer;" data-vol-id={volunteer.id} data-vol-name={volunteer.full_name || user.name} data-vol-rank={rank} data-vol-hours={hours} data-vol-code={code} data-vol-avatar={volunteerPhotoUrl || user.avatar || ''} data-vol-cert={volunteer.certificate_allowed ? `/certificate/${volunteer.id}` : ''} data-vol-card={`/volunteers/card/${volunteer.id}`} title="اضغط للاحتفال برتبتك!">
                       <div class="kpi-icon-wrap bg-purple">{icon('fa-trophy')}</div>
                       <div>
                         <span class="kpi-sub">الرتبة الميدانية (احتفل 🎉):</span>

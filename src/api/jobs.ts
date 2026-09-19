@@ -3,6 +3,7 @@ import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
 import { getEmailConfig, sendInBackground, jobApplicationAlert } from '../lib/email'
 import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
+import { cleanEmail, cleanMultiline, cleanPhone, cleanText, cleanUrl, isValidEmail } from './sanitize'
 
 export const jobs = new Hono()
 
@@ -106,13 +107,25 @@ jobs.post('/apply', rateLimiter(5, 60000, 'job-apply'), async (c) => {
     body = await c.req.parseBody()
   }
 
-  const { job_id, full_name, email, phone, bio, cv_url } = body
+  const job_id = cleanText(body.job_id, 160)
+  const full_name = cleanText(body.full_name, 120)
+  const email = cleanEmail(body.email)
+  const phone = cleanPhone(body.phone)
+  const bio = cleanMultiline(body.bio, 2000)
+  const cv_url = cleanUrl(body.cv_url, 2048)
 
   if (!full_name || !email || !phone) {
     if (!contentType.includes('application/json')) {
       return c.redirect('/careers?error=missing_fields')
     }
     return c.json({ error: 'الرجاء ملء جميع الحقول الإلزامية' }, 400)
+  }
+
+  if (!isValidEmail(email)) {
+    if (!contentType.includes('application/json')) {
+      return c.redirect('/careers?error=invalid_email')
+    }
+    return c.json({ error: 'البريد الإلكتروني غير صالح' }, 400)
   }
 
   try {
@@ -130,8 +143,8 @@ jobs.post('/apply', rateLimiter(5, 60000, 'job-apply'), async (c) => {
       full_name,
       email,
       phone,
-      bio: bio || '',
-      cv_url: cv_url || '',
+      bio,
+      cv_url,
       status: 'pending',
       created_at: new Date().toISOString()
     }

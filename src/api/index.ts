@@ -44,6 +44,47 @@ const corsOrigins = envCorsOrigins.length > 0
       'https://www.omarhesham.org'
     ]
 
+const mutationMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+
+const isTrustedMutationSource = (c: any): boolean => {
+  if (!mutationMethods.has(c.req.method.toUpperCase())) {
+    return true
+  }
+
+  let requestOrigin = ''
+  try {
+    requestOrigin = new URL(c.req.url).origin
+  } catch {
+    requestOrigin = ''
+  }
+
+  const trustedOrigins = new Set(
+    [...corsOrigins, requestOrigin]
+      .filter(Boolean)
+      .map((origin) => origin.toLowerCase())
+  )
+
+  const hasTrustedOrigin = (value: string): boolean => {
+    try {
+      return trustedOrigins.has(new URL(value).origin.toLowerCase())
+    } catch {
+      return false
+    }
+  }
+
+  const origin = c.req.header('origin')
+  if (origin) {
+    return hasTrustedOrigin(origin)
+  }
+
+  const referer = c.req.header('referer')
+  if (referer) {
+    return hasTrustedOrigin(referer)
+  }
+
+  return true
+}
+
 // Global CORS middleware
 // 🔴 الإصلاح: أُزيلت http://localhost:* من القائمة الافتراضية — كان أي
 // موقع مهاجم يملك نطاقًا اسمه localhost يُرسل معاملات عبر المتصفح باسم
@@ -55,6 +96,14 @@ api.use('*', cors({
   allowHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400,
 }))
+
+api.use('*', async (c, next) => {
+  if (!isTrustedMutationSource(c)) {
+    return c.json({ error: 'تم رفض الطلب: مصدر غير موثوق' }, 403)
+  }
+
+  await next()
+})
 
 // Global error handler
 api.onError((err, c) => {

@@ -3,6 +3,7 @@ import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
 import { getEmailConfig, sendInBackground, contactAlert, contactAck } from '../lib/email'
 import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
+import { cleanEmail, cleanMultiline, cleanPhone, cleanText, isValidEmail } from './sanitize'
 
 export const contacts = new Hono()
 
@@ -18,7 +19,11 @@ contacts.post('/', rateLimiter(5, 60000, 'contact'), async (c) => {
     body = await c.req.parseBody()
   }
 
-  const { name, email, phone, subject, message } = body
+  const name = cleanText(body.name, 120)
+  const email = cleanEmail(body.email)
+  const phone = cleanPhone(body.phone)
+  const subject = cleanText(body.subject || 'استفسار عام', 160)
+  const message = cleanMultiline(body.message, 2000)
 
   if (!name || !email || !message) {
     if (!contentType.includes('application/json')) {
@@ -27,12 +32,19 @@ contacts.post('/', rateLimiter(5, 60000, 'contact'), async (c) => {
     return c.json({ error: 'الرجاء ملء جميع الحقول المطلوبة' }, 400)
   }
 
+  if (!isValidEmail(email)) {
+    if (!contentType.includes('application/json')) {
+      return c.redirect('/contact?error=invalid_email')
+    }
+    return c.json({ error: 'البريد الإلكتروني غير صالح' }, 400)
+  }
+
   try {
     const contactData = {
       name,
       email,
-      phone: phone || '',
-      subject: subject || 'استفسار عام',
+      phone,
+      subject,
       message,
       status: 'unread',
       created_at: new Date().toISOString()

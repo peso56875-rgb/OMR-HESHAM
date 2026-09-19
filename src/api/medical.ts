@@ -3,6 +3,7 @@ import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
 import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
 import { getEmailConfig, sendInBackground, contactAlert } from '../lib/email'
+import { cleanMultiline, cleanPhone, cleanText, cleanUrl } from './sanitize'
 
 export const medical = new Hono()
 
@@ -118,17 +119,17 @@ export const defaultMedicalEquipment = [
 medical.post('/request', rateLimiter(5, 60000, 'med-request'), async (c) => {
   try {
     const body = await c.req.parseBody()
-    const patient_name = String(body.patient_name || '').trim()
-    const patient_national_id = String(body.patient_national_id || '').trim()
-    const requester_name = String(body.requester_name || patient_name).trim()
-    const requester_phone = String(body.requester_phone || '').trim()
-    const alt_phone = String(body.alt_phone || '').trim()
-    const city = String(body.city || '').trim()
-    const address = String(body.address || '').trim()
-    const equipment_type = String(body.equipment_type || '').trim()
-    const expected_duration = String(body.expected_duration || 'شهر واحد').trim()
-    const diagnosis = String(body.diagnosis || '').trim()
-    const medical_report_url = String(body.medical_report_url || '').trim()
+    const patient_name = cleanText(body.patient_name, 120)
+    const patient_national_id = cleanText(body.patient_national_id, 32)
+    const requester_name = cleanText(body.requester_name || patient_name, 120)
+    const requester_phone = cleanPhone(body.requester_phone)
+    const alt_phone = cleanPhone(body.alt_phone)
+    const city = cleanText(body.city, 120)
+    const address = cleanMultiline(body.address, 800)
+    const equipment_type = cleanText(body.equipment_type, 160)
+    const expected_duration = cleanText(body.expected_duration || 'شهر واحد', 80)
+    const diagnosis = cleanMultiline(body.diagnosis, 1500)
+    const medical_report_url = cleanUrl(body.medical_report_url, 2048)
 
     if (!patient_name || !requester_phone || !equipment_type || !address) {
       return c.json({ error: 'يرجى استكمال الحقول الإلزامية (اسم المريض، الهاتف، الجهاز، العنوان)' }, 400)

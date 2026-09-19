@@ -3,6 +3,7 @@ import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
 import { getEmailConfig, sendInBackground, newsletterWelcome } from '../lib/email'
 import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
+import { cleanEmail, isValidEmail } from './sanitize'
 
 export const newsletter = new Hono()
 
@@ -57,8 +58,8 @@ newsletter.post('/', rateLimiter(5, 60000, 'newsletter'), async (c) => {
   }
 
   // ✅ الأمان: تحقق من صيغة البريد الأساسية قبل أي استخدام.
-  const rawEmail = String(email || '').trim()
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+  const rawEmail = cleanEmail(email)
+  if (!isValidEmail(rawEmail)) {
     if (!contentType.includes('application/json')) {
       return c.redirect(safeLocalRedirect(c, '/#newsletter') + '&news_error=invalid_email')
     }

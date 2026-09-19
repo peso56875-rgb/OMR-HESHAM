@@ -5,6 +5,15 @@ import adapter from '@hono/vite-dev-server/node'
 // @ts-ignore
 import { copyExternalsIntoFunction } from './scripts/copy-externals.mjs'
 
+const devAllowedHosts = [
+  'localhost',
+  '127.0.0.1',
+  'omarhesham-foundation.com',
+  'www.omarhesham-foundation.com',
+  'omarhesham.org',
+  'www.omarhesham.org'
+]
+
 // Copies firebase-admin (+ full dependency tree) into the Vercel function
 // folder after the bundle is written. Without this, the deployed function
 // crashes with ERR_MODULE_NOT_FOUND because Vercel's Build Output API does
@@ -20,7 +29,7 @@ const copyExternalsPlugin = (): Plugin => ({
 
 export default defineConfig({
   server: {
-    allowedHosts: true
+    allowedHosts: devAllowedHosts
   },
   plugins: [
     build({

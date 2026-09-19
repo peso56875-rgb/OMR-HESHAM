@@ -3,7 +3,7 @@ import { getFirestore, getAuth } from '../lib/firebase-admin'
 import { getCookie } from 'hono/cookie'
 import { adminMiddleware, authMiddleware, rateLimiter } from './middleware'
 import { isPlatformAdmin } from '../lib/admin-check'
-import { normalizeMediaUrl, storeMediaFile } from '../lib/storage'
+import { normalizeMediaUrl, storeMediaFile, sniffFileType, SNIFF_IMAGE_TYPES } from '../lib/storage'
 import {
   getEmailConfig,
   sendInBackground,
@@ -22,6 +22,7 @@ import {
   rankChangeBody,
   dashLink
 } from '../lib/notifications'
+import { cleanEmail, cleanMultiline, cleanPhone, cleanText, cleanUrl, isValidEmail } from './sanitize'
 
 export const volunteers = new Hono()
 
@@ -45,6 +46,25 @@ const ok = (c: any, message: string, extra: Record<string, any> = {}) => {
 const fail = (c: any, message: string, status: number = 400, code: string = '1') => {
   if (wantsJson(c)) return c.json({ error: message }, status as any)
   return c.redirect(`/dashboard?view=volunteers&error=${encodeURIComponent(code)}`)
+}
+
+const MAX_VOLUNTEER_PHOTO_BYTES = 5 * 1024 * 1024
+
+const storeVolunteerPhoto = async (file: File, c: any): Promise<string> => {
+  if (file.size > MAX_VOLUNTEER_PHOTO_BYTES) {
+    throw new Error('حجم الصورة كبير جداً. الحد الأقصى 5 ميجابايت')
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer())
+  const sniffed = sniffFileType(bytes)
+  if (!SNIFF_IMAGE_TYPES.includes(sniffed)) {
+    throw new Error('الصورة غير مدعومة أو لا تطابق محتواها الفعلي. الأنواع المسموحة: JPG, PNG, WEBP, GIF, AVIF, BMP')
+  }
+
+  const safeFile = new File([bytes], (file as any).name || 'volunteer-photo', { type: sniffed })
+  const stored = await storeMediaFile(safeFile, c)
+  if (!stored.url) throw new Error('لم يتم إرجاع رابط للصورة المرفوعة')
+  return normalizeMediaUrl(stored.url)
 }
 
 /**
@@ -417,12 +437,14 @@ const safeDownloadName = (name: string, contentType: string): string => {
   return `صورة-${base}.${extension}`
 }
 
-/**
- * Streams the stored volunteer photo through our own origin so the browser's
- * download button always saves a file (cross-origin `download` attributes are
- * commonly ignored and open the image in a new tab instead).
- */
-volunteers.get('/photo/:id/download', authMiddleware, async (c) => {
+const canAccessVolunteerPhoto = (user: any, volunteer: Record<string, any>): boolean => {
+  const isAdmin = isPlatformAdmin(user?.email, user?.id)
+  const ownerEmail = String(volunteer.email || '').trim().toLowerCase()
+  const userEmail = String(user?.email || '').trim().toLowerCase()
+  return Boolean(isAdmin || volunteer.profile_id === user?.id || (ownerEmail && ownerEmail === userEmail))
+}
+
+const streamVolunteerPhoto = async (c: any, disposition: 'inline' | 'attachment') => {
   const db = getFirestore(c)
   const id = c.req.param('id') || ''
   const user = (c as any).get('user')
@@ -432,14 +454,8 @@ volunteers.get('/photo/:id/download', authMiddleware, async (c) => {
     if (!volDoc.exists) return c.json({ error: 'لم يتم العثور على هذا المتطوع.' }, 404)
 
     const volunteer = volDoc.data() || {}
-    const isAdmin = isPlatformAdmin(user?.email, user?.id)
-    const isOwner = !!user && (
-      volunteer.profile_id === user.id ||
-      (volunteer.email && String(volunteer.email).toLowerCase() === String(user.email || '').toLowerCase())
-    )
-
-    if (!isAdmin && !isOwner) {
-      return c.json({ error: 'غير مصرّح: لا يمكنك تحميل صورة هذا المتطوع.' }, 403)
+    if (!canAccessVolunteerPhoto(user, volunteer)) {
+      return c.json({ error: 'غير مصرّح: لا يمكنك عرض صورة هذا المتطوع.' }, 403)
     }
 
     const avatarUrl = normalizeMediaUrl(volunteer.avatar_url || '')
@@ -483,15 +499,34 @@ volunteers.get('/photo/:id/download', authMiddleware, async (c) => {
       headers: {
         'Content-Type': contentType,
         'Content-Length': String(bytes.byteLength),
-        'Content-Disposition': `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        'Content-Disposition': disposition === 'attachment'
+          ? `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`
+          : 'inline',
         'Cache-Control': 'private, no-store',
-        'X-Content-Type-Options': 'nosniff'
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Security-Policy': 'sandbox',
+        'Cross-Origin-Resource-Policy': 'same-origin'
       }
     })
   } catch (error: any) {
     console.error('Volunteer photo download error:', error?.message)
     return c.json({ error: 'تعذر تحميل صورة المتطوع.' }, 500)
   }
+}
+
+// Protected inline image endpoint used by cards and dashboards. Raw provider
+// URLs are intentionally not rendered into volunteer pages.
+volunteers.get('/photo/:id/view', authMiddleware, async (c) => {
+  return streamVolunteerPhoto(c, 'inline')
+})
+
+/**
+ * Streams the stored volunteer photo through our own origin so the browser's
+ * download button always saves a file (cross-origin `download` attributes are
+ * commonly ignored and open the image in a new tab instead).
+ */
+volunteers.get('/photo/:id/download', authMiddleware, async (c) => {
+  return streamVolunteerPhoto(c, 'attachment')
 })
 
 // Submit a volunteer application (accepts form data from browser or JSON)
@@ -527,27 +562,32 @@ volunteers.post('/', rateLimiter(5, 60000, 'volunteer-apply'), async (c) => {
     body = await c.req.parseBody()
   }
 
-  const full_name = (body.name || body.full_name) as string
-  const phone = body.phone as string
-  const age = body.age ? parseInt(body.age as string) : null
-  const city = body.city as string
+  const full_name = cleanText(body.name || body.full_name, 120)
+  const phone = cleanPhone(body.phone)
+  const age = body.age ? parseInt(cleanText(body.age, 8), 10) : null
+  const city = cleanText(body.city, 120)
   // Optional: the form asks for it only so we can acknowledge the application.
   // Phone stays the field the foundation actually calls back on.
-  const email = ((body.email as string) || '').trim().toLowerCase()
-  const preferred_role = (body.role || body.preferred_role) as string
-  const skills = body.skills as string
-  let avatar_url = body.avatar_url ? normalizeMediaUrl(body.avatar_url) : ''
+  const email = cleanEmail(body.email)
+  const preferred_role = cleanText(body.role || body.preferred_role, 120)
+  const skills = cleanMultiline(body.skills, 1500)
+  // Public applicants may upload an actual image file, or inherit their verified
+  // profile avatar when signed in. Do not accept arbitrary pasted image URLs
+  // here; otherwise an attacker can plant a remote tracking URL that opens when
+  // admins review volunteer requests.
+  let avatar_url = ''
 
   // Support direct multipart photo upload with the form
   const avatarFileCandidate = body.avatar_file || body.avatar || body.file
   if (avatarFileCandidate && avatarFileCandidate instanceof File && avatarFileCandidate.size > 0) {
     try {
-      const stored = await storeMediaFile(avatarFileCandidate, c)
-      if (stored.url) {
-        avatar_url = normalizeMediaUrl(stored.url)
-      }
+      avatar_url = await storeVolunteerPhoto(avatarFileCandidate, c)
     } catch (err: any) {
       console.error('Failed to store uploaded volunteer photo:', err?.message)
+      if (contentType.includes('application/json')) {
+        return c.json({ error: `تعذر رفع الصورة: ${err?.message || 'خطأ غير معروف'}` }, 400)
+      }
+      return c.redirect('/volunteers?error=invalid_photo')
     }
   }
 
@@ -568,12 +608,18 @@ volunteers.post('/', rateLimiter(5, 60000, 'volunteer-apply'), async (c) => {
     }
     return c.json({ error: 'الاسم ورقم الهاتف مطلوبان' }, 400)
   }
+  if (email && !isValidEmail(email)) {
+    if (!contentType.includes('application/json')) {
+      return c.redirect('/volunteers?error=invalid_email')
+    }
+    return c.json({ error: 'البريد الإلكتروني غير صالح' }, 400)
+  }
 
   try {
     const volData = {
       profile_id,
       full_name,
-      age,
+      age: Number.isFinite(age as number) && (age as number) > 0 && (age as number) < 120 ? age : null,
       phone,
       city: city || '',
       email,
@@ -933,14 +979,14 @@ volunteers.post('/update/:id', adminMiddleware, async (c) => {
     // (e.g. skills, which had no input in the form) made Firestore reject the
     // ENTIRE update, which is why "any change doesn't actually change".
     const updateData = pruneUndefined({
-      full_name: fullName,
-      phone,
-      city: field(body, 'city'),
-      preferred_role: preferredRole,
-      team: teamRaw || preferredRole,
-      skills: field(body, 'skills'),
-      rank: field(body, 'rank'),
-      volunteer_code: field(body, 'volunteer_code')?.toUpperCase(),
+      full_name: fullName === undefined ? undefined : cleanText(fullName, 120),
+      phone: phone === undefined ? undefined : cleanPhone(phone),
+      city: field(body, 'city') === undefined ? undefined : cleanText(field(body, 'city'), 120),
+      preferred_role: preferredRole === undefined ? undefined : cleanText(preferredRole, 120),
+      team: (teamRaw || preferredRole) === undefined ? undefined : cleanText(teamRaw || preferredRole, 120),
+      skills: field(body, 'skills') === undefined ? undefined : cleanMultiline(field(body, 'skills'), 1500),
+      rank: field(body, 'rank') === undefined ? undefined : cleanText(field(body, 'rank'), 120),
+      volunteer_code: field(body, 'volunteer_code') === undefined ? undefined : cleanText(field(body, 'volunteer_code'), 80).toUpperCase(),
       status,
       age: ageRaw === undefined ? undefined : (ageRaw === '' ? null : parseInt(ageRaw, 10) || null),
       hours_count: hoursRaw === undefined ? undefined : (parseInt(hoursRaw, 10) || 0)
@@ -981,16 +1027,14 @@ volunteers.post('/update/:id', adminMiddleware, async (c) => {
     // A pasted URL, or an intentionally emptied field to remove the photo.
     const avatarUrlRaw = field(body, 'avatar_url')
     if (avatarUrlRaw !== undefined) {
-      updateData.avatar_url = avatarUrlRaw ? normalizeMediaUrl(avatarUrlRaw) : ''
+      updateData.avatar_url = avatarUrlRaw ? normalizeMediaUrl(cleanUrl(avatarUrlRaw, 2048)) : ''
     }
 
     // An actual uploaded file always wins over the URL field.
     const avatarFileCandidate = body.avatar_file || body.avatar || body.file
     if (avatarFileCandidate && avatarFileCandidate instanceof File && avatarFileCandidate.size > 0) {
       try {
-        const stored = await storeMediaFile(avatarFileCandidate, c)
-        if (!stored.url) throw new Error('لم يتم إرجاع رابط للصورة المرفوعة')
-        updateData.avatar_url = normalizeMediaUrl(stored.url)
+        updateData.avatar_url = await storeVolunteerPhoto(avatarFileCandidate, c)
       } catch (err: any) {
         // This used to be swallowed, so "تغيير الصورة الشخصية" appeared to work
         // while the old photo stayed in place.

@@ -75,7 +75,8 @@ auth.post('/session', rateLimiter(10, 60000, 'session'), async (c) => {
           })
         })
       } else {
-        role = (profileDoc.data()?.role === 'admin' || isAdmin) ? 'admin' : (profileDoc.data()?.role || role)
+        const storedRole = String(profileDoc.data()?.role || role)
+        role = isAdmin ? 'admin' : (storedRole === 'admin' ? 'donor' : storedRole)
       }
     } catch (dbErr: any) {
       console.warn('[Session Auth] Firestore sync skipped due to error (e.g. quota limit):', dbErr.message)

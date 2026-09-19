@@ -19,6 +19,7 @@ import {
 } from '../lib/notifications'
 import { buildReceipt, receiptPath } from '../lib/receipts'
 import { SITE_ORIGIN } from '../lib/seo'
+import { cleanEmail, cleanPhone, cleanText, isValidEmail } from './sanitize'
 
 export const donations = new Hono()
 
@@ -67,10 +68,22 @@ donations.post('/', rateLimiter(10, 60000, 'donate'), async (c) => {
     return c.json({ error: 'بيانات غير صالحة' }, 400)
   }
 
-  const { amount, donation_type, campaign_id, case_id, case_code, donation_purpose, donor_name, donor_phone, donor_email, payment_method } = body
+  const amount = body.amount
+  const donation_type = cleanText(body.donation_type || 'once', 40)
+  const campaign_id = cleanText(body.campaign_id, 160)
+  const case_id = cleanText(body.case_id, 160)
+  const case_code = cleanText(body.case_code, 80)
+  const donation_purpose = cleanText(body.donation_purpose, 160)
+  const donor_name = cleanText(body.donor_name, 120)
+  const donor_phone = cleanPhone(body.donor_phone)
+  const donor_email = cleanEmail(body.donor_email)
+  const payment_method = cleanText(body.payment_method, 80)
 
   if (!donor_name || !donor_phone || !payment_method) {
     return c.json({ error: 'الحقول المطلوبة غير مكتملة' }, 400)
+  }
+  if (donor_email && !isValidEmail(donor_email)) {
+    return c.json({ error: 'البريد الإلكتروني غير صالح' }, 400)
   }
 
   // ✅ الأمان: التحقق من صحة المبلغ قبل الحفظ.
@@ -200,15 +213,15 @@ donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
   // بصمت (كانت 0 تنجح في فحص !amount؟ لا — بل كانت تُقبل لأن 0 || 0 = 0،
   // لكن القيم الضخمة/السالبة كانت تمر). نتحقق الآن من المدى بالكامل.
   const amount = Number.isFinite(amountRaw) ? amountRaw : NaN
-  const donor_name = (body.name || body.donor_name || '').toString().trim()
-  const donor_phone = (body.phone || body.donor_phone || '').toString().trim()
-  const donor_email = (body.email || body.donor_email || '').toString().trim() || null
-  const payment_method = (body.method || body.payment_method || 'instapay').toString()
-  const requested_campaign_id = (body.campaign_id || '').toString().trim() || null
-  const requested_case_id = (body.case_id || '').toString().trim() || null
-  const requested_case_code = (body.case_code || '').toString().trim() || null
-  const requested_case_title = (body.case_title || '').toString().trim() || null
-  const donation_purpose = (body.donation_purpose || body.purpose || '').toString().trim() || null
+  const donor_name = cleanText(body.name || body.donor_name, 120)
+  const donor_phone = cleanPhone(body.phone || body.donor_phone)
+  const donor_email = cleanEmail(body.email || body.donor_email) || null
+  const payment_method = cleanText(body.method || body.payment_method || 'instapay', 80)
+  const requested_campaign_id = cleanText(body.campaign_id, 160) || null
+  const requested_case_id = cleanText(body.case_id, 160) || null
+  const requested_case_code = cleanText(body.case_code, 80) || null
+  const requested_case_title = cleanText(body.case_title, 180) || null
+  const donation_purpose = cleanText(body.donation_purpose || body.purpose, 160) || null
 
   if (!Number.isFinite(amount) || amount < 1 || amount > 100_000_000) {
     return c.json({ error: 'المبلغ غير صالح (يجب أن يكون رقمًا بين 1 و 100,000,000)' }, 400)
@@ -216,6 +229,9 @@ donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
 
   if (!donor_name || !donor_phone) {
     return c.json({ error: 'الحقول المطلوبة غير مكتملة (الاسم، الهاتف، المبلغ)' }, 400)
+  }
+  if (donor_email && !isValidEmail(donor_email)) {
+    return c.json({ error: 'البريد الإلكتروني غير صالح' }, 400)
   }
 
   try {

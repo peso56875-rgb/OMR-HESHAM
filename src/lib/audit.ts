@@ -242,10 +242,10 @@ export const makeAuditMiddleware = (getDb?: (c: any) => any) => async (c: any, n
       actor_email: user?.email || null,
       actor_name: user?.name || null,
       payload,
-      ip:
-        c.req.header('cf-connecting-ip') ||
-        c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
-        null,
+      // Vercel is the outermost edge for this project; it overwrites
+      // X-Forwarded-For, while CF-Connecting-IP is attacker-controlled unless
+      // Cloudflare is actually in front of the site.
+      ip: c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || null,
       user_agent: (c.req.header('user-agent') || '').slice(0, 200) || null,
       created_at: new Date().toISOString(),
     })

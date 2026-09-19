@@ -16,6 +16,7 @@ export function VolunteerCardView({
     : 'صلاحية مفتوحة'
   const isExpired = Boolean(volunteer.expires_at && new Date(volunteer.expires_at) < new Date())
   const isRevoked = volunteer.status === 'revoked'
+  const volunteerPhotoUrl = volunteer.id && volunteer.avatar_url ? `/api/volunteers/photo/${volunteer.id}/view` : ''
 
   return (
     <html lang="ar" dir="rtl">
@@ -309,8 +310,8 @@ export function VolunteerCardView({
           </div>
 
           <div class="badge-avatar-center">
-            {volunteer.avatar_url ? (
-              <img src={volunteer.avatar_url} alt={volunteer.full_name} class="badge-avatar-img" />
+            {volunteerPhotoUrl ? (
+              <img src={volunteerPhotoUrl} alt={volunteer.full_name} class="badge-avatar-img" />
             ) : (
               <div class="badge-avatar-initials">
                 {volunteer.full_name?.split(' ')?.[0]?.[0] || 'م'}
