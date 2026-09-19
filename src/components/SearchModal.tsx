@@ -136,6 +136,40 @@ export function SearchModal() {
             });
           });
 
+          // ✅ الأمان: ناتج البحث من /api/search يعكس بيانات مخزّنة (عناوين
+          // حملات/أخبار) — لو احتوى أحدها على وسوم HTML خبيثة كانت تُنفَّذ
+          // لأن النتائج كانت تُبنى بالربط المباشر innerHTML بدون تهريب.
+          // الآن كل حقل يُهرَّب، والروابط تُقيَّد بالمسارات المحلية فقط.
+          function escapeHtml(value) {
+            return String(value == null ? '' : value)
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;');
+          }
+
+          function safeHref(url) {
+            const value = String(url || '').trim();
+            if (!value) return '#';
+            if (value.charAt(0) === '/') {
+              // مسارات محلية فقط؛ لا protocol-relative (//) ولا backslash.
+              if (value.charAt(1) === '/' || value.charAt(1) === '\\') return '#';
+              return value;
+            }
+            try {
+              const parsed = new URL(value, window.location.origin);
+              if (parsed.origin === window.location.origin && (parsed.protocol === 'https:' || parsed.protocol === 'http:')) {
+                return parsed.pathname + parsed.search + parsed.hash;
+              }
+              if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+                // روابط خارجية صريحة مقبولة (مصادر المؤسسة العامة).
+                return value;
+              }
+            } catch (e) { /* تجاهل */ }
+            return '#';
+          }
+
           // Search execution
           async function performSearch(query) {
             query = query.trim();
@@ -152,17 +186,22 @@ export function SearchModal() {
               const results = data.results || [];
 
               if (results.length === 0) {
-                resultsList.innerHTML = '<div class="search-no-results"><i class="fa-solid fa-magnifying-glass"></i><h4>لم نجد نتائج مطابقة لـ "' + query + '"</h4><p>جرب البحث بكلمات أخرى مثل "زكاة" أو "علاج" أو تواصل معنا مباشرة.</p></div>';
+                resultsList.innerHTML = '<div class="search-no-results"><i class="fa-solid fa-magnifying-glass"></i><h4>لم نجد نتائج مطابقة لـ "' + escapeHtml(query) + '"</h4><p>جرب البحث بكلمات أخرى مثل "زكاة" أو "علاج" أو تواصل معنا مباشرة.</p></div>';
                 return;
               }
 
               let html = '';
               results.forEach((item, idx) => {
-                html += '<a href="' + item.url + '" class="search-result-item" data-index="' + idx + '">';
-                html += '<div class="result-icon-box"><i class="fa-solid ' + (item.icon || 'fa-arrow-left') + '"></i></div>';
+                const href = safeHref(item.url);
+                const icon = escapeHtml(item.icon || 'fa-arrow-left');
+                const category = escapeHtml(item.category);
+                const title = escapeHtml(item.title);
+                const snippet = escapeHtml(item.snippet);
+                html += '<a href="' + href + '" class="search-result-item" data-index="' + idx + '">';
+                html += '<div class="result-icon-box"><i class="fa-solid ' + icon + '"></i></div>';
                 html += '<div class="result-content-box">';
-                html += '<div class="result-top-row"><span class="result-cat-badge">' + item.category + '</span><h4 class="result-title">' + item.title + '</h4></div>';
-                html += '<p class="result-snippet">' + item.snippet + '</p>';
+                html += '<div class="result-top-row"><span class="result-cat-badge">' + category + '</span><h4 class="result-title">' + title + '</h4></div>';
+                html += '<p class="result-snippet">' + snippet + '</p>';
                 html += '</div>';
                 html += '<i class="fa-solid fa-arrow-left result-arrow"></i>';
                 html += '</a>';

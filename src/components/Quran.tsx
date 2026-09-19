@@ -1066,6 +1066,18 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
         (function() {
           const JUZ_START_SURAHS = [1, 2, 2, 3, 4, 4, 5, 6, 7, 8, 9, 11, 12, 15, 17, 18, 21, 23, 25, 27, 29, 33, 36, 39, 41, 46, 51, 58, 67, 78];
 
+          // Escape before any value is concatenated into innerHTML. The khatma
+          // board renders reader names and titles as HTML; a malicious stored
+          // name (e.g. <img onerror=...>) must stay inert text.
+          function escHtml(v) {
+            return String(v == null ? '' : v)
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;');
+          }
+
           function notify(msg, type) {
             if (typeof window.showToast === 'function') {
               window.showToast(msg, type || 'success');
@@ -1137,9 +1149,9 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
 
               let readerMetaHtml = '';
               if (st === 'reading' && p.reader_name) {
-                readerMetaHtml = '<div class="juz-reader-meta"><i class="fa-solid fa-user-pen"></i> القارئ الحالي: ' + p.reader_name + '</div>';
+                readerMetaHtml = '<div class="juz-reader-meta"><i class="fa-solid fa-user-pen"></i> القارئ الحالي: ' + escHtml(p.reader_name) + '</div>';
               } else if (st === 'completed' && p.reader_name) {
-                readerMetaHtml = '<div class="juz-reader-meta" style="color:var(--emerald-600)"><i class="fa-solid fa-check"></i> قرأه: ' + p.reader_name + '</div>';
+                readerMetaHtml = '<div class="juz-reader-meta" style="color:var(--emerald-600)"><i class="fa-solid fa-check"></i> قرأه: ' + escHtml(p.reader_name) + '</div>';
               }
 
               const startSurah = JUZ_START_SURAHS[p.part - 1] || 1;
@@ -1150,7 +1162,7 @@ export function QuranHub({ user, initialSurah }: { user?: UserSession, initialSu
                   '<span class="juz-num-tag">الجزء ' + p.part.toLocaleString('ar-EG') + '</span>' +
                   '<span class="juz-status-tag">' + statusLabel + '</span>' +
                 '</div>' +
-                '<div class="juz-content-info">' + p.title + '</div>' +
+                '<div class="juz-content-info">' + escHtml(p.title) + '</div>' +
                 readLinkHtml +
                 readerMetaHtml +
                 '<div class="juz-card-footer">' + actionBtnHtml + '</div>';

@@ -10,9 +10,25 @@ service cloud.firestore {
     }
 
     // Profiles Collection
+    //
+    // 🔴 الثغرة القديمة (C2):
+    //  • القراءة كانت مفتوحة لأي مستخدم مُصادق -> إمكانية تعداد كل حسابات
+    //    المنصة (أسماء، صور، أرقام هواتف) عبر REST/SDK مباشرة.
+    //  • الكتابة الذاتية كانت تسمح بتضمين الحقل `role` -> ترقية النفس
+    //    إلى مشرف عبر تحديث الملف الشخصي مباشرة.
+    //
+    // ✅ الإصلاح:
+    //  • القراءة: صاحب الملف فقط أو المشرف.
+    //  • الإنشاء الذاتي: بدون حقول الصلاحية (role/is_admin/created_by/updated_by).
+    //  • التحديث الذاتي: لا يجوز تغيير أي حقل صلاحية أو حقل يُنشئه الخادم.
+    //  • الحذف: للمشرف فقط.
     match /profiles/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.keys().hasAny(['role', 'is_admin', 'created_by', 'updated_by']);
+      allow update: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_admin', 'created_by', 'updated_by']);
+      allow delete: if isAdmin();
     }
 
     // Campaigns, News, Events, Stories, Jobs (Public read, Admin write)

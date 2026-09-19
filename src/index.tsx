@@ -556,6 +556,9 @@ app.get('/certificate/:id', async (c) => {
 
   const user = (c as any).get('user')
   const isAdmin = user?.role === 'admin'
+  // V5-CERT-OWNER: certificate is viewable only by its owner or admins
+  const ownerEmail = ((volunteer.email || '') as string).trim().toLowerCase()
+  const isOwner = !!user && (volunteer.profile_id === user.id || (ownerEmail && ownerEmail === ((user.email || '') as string).trim().toLowerCase()))
   const isAllowed = Boolean(volunteer.certificate_allowed) || isAdmin
 
   if (!isAllowed) {
@@ -568,7 +571,33 @@ app.get('/certificate/:id', async (c) => {
             </div>
             <h2 style="font-weight: 900; color: var(--heading); margin-bottom: 12px; font-size: 1.4rem;">إصدار الشهادة يتطلب موافقة الإدارة</h2>
             <p style="color: var(--muted); font-size: 0.95rem; line-height: 1.7; margin-bottom: 26px;">
-              عذراً، شهادة التطوع الخاصة بالمتطوع <strong>{volunteer.full_name}</strong> لم يتم اعتماد إتاحتها من قِبل إدارة المؤسسة بعد. سيتمكن المتطوع من استعراضها وطباعتها وتحميلها فور قيام الإدارة بالموافقة.
+              عذراً، شهادة التطوع لم يتم اعتماد إتاحتها من قِبل إدارة المؤسسة بعد. سيتمكن المتطوع من استعراضها وطباعتها وتحميلها فور قيام الإدارة بالموافقة.
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+              <a href="/volunteer-portal" class="primary-btn">
+                <span>العودة لبوابة المتطوعين</span>
+                <i class="fa-solid fa-arrow-left"></i>
+              </a>
+              <a href="/" class="outline-btn">الصفحة الرئيسية</a>
+            </div>
+          </div>
+        </section>
+      </Layout>
+    )
+  }
+
+  if (!isOwner && !isAdmin) {
+    // V5-CERT-OWNER: certificate is viewable only by its owner or admins
+    return c.html(
+      <Layout user={user} title="الشهادة غير متاحة | مؤسسة د. عمر هشام">
+        <section class="section-pad" style="text-align: center; min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 60px 15px;">
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 44px 32px; max-width: 560px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.06);">
+            <div style="width: 76px; height: 76px; border-radius: 50%; background: rgba(239,68,68,0.12); color: #dc2626; display: grid; place-items: center; font-size: 2.2rem; margin: 0 auto 20px;">
+              <i class="fa-solid fa-ban"></i>
+            </div>
+            <h2 style="font-weight: 900; color: var(--heading); margin-bottom: 12px; font-size: 1.4rem;">لا يمكنك عرض هذه الشهادة</h2>
+            <p style="color: var(--muted); font-size: 0.95rem; line-height: 1.7; margin-bottom: 26px;">
+              هذه الشهادة متاحة فقط لصاحبها أو لإدارة المؤسسة. سجّل الدخول بحسابك الشخصي للاطلاع على شهادتك.
             </p>
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
               <a href="/volunteer-portal" class="primary-btn">
@@ -660,6 +689,36 @@ app.get('/volunteers/card/:id', async (c) => {
 
   if (!volunteer) {
     return c.redirect('/volunteer-portal')
+  }
+
+  const user = (c as any).get('user')
+  // V5-CARD-OWNER: the digital card is viewable only by its owner or admins
+  const ownerEmail = ((volunteer.email || '') as string).trim().toLowerCase()
+  const isOwner = !!user && (volunteer.profile_id === user.id || (ownerEmail && ownerEmail === ((user.email || '') as string).trim().toLowerCase()))
+  const isAdmin = user?.role === 'admin'
+
+  if (!isOwner && !isAdmin) {
+    return c.html(
+      <Layout user={user} title="البطاقة غير متاحة | مؤسسة د. عمر هشام">
+        <section class="section-pad" style="text-align: center; min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 60px 15px;">
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 44px 32px; max-width: 560px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.06);">
+            <div style="width: 76px; height: 76px; border-radius: 50%; background: rgba(239,68,68,0.12); color: #dc2626; display: grid; place-items: center; font-size: 2.2rem; margin: 0 auto 20px;">
+              <i class="fa-solid fa-id-card"></i>
+            </div>
+            <h2 style="font-weight: 900; color: var(--heading); margin-bottom: 12px; font-size: 1.4rem;">لا يمكنك عرض هذه البطاقة</h2>
+            <p style="color: var(--muted); font-size: 0.95rem; line-height: 1.7; margin-bottom: 26px;">
+              بطاقة المتطوع متاحة فقط لصاحبها أو لإدارة المؤسسة. يمكنك العودة إلى بوابة المتطوعين لعرض بطاقتك الخاصة.
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+              <a href="/volunteer-portal" class="primary-btn">
+                <span>العودة لبوابة المتطوعين</span>
+                <i class="fa-solid fa-arrow-left"></i>
+              </a>
+            </div>
+          </div>
+        </section>
+      </Layout>
+    )
   }
 
   return c.html(<VolunteerCardView volunteer={volunteer} />)

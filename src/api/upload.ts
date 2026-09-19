@@ -1,24 +1,31 @@
 import { Hono } from 'hono'
 import { adminMiddleware, rateLimiter } from './middleware'
-import { storeMediaFile, storageBucketCandidates, cloudinaryConfigured } from '../lib/storage'
+import {
+  storeMediaFile,
+  storageBucketCandidates,
+  cloudinaryConfigured,
+  sniffFileType,
+  SNIFF_IMAGE_TYPES,
+  SNIFF_ALLOWED_TYPES,
+} from '../lib/storage'
 
 export const upload = new Hono()
 
 const MAX_BYTES = 10 * 1024 * 1024
-const ALLOWED_PREFIXES = ['image/', 'video/']
-const ALLOWED_EXACT = ['application/pdf']
-const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'avif', 'bmp', 'mp4', 'webm', 'pdf']
 
-const isAllowed = (file: File): boolean => {
-  const type = (file.type || '').toLowerCase()
-  if (type) {
-    if (ALLOWED_PREFIXES.some(prefix => type.startsWith(prefix))) return true
-    if (ALLOWED_EXACT.includes(type)) return true
-    return false
-  }
-  // Some browsers send an empty mime type — fall back to the extension.
-  const ext = String((file as any).name || '').split('.').pop()?.toLowerCase() || ''
-  return ALLOWED_EXTENSIONS.includes(ext)
+// ملاحظة أمنية (C3): `file.type` قادم من المتصفح ويمكن تزويره بالكامل، لذا
+// لم يعد يُستخدم في القرار النهائي — القرار الآن مبني على بصمة الملف الفعلية
+// (sniffFileType). أزلنا SVG نهائيًا لأنه نص قابل للتنفيذ (XSS) وليس له
+// بصمة بايتات موثوقة، والرفع العام للصور فقط.
+// ALLOWED_EXTENSIONS أُزيلت كلها: الامتداد قابل للتزوير ولا يضيف أمانًا بعد
+// فحص البصمة، لكن أبقينا فحصًا رمزيًا للامتداد داخل safeFileName في storage.ts.
+const isSniffedAllowed = (sniffed: string): boolean => SNIFF_ALLOWED_TYPES.includes(sniffed)
+const isSniffedImage = (sniffed: string): boolean => SNIFF_IMAGE_TYPES.includes(sniffed)
+
+/** يقرأ بايتات الملف ويفحص بصمته. يعيد النوع المكتشف أو سلسلة فارغة. */
+const readSniffed = async (file: File): Promise<string> => {
+  const arrayBuffer = await file.arrayBuffer()
+  return sniffFileType(Buffer.from(arrayBuffer))
 }
 
 /** Upload a file (admin only). Returns a public URL for the stored media. */
@@ -38,12 +45,18 @@ upload.post('/', adminMiddleware, async (c) => {
       return c.json({ error: 'الملف فارغ، فضلاً اختر صورة صالحة' }, 400)
     }
 
-    if (!isAllowed(file)) {
-      return c.json({ error: 'نوع الملف غير مدعوم. الأنواع المسموحة: صور، فيديو، PDF' }, 400)
-    }
-
     if (file.size > MAX_BYTES) {
       return c.json({ error: 'حجم الملف كبير جداً. الحد الأقصى 10 ميجابايت' }, 413)
+    }
+
+    // ✅ الأمان (C3): رفض حسب البصمة الفعلية — أي ملف بلا بصمة معروفة
+    // (مثل SVG أو HTML مقنّع) يُرفض حتى لو ادعى المتصفح أنه صورة.
+    const sniffed = await readSniffed(file)
+    if (!isSniffedAllowed(sniffed)) {
+      return c.json(
+        { error: 'نوع الملف غير مدعوم أو لا يطابق محتواه الفعلي. الأنواع المسموحة: JPG, PNG, WEBP, GIF, AVIF, BMP, MP4, WEBM, PDF' },
+        400
+      )
     }
 
     const stored = await storeMediaFile(file, c)
@@ -84,17 +97,16 @@ upload.post('/public', rateLimiter(8, 300000, 'public-upload'), async (c) => {
       return c.json({ error: 'الملف فارغ، فضلاً اختر صورة صالحة' }, 400)
     }
 
-    const type = (file.type || '').toLowerCase()
-    const ext = String(file.name || '').split('.').pop()?.toLowerCase() || ''
-    const isImage = type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'].includes(ext)
-
-    if (!isImage) {
-      return c.json({ error: 'الرفع العام مخصص للصور فقط (JPG, PNG, WEBP)' }, 400)
-    }
-
     const PUBLIC_MAX_BYTES = 5 * 1024 * 1024
     if (file.size > PUBLIC_MAX_BYTES) {
       return c.json({ error: 'حجم الصورة كبير جداً. الحد الأقصى 5 ميجابايت' }, 413)
+    }
+
+    // ✅ الأمان (C3): الرفع العام صور فقط — وبفحص البصمة الفعلية وليس نوع
+    // المتصفح المزوّر. SVG/HTML بلا بصمة معروفة مرفوضة نهائيًا.
+    const sniffed = await readSniffed(file)
+    if (!isSniffedImage(sniffed)) {
+      return c.json({ error: 'الرفع العام مخصص للصور فقط (JPG, PNG, WEBP, GIF, AVIF)' }, 400)
     }
 
     const stored = await storeMediaFile(file, c)

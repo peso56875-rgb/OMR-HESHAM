@@ -27,6 +27,12 @@ media.get('/:id', async (c) => {
         'Content-Length': String(stored.size),
         'Cache-Control': 'public, max-age=31536000, immutable',
         'X-Content-Type-Options': 'nosniff',
+        // ✅ (C3) حتى لو عُرض الملف مباشرة في تبويب (نوع قلنا إنه لن يُخزن
+        // إلا بعد فحص بصمة)، بيئة sandbox تمنع تنفيذ أي سكربت داخل الصفحة
+        // المعروضة. مع nosniff لا يمكن للمتصفح إعادة تفسير الملف كنوع آخر.
+        'Content-Security-Policy': 'sandbox',
+        // عرض داخل الصفحة لا تنزيل: صور المنصة تُعرض في <img>.
+        'Content-Disposition': 'inline',
       },
     })
   } catch (error: any) {

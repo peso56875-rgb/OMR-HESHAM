@@ -48,10 +48,10 @@ auth.post('/session', async (c) => {
       const profileDoc = await profileRef.get()
 
       if (!profileDoc.exists) {
-        // Check if it's the first profile in the collection to set as admin
-        const profilesSnapshot = await db.collection('profiles').limit(1).get()
-        const isFirst = profilesSnapshot.empty
-        role = (isFirst || isAdmin) ? 'admin' : 'donor'
+        // 🔴 الإصلاح: أُزيل منطق «أول مستخدم يصبح مشرفًا» — كان بابًا
+        // خلفيًا يمنح الصلاحية لأي شخص يسجّل قبل مسح القاعدة أو في مشروع
+        // جديد. المشرفون الآن من قائمة ADMIN_EMAILS البيضاء حصريًا.
+        role = isAdmin ? 'admin' : 'donor'
         const fullName = decodedToken.name || email.split('@')[0] || 'عضو جديد'
 
         await profileRef.set({

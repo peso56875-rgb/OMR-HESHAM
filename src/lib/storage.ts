@@ -19,6 +19,82 @@ import { uploadToCloudinary } from './cloudinary'
 
 export type MediaProvider = 'firebase-storage' | 'cloudinary' | 'firestore'
 
+/**
+ * يكتشف نوع الملف الفعلي من «البصمة» (Magic Bytes) في بداية الملف.
+ *
+ * 🔴 لماذا؟ كانت الثغرة (C3) تعتمد على `file.type` المُرسل من المتصفح —
+ * والمهاجم يتحكم فيه بالكامل (يمكن تسمية أي ملف image/svg+xml فيُقبل SVG
+ * خبيث يحتوي سكربت، ويُحفظ ويُقدَّم من نفس الأصل).
+ *
+ * ✅ البصمة لا يمكن تزويرها بسهولة: حتى لو ادعى المهاجم أن الملف صورة،
+ * فبداية الملف الحقيقية (FFD8 لـ JPG، 89504E47 لـ PNG…) تحسم الأمر.
+ * أي ملف بلا بصمة معروفة (مثل SVG) يُرفض نهائيًا.
+ *
+ * يعيد سلسلة فارغة لو لم يتعرف على النوع — ويجب على المتصل رفضها.
+ */
+export function sniffFileType(buffer: Buffer): string {
+  if (!buffer || buffer.length < 12) return ''
+
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'image/jpeg'
+
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    buffer.length >= 8 &&
+    buffer.readUInt32BE(0) === 0x89504e47 &&
+    buffer.readUInt32BE(4) === 0x0d0a1a0a
+  ) {
+    return 'image/png'
+  }
+
+  // GIF: GIF87a / GIF89a
+  if (buffer.length >= 6) {
+    const gif = buffer.subarray(0, 6).toString('latin1')
+    if (gif === 'GIF87a' || gif === 'GIF89a') return 'image/gif'
+  }
+
+  // WebP: RIFF....WEBP
+  if (
+    buffer.length >= 12 &&
+    buffer.toString('latin1', 0, 4) === 'RIFF' &&
+    buffer.toString('latin1', 8, 12) === 'WEBP'
+  ) {
+    return 'image/webp'
+  }
+
+  // BMP: 'BM'
+  if (buffer[0] === 0x42 && buffer[1] === 0x4d) return 'image/bmp'
+
+  // ISO-BMFF (MP4 / AVIF / HEIC): 'ftyp' عند الإزاحة 4 ثم العلامة التجارية
+  if (buffer.length >= 12 && buffer.toString('latin1', 4, 8) === 'ftyp') {
+    const brand = buffer.toString('latin1', 8, 12)
+    if (brand === 'avif' || brand === 'avis') return 'image/avif'
+    if (brand === 'heic' || brand === 'heix' || brand === 'mif1' || brand === 'msf1') return 'image/heic'
+    return 'video/mp4'
+  }
+
+  // WebM / Matroska: EBML 1A 45 DF A3
+  if (
+    buffer.length >= 4 &&
+    buffer[0] === 0x1a &&
+    buffer[1] === 0x45 &&
+    buffer[2] === 0xdf &&
+    buffer[3] === 0xa3
+  ) {
+    return 'video/webm'
+  }
+
+  // PDF: %PDF-
+  if (buffer.length >= 5 && buffer.toString('latin1', 0, 5) === '%PDF-') return 'application/pdf'
+
+  return ''
+}
+
+/** قائمة بيضاء بالأنواع التي يقبلها نظام الرفع بعد فحص البصمة. */
+export const SNIFF_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/bmp']
+export const SNIFF_VIDEO_TYPES = ['video/mp4', 'video/webm']
+export const SNIFF_ALLOWED_TYPES = [...SNIFF_IMAGE_TYPES, ...SNIFF_VIDEO_TYPES, 'application/pdf']
+
 export interface StoredMedia {
   url: string
   provider: MediaProvider
@@ -199,14 +275,30 @@ export async function readStoredMedia(
 export async function storeMediaFile(file: File, c?: any): Promise<StoredMedia> {
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
-  const contentType = file.type || 'application/octet-stream'
   const fileName = (file as any).name || 'upload'
   const warnings: string[] = []
+
+  // ✅ الأمان (C3): لا نثق في `file.type` المُرسل من المتصفح — نفحص البصمة
+  // الفعلية ونجبر كل الخلفيات على استخدام النوع الحقيقي حتى لو حاول المهاجم
+  // تسمية الملف بنوع آخر. (الرفض النهائي للأنواع غير المسموحة يحدث في نقاط
+  // النهاية قبل الوصول إلى هنا.)
+  const sniffed = sniffFileType(buffer)
+  const type = sniffed || file.type || 'application/octet-stream'
+  if (sniffed !== (file.type || '').toLowerCase()) {
+    warnings.push('نوع الملف الفعلي يختلف عن النوع المُعلَن — استُخدم النوع المكتشف من البصمة')
+  }
+  const contentType = type
+
+  // أعد بناء File بنوع حقيقي حتى تستخدمه Cloudinary (التي تقرأ file.type").
+  const safeFile =
+    sniffed && sniffed !== (file.type || '').toLowerCase()
+      ? new File([buffer], fileName, { type: sniffed })
+      : file
 
   // 1) Cloudinary — the configured, purpose-built media CDN.
   if (cloudinaryConfigured(c)) {
     try {
-      const url = await uploadToCloudinary(file, c)
+      const url = await uploadToCloudinary(safeFile, c)
       if (url) return { url, provider: 'cloudinary', warnings }
       warnings.push('Cloudinary: لم يتم إرجاع رابط')
     } catch (error: any) {

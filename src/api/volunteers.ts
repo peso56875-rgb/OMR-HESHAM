@@ -77,9 +77,37 @@ const toIsoDate = (raw: string): string => {
 }
 
 /**
- * Allocates the next sequential VOL-N code. The old implementation used
+ * Alphabet without visually ambiguous characters (0, O, 1, I, L) so codes stay
+ * easy to read aloud and type on a card.
+ */
+const CODE_SUFFIX_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+/**
+ * 4-character random suffix. Sequential codes (VOL-1, VOL-2, ...) let anyone
+ * enumerate every volunteer certificate via the public /verify/:code endpoint;
+ * the random suffix makes each code unguessable. Uses the Web Crypto CSPRNG
+ * (Node >= 18) and falls back to Math.random in odd runtimes.
+ */
+const randomCodeSuffix = (): string => {
+  const bytes = new Uint8Array(4)
+  if (typeof globalThis.crypto?.getRandomValues === 'function') {
+    globalThis.crypto.getRandomValues(bytes)
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256)
+  }
+  let suffix = ''
+  for (let i = 0; i < bytes.length; i += 1) {
+    suffix += CODE_SUFFIX_ALPHABET[bytes[i] % CODE_SUFFIX_ALPHABET.length]
+  }
+  return suffix
+}
+
+/**
+ * Allocates the next VOL-N-XXXX code. The old implementation used
  * .where('volunteer_code', '!=', '') which needs a composite index AND silently
  * skips documents where the field is missing, so it could hand out a duplicate.
+ * The sequence number is still parsed via /VOL-(\d+)/ by callers, so the 4-char
+ * random suffix is appended without breaking existing lookups.
  */
 const nextVolunteerCode = async (db: any): Promise<string> => {
   const snapshot = await db.collection('volunteers').get()
@@ -87,7 +115,7 @@ const nextVolunteerCode = async (db: any): Promise<string> => {
     const match = String(doc.data()?.volunteer_code || '').match(/VOL-(\d+)/i)
     return match ? Math.max(max, parseInt(match[1], 10)) : max
   }, 0)
-  return `VOL-${maxNumber + 1}`
+  return `VOL-${maxNumber + 1}-${randomCodeSuffix()}`
 }
 
 /** Keeps the linked profile's role and avatar in sync with the volunteer record. */
@@ -639,6 +667,10 @@ volunteers.get('/verify/:code', async (c) => {
       return c.json({ found: false, message: 'كود المتطوع هذا غير مفعّل أو قيد المراجعة.' })
     }
 
+    // Note: /verify is PUBLIC, so no PII is returned here. The volunteer's name,
+    // photo and preferred role are deliberately excluded — the response only
+    // proves that a code is valid and shows the card's public identity fields
+    // (team/rank/hours) plus validity flags.
     return c.json({
       found: true,
       revoked: isRevoked || isFrozen,
@@ -646,13 +678,10 @@ volunteers.get('/verify/:code', async (c) => {
       status: vol.status,
       volunteer: {
         id: snap.docs[0].id,
-        full_name: vol.full_name,
         volunteer_code: vol.volunteer_code,
-        preferred_role: vol.preferred_role,
         team: vol.team || vol.preferred_role,
         rank: vol.rank || 'متطوع مبادر',
         hours_count: vol.hours_count || 0,
-        avatar_url: vol.avatar_url || '',
         approved_at: vol.approved_at,
         expires_at: vol.expires_at,
         status: vol.status,
@@ -1151,6 +1180,25 @@ volunteers.post('/missions/join', authMiddleware, async (c) => {
 
     const volDoc = vSnap.docs[0]
     const volData = volDoc.data()
+
+    // فقط المتطوع المعتمد فعلياً يمكنه الانضمام للمهام — طلبات قيد المراجعة
+    // أو المرفوضة أو الملغاة يجب ألا تحصل على أي امتيازات ميدانية.
+    if (volData.status !== 'approved') {
+      return c.json({ error: 'يجب أن تكون متطوعاً معتمداً لتسجيل الانضمام للمهمة' }, 403)
+    }
+
+    // تحقق أن المهمة موجودة ومفعّلة (من قاعدة البيانات أو المهام الافتراضية).
+    const missionSnap = await db.collection('volunteer_missions').doc(missionId).get()
+    const mission = missionSnap.exists ? missionSnap.data() : undefined
+    const defaultMission = defaultVolunteerMissions.find(m => m.id === missionId)
+    const missionActive = Boolean(
+      (mission && mission.is_active === true) ||
+      (defaultMission && defaultMission.is_active)
+    )
+    if (!missionActive) {
+      return c.json({ error: 'المهمة الميدانية غير موجودة أو غير مفعّلة حالياً' }, 404)
+    }
+
     const activeMissions = Array.isArray(volData.active_missions) ? volData.active_missions : []
 
     if (!activeMissions.includes(missionId)) {
@@ -1172,12 +1220,13 @@ volunteers.post('/missions/join', authMiddleware, async (c) => {
 })
 
 // تسجيل الحضور الميداني وإنجاز المهمة وإضافة الساعات التطوعية تلقائياً
+const MAX_CREDITABLE_HOURS_PER_MISSION = 12
+
 volunteers.post('/missions/checkin', authMiddleware, async (c) => {
   const user = (c as any).get('user')
   const body = await c.req.json().catch(() => ({}))
   const missionId = String(body.mission_id || '').trim()
-  const customHours = Number(body.hours) || 0
-  const notes = String(body.notes || 'إنجاز المهمة بنجاح والتواجد الميداني').trim()
+  const notes = String(body.notes || 'إنجاز المهمة بنجاح والتواجد الميداني').trim().slice(0, 500)
 
   if (!missionId) {
     return c.json({ error: 'رقم المهمة مطلوب' }, 400)
@@ -1194,11 +1243,53 @@ volunteers.post('/missions/checkin', authMiddleware, async (c) => {
     const volId = volDoc.id
     const before = volDoc.data()
 
-    // تحديد ساعات المهمة
-    let missionHours = customHours
+    // فقط المتطوع المعتمد يمكنه تسجيل حضور.
+    if (before.status !== 'approved') {
+      return c.json({ error: 'لم يتم العثور على سجل تطوع معتمد لهذا الحساب' }, 403)
+    }
+
+    // يجب أن يكون المتطوع منضمًّا للمهمة أولاً (active_missions) قبل تسجيل الحضور.
+    const activeMissions = Array.isArray(before.active_missions) ? before.active_missions : []
+    if (!activeMissions.includes(missionId)) {
+      return c.json({ error: 'يجب الانضمام للمهمة أولاً قبل تسجيل الحضور فيها' }, 403)
+    }
+
+    // تحديد ساعات المهمة من مصدر موثوق فقط — ساعات يرسلها العميل يتم تجاهلها
+    // تماماً حتى لا يتمكن المتطوع من تضخيم رصيده بأرقام عشوائية.
+    let missionHours = 0
+    const missionSnap = await db.collection('volunteer_missions').doc(missionId).get()
+    if (missionSnap.exists) {
+      missionHours = Math.min(Number(missionSnap.data()?.hours) || 0, MAX_CREDITABLE_HOURS_PER_MISSION)
+    }
     if (!missionHours) {
       const found = defaultVolunteerMissions.find(m => m.id === missionId)
-      missionHours = found ? found.hours : 3
+      if (found) missionHours = Math.min(Number(found.hours) || 0, MAX_CREDITABLE_HOURS_PER_MISSION)
+    }
+    if (!missionHours) {
+      return c.json({ error: 'المهمة الميدانية غير موجودة أو غير مفعّلة' }, 404)
+    }
+
+    // منع تكرار تسجيل الحضور: حضور واحد فقط لكل متطوع لنفس المهمة في نفس اليوم.
+    // استعلام بحقل واحد (volunteer_id) ثم فلترة في الذاكرة لتجنب احتياج
+    // مؤشر مركّب على (volunteer_id, mission_id, created_at).
+    const dayStart = new Date()
+    dayStart.setHours(0, 0, 0, 0)
+    const dayStartIso = dayStart.toISOString()
+    const attendSnap = await db
+      .collection('volunteer_attendance')
+      .where('volunteer_id', '==', volId)
+      .limit(1000)
+      .get()
+    const alreadyCheckedInToday = attendSnap.docs.some((doc: any) => {
+      const rec = doc.data()
+      return (
+        rec.mission_id === missionId &&
+        typeof rec.created_at === 'string' &&
+        rec.created_at >= dayStartIso
+      )
+    })
+    if (alreadyCheckedInToday) {
+      return c.json({ error: 'تم تسجيل حضورك في هذه المهمة اليوم بالفعل' }, 409)
     }
 
     const prevHours = Number(before.hours_count) || 0
@@ -1221,8 +1312,8 @@ volunteers.post('/missions/checkin', authMiddleware, async (c) => {
     }
 
     // إزالة المهمة من قائمة المهام الجارية وإضافتها لسجل المهام المنجزة
-    const activeMissions = (before.active_missions || []).filter((id: string) => id !== missionId)
-    patch.active_missions = activeMissions
+    const remainingMissions = (before.active_missions || []).filter((id: string) => id !== missionId)
+    patch.active_missions = remainingMissions
 
     await volDoc.ref.update(patch)
 

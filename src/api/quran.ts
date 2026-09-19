@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
+import { authMiddleware, rateLimiter } from './middleware'
 
 const quranApi = new Hono()
 
@@ -456,8 +457,24 @@ const initialKhatmaParts = () => JUZ_NAMES.map((title, idx) => ({
   title,
   status: 'available', // available | reading | completed
   reader_name: '',
+  user_id: '',
   updated_at: ''
 }))
+
+/**
+ * Sanitizes the reader name shown publicly on the khatma board. The name is
+ * later injected into the page via innerHTML in the browser, so every character
+ * that could break out of HTML context is removed, control characters are
+ * stripped, whitespace is collapsed, and length is capped.
+ */
+const sanitizeKhatmaName = (raw: string): string => {
+  return String(raw || '')
+    .replace(/[<>&"'`]/g, '')
+    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 60)
+}
 
 // Fallback in-memory state if DB offline
 let memoryKhatma = {
@@ -491,11 +508,14 @@ quranApi.get('/khatma/current', async (c) => {
 })
 
 // حجز قراءة جزء في الختمة
-quranApi.post('/khatma/claim', async (c) => {
+// يتطلب تسجيل دخول حتى لا يستطيع زائر مجهول حجز جزء أو حقن اسم قارئ خبيث؛
+// ويُقيَّد بعدد الطلبات لمنع إغراق الختمة بالحجوزات المتكررة.
+quranApi.post('/khatma/claim', authMiddleware, rateLimiter(20, 60000, 'khatma-claim'), async (c) => {
+  const user = (c as any).get('user')
   try {
     const body = await c.req.json()
     const partNum = Number(body.part)
-    const readerName = String(body.reader_name || 'قارئ كريم').trim()
+    const readerName = sanitizeKhatmaName(String(body.reader_name || '')) || 'فاعل خير'
 
     if (isNaN(partNum) || partNum < 1 || partNum > 30) {
       return c.json({ success: false, error: 'رقم الجزء غير صالح' }, 400)
@@ -513,8 +533,13 @@ quranApi.post('/khatma/claim', async (c) => {
         if (p.status === 'completed') {
           return c.json({ success: false, error: 'هذا الجزء مكتمل بالفعل في الختمة الحالية.' }, 400)
         }
+        // الجزء محجوز من قارئ آخر — لا يمكن خطفه.
+        if (p.status === 'reading' && p.user_id && p.user_id !== user.id) {
+          return c.json({ success: false, error: 'هذا الجزء محجوز حالياً من قارئ آخر.' }, 409)
+        }
         p.status = 'reading'
-        p.reader_name = readerName || 'قارئ كريم'
+        p.reader_name = readerName
+        p.user_id = user.id
         p.updated_at = new Date().toISOString()
       }
 
@@ -526,8 +551,12 @@ quranApi.post('/khatma/claim', async (c) => {
         if (p.status === 'completed') {
           return c.json({ success: false, error: 'هذا الجزء مكتمل بالفعل في الختمة الحالية.' }, 400)
         }
+        if (p.status === 'reading' && p.user_id && p.user_id !== user.id) {
+          return c.json({ success: false, error: 'هذا الجزء محجوز حالياً من قارئ آخر.' }, 409)
+        }
         p.status = 'reading'
-        p.reader_name = readerName || 'قارئ كريم'
+        p.reader_name = readerName
+        p.user_id = user.id
       }
       return c.json({ success: true, message: `تقبل الله منك! تم حجز الجزء ${partNum}.`, khatma: memoryKhatma })
     }
@@ -537,7 +566,11 @@ quranApi.post('/khatma/claim', async (c) => {
 })
 
 // إلغاء حجز جزء وإتاحته للقراء الآخرين
-quranApi.post('/khatma/release', async (c) => {
+// يتطلب تسجيل دخول، ولا يُلغى الحجز إلا من صاحبه أو من مشرف؛ الحجوزات
+// القديمة (بدون user_id) يمكن لأي مستخدم مسجل إلغاؤها للسماح بإعادة تدويرها.
+quranApi.post('/khatma/release', authMiddleware, async (c) => {
+  const user = (c as any).get('user')
+  const isAdmin = user.role === 'admin'
   try {
     const body = await c.req.json()
     const partNum = Number(body.part)
@@ -558,8 +591,13 @@ quranApi.post('/khatma/release', async (c) => {
         if (p.status === 'completed') {
           return c.json({ success: false, error: 'لا يمكن إلغاء حجز جزء مكتمل بالفعل.' }, 400)
         }
+        const isHolder = !p.user_id || p.user_id === user.id
+        if (!isHolder && !isAdmin) {
+          return c.json({ success: false, error: 'لا يمكنك إلغاء حجز جزء محجوز من قارئ آخر.' }, 403)
+        }
         p.status = 'available'
         p.reader_name = ''
+        p.user_id = ''
         p.updated_at = new Date().toISOString()
       }
 
@@ -568,8 +606,11 @@ quranApi.post('/khatma/release', async (c) => {
     } catch (_) {
       const p = memoryKhatma.parts.find(x => x.part === partNum)
       if (p) {
-        p.status = 'available'
-        p.reader_name = ''
+        if (p.status !== 'completed' && (isAdmin || !p.user_id || p.user_id === user.id)) {
+          p.status = 'available'
+          p.reader_name = ''
+          p.user_id = ''
+        }
       }
       return c.json({ success: true, message: `تم إلغاء حجز الجزء ${partNum}.`, khatma: memoryKhatma })
     }
@@ -579,7 +620,11 @@ quranApi.post('/khatma/release', async (c) => {
 })
 
 // تأكيد إتمام قراءة الجزء
-quranApi.post('/khatma/complete', async (c) => {
+// يتطلب تسجيل دخول؛ فقط صاحب الحجز (أو مشرف) يمكنه تأكيد الإتمام، ولا يمكن
+// إتمام جزء غير محجوز أصلاً.
+quranApi.post('/khatma/complete', authMiddleware, async (c) => {
+  const user = (c as any).get('user')
+  const isAdmin = user.role === 'admin'
   try {
     const body = await c.req.json()
     const partNum = Number(body.part)
@@ -597,6 +642,13 @@ quranApi.post('/khatma/complete', async (c) => {
       const parts = data.parts || initialKhatmaParts()
       const p = parts.find((x: any) => x.part === partNum)
       if (p) {
+        if (p.status !== 'reading') {
+          return c.json({ success: false, error: 'يجب حجز الجزء أولاً قبل تسجيل إتمام تلاوته.' }, 400)
+        }
+        const isHolder = !p.user_id || p.user_id === user.id
+        if (!isHolder && !isAdmin) {
+          return c.json({ success: false, error: 'لا يمكنك تسجيل إتمام جزء محجوز من قارئ آخر.' }, 403)
+        }
         p.status = 'completed'
         p.updated_at = new Date().toISOString()
       }
@@ -636,7 +688,12 @@ quranApi.post('/khatma/complete', async (c) => {
       return c.json({ success: true, message: `جزاك الله خيراً وأثابك! تم تسجيل إتمام قراءة الجزء ${partNum}.`, khatma: { ...data, parts } })
     } catch (_) {
       const p = memoryKhatma.parts.find(x => x.part === partNum)
-      if (p) p.status = 'completed'
+      if (p) {
+        if (p.status !== 'completed' && (isAdmin || !p.user_id || p.user_id === user.id)) {
+          p.status = 'completed'
+          p.updated_at = new Date().toISOString()
+        }
+      }
       return c.json({ success: true, message: 'تم تسجيل إتمام القراءة بحمد الله.', khatma: memoryKhatma })
     }
   } catch (e: any) {

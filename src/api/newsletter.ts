@@ -6,6 +6,35 @@ import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications
 
 export const newsletter = new Hono()
 
+/**
+ * ✅ الأمان: تحويل آمن بعد معالجة النموذج.
+ * كان الكود يعيد التوجيه إلى قيمة رأس Referer كما هي — أي مهاجم يستطيع
+ * وضع رابط مباشر إلى /api/newsletter مع Referer مفروض خارجي (مثل
+ * https://evil.example) فيُحوَّل الزائر إليه بعد الاشتراك (Open Redirect
+ * يُستخدم في التصيّد). الآن نعيد أصلًا محليًا فقط.
+ */
+const safeLocalRedirect = (c: any, fallback = '/'): string => {
+  const referer = c.req.header('referer') || ''
+  try {
+    const url = new URL(referer)
+    const host = url.host.toLowerCase()
+    const ownHost = (c.req.header('host') || '').toLowerCase()
+    const knownHosts = new Set([
+      'omarhesham-foundation.com',
+      'www.omarhesham-foundation.com',
+      'omarhesham.org',
+      'www.omarhesham.org',
+    ])
+    if (ownHost === host || knownHosts.has(host)) {
+      // مسار محلي فقط — بدون بروتوكول/نطاق أجنبي.
+      return url.pathname + url.search + url.hash || fallback
+    }
+  } catch {
+    // Referer غير قابل للتحليل — تجاهله.
+  }
+  return fallback
+}
+
 // Subscribe to newsletter (accepts form data from browser or JSON)
 newsletter.post('/', rateLimiter(5, 60000, 'newsletter'), async (c) => {
   const db = getFirestore(c)
@@ -22,13 +51,21 @@ newsletter.post('/', rateLimiter(5, 60000, 'newsletter'), async (c) => {
 
   if (!email) {
     if (!contentType.includes('application/json')) {
-      const referer = c.req.header('referer') || '/'
-      return c.redirect(referer)
+      return c.redirect(safeLocalRedirect(c, '/#newsletter'))
     }
     return c.json({ error: 'البريد الإلكتروني مطلوب' }, 400)
   }
 
-  const normalizedEmail = email.trim().toLowerCase()
+  // ✅ الأمان: تحقق من صيغة البريد الأساسية قبل أي استخدام.
+  const rawEmail = String(email || '').trim()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+    if (!contentType.includes('application/json')) {
+      return c.redirect(safeLocalRedirect(c, '/#newsletter') + '&news_error=invalid_email')
+    }
+    return c.json({ error: 'البريد الإلكتروني غير صالح' }, 400)
+  }
+
+  const normalizedEmail = rawEmail.toLowerCase()
 
   try {
     // Find if subscriber already exists
@@ -76,17 +113,23 @@ newsletter.post('/', rateLimiter(5, 60000, 'newsletter'), async (c) => {
     }
 
     if (!contentType.includes('application/json')) {
-      const referer = c.req.header('referer') || '/'
-      const separator = referer.includes('?') ? '&' : '?'
-      return c.redirect(referer + separator + 'news_success=1')
+      const dest = safeLocalRedirect(c, '/#newsletter')
+      const separator = dest.includes('?') ? '&' : '?'
+      if (/[#]/.test(dest)) {
+        return c.redirect(dest)
+      }
+      return c.redirect(dest + separator + 'news_success=1')
     }
     return c.json({ message: 'تم الاشتراك بنجاح في النشرة البريدية.' })
   } catch (error: any) {
     console.error('Newsletter subscription error:', error.message)
     if (!contentType.includes('application/json')) {
-      const referer = c.req.header('referer') || '/'
-      const separator = referer.includes('?') ? '&' : '?'
-      return c.redirect(referer + separator + 'news_error=1')
+      const dest = safeLocalRedirect(c, '/#newsletter')
+      const separator = dest.includes('?') ? '&' : '?'
+      if (/[#]/.test(dest)) {
+        return c.redirect(dest)
+      }
+      return c.redirect(dest + separator + 'news_error=1')
     }
     return c.json({ error: error.message }, 400)
   }

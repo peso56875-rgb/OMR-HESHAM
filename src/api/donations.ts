@@ -69,8 +69,17 @@ donations.post('/', rateLimiter(10, 60000, 'donate'), async (c) => {
 
   const { amount, donation_type, campaign_id, case_id, case_code, donation_purpose, donor_name, donor_phone, donor_email, payment_method } = body
 
-  if (!amount || !donor_name || !donor_phone || !payment_method) {
+  if (!donor_name || !donor_phone || !payment_method) {
     return c.json({ error: 'الحقول المطلوبة غير مكتملة' }, 400)
+  }
+
+  // ✅ الأمان: التحقق من صحة المبلغ قبل الحفظ.
+  // كان يُقبل أي قيمة (سالب، صفر، لا نهائي، نص مختلط) ويُخزن كرقم لمبلغ
+  // يظهر لاحقًا في الإحصائيات والإيصالات والتنبيهات. الحد الأدنى 1 جنيه
+  // والحد الأقصى معقول حتى للتحويلات البنكية الكبيرة.
+  const numericAmount = Number(amount)
+  if (!Number.isFinite(numericAmount) || numericAmount < 1 || numericAmount > 100_000_000) {
+    return c.json({ error: 'المبلغ غير صالح (يجب أن يكون رقمًا بين 1 و 100,000,000)' }, 400)
   }
 
   // Get user profile if authenticated
@@ -110,7 +119,7 @@ donations.post('/', rateLimiter(10, 60000, 'donate'), async (c) => {
       case_code: resolved_case_code || null,
       case_title: case_title || null,
       donation_purpose: donation_purpose || null,
-      amount: Number(amount),
+      amount: numericAmount,
       donation_type: donation_type || 'once',
       donor_name,
       donor_phone,
@@ -186,7 +195,11 @@ donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
     return c.json({ error: 'بيانات غير صالحة' }, 400)
   }
 
-  const amount = Number(body.amount) || 0
+  const amountRaw = Number(body.amount)
+  // ✅ الأمان: رفض القيم غير الصالحة صراحةً بدلاً من تحويل "abc" إلى 0
+  // بصمت (كانت 0 تنجح في فحص !amount؟ لا — بل كانت تُقبل لأن 0 || 0 = 0،
+  // لكن القيم الضخمة/السالبة كانت تمر). نتحقق الآن من المدى بالكامل.
+  const amount = Number.isFinite(amountRaw) ? amountRaw : NaN
   const donor_name = (body.name || body.donor_name || '').toString().trim()
   const donor_phone = (body.phone || body.donor_phone || '').toString().trim()
   const donor_email = (body.email || body.donor_email || '').toString().trim() || null
@@ -197,7 +210,11 @@ donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
   const requested_case_title = (body.case_title || '').toString().trim() || null
   const donation_purpose = (body.donation_purpose || body.purpose || '').toString().trim() || null
 
-  if (!amount || !donor_name || !donor_phone) {
+  if (!Number.isFinite(amount) || amount < 1 || amount > 100_000_000) {
+    return c.json({ error: 'المبلغ غير صالح (يجب أن يكون رقمًا بين 1 و 100,000,000)' }, 400)
+  }
+
+  if (!donor_name || !donor_phone) {
     return c.json({ error: 'الحقول المطلوبة غير مكتملة (الاسم، الهاتف، المبلغ)' }, 400)
   }
 

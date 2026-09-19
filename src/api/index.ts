@@ -28,16 +28,29 @@ import { medical } from './medical'
 
 const api = new Hono()
 
+// قائمة البيئة CORS_ORIGINS تسمح للمطور بإضافة أصل محلي أثناء التطوير
+// (مثل http://localhost:5173) دون تعريضه للإنترنت.
+const envCorsOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
+const corsOrigins = envCorsOrigins.length > 0
+  ? envCorsOrigins
+  : [
+      'https://omarhesham-foundation.com',
+      'https://www.omarhesham-foundation.com',
+      'https://omarhesham.org',
+      'https://www.omarhesham.org'
+    ]
+
 // Global CORS middleware
+// 🔴 الإصلاح: أُزيلت http://localhost:* من القائمة الافتراضية — كان أي
+// موقع مهاجم يملك نطاقًا اسمه localhost يُرسل معاملات عبر المتصفح باسم
+// المستخدم (خصوصًا مع ملفات تعريف ارتباط SameSite=Lax التي لا تحمي
+// المكالمات غير الثانوية من نفس النطاق الأصلي إلا جزئيًا).
 api.use('*', cors({
-  origin: [
-    'https://omarhesham-foundation.com',
-    'https://www.omarhesham-foundation.com',
-    'https://omarhesham.org',
-    'https://www.omarhesham.org',
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ],
+  origin: corsOrigins,
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400,
