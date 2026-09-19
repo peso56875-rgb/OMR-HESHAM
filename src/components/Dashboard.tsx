@@ -1354,8 +1354,14 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                             <div style="grid-column:1/-1">
                               <label style="font-size:.78rem; font-weight:700; color:var(--muted); display:block; margin-bottom:6px">{icon('fa-camera')} تغيير الصورة الشخصية</label>
                               <input type="file" name="avatar_file" accept="image/*" style="font-size:.78rem" />
-                              <input name="avatar_url" value={v.avatar_url || ''} placeholder="أو ضع رابط الصورة مباشرة https://..." style="width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; background:var(--surface); color:var(--text); margin-top:8px; font-size:.78rem" />
-                              <small style="display:block; margin-top:4px; color:var(--muted); font-size:.7rem">اختر ملفاً لرفعه، أو الصق رابطاً، أو امسح الحقل لإزالة الصورة.</small>
+                              <input type="hidden" name="avatar_url" value={v.avatar_url || ''} />
+                              {v.avatar_url && (
+                                <label style="display:flex; align-items:center; gap:6px; margin-top:8px; font-size:.74rem; color:var(--muted); font-weight:700">
+                                  <input type="checkbox" name="remove_avatar" value="1" />
+                                  إزالة الصورة الحالية من بطاقة المتطوع
+                                </label>
+                              )}
+                              <small style="display:block; margin-top:4px; color:var(--muted); font-size:.7rem">اختر ملفاً جديداً لرفعه بشكل خاص. لا يتم قبول روابط خارجية مباشرة لصور المتطوعين.</small>
                             </div>
                             <div style="grid-column:1/-1; display:flex; justify-content:flex-end; gap:10px; margin-top:6px">
                               <button type="submit" style="background:var(--emerald-600); color:white; border:none; border-radius:10px; padding:10px 24px; font-weight:800; font-size:.85rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px">

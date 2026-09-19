@@ -202,8 +202,9 @@ app.get('/campaigns/:id', async (c) => {
   try {
     const db = getFirestore(c)
     const doc = await db.collection('campaigns').doc(id).get()
-    if (doc.exists) {
-      const campaign = { id: doc.id, ...doc.data() }
+    const data = doc.exists ? doc.data() : null
+    if (doc.exists && data?.is_published === true) {
+      const campaign = { id: doc.id, ...data }
       return c.html(<CampaignDetail c={campaign} user={(c as any).get('user')} />)
     }
   } catch (e) { }
@@ -218,21 +219,38 @@ app.get('/donate', async (c) => {
     campaigns = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
   } catch (e) { }
 
-  const selectedCampaignId = c.req.query('campaign') || ''
-  const selectedCaseId = c.req.query('case_id') || ''
+  let selectedCampaignId = c.req.query('campaign') || ''
+  let selectedCaseId = c.req.query('case_id') || ''
   let selectedCaseCode = c.req.query('case_code') || ''
   let selectedCaseTitle = ''
+
+  if (selectedCampaignId) {
+    try {
+      const db = getFirestore(c)
+      const doc = await db.collection('campaigns').doc(selectedCampaignId).get()
+      const d = doc.exists ? doc.data() : null
+      if (!doc.exists || d?.is_published !== true) selectedCampaignId = ''
+    } catch (e) {
+      selectedCampaignId = ''
+    }
+  }
 
   if (selectedCaseId) {
     try {
       const db = getFirestore(c)
       const doc = await db.collection('beneficiary_cases').doc(selectedCaseId).get()
-      if (doc.exists) {
-        const d = doc.data()
+      const d = doc.exists ? doc.data() : null
+      if (doc.exists && d?.is_published === true) {
         selectedCaseTitle = d?.title || ''
         if (!selectedCaseCode && d?.code) selectedCaseCode = d.code
+      } else {
+        selectedCaseId = ''
+        selectedCaseCode = ''
       }
-    } catch (e) {}
+    } catch (e) {
+      selectedCaseId = ''
+      selectedCaseCode = ''
+    }
   }
 
   const initialAmount = c.req.query('amount') || ''
@@ -297,8 +315,9 @@ app.get('/news/:id', async (c) => {
   try {
     const db = getFirestore(c)
     const doc = await db.collection('news').doc(id).get()
-    if (doc.exists) {
-      const item = { id: doc.id, ...doc.data() }
+    const data = doc.exists ? doc.data() : null
+    if (doc.exists && data?.is_published === true) {
+      const item = { id: doc.id, ...data }
       return c.html(<NewsDetail n={item} user={(c as any).get('user')} />)
     }
   } catch (e) { }
@@ -345,10 +364,11 @@ app.get('/events/:id', async (c) => {
   try {
     const db = getFirestore(c)
     const doc = await db.collection('events').doc(id).get()
-    if (!doc.exists) {
+    const data = doc.exists ? doc.data() : null
+    if (!doc.exists || data?.is_published !== true) {
       return c.notFound()
     }
-    const event = { id: doc.id, ...doc.data() }
+    const event = { id: doc.id, ...data }
     return c.html(<EventDetail e={event} user={(c as any).get('user')} />)
   } catch (e) {
     return c.notFound()
@@ -369,8 +389,14 @@ app.get('/careers', async (c) => {
   let jobs: any[] = []
   try {
     const db = getFirestore(c)
-    const snap = await db.collection('jobs').where('is_published', '==', true).orderBy('created_at', 'desc').get()
+    const snap = await db.collection('jobs')
+      .where('is_published', '==', true)
+      .where('is_active', '==', true)
+      .orderBy('created_at', 'desc')
+      .get()
+      .catch(() => db.collection('jobs').where('is_published', '==', true).get())
     jobs = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      .filter((job: any) => job.is_active === true)
   } catch (e) { }
   return c.html(<Careers jobs={jobs} user={(c as any).get('user')} />)
 })
@@ -459,8 +485,9 @@ app.get('/cases/:id', async (c) => {
   try {
     const db = getFirestore(c)
     const doc = await db.collection('beneficiary_cases').doc(id).get()
-    if (doc.exists) {
-      const item = { id: doc.id, ...doc.data() } as any
+    const data = doc.exists ? doc.data() : null
+    if (doc.exists && data?.is_published === true) {
+      const item = { id: doc.id, ...data } as any
       return c.html(<CaseDetail caseItem={item} user={(c as any).get('user')} />)
     }
   } catch (e) {}

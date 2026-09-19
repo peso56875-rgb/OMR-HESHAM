@@ -29,11 +29,12 @@ news.get('/:id', async (c) => {
     const id = c.req.param('id') as string
     const doc = await db.collection('news').doc(id).get()
 
-    if (!doc.exists || doc.data()?.is_published === false) {
+    const data = doc.exists ? doc.data() : null
+    if (!doc.exists || data?.is_published !== true) {
       return c.json({ error: 'الخبر غير موجود' }, 404)
     }
 
-    return c.json({ data: { id: doc.id, ...doc.data() } })
+    return c.json({ data: { id: doc.id, ...data } })
   } catch (error: any) {
     return c.json({ error: error.message }, 500)
   }

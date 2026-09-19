@@ -100,35 +100,43 @@ donations.post('/', rateLimiter(10, 60000, 'donate'), async (c) => {
   const profile_id = user ? user.id : null
 
   try {
+    let resolvedCampaignId: string | null = null
     let campaign_title = ''
     let campaign_category = ''
 
     if (campaign_id) {
       const campDoc = await db.collection('campaigns').doc(campaign_id).get()
-      if (campDoc.exists) {
-        campaign_title = campDoc.data()?.title || ''
-        campaign_category = campDoc.data()?.category || ''
+      const campData = campDoc.exists ? campDoc.data() : null
+      if (campData?.is_published === true) {
+        resolvedCampaignId = campDoc.id
+        campaign_title = campData.title || ''
+        campaign_category = campData.category || ''
       }
     }
 
+    let resolvedCaseId: string | null = null
     let case_title = ''
     let resolved_case_code = case_code || ''
     if (case_id) {
       try {
         const caseDoc = await db.collection('beneficiary_cases').doc(case_id).get()
-        if (caseDoc.exists) {
-          case_title = caseDoc.data()?.title || ''
-          if (!resolved_case_code) resolved_case_code = caseDoc.data()?.code || ''
+        const caseData = caseDoc.exists ? caseDoc.data() : null
+        if (caseData?.is_published === true) {
+          resolvedCaseId = caseDoc.id
+          case_title = caseData.title || ''
+          if (!resolved_case_code) resolved_case_code = caseData.code || ''
+        } else {
+          resolved_case_code = ''
         }
       } catch (e) {}
     }
 
     const donationData = {
       profile_id,
-      campaign_id: campaign_id || null,
+      campaign_id: resolvedCampaignId,
       campaign_title: campaign_title || null,
       campaign_category: campaign_category || null,
-      case_id: case_id || null,
+      case_id: resolvedCaseId,
       case_code: resolved_case_code || null,
       case_title: case_title || null,
       donation_purpose: donation_purpose || null,
@@ -242,7 +250,7 @@ donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
     if (requested_campaign_id) {
       const campDoc = await db.collection('campaigns').doc(requested_campaign_id).get()
       const campData = campDoc.exists ? campDoc.data() : null
-      if (campData && campData.is_published !== false) {
+      if (campData && campData.is_published === true) {
         campaign_id = campDoc.id
         campaign_title = campData.title || campaign_title
         campaign_category = campData.category || campaign_category
@@ -258,20 +266,13 @@ donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
     if (requested_case_id) {
       try {
         const caseDoc = await db.collection('beneficiary_cases').doc(requested_case_id).get()
-        if (caseDoc.exists) {
+        const caseData = caseDoc.exists ? caseDoc.data() : null
+        if (caseData?.is_published === true) {
           case_id = caseDoc.id
-          case_title = caseDoc.data()?.title || requested_case_title
-          case_code = caseDoc.data()?.code || requested_case_code
-        } else {
-          case_id = requested_case_id
-          case_title = requested_case_title
-          case_code = requested_case_code
+          case_title = caseData.title || requested_case_title
+          case_code = caseData.code || requested_case_code
         }
-      } catch (e) {
-        case_id = requested_case_id
-        case_title = requested_case_title
-        case_code = requested_case_code
-      }
+      } catch (e) {}
     }
 
     const donationData = {

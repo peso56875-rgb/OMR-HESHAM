@@ -130,15 +130,18 @@ jobs.post('/apply', rateLimiter(5, 60000, 'job-apply'), async (c) => {
 
   try {
     let job_title = ''
+    let resolved_job_id: string | null = null
     if (job_id) {
       const jobDoc = await db.collection('jobs').doc(job_id).get()
-      if (jobDoc.exists) {
-        job_title = jobDoc.data()?.title || ''
+      const jobData = jobDoc.exists ? jobDoc.data() : null
+      if (jobData?.is_published === true && jobData?.is_active === true) {
+        resolved_job_id = jobDoc.id
+        job_title = jobData.title || ''
       }
     }
 
     const applicationData = {
-      job_id: job_id || null,
+      job_id: resolved_job_id,
       job_title: job_title || 'عام',
       full_name,
       email,
@@ -167,7 +170,7 @@ jobs.post('/apply', rateLimiter(5, 60000, 'job-apply'), async (c) => {
         title: `طلب توظيف جديد: ${full_name}`,
         body: `لوظيفة: ${job_title || 'عام'} — هاتف: ${phone}`,
         link: dashLink('job_applications'),
-        meta: { job_application_id: ref.id, job_id: job_id || '', full_name, email, phone }
+        meta: { job_application_id: ref.id, job_id: resolved_job_id || '', full_name, email, phone }
       })
     })
 

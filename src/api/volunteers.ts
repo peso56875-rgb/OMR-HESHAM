@@ -609,17 +609,6 @@ volunteers.post('/', rateLimiter(5, 60000, 'volunteer-apply'), async (c) => {
     }
   }
 
-  // Fallback to logged-in user profile avatar if no custom photo provided
-  if (!avatar_url && profile_id) {
-    try {
-      const profileDoc = await db.collection('profiles').doc(profile_id).get()
-      const pData = profileDoc.data()
-      if (profileDoc.exists && pData && pData.avatar_url) {
-        avatar_url = normalizeMediaUrl(pData.avatar_url)
-      }
-    } catch (e) {}
-  }
-
   if (!full_name || !phone) {
     if (!contentType.includes('application/json')) {
       return c.redirect('/volunteers?error=missing_fields')
@@ -1042,10 +1031,23 @@ volunteers.post('/update/:id', adminMiddleware, async (c) => {
       }
     }
 
-    // A pasted URL, or an intentionally emptied field to remove the photo.
+    // The volunteer photo must be either a private-media reference that our
+    // server created earlier, or an intentionally emptied field to remove it.
+    // Raw external URLs are not accepted for volunteers anymore: they can leak
+    // private photos and let third parties track admin/volunteer views.
+    const removeAvatar = ['1', 'true', 'on'].includes(String(body.remove_avatar || '').toLowerCase())
     const avatarUrlRaw = field(body, 'avatar_url')
-    if (avatarUrlRaw !== undefined) {
-      updateData.avatar_url = avatarUrlRaw ? normalizeMediaUrl(cleanUrl(avatarUrlRaw, 2048)) : ''
+    if (removeAvatar) {
+      updateData.avatar_url = ''
+    } else if (avatarUrlRaw !== undefined) {
+      const cleanedAvatarUrl = cleanUrl(avatarUrlRaw, 2048)
+      if (!cleanedAvatarUrl) {
+        updateData.avatar_url = ''
+      } else if (cleanedAvatarUrl.startsWith(PRIVATE_MEDIA_PREFIX)) {
+        updateData.avatar_url = cleanedAvatarUrl
+      } else {
+        return fail(c, 'صور المتطوعين يجب رفعها كملف جديد ولا تقبل روابط خارجية مباشرة.', 400, 'invalid_photo_url')
+      }
     }
 
     // An actual uploaded file always wins over the URL field.
