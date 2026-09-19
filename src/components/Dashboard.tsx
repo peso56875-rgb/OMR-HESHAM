@@ -948,6 +948,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
           const statusBg = isInactive ? 'rgba(220,38,38,.1)' : isApproved ? 'rgba(16,185,129,.1)' : isRejected ? 'rgba(239,68,68,.1)' : 'rgba(245,158,11,.1)'
           const statusText = isRevoked ? 'ملغاة / مجمّدة' : isFrozen ? 'مجمّدة مؤقتاً' : isApproved ? (isExpired ? 'معتمد — منتهية الصلاحية' : 'معتمد') : isRejected ? 'مرفوض' : 'قيد المراجعة'
           const statusIcon = isInactive ? 'fa-ban' : isApproved ? (isExpired ? 'fa-triangle-exclamation' : 'fa-shield-halved') : isRejected ? 'fa-circle-xmark' : 'fa-clock'
+          const volunteerPhotoUrl = v.id && v.avatar_url ? `/api/volunteers/photo/${v.id}/view` : ''
 
           return (
             <div style={`background:var(--surface); border:1px solid var(--border); border-radius:20px; overflow:hidden; transition:transform .25s, box-shadow .25s; position:relative${isInactive ? '; opacity:.75' : ''}`}>
@@ -960,8 +961,8 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                   aria-label={`عرض صورة ${v.full_name}`}
                   title={v.avatar_url ? "اضغط لعرض وتكبير الصورة بالكامل" : "لا توجد صورة مرفوعة"}
                   data-vol-id={v.id}
-                  data-vol-img={v.avatar_url || ''}
-                  data-vol-avatar={v.avatar_url || ''}
+                  data-vol-img={volunteerPhotoUrl}
+                  data-vol-avatar={volunteerPhotoUrl}
                   data-vol-download={v.avatar_url ? `/api/volunteers/photo/${v.id}/download` : ''}
                   data-vol-name={v.full_name || ''}
                   data-vol-code={v.volunteer_code || ''}
@@ -980,7 +981,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                 >
                   {v.avatar_url ? (
                     <>
-                      <img src={v.avatar_url} alt={v.full_name} class="vol-avatar-img" />
+                      <img src={volunteerPhotoUrl} alt={v.full_name} class="vol-avatar-img" />
                       <span class="vol-avatar-zoom-overlay">
                         {icon('fa-magnifying-glass-plus')}
                       </span>
@@ -1083,7 +1084,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                   data-vol-city={v.city || 'الدقهلية'}
                   data-vol-rank={v.rank || (isApproved ? 'متطوع مبادر' : '—')}
                   data-vol-hours={v.hours_count || 0}
-                  data-vol-avatar={v.avatar_url || ''}
+                  data-vol-avatar={volunteerPhotoUrl}
                   data-vol-created={createdDate}
                   data-vol-expiry={expiryDate}
                   style="background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:7px 12px; border-radius:10px; cursor:pointer; font-size:.78rem; font-weight:800; display:inline-flex; align-items:center; gap:5px"
@@ -1122,8 +1123,8 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                           aria-label={`عرض صورة ${v.full_name}`}
                           title={v.avatar_url ? "اضغط لعرض وتكبير الصورة بالكامل" : "لا توجد صورة مرفوعة"}
                           data-vol-id={v.id}
-                          data-vol-img={v.avatar_url || ''}
-                          data-vol-avatar={v.avatar_url || ''}
+                          data-vol-img={volunteerPhotoUrl}
+                          data-vol-avatar={volunteerPhotoUrl}
                           data-vol-download={v.avatar_url ? `/api/volunteers/photo/${v.id}/download` : ''}
                           data-vol-name={v.full_name || ''}
                           data-vol-code={v.volunteer_code || ''}
@@ -1142,7 +1143,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                         >
                           {v.avatar_url ? (
                             <>
-                              <img src={v.avatar_url} alt="" class="vol-avatar-img" />
+                              <img src={volunteerPhotoUrl} alt="" class="vol-avatar-img" />
                               <span class="vol-avatar-zoom-overlay">
                                 {icon('fa-magnifying-glass-plus')}
                               </span>
@@ -1226,7 +1227,7 @@ export function DashVolunteers({ list = [] }: { list: any[] }) {
                               data-vol-city={v.city || 'الدقهلية'}
                               data-vol-rank={v.rank || (isApproved ? 'متطوع مبادر' : '—')}
                               data-vol-hours={v.hours_count || 0}
-                              data-vol-avatar={v.avatar_url || ''}
+                              data-vol-avatar={volunteerPhotoUrl}
                               data-vol-created={createdDate}
                               data-vol-expiry={expiryDate}
                               style="background:#0c4a3f; color:#fff; border:none; padding:8px 16px; border-radius:10px; font-weight:800; font-size:.82rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px"

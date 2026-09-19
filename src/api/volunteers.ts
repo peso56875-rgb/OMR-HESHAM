@@ -3,7 +3,14 @@ import { getFirestore, getAuth } from '../lib/firebase-admin'
 import { getCookie } from 'hono/cookie'
 import { adminMiddleware, authMiddleware, rateLimiter } from './middleware'
 import { isPlatformAdmin } from '../lib/admin-check'
-import { normalizeMediaUrl, storeMediaFile, sniffFileType, SNIFF_IMAGE_TYPES } from '../lib/storage'
+import {
+  normalizeMediaUrl,
+  readPrivateMedia,
+  sniffFileType,
+  SNIFF_IMAGE_TYPES,
+  storePrivateMediaFile,
+  PRIVATE_MEDIA_PREFIX
+} from '../lib/storage'
 import {
   getEmailConfig,
   sendInBackground,
@@ -49,6 +56,7 @@ const fail = (c: any, message: string, status: number = 400, code: string = '1')
 }
 
 const MAX_VOLUNTEER_PHOTO_BYTES = 5 * 1024 * 1024
+const VOLUNTEER_PHOTO_NAMESPACE = 'volunteer_photos'
 
 const storeVolunteerPhoto = async (file: File, c: any): Promise<string> => {
   if (file.size > MAX_VOLUNTEER_PHOTO_BYTES) {
@@ -62,9 +70,7 @@ const storeVolunteerPhoto = async (file: File, c: any): Promise<string> => {
   }
 
   const safeFile = new File([bytes], (file as any).name || 'volunteer-photo', { type: sniffed })
-  const stored = await storeMediaFile(safeFile, c)
-  if (!stored.url) throw new Error('لم يتم إرجاع رابط للصورة المرفوعة')
-  return normalizeMediaUrl(stored.url)
+  return storePrivateMediaFile(safeFile, c, VOLUNTEER_PHOTO_NAMESPACE)
 }
 
 /**
@@ -461,6 +467,32 @@ const streamVolunteerPhoto = async (c: any, disposition: 'inline' | 'attachment'
     const avatarUrl = normalizeMediaUrl(volunteer.avatar_url || '')
     if (!avatarUrl) return c.json({ error: 'لا توجد صورة مرفوعة لهذا المتطوع.' }, 404)
 
+    const sendPhoto = (bytes: ArrayBuffer | Uint8Array, contentType: string) => {
+      const byteLength = bytes instanceof ArrayBuffer ? bytes.byteLength : bytes.byteLength
+      const filename = safeDownloadName(volunteer.full_name || volunteer.volunteer_code || 'volunteer', contentType)
+      const asciiFilename = `volunteer-photo.${filename.split('.').pop()}`
+      return new Response(bytes as any, {
+        headers: {
+          'Content-Type': contentType,
+          'Content-Length': String(byteLength),
+          'Content-Disposition': disposition === 'attachment'
+            ? `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`
+            : 'inline',
+          'Cache-Control': 'private, no-store',
+          'X-Content-Type-Options': 'nosniff',
+          'Content-Security-Policy': 'sandbox',
+          'Cross-Origin-Resource-Policy': 'same-origin'
+        }
+      })
+    }
+
+    if (avatarUrl.startsWith(PRIVATE_MEDIA_PREFIX)) {
+      const stored = await readPrivateMedia(avatarUrl, c, VOLUNTEER_PHOTO_NAMESPACE)
+      if (!stored) return c.json({ error: 'الصورة الخاصة غير موجودة.' }, 404)
+      if (!stored.contentType.startsWith('image/')) return c.json({ error: 'الملف المطلوب ليس صورة.' }, 415)
+      return sendPhoto(stored.bytes, stored.contentType)
+    }
+
     const requestUrl = new URL(c.req.url)
     const sourceUrl = new URL(avatarUrl, requestUrl.origin)
     if (!isSafePhotoUrl(sourceUrl, requestUrl.origin)) {
@@ -493,21 +525,7 @@ const streamVolunteerPhoto = async (c: any, disposition: 'inline' | 'attachment'
       return c.json({ error: 'حجم الصورة أكبر من الحد المسموح للتحميل.' }, 413)
     }
 
-    const filename = safeDownloadName(volunteer.full_name || volunteer.volunteer_code || 'volunteer', contentType)
-    const asciiFilename = `volunteer-photo.${filename.split('.').pop()}`
-    return new Response(bytes, {
-      headers: {
-        'Content-Type': contentType,
-        'Content-Length': String(bytes.byteLength),
-        'Content-Disposition': disposition === 'attachment'
-          ? `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`
-          : 'inline',
-        'Cache-Control': 'private, no-store',
-        'X-Content-Type-Options': 'nosniff',
-        'Content-Security-Policy': 'sandbox',
-        'Cross-Origin-Resource-Policy': 'same-origin'
-      }
-    })
+    return sendPhoto(bytes, contentType)
   } catch (error: any) {
     console.error('Volunteer photo download error:', error?.message)
     return c.json({ error: 'تعذر تحميل صورة المتطوع.' }, 500)

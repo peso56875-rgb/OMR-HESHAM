@@ -132,6 +132,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Private media store — sensitive files such as volunteer profile photos.
+    // These are served only through authenticated server endpoints that check
+    // ownership/admin rights before streaming the bytes.
+    match /private_media/{document=**} {
+      allow read, write: if false;
+    }
+
     // Sequential counters (e.g. counters/receipts-2026 backing receipt numbers).
     // Server-only: the Admin SDK bypasses these rules, so denying clients here
     // costs nothing and prevents a client from ever tampering with a sequence

@@ -94,6 +94,8 @@ export function sniffFileType(buffer: Buffer): string {
 export const SNIFF_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/bmp']
 export const SNIFF_VIDEO_TYPES = ['video/mp4', 'video/webm']
 export const SNIFF_ALLOWED_TYPES = [...SNIFF_IMAGE_TYPES, ...SNIFF_VIDEO_TYPES, 'application/pdf']
+export const PRIVATE_MEDIA_COLLECTION = 'private_media'
+export const PRIVATE_MEDIA_PREFIX = 'private-media:'
 
 export interface StoredMedia {
   url: string
@@ -242,6 +244,47 @@ async function uploadToFirestore(
   return `/api/media/${docRef.id}`
 }
 
+async function uploadToPrivateFirestore(
+  buffer: Buffer,
+  contentType: string,
+  fileName: string,
+  c?: any,
+  namespace = 'private'
+): Promise<string> {
+  if (buffer.length > FIRESTORE_MAX_BYTES) {
+    throw new Error(
+      `الملف أكبر من الحد المسموح للتخزين الخاص (${Math.floor(FIRESTORE_MAX_BYTES / (1024 * 1024))} ميجابايت).`
+    )
+  }
+
+  const db = getFirestore(c)
+  if (!db) throw new Error('Firestore is not available')
+
+  const docRef = db.collection(PRIVATE_MEDIA_COLLECTION).doc()
+  const chunksRef = docRef.collection('chunks')
+
+  const total = Math.ceil(buffer.length / FIRESTORE_CHUNK_SIZE) || 1
+  for (let index = 0; index < total; index++) {
+    const slice = buffer.subarray(index * FIRESTORE_CHUNK_SIZE, (index + 1) * FIRESTORE_CHUNK_SIZE)
+    await chunksRef.doc(String(index).padStart(4, '0')).set({
+      index,
+      data: slice.toString('base64'),
+    })
+  }
+
+  await docRef.set({
+    namespace,
+    file_name: safeFileName(fileName),
+    content_type: contentType,
+    size: buffer.length,
+    chunk_count: total,
+    chunk_size: FIRESTORE_CHUNK_SIZE,
+    created_at: new Date().toISOString(),
+  })
+
+  return `${PRIVATE_MEDIA_PREFIX}${docRef.id}`
+}
+
 /** Reads back a file previously stored with the Firestore fallback. */
 export async function readStoredMedia(
   id: string,
@@ -266,6 +309,53 @@ export async function readStoredMedia(
     contentType: meta?.content_type || 'application/octet-stream',
     size: bytes.length,
   }
+}
+
+export async function readPrivateMedia(
+  privateRef: string,
+  c?: any,
+  expectedNamespace?: string
+): Promise<{ bytes: Uint8Array; contentType: string; size: number } | null> {
+  const rawId = String(privateRef || '').startsWith(PRIVATE_MEDIA_PREFIX)
+    ? String(privateRef).slice(PRIVATE_MEDIA_PREFIX.length)
+    : String(privateRef || '')
+
+  if (!/^[A-Za-z0-9_-]{6,64}$/.test(rawId)) return null
+
+  const db = getFirestore(c)
+  if (!db) return null
+
+  const docRef = db.collection(PRIVATE_MEDIA_COLLECTION).doc(rawId)
+  const snapshot = await docRef.get()
+  if (!snapshot.exists) return null
+
+  const meta = snapshot.data() as any
+  if (expectedNamespace && meta?.namespace !== expectedNamespace) return null
+
+  const chunkDocs = await docRef.collection('chunks').orderBy('index').get()
+  if (chunkDocs.empty) return null
+
+  const parts = chunkDocs.docs.map(doc => Buffer.from(String((doc.data() as any).data || ''), 'base64'))
+  const bytes = Buffer.concat(parts)
+
+  return {
+    bytes: new Uint8Array(bytes),
+    contentType: meta?.content_type || 'application/octet-stream',
+    size: bytes.length,
+  }
+}
+
+export async function storePrivateMediaFile(
+  file: File,
+  c?: any,
+  namespace = 'private'
+): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+  const fileName = (file as any).name || 'upload'
+  const sniffed = sniffFileType(buffer)
+  const contentType = sniffed || file.type || 'application/octet-stream'
+  return uploadToPrivateFirestore(buffer, contentType, fileName, c, namespace)
 }
 
 /**

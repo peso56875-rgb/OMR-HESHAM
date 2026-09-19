@@ -588,7 +588,8 @@ app.get('/certificate/:id', async (c) => {
             </div>
           </div>
         </section>
-      </Layout>
+      </Layout>,
+      403
     )
   }
 
@@ -614,7 +615,8 @@ app.get('/certificate/:id', async (c) => {
             </div>
           </div>
         </section>
-      </Layout>
+      </Layout>,
+      403
     )
   }
 
@@ -721,7 +723,8 @@ app.get('/volunteers/card/:id', async (c) => {
             </div>
           </div>
         </section>
-      </Layout>
+      </Layout>,
+      403
     )
   }
 
