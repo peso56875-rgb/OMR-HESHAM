@@ -182,13 +182,27 @@ export const adminPageGuard = async (c: Context, next: Next) => {
 const rateLimitMap = new Map<string, { count: number; reset: number }>()
 
 /**
- * Resolves the caller's IP. X-Forwarded-For is a comma-separated chain
- * (client, proxy1, proxy2…) so only the FIRST entry is the real client — using
- * the raw header would bucket every visitor behind one proxy into one counter.
+ * Resolves the caller's IP for rate limiting.
+ *
+ * SECURITY (V10): we deliberately read ONLY `X-Forwarded-For` and never
+ * `CF-Connecting-IP`. That header is set by Cloudflare, and this site runs on
+ * Vercel WITHOUT Cloudflare in front — so any value a client sends in
+ * `CF-Connecting-IP` is passed through untouched and is fully attacker-
+ * controlled. Trusting it would let an attacker rotate a fake identity per
+ * request and bypass every rate limit on the site.
+ *
+ * Vercel's edge overwrites `X-Forwarded-For` from the real TCP connection and
+ * does NOT forward client-supplied values (https://vercel.com/docs/headers/
+ * request-headers#x-forwarded-for). With Vercel as the outermost edge — the
+ * default here — the LEFT-most entry is therefore genuinely the client's IP.
+ *
+ * The comma-separated chain order is (client, proxy1, proxy2…); taking the
+ * first entry is what buckets each visitor separately instead of lumping every
+ * visitor behind one proxy into a shared counter.
  */
 const clientIp = (c: Context): string => {
   const forwarded = c.req.header('X-Forwarded-For') || ''
-  return c.req.header('CF-Connecting-IP') || forwarded.split(',')[0].trim() || 'unknown'
+  return forwarded.split(',')[0].trim() || 'unknown'
 }
 
 /**

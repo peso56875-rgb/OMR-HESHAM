@@ -3,10 +3,11 @@ import { getAuth, getFirestore } from '../lib/firebase-admin'
 import { setCookie, deleteCookie } from 'hono/cookie'
 import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
 import { isPlatformAdmin } from '../lib/admin-check'
+import { rateLimiter } from './middleware'
 
 export const auth = new Hono()
 
-auth.post('/session', async (c) => {
+auth.post('/session', rateLimiter(10, 60000, 'session'), async (c) => {
   let body: any
   try {
     body = await c.req.json()

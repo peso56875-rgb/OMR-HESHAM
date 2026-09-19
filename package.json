@@ -12,21 +12,23 @@
     "deploy:rules": "node scripts/deploy-rules.mjs"
   },
   "dependencies": {
-    "@hono/node-server": "^1.19.14",
+    "@hono/node-server": "^1.19.17",
     "firebase": "^12.16.0",
-    "firebase-admin": "^14.1.0",
+    "firebase-admin": "^14.4.0",
     "googleapis": "^173.0.0",
-    "hono": "^4.9.6"
+    "hono": "^4.13.8"
   },
   "overrides": {
-    "jwks-rsa": {
-      "jose": "4.15.9"
-    }
+    "brace-expansion": "^2.1.7",
+    "fast-xml-parser": "^5.11.1",
+    "qs": "^6.16.0",
+    "postcss": "^8.5.23",
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "@hono/vite-build": "^1.11.1",
     "@hono/vite-dev-server": "^0.26.1",
     "typescript": "^5.8.3",
-    "vite": "^5.4.21"
+    "vite": "^6.4.3"
   }
 }

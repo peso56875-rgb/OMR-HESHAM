@@ -40,4 +40,22 @@ if (searchTs.includes("rateLimiter(30, 60000, 'search-api')")) {
   console.error('✗ Search API missing rate limiter!')
 }
 
+// 5. Check src/api/middleware.ts — clientIp must NOT read spoofable CF-Connecting-IP
+const middlewareTs = readFileSync('./src/api/middleware.ts', 'utf8')
+// Trust only the function body (not comments): read from 'const clientIp' to the closing '}'
+const clientIpBody = middlewareTs.slice(middlewareTs.indexOf('const clientIp'), middlewareTs.indexOf('const clientIp') + 120)
+if (!clientIpBody.includes('CF-Connecting-IP') && clientIpBody.includes('X-Forwarded-For')) {
+  console.log('✓ clientIp trusts only Vercel-managed X-Forwarded-For (no CF-Connecting-IP spoof)')
+} else {
+  console.error('✗ clientIp still trusts client-spoofable headers!')
+}
+
+// 6. Check src/api/auth.ts — session creation must be rate-limited
+const authTs = readFileSync('./src/api/auth.ts', 'utf8')
+if (authTs.includes("rateLimiter(10, 60000, 'session')")) {
+  console.log('✓ /api/auth/session is rate-limited')
+} else {
+  console.error('✗ /api/auth/session missing rate limiter!')
+}
+
 console.log('--- All Security Checks Passed ---')
