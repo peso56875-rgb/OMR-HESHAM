@@ -423,7 +423,7 @@ notifications.get('/count', rateLimiter(120, 60000, 'notif-count'), async (c) =>
 })
 
 /** POST /api/notifications/read/:id */
-notifications.post('/read/:id', async (c) => {
+notifications.post('/read/:id', authMiddleware, async (c) => {
   const user = currentUser(c)
   const uid = user.id || ''
   const id = c.req.param('id') as string
@@ -477,7 +477,7 @@ notifications.post('/read/:id', async (c) => {
 })
 
 /** POST /api/notifications/toggle-read/:id */
-notifications.post('/toggle-read/:id', async (c) => {
+notifications.post('/toggle-read/:id', authMiddleware, async (c) => {
   const user = currentUser(c)
   const uid = user.id || ''
   const id = c.req.param('id') as string
@@ -585,7 +585,7 @@ notifications.post('/read-section/:section', authMiddleware, async (c) => {
  * يقتصر على أحدث COUNT_CAP إشعارًا: "تعليم الكل" في الواجهة يعني
  * "أفرِغ الجرس"، والجرس نفسه لا يعدّ أكثر من هذا السقف.
  */
-notifications.post('/read-all', async (c) => {
+notifications.post('/read-all', authMiddleware, async (c) => {
   const user = currentUser(c)
   const uid = user.id || ''
   const isAdmin = user.role === 'admin'
@@ -1089,7 +1089,7 @@ notifications.post('/send-custom', adminMiddleware, rateLimiter(15, 60000, 'noti
  * POST /api/notifications/delete/:id
  * حذف إشعار فردي (للمشرفين أو للمستخدم)
  */
-notifications.post('/delete/:id', async (c) => {
+notifications.post('/delete/:id', authMiddleware, async (c) => {
   const user = currentUser(c)
   const uid = user.id || ''
   const isAdmin = user.role === 'admin'
@@ -1160,7 +1160,7 @@ notifications.post('/delete/:id', async (c) => {
  * POST /api/notifications/clear-all
  * تفريغ كافة الإشعارات المقروءة للمستخدم أو المشرف
  */
-notifications.post('/clear-all', async (c) => {
+notifications.post('/clear-all', authMiddleware, async (c) => {
   const user = currentUser(c)
   const uid = user.id || ''
   const isAdmin = user.role === 'admin'

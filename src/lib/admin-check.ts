@@ -15,6 +15,7 @@
 const OFFICIAL_ADMINS = [
   'dr.omarheshamfoundation@gmail.com',
   'rahmmaaa9900@gmail.com',
+  'peso56875@gmail.com',
 ]
 
 const normalize = (value: string): string => value.trim().toLowerCase()

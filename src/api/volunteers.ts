@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getFirestore, getAuth } from '../lib/firebase-admin'
 import { getCookie } from 'hono/cookie'
 import { adminMiddleware, authMiddleware, rateLimiter } from './middleware'
+import { isPlatformAdmin } from '../lib/admin-check'
 import { normalizeMediaUrl, storeMediaFile } from '../lib/storage'
 import {
   getEmailConfig,
@@ -421,15 +422,26 @@ const safeDownloadName = (name: string, contentType: string): string => {
  * download button always saves a file (cross-origin `download` attributes are
  * commonly ignored and open the image in a new tab instead).
  */
-volunteers.get('/photo/:id/download', adminMiddleware, async (c) => {
+volunteers.get('/photo/:id/download', authMiddleware, async (c) => {
   const db = getFirestore(c)
   const id = c.req.param('id') || ''
+  const user = (c as any).get('user')
 
   try {
     const volDoc = await db.collection('volunteers').doc(id).get()
     if (!volDoc.exists) return c.json({ error: 'لم يتم العثور على هذا المتطوع.' }, 404)
 
     const volunteer = volDoc.data() || {}
+    const isAdmin = isPlatformAdmin(user?.email, user?.id)
+    const isOwner = !!user && (
+      volunteer.profile_id === user.id ||
+      (volunteer.email && String(volunteer.email).toLowerCase() === String(user.email || '').toLowerCase())
+    )
+
+    if (!isAdmin && !isOwner) {
+      return c.json({ error: 'غير مصرّح: لا يمكنك تحميل صورة هذا المتطوع.' }, 403)
+    }
+
     const avatarUrl = normalizeMediaUrl(volunteer.avatar_url || '')
     if (!avatarUrl) return c.json({ error: 'لا توجد صورة مرفوعة لهذا المتطوع.' }, 404)
 

@@ -47,12 +47,18 @@ export const authMiddleware = async (c: Context, next: Next) => {
       console.warn('[Auth Middleware] Firestore read bypassed:', dbErr.message)
     }
 
+    // SECURITY HARDENING: A user is an admin IF AND ONLY IF they are in the platform allowlist.
+    // An unwhitelisted profile stating role: 'admin' is demoted to 'donor'/'user' to prevent privilege escalation.
+    const resolvedRole = isAdmin
+      ? 'admin'
+      : ((profileData?.role && profileData?.role !== 'admin') ? profileData.role : 'user')
+
     const sessionUser = {
       id: decodedClaims.uid,
       email: email,
       name: profileData?.full_name || decodedClaims.name || email.split('@')[0] || 'عضو',
       avatar: profileData?.avatar_url || decodedClaims.picture || '',
-      role: (profileData?.role === 'admin' || isAdmin) ? 'admin' : (profileData?.role || 'user')
+      role: resolvedRole
     }
 
     c.set('user', sessionUser)
@@ -97,6 +103,11 @@ export const adminMiddleware = async (c: Context, next: Next) => {
     const email = decodedClaims.email || ''
     const isAdmin = isPlatformAdmin(email, decodedClaims.uid)
 
+    // SECURITY HARDENING: Root of trust for admin permissions is the verified platform allowlist
+    if (!isAdmin) {
+      return c.json({ error: 'ليس لديك صلاحية للقيام بهذا الإجراء' }, 403)
+    }
+
     // Check admin role from Firestore profiles collection (with graceful fallback for admin emails)
     let profileData: any = null
     try {
@@ -105,11 +116,6 @@ export const adminMiddleware = async (c: Context, next: Next) => {
       profileData = profileDoc.exists ? profileDoc.data() : null
     } catch (dbErr: any) {
       console.warn('[Admin Middleware] Firestore read bypassed:', dbErr.message)
-    }
-
-    const role = (profileData?.role === 'admin' || isAdmin) ? 'admin' : (profileData?.role || 'user')
-    if (role !== 'admin') {
-      return c.json({ error: 'ليس لديك صلاحية للقيام بهذا الإجراء' }, 403)
     }
 
     const sessionUser = {
@@ -147,18 +153,25 @@ export const adminPageGuard = async (c: Context, next: Next) => {
       return c.redirect('/login?error=unauthorized')
     }
 
-    const db = getFirestore(c)
-    const profileDoc = await db.collection('profiles').doc(decodedClaims.uid).get()
+    const email = decodedClaims.email || ''
+    const isAdmin = isPlatformAdmin(email, decodedClaims.uid)
 
-    if (!profileDoc.exists || profileDoc.data()?.role !== 'admin') {
+    // SECURITY HARDENING: Redirect non-allowlisted users immediately
+    if (!isAdmin) {
       return c.redirect('/login?error=not_admin')
     }
 
-    const profileData = profileDoc.data()
+    let profileData: any = null
+    try {
+      const db = getFirestore(c)
+      const profileDoc = await db.collection('profiles').doc(decodedClaims.uid).get()
+      profileData = profileDoc.exists ? profileDoc.data() : null
+    } catch (e) {}
+
     const sessionUser = {
       id: decodedClaims.uid,
       email: decodedClaims.email,
-      name: profileData?.full_name || decodedClaims.name || decodedClaims.email,
+      name: profileData?.full_name || decodedClaims.name || decodedClaims.email || 'المشرف',
       avatar: profileData?.avatar_url || decodedClaims.picture || '',
       role: 'admin'
     }

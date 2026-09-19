@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware } from './middleware'
+import { isPlatformAdmin } from '../lib/admin-check'
 import { getEmailConfig, roleChanged } from '../lib/email'
 import { notify, notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
 
@@ -64,6 +65,11 @@ users.post('/role/:id', adminMiddleware, async (c) => {
     const oldRole = String(profileData.role || 'user')
     const targetName = profileData.full_name || profileData.email || 'المستخدم'
     const targetEmail = String(profileData.email || '')
+
+    // SECURITY HARDENING: Cannot promote an account to admin unless its email/uid is on the official platform allowlist
+    if (newRole === 'admin' && !isPlatformAdmin(targetEmail, id)) {
+      return c.json({ error: 'لا يمكن ترقية هذا الحساب لمشرف: البريد الإلكتروني غير مدرج في القائمة الرسمية المعتمدة للمشرفين (ADMIN_EMAILS).' }, 403)
+    }
 
     await profileRef.update({ role: newRole })
 

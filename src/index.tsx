@@ -72,7 +72,11 @@ app.use('*', async (c, next) => {
 
       const email = decodedClaims.email || ''
       const isAdmin = isPlatformAdmin(email, decodedClaims.uid)
-      const role = (profile?.role === 'admin' || isAdmin) ? 'admin' : (profile?.role || 'donor')
+      // SECURITY HARDENING: A user is an admin ONLY if in the platform allowlist.
+      // An unwhitelisted profile stating role: 'admin' cannot escalate privileges.
+      const role = isAdmin
+        ? 'admin'
+        : ((profile?.role && profile?.role !== 'admin') ? profile.role : 'donor')
 
       ;(c as any).set('user', {
         id: decodedClaims.uid,
@@ -508,18 +512,16 @@ app.get('/volunteer-portal', async (c) => {
     if (!vSnap.empty && vSnap.docs && vSnap.docs.length > 0) {
       volunteer = { id: vSnap.docs[0].id, ...vSnap.docs[0].data() }
     } else {
-      const userPhone = String(user.phone || '').trim()
+      // SECURITY HARDENING: Never match volunteers by unverified phone numbers.
+      // Fallback matching is ONLY allowed via cryptographically verified Google email.
       const userEmail = String(user.email || '').trim().toLowerCase()
-      if (userPhone && userPhone.length >= 8) {
-        const fallbackSnap = await db.collection('volunteers').where('phone', '==', userPhone).limit(1).get().catch(() => ({ empty: true, docs: [] }))
-        if (!fallbackSnap.empty && fallbackSnap.docs && fallbackSnap.docs.length > 0) {
-          volunteer = { id: fallbackSnap.docs[0].id, ...fallbackSnap.docs[0].data() }
-        }
-      }
-      if (!volunteer && userEmail) {
+      if (userEmail) {
         const fallbackEmailSnap = await db.collection('volunteers').where('email', '==', userEmail).limit(1).get().catch(() => ({ empty: true, docs: [] }))
         if (!fallbackEmailSnap.empty && fallbackEmailSnap.docs && fallbackEmailSnap.docs.length > 0) {
-          volunteer = { id: fallbackEmailSnap.docs[0].id, ...fallbackEmailSnap.docs[0].data() }
+          const matchedDoc = fallbackEmailSnap.docs[0]
+          volunteer = { id: matchedDoc.id, ...matchedDoc.data() }
+          // Permanently link profile_id to the verified user account to secure future accesses
+          matchedDoc.ref.update({ profile_id: user.id }).catch(() => {})
         }
       }
     }
@@ -559,7 +561,7 @@ app.get('/certificate/:id', async (c) => {
   }
 
   const user = (c as any).get('user')
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = !!user && isPlatformAdmin(user.email, user.id)
   // V5-CERT-OWNER: certificate is viewable only by its owner or admins
   const ownerEmail = ((volunteer.email || '') as string).trim().toLowerCase()
   const isOwner = !!user && (volunteer.profile_id === user.id || (ownerEmail && ownerEmail === ((user.email || '') as string).trim().toLowerCase()))
@@ -697,7 +699,7 @@ app.get('/volunteers/card/:id', async (c) => {
   // V5-CARD-OWNER: the digital card is viewable only by its owner or admins
   const ownerEmail = ((volunteer.email || '') as string).trim().toLowerCase()
   const isOwner = !!user && (volunteer.profile_id === user.id || (ownerEmail && ownerEmail === ((user.email || '') as string).trim().toLowerCase()))
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = !!user && isPlatformAdmin(user.email, user.id)
 
   if (!isOwner && !isAdmin) {
     return c.html(
@@ -848,12 +850,11 @@ app.get('/dashboard', async (c) => {
   if (!user) {
     return c.redirect('/login?error=unauthorized')
   }
-  if (user.role !== 'admin' && !isPlatformAdmin(user.email, user.id)) {
+  // SECURITY HARDENING: Only users verified on the platform admin allowlist can access the dashboard
+  if (!isPlatformAdmin(user.email, user.id)) {
     return c.redirect('/profile?error=not_admin')
   }
-  if (user.role !== 'admin') {
-    user.role = 'admin'
-  }
+  user.role = 'admin'
 
   const view = c.req.query('view') || 'overview'
   let viewData: any = { list: [], stats: {}, recentDonations: [] }
