@@ -3,14 +3,10 @@ import type { Volunteer } from '../types'
 
 export function CertificateView({
   volunteer,
-  certCode,
-  verificationUrl,
-  isPublicVerification = false
+  certCode
 }: {
   volunteer: Volunteer
   certCode: string
-  verificationUrl: string
-  isPublicVerification?: boolean
 }) {
   const issueDate = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })
   const hours = volunteer.hours_count || 30

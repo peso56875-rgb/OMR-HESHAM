@@ -54,31 +54,47 @@ service cloud.firestore {
     }
 
     // Donations
+    //
+    // 🔴 V6 (خطيرة): كانت `create: if true` تسمح لأي زائر مجهول بكتابة
+    //    مستندات تبرع مباشرة عبر REST/SDK — متجاوزًا تحقق الخادم و rate limits
+    //    في /api/donations. النتيجة: تزوير تبرعات "مكتملة" لتضخيم الإحصائيات
+    //    العامة، وحقن حقول عشوائية، وإغراق المجموعة.
+    //
+    // ✅ الإصلاح: الإنشاء server-only. كل تبرع يمر عبر /api/donations
+    //    (Admin SDK يتجاوز القواعد)، والواجهة لا تكتب Firestore مباشرة إطلاقًا.
     match /donations/{document} {
-      allow create: if true; // Anyone can submit a donation request
       allow read: if request.auth != null && (resource.data.profile_id == request.auth.uid || isAdmin());
-      allow update, delete: if isAdmin();
+      allow write: if false;
     }
 
     // Volunteers
+    //
+    // 🔴 V6 (خطيرة): كانت `create: if true` تسمح لأي مجهول بإنشاء سجل متطوع
+    //    بحالة `approved` مباشرة — سك بطاقات تطوع وهمية وتضخيم الأعداد بدون
+    //    موافقة إدارية، متجاوزًا /api/volunteers (الذي يفرض status='pending').
+    //
+    // ✅ الإصلاح: الإنشاء server-only عبر /api/volunteers فقط.
     match /volunteers/{document} {
-      allow create: if true; // Anyone can apply
       allow read: if request.auth != null && (resource.data.profile_id == request.auth.uid || isAdmin());
-      allow update, delete: if isAdmin();
+      allow write: if false;
     }
 
-    // Contacts, Job Applications, Newsletter Subscribers (Public write, Admin read/write)
+    // Contacts, Job Applications, Newsletter Subscribers
+    //
+    // 🔴 V6 (متوسطة): كانت الكتابة مفتوحة للعميل مباشرة مما يسمح بإغراق
+    //    المجموعات متجاوزًا rate limits الخادم، وتحديث مستندات الغير
+    //    (newsletter_subscribers كان `update: if true`).
+    //
+    // ✅ الإصلاح: كلها server-only — النماذج ترسل إلى /api/contacts,
+    //    /api/jobs/apply, /api/newsletter على الترتيب.
     match /contacts/{document} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, write: if isAdmin();
     }
     match /job_applications/{document} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, write: if isAdmin();
     }
     match /newsletter_subscribers/{document} {
-      allow create, update: if true; // Anyone can subscribe
-      allow read, delete: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
     // Treasury — Income & Expenses (Admin only)

@@ -201,7 +201,13 @@ const RECITER_AUDIO_MAP: Record<string, string[]> = {
 }
 
 quranApi.get('/audio/:reciter/:surah', async (c) => {
-  const reciter = c.req.param('reciter')
+  // reciter يُستخدم كمفتاح في خريطة ثابتة فقط، ونعقّم القيمة قبل وضعها
+  // في Content-Disposition حتى لا يكسر المهاجم صيغة الترويسة أو يحقن فيها
+  // (كانت تُدرج خام في اسم الملف). أي اسم قارئ غير معروف يسقط إلى minshawi
+  // بمعرّف الملف الآمن أيضًا.
+  const rawReciter = c.req.param('reciter')
+  const reciter = RECITER_AUDIO_MAP[rawReciter] ? rawReciter : 'minshawi'
+  const safeReciter = reciter.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32) || 'minshawi'
   let surah = c.req.param('surah').replace('.mp3', '')
   const surahNum = parseInt(surah, 10)
   if (isNaN(surahNum) || surahNum < 1 || surahNum > 114) {
@@ -243,7 +249,7 @@ quranApi.get('/audio/:reciter/:surah', async (c) => {
           responseHeaders.set('Content-Length', contentLength)
         }
         if (isDownload) {
-          responseHeaders.set('Content-Disposition', `attachment; filename="Surah_${numStr}_${reciter}.mp3"`)
+          responseHeaders.set('Content-Disposition', `attachment; filename="Surah_${numStr}_${safeReciter}.mp3"`)
         }
 
         return new Response(res.body, {
@@ -568,7 +574,7 @@ quranApi.post('/khatma/claim', authMiddleware, rateLimiter(20, 60000, 'khatma-cl
 // إلغاء حجز جزء وإتاحته للقراء الآخرين
 // يتطلب تسجيل دخول، ولا يُلغى الحجز إلا من صاحبه أو من مشرف؛ الحجوزات
 // القديمة (بدون user_id) يمكن لأي مستخدم مسجل إلغاؤها للسماح بإعادة تدويرها.
-quranApi.post('/khatma/release', authMiddleware, async (c) => {
+quranApi.post('/khatma/release', authMiddleware, rateLimiter(10, 60000, 'khatma-release'), async (c) => {
   const user = (c as any).get('user')
   const isAdmin = user.role === 'admin'
   try {
@@ -622,7 +628,7 @@ quranApi.post('/khatma/release', authMiddleware, async (c) => {
 // تأكيد إتمام قراءة الجزء
 // يتطلب تسجيل دخول؛ فقط صاحب الحجز (أو مشرف) يمكنه تأكيد الإتمام، ولا يمكن
 // إتمام جزء غير محجوز أصلاً.
-quranApi.post('/khatma/complete', authMiddleware, async (c) => {
+quranApi.post('/khatma/complete', authMiddleware, rateLimiter(10, 60000, 'khatma-complete'), async (c) => {
   const user = (c as any).get('user')
   const isAdmin = user.role === 'admin'
   try {

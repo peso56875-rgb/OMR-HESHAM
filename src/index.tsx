@@ -613,13 +613,11 @@ app.get('/certificate/:id', async (c) => {
   }
 
   const certCode = `CERT-2026-${(volunteer.id || id).slice(0, 6).toUpperCase()}`
-  const verificationUrl = `${SITE_ORIGIN}/verify-certificate/${certCode}`
 
   return c.html(
     <CertificateView
       volunteer={volunteer}
       certCode={certCode}
-      verificationUrl={verificationUrl}
     />
   )
 })
