@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { getAuth, getFirestore } from '../lib/firebase-admin'
 import { setCookie, deleteCookie } from 'hono/cookie'
 import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
-import { isPlatformAdmin } from '../lib/admin-check'
+import { isVerifiedPlatformAdmin } from '../lib/admin-check'
 import { rateLimiter } from './middleware'
 
 export const auth = new Hono()
@@ -39,7 +39,7 @@ auth.post('/session', rateLimiter(10, 60000, 'session'), async (c) => {
     // Get user details from Firebase Auth
     const decodedToken = await firebaseAuth.verifySessionCookie(sessionCookie)
     const email = decodedToken.email || ''
-    const isAdmin = isPlatformAdmin(email, decodedToken.uid)
+    const isAdmin = isVerifiedPlatformAdmin(email, decodedToken.uid, decodedToken.email_verified === true)
     let role = isAdmin ? 'admin' : 'donor'
     
     // Safely attempt Firestore profile synchronization

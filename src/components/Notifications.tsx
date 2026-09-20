@@ -6,6 +6,7 @@ import {
   type NotificationCategory,
   type NotificationTypeDef
 } from '../lib/notifications'
+import { safeHref, isSafeFontAwesomeIcon } from '../api/sanitize'
 
 /**
  * ═══════════════════════ مكونات واجهة الإشعارات ═══════════════════════
@@ -309,8 +310,9 @@ export function NotificationsPage({
               <div class="notif-feed-list" id="notifFeedList">
                 {items.map((item) => {
                   const isRead = Boolean(item.is_read)
-                  const link = item.link || ''
-                  const iconName = item.icon || 'fa-bell'
+                  // ✅ الأمان: تنقية الرابط لمنع javascript: XSS والأيقونة لمنع حقن وسوم
+                  const link = item.link ? safeHref(item.link, '') : ''
+                  const iconName = isSafeFontAwesomeIcon(item.icon) ? (item.icon as string) : 'fa-bell'
                   const catLabel = CATEGORY_LABELS[item.category as NotificationCategory] || 'عام'
                   const isHigh = item.priority === 'high'
                   const fullDate = item.created_at ? new Date(item.created_at).toLocaleString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''

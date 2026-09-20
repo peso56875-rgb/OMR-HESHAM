@@ -486,6 +486,27 @@ export const newsletterWelcome = (cfg: EmailConfig, email: string): Promise<Send
   return deliver(cfg, to, 'مرحبًا بك في نشرة مؤسسة الدكتور عمر هشام', html)
 }
 
+/** 9b) تأكيد الاشتراك في النشرة البريدية (Double Opt-In). */
+export const newsletterConfirmationEmail = (
+  cfg: EmailConfig,
+  email: string,
+  confirmUrl: string
+): Promise<SendResult> => {
+  const to = (email || '').trim()
+  if (!to) return Promise.resolve({ sent: false, skipped: 'no email' })
+
+  const html = shell(
+    'تأكيد الاشتراك في النشرة البريدية',
+    `${para('أهلاً بك! لقد تلقينا طلباً للاشتراك في النشرة البريدية لمؤسسة الدكتور عمر هشام الخيرية.')}
+     ${para('لإتمام الاشتراك وتأكيد ملكيتك لهذا البريد الإلكتروني، يرجى الضغط على زر التأكيد أدناه:')}
+     ${btn(confirmUrl, 'تأكيد اشتراكي الآن')}
+     ${para('إذا لم تطلب الاشتراك في نشرتنا البريدية، يمكنك ببساطة تجاهل هذه الرسالة ولن يتم تسجيل بريدك.')}`,
+    'رابط التأكيد صالح لمدة 24 ساعة فقط.'
+  )
+
+  return deliver(cfg, to, 'تأكيد اشتراكك في نشرة مؤسسة الدكتور عمر هشام', html)
+}
+
 /* ───────────────────── قوالب نظام الإشعارات ─────────────────────
  *
  * القوالب 10–18 أُضيفت مع نظام الإشعارات المتكامل.

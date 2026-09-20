@@ -81,7 +81,9 @@ export const securityHeaders = () =>
       // before it has been uploaded anywhere.
       imgSrc: ["'self'", 'data:', 'blob:', ...MEDIA_HOSTS],
 
-      connectSrc: ["'self'", ...FIREBASE_APIS, ...FCM_APIS, 'https://api.cloudinary.com'],
+      // ✅ الأمان: أُزيل api.cloudinary.com — الرفع يمر عبر السيرفر فقط؛\r
+      // إبقاؤه يسمح لسكريبت محقون بتسريب بيانات لحساب Cloudinary.\r
+      connectSrc: ["'self'", ...FIREBASE_APIS, ...FCM_APIS],
 
       // The FCM service worker is served from our own origin
       // (/firebase-messaging-sw.js). Without an explicit worker-src, browsers

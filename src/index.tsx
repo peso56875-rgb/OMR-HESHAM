@@ -322,7 +322,10 @@ app.get('/news/:id', async (c) => {
     }
   } catch (e) { }
   const matchIdx = id.startsWith('default-news-') ? parseInt(id.replace('default-news-', ''), 10) : -1
-  const def = (matchIdx >= 0 && defaultNews[matchIdx]) ? defaultNews[matchIdx] : defaultNews[0]
+  const def = (matchIdx >= 0 && defaultNews[matchIdx]) ? defaultNews[matchIdx] : null
+  if (!def) {
+    return c.html(<GenericNotFound title="الخبر غير موجود" message="عذرًا، لم يتم العثور على الخبر المطلوب أو قد يكون تم حذفه." user={(c as any).get('user')} />, 404)
+  }
   return c.html(<NewsDetail n={{
     id,
     title: def[0],

@@ -79,48 +79,13 @@ upload.post('/', adminMiddleware, async (c) => {
   }
 })
 
-/** Legacy image upload endpoint. Kept for compatibility, but admin-only. */
-// Tightest budget on the site: each accepted request can persist up to 5MB
-// of media, so an unthrottled loop here is both a storage-cost and a
-// denial-of-service vector.
-upload.post('/public', adminMiddleware, rateLimiter(8, 300000, 'public-upload'), async (c) => {
-  try {
-    const body = await c.req.parseBody()
-    const candidate = body.file || body.image || body.avatar || body.upload || body.media || body.avatar_file
-    const file = Array.isArray(candidate) ? candidate[0] : candidate
-
-    if (!file || !(file instanceof File)) {
-      return c.json({ error: 'لم يتم اختيار صورة' }, 400)
-    }
-
-    if (file.size === 0) {
-      return c.json({ error: 'الملف فارغ، فضلاً اختر صورة صالحة' }, 400)
-    }
-
-    const PUBLIC_MAX_BYTES = 5 * 1024 * 1024
-    if (file.size > PUBLIC_MAX_BYTES) {
-      return c.json({ error: 'حجم الصورة كبير جداً. الحد الأقصى 5 ميجابايت' }, 413)
-    }
-
-    // ✅ الأمان (C3): الرفع العام صور فقط — وبفحص البصمة الفعلية وليس نوع
-    // المتصفح المزوّر. SVG/HTML بلا بصمة معروفة مرفوضة نهائيًا.
-    const sniffed = await readSniffed(file)
-    if (!isSniffedImage(sniffed)) {
-      return c.json({ error: 'الرفع العام مخصص للصور فقط (JPG, PNG, WEBP, GIF, AVIF)' }, 400)
-    }
-
-    const stored = await storeMediaFile(file, c)
-
-    return c.json({
-      success: true,
-      url: stored.url,
-      secure_url: stored.url,
-      provider: stored.provider
-    })
-  } catch (error: any) {
-    console.error('Public upload error:', error?.message)
-    return c.json({ error: 'فشل رفع الصورة: ' + (error?.message || 'خطأ غير معروف') }, 500)
-  }
+/**
+ * ✅ الأمان: أُزيل مسار /public نهائيًا — نقطة هجوم إضافية بلا حاجة.
+ * المسار الرئيسي / (admin-only) يغطي جميع حالات الاستخدام.
+ * نُبقي المسار معرّفًا لمنع سقوط الطلبات على مسارات أخرى، لكن نرد 410 Gone.
+ */
+upload.post('/public', (c) => {
+  return c.json({ error: 'تم إلغاء مسار الرفع العام. استخدم المسار الرئيسي /api/upload مع صلاحية مشرف.' }, 410)
 })
 
 /** Diagnostics so an admin can see which storage backends are usable. */

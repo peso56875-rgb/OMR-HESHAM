@@ -1,7 +1,7 @@
 import { Context, Next } from 'hono'
 import { getCookie } from 'hono/cookie'
 import { getAuth, getFirestore } from '../lib/firebase-admin'
-import { isPlatformAdmin } from '../lib/admin-check'
+import { isVerifiedPlatformAdmin } from '../lib/admin-check'
 
 /**
  * Authentication middleware — verifies user is logged in via Firebase session cookie.
@@ -35,7 +35,7 @@ export const authMiddleware = async (c: Context, next: Next) => {
     }
 
     const email = decodedClaims.email || ''
-    const isAdmin = isPlatformAdmin(email, decodedClaims.uid)
+    const isAdmin = isVerifiedPlatformAdmin(email, decodedClaims.uid, decodedClaims.email_verified === true)
 
     // Get user profile from Firestore to fetch role and full name (with graceful fallback)
     let profileData: any = null
@@ -58,7 +58,8 @@ export const authMiddleware = async (c: Context, next: Next) => {
       email: email,
       name: profileData?.full_name || decodedClaims.name || email.split('@')[0] || 'عضو',
       avatar: profileData?.avatar_url || decodedClaims.picture || '',
-      role: resolvedRole
+      role: resolvedRole,
+      emailVerified: decodedClaims.email_verified === true
     }
 
     c.set('user', sessionUser)
@@ -101,7 +102,7 @@ export const adminMiddleware = async (c: Context, next: Next) => {
     }
 
     const email = decodedClaims.email || ''
-    const isAdmin = isPlatformAdmin(email, decodedClaims.uid)
+    const isAdmin = isVerifiedPlatformAdmin(email, decodedClaims.uid, decodedClaims.email_verified === true)
 
     // SECURITY HARDENING: Root of trust for admin permissions is the verified platform allowlist
     if (!isAdmin) {
@@ -123,7 +124,8 @@ export const adminMiddleware = async (c: Context, next: Next) => {
       email: email,
       name: profileData?.full_name || decodedClaims.name || email.split('@')[0] || 'المشرف',
       avatar: profileData?.avatar_url || decodedClaims.picture || '',
-      role: 'admin'
+      role: 'admin',
+      emailVerified: decodedClaims.email_verified === true
     }
 
     c.set('user', sessionUser)
@@ -154,7 +156,7 @@ export const adminPageGuard = async (c: Context, next: Next) => {
     }
 
     const email = decodedClaims.email || ''
-    const isAdmin = isPlatformAdmin(email, decodedClaims.uid)
+    const isAdmin = isVerifiedPlatformAdmin(email, decodedClaims.uid, decodedClaims.email_verified === true)
 
     // SECURITY HARDENING: Redirect non-allowlisted users immediately
     if (!isAdmin) {
@@ -173,7 +175,8 @@ export const adminPageGuard = async (c: Context, next: Next) => {
       email: decodedClaims.email,
       name: profileData?.full_name || decodedClaims.name || decodedClaims.email || 'المشرف',
       avatar: profileData?.avatar_url || decodedClaims.picture || '',
-      role: 'admin'
+      role: 'admin',
+      emailVerified: decodedClaims.email_verified === true
     }
 
     c.set('user', sessionUser)

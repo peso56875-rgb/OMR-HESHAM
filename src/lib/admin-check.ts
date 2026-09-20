@@ -47,3 +47,21 @@ export function isPlatformAdmin(email?: string, uid?: string): boolean {
 
   return false
 }
+
+/**
+ * Same allowlist check, but with the security property the site actually needs:
+ * an admin email is trusted only after Firebase says the address is verified.
+ *
+ * UID allowlisting remains valid even without email claims because it pins the
+ * exact Firebase Auth account, not a user-controlled email string.
+ */
+export function isVerifiedPlatformAdmin(email?: string, uid?: string, emailVerified?: boolean): boolean {
+  const uidAllowlist = envList('ADMIN_UIDS')
+  if (uid && uidAllowlist.length > 0 && uidAllowlist.includes(uid)) return true
+
+  if (emailVerified !== true) return false
+
+  const emailAllowlist = envList('ADMIN_EMAILS')
+  const admins = emailAllowlist.length > 0 ? emailAllowlist : OFFICIAL_ADMINS
+  return email ? admins.includes(normalize(email)) : false
+}

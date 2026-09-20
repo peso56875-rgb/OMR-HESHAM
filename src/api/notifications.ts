@@ -23,8 +23,10 @@
  */
 
 import { Hono } from 'hono'
-import { getFirestore } from '../lib/firebase-admin'
+import { getFirestore, getAuth } from '../lib/firebase-admin'
+import { isPlatformAdmin } from '../lib/admin-check'
 import { authMiddleware, adminMiddleware, rateLimiter } from './middleware'
+import { cleanText, cleanMultiline, safeHref, isSafeFontAwesomeIcon } from './sanitize'
 import {
   NOTIFICATION_TYPES,
   CATEGORY_LABELS,
@@ -58,6 +60,37 @@ const currentUser = (c: any) => (c.get('user') || {}) as {
   email?: string
   name?: string
   role?: string
+}
+
+/**
+ * يستخرج المستخدم الحالي من سياق الجلسة أو ترويسة Authorization: Bearer
+ */
+const resolveUser = async (c: any): Promise<{ id?: string; email?: string; name?: string; role?: string }> => {
+  const existing = c.get('user')
+  if (existing?.id) return existing
+
+  const authHeader = c.req.header('Authorization')
+  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+    const token = authHeader.slice(7).trim()
+    try {
+      const auth = getAuth(c)
+      const claims = await auth.verifyIdToken(token)
+      if (claims?.uid) {
+        const email = claims.email || ''
+        const isAdmin = isPlatformAdmin(email, claims.uid)
+        return {
+          id: claims.uid,
+          email,
+          name: claims.name || email.split('@')[0] || 'المستخدم',
+          role: isAdmin ? 'admin' : 'donor'
+        }
+      }
+    } catch {
+      // التوكن غير صالح
+    }
+  }
+
+  return {}
 }
 
 /* ────────────────────────── جلب التدفّق ────────────────────────── */
@@ -294,9 +327,18 @@ notifications.get('/', rateLimiter(60, 60000, 'notif-list'), async (c) => {
   c.header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
   c.header('Pragma', 'no-cache')
 
-  const user = currentUser(c)
+  const user = await resolveUser(c)
   const uid = user.id || ''
   const isAdmin = user.role === 'admin'
+
+  // ✅ الأمان: الزوار غير المسجلين لا يملكون إشعارات خاصة
+  if (!uid) {
+    return c.json({
+      data: [],
+      unread: 0,
+      push_available: false
+    })
+  }
 
   const rawLimit = Number(c.req.query('limit'))
   const limit = Math.min(
@@ -380,9 +422,19 @@ notifications.get('/count', rateLimiter(120, 60000, 'notif-count'), async (c) =>
   c.header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
   c.header('Pragma', 'no-cache')
 
-  const user = currentUser(c)
+  const user = await resolveUser(c)
   const uid = user.id || ''
   const isAdmin = user.role === 'admin'
+
+  // ✅ الأمان: الزوار غير المسجلين لا يملكون إشعارات أو تنبيهات جرس
+  if (!uid) {
+    return c.json({
+      unread: 0,
+      capped: false,
+      latest: null,
+      section_alerts: {}
+    })
+  }
 
   try {
     const db = getFirestore(c)
@@ -507,6 +559,9 @@ notifications.post('/toggle-read/:id', authMiddleware, async (c) => {
     const data = snap.data() || {}
 
     if (data.audience === 'admins' || data.audience === 'all') {
+      if (data.audience === 'admins' && user.role !== 'admin') {
+        return c.json({ error: 'غير مصرّح' }, 403)
+      }
       if (uid) {
         const readRef = db.collection('notification_reads').doc(readId(id, uid))
         const rSnap = await readRef.get()
@@ -861,13 +916,18 @@ notifications.post('/send-custom', adminMiddleware, rateLimiter(15, 60000, 'noti
       ? await c.req.json().catch(() => ({}))
       : await c.req.parseBody()
 
-    const title = String(body.title || '').trim()
-    const textBody = String(body.body || '').trim()
-    const category = String(body.category || 'content').trim() as NotificationCategory
+    // ✅ الأمان: تنقية كل المدخلات لمنع Stored XSS
+    const title = cleanText(body.title, 200)
+    const textBody = cleanMultiline(body.body, 2000)
+    const VALID_CATEGORIES = ['content', 'financial', 'volunteers', 'system', 'security', 'cases'] as const
+    const rawCategory = cleanText(body.category, 30)
+    const category = (VALID_CATEGORIES.includes(rawCategory as any) ? rawCategory : 'content') as NotificationCategory
     const priority = (String(body.priority || 'normal').trim() === 'high' ? 'high' : 'normal') as NotificationPriority
-    const link = String(body.link || '').trim() || '/notifications'
-    const audience = String(body.audience || 'all').trim() // 'all' | 'volunteers' | 'donors' | 'admins' | 'single'
-    const targetUser = String(body.target_user || '').trim() // uid or email if single
+    const link = safeHref(body.link, '/notifications')
+    const VALID_AUDIENCES = ['all', 'volunteers', 'donors', 'admins', 'single'] as const
+    const rawAudience = cleanText(body.audience, 20)
+    const audience = VALID_AUDIENCES.includes(rawAudience as any) ? rawAudience : 'all'
+    const targetUser = cleanText(body.target_user, 128) // uid or email if single
     const sendInApp = body.send_in_app === undefined ? true : (body.send_in_app === true || body.send_in_app === 'on' || body.send_in_app === '1' || body.send_in_app === 1 || body.send_in_app === 'true')
     const sendPush = body.send_push === undefined ? true : (body.send_push === true || body.send_push === 'on' || body.send_push === '1' || body.send_push === 1 || body.send_push === 'true')
 

@@ -256,9 +256,14 @@
       var html = '';
       items.forEach(function (item) {
         var isRead = Boolean(item.is_read) || localReads.indexOf(item.id) !== -1;
-        var iconName = item.icon || 'fa-bell';
+        // ✅ الأمان: فحص أيقونة FontAwesome — فقط fa-[a-z0-9-]+ مسموح
+        var rawIcon = String(item.icon || 'fa-bell');
+        var iconName = /^fa-[a-z0-9-]+$/.test(rawIcon) ? rawIcon : 'fa-bell';
+        // ✅ الأمان: تنقية id و link لمنع حقن HTML عبر السمات
+        var safeId = escapeAttr(item.id || '');
+        var safeLink = escapeAttr(item.link || '');
 
-        html += '<div class="notif-dropdown-item ' + (isRead ? 'is-read' : 'is-unread') + '" data-id="' + item.id + '" data-link="' + (item.link || '') + '">';
+        html += '<div class="notif-dropdown-item ' + (isRead ? 'is-read' : 'is-unread') + '" data-id="' + safeId + '" data-link="' + safeLink + '">';
         html += '  <div class="notif-item-icon-box"><i class="fa-solid ' + iconName + '"></i></div>';
         html += '  <div class="notif-item-text-box">';
         html += '    <h5 class="notif-item-title">' + escapeHtml(item.title) + '</h5>';
@@ -313,6 +318,12 @@
     var div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /** ✅ الأمان: تنقية قيمة سمة HTML لمنع كسر السمة وحقن HTML */
+  function escapeAttr(text) {
+    if (!text) return '';
+    return String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   async function markAsRead(id) {
