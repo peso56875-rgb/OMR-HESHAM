@@ -2,6 +2,18 @@
   const $ = (s, root = document) => root.querySelector(s)
   const $$ = (s, root = document) => [...root.querySelectorAll(s)]
 
+  const escapeHtml = str => String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
+  const safeIconName = (name, fallback = 'fa-heart') => {
+    const s = String(name ?? '').trim()
+    return /^fa-[a-z0-9-]+$/.test(s) ? s : fallback
+  }
+
   const toastConfig = {
     success:    ['fa-check',              'تم بنجاح'],
     error:      ['fa-xmark',              'تعذر التنفيذ'],
@@ -467,7 +479,7 @@
         const input = document.getElementById('modal-icon-input')
         const badge = document.getElementById('modal-icon-badge')
         if (input) input.value = this.dataset.icon
-        if (badge) badge.innerHTML = `<i class="fa-solid ${this.dataset.icon}"></i>`
+        if (badge) badge.innerHTML = `<i class="fa-solid ${safeIconName(this.dataset.icon, 'fa-heart')}"></i>`
       })
     })
 
@@ -475,7 +487,7 @@
     if (modalIconInput) {
       modalIconInput.addEventListener('input', function() {
         const badge = document.getElementById('modal-icon-badge')
-        if (badge) badge.innerHTML = `<i class="fa-solid ${this.value.trim() || 'fa-heart'}"></i>`
+        if (badge) badge.innerHTML = `<i class="fa-solid ${safeIconName(this.value, 'fa-heart')}"></i>`
       })
     }
 
@@ -621,7 +633,7 @@
         const input = document.getElementById('campaign-icon-input')
         const badge = document.getElementById('icon-preview-badge')
         if (input) input.value = this.dataset.icon
-        if (badge) badge.innerHTML = `<i class="fa-solid ${this.dataset.icon}"></i>`
+        if (badge) badge.innerHTML = `<i class="fa-solid ${safeIconName(this.dataset.icon, 'fa-heart')}"></i>`
       })
     })
     const iconInput = document.getElementById('campaign-icon-input')
@@ -629,7 +641,7 @@
       iconInput.dataset.bound = 'true'
       iconInput.addEventListener('input', function() {
         const badge = document.getElementById('icon-preview-badge')
-        if (badge) badge.innerHTML = `<i class="fa-solid ${this.value.trim() || 'fa-heart'}"></i>`
+        if (badge) badge.innerHTML = `<i class="fa-solid ${safeIconName(this.value, 'fa-heart')}"></i>`
       })
     }
 
@@ -641,7 +653,7 @@
         const input = document.getElementById('program-icon-input')
         const badge = document.getElementById('program-icon-badge')
         if (input) input.value = this.dataset.icon
-        if (badge) badge.innerHTML = `<i class="fa-solid ${this.dataset.icon}"></i>`
+        if (badge) badge.innerHTML = `<i class="fa-solid ${safeIconName(this.dataset.icon, 'fa-hand-holding-heart')}"></i>`
       })
     })
     const programIconInput = document.getElementById('program-icon-input')
@@ -649,7 +661,7 @@
       programIconInput.dataset.bound = 'true'
       programIconInput.addEventListener('input', function() {
         const badge = document.getElementById('program-icon-badge')
-        if (badge) badge.innerHTML = `<i class="fa-solid ${this.value.trim() || 'fa-hand-holding-heart'}"></i>`
+        if (badge) badge.innerHTML = `<i class="fa-solid ${safeIconName(this.value, 'fa-hand-holding-heart')}"></i>`
       })
     }
 
@@ -753,7 +765,7 @@
             const arr = JSON.parse(rawPreview)
             if (arr && arr.length > 0) {
               previewBox.style.display = 'block'
-              previewNames.innerHTML = arr.map(n => `<span style="background:var(--surface);border:1px solid var(--border);padding:3px 10px;border-radius:8px;font-size:.85rem;">${n}</span>`).join('')
+              previewNames.innerHTML = arr.map(n => `<span style="background:var(--surface);border:1px solid var(--border);padding:3px 10px;border-radius:8px;font-size:.85rem;">${escapeHtml(n)}</span>`).join('')
             } else {
               previewBox.style.display = 'none'
             }
@@ -2657,15 +2669,15 @@
           result.innerHTML = `
             <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
               <div style="width:56px;height:56px;border-radius:50%;background:rgba(22,138,112,.3);display:grid;place-items:center;font-size:1.3rem;color:#7ee2bd;overflow:hidden;flex-shrink:0;border:2px solid #f0cf82;box-shadow:0 4px 12px rgba(0,0,0,.3)">
-                ${v.avatar_url ? `<img src="${v.avatar_url}" style="width:100%;height:100%;object-fit:cover" />` : '<i class="fa-solid fa-user"></i>'}
+                ${v.avatar_url && (v.avatar_url.startsWith('/') || v.avatar_url.startsWith('https://')) ? `<img src="${escapeHtml(v.avatar_url)}" style="width:100%;height:100%;object-fit:cover" />` : '<i class="fa-solid fa-user"></i>'}
               </div>
               <div style="flex:1">
-                <strong style="font-size:1.08rem;display:block">${v.full_name}</strong>
-                <span style="font-size:.82rem;color:rgba(255,255,255,.65)">${v.preferred_role || v.team || ''}</span>
+                <strong style="font-size:1.08rem;display:block">${escapeHtml(v.full_name)}</strong>
+                <span style="font-size:.82rem;color:rgba(255,255,255,.65)">${escapeHtml(v.preferred_role || v.team || '')}</span>
               </div>
               <div style="text-align:center">
-                <span style="font-family:monospace;font-size:1.15rem;font-weight:900;color:#f0cf82;display:block">${v.volunteer_code}</span>
-                <small style="font-size:.7rem;color:rgba(255,255,255,.5)">${v.rank || 'متطوع مبادر'}</small>
+                <span style="font-family:monospace;font-size:1.15rem;font-weight:900;color:#f0cf82;display:block">${escapeHtml(v.volunteer_code)}</span>
+                <small style="font-size:.7rem;color:rgba(255,255,255,.5)">${escapeHtml(v.rank || 'متطوع مبادر')}</small>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:.82rem;font-weight:800;${isRevoked || isExpired ? 'color:#ff7675' : 'color:#7ee2bd'}">
@@ -2678,7 +2690,7 @@
           result.innerHTML = `
             <div style="display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.8)">
               <i class="fa-solid fa-circle-xmark" style="font-size:1.3rem;color:#e86f51"></i>
-              <span>${data.message || 'لا يوجد متطوع بهذا الكود أو أن الكود غير مفعّل.'}</span>
+              <span>${escapeHtml(data.message || 'لا يوجد متطوع بهذا الكود أو أن الكود غير مفعّل.')}</span>
             </div>
           `
         }

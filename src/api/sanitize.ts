@@ -82,8 +82,45 @@ export const isValidEmail = (value: string): boolean => {
 export const cleanPhone = (value: unknown): string =>
   cleanText(value, 40).replace(/[^\d+\-\s()]/g, '').slice(0, 32)
 
-export const cleanUrl = (value: unknown, max = 2048): string =>
+/**
+ * تنقية الروابط المدخلة مع فرض التحقق الصارم من البروتوكول الآمن.
+ * يرفض تمامًا بروتوكولات javascript: و data: و vbscript: وأي مخطط غير http/https/مسار نسبي.
+ */
+export const cleanUrl = (value: unknown, max = 2048): string => {
+  const cleaned = cleanText(value, max)
+  if (!cleaned) return ''
+  // مسار محلي آمن
+  if (cleaned.startsWith('/') && !cleaned.startsWith('//') && !cleaned.startsWith('/\\')) {
+    return cleaned
+  }
+  try {
+    const parsed = new URL(cleaned)
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      return parsed.toString().slice(0, max)
+    }
+  } catch {
+    // ليس رابطًا صالحًا
+  }
+  return ''
+}
+
+/**
+ * إزالة وسوم HTML وأقواس < > تمامًا لمنع حقن الوسوم في الحقول النصية (مثل الأسماء والعناوين).
+ */
+export const stripHtml = (value: unknown, max = 200): string =>
   cleanText(value, max)
+    .replace(/[<>]/g, '')
+    .trim()
+
+/**
+ * تسلسل آمن لـ JSON داخل عناصر <script> في الـ HTML لمنع كسر الوسم عبر </script> (Script Tag Breakout XSS).
+ */
+export const safeJsonStringify = (value: unknown): string => {
+  return JSON.stringify(value ?? '')
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+}
 
 /**
  * فحص أمان أسماء أيقونات FontAwesome

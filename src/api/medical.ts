@@ -3,7 +3,7 @@ import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
 import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
 import { getEmailConfig, sendInBackground, contactAlert } from '../lib/email'
-import { cleanMultiline, cleanPhone, cleanText, cleanUrl } from './sanitize'
+import { cleanMultiline, cleanPhone, cleanText, cleanUrl, stripHtml } from './sanitize'
 
 export const medical = new Hono()
 
@@ -119,9 +119,9 @@ export const defaultMedicalEquipment = [
 medical.post('/request', rateLimiter(5, 60000, 'med-request'), async (c) => {
   try {
     const body = await c.req.parseBody()
-    const patient_name = cleanText(body.patient_name, 120)
+    const patient_name = stripHtml(body.patient_name, 120)
     const patient_national_id = cleanText(body.patient_national_id, 32)
-    const requester_name = cleanText(body.requester_name || patient_name, 120)
+    const requester_name = stripHtml(body.requester_name || patient_name, 120)
     const requester_phone = cleanPhone(body.requester_phone)
     const alt_phone = cleanPhone(body.alt_phone)
     const city = cleanText(body.city, 120)

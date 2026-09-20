@@ -1,6 +1,7 @@
 import { icon, Layout } from './shared'
 import type { UserSession } from '../types'
 import { NotificationBell, DashNotifications } from './Notifications'
+import { safeHref } from '../api/sanitize'
 
 export function Dashboard({ view, data, user }: { view: string, data: any, user: UserSession }) {
   const sideMenu = [
@@ -1998,7 +1999,7 @@ export function DashJobApplications({ list = [] }: { list: any[] }) {
             <td>{a.full_name}</td>
             <td><span class="category-chip">{a.job_title || 'عام'}</span></td>
             <td>{a.phone} / {a.email}</td>
-            <td>{a.cv_url ? <a href={a.cv_url} target="_blank" rel="noopener noreferrer" style="color:var(--blue-600);font-weight:600">عرض السيرة {icon('fa-arrow-up-right-from-square')}</a> : '-'}</td>
+            <td>{a.cv_url && safeHref(a.cv_url, '') ? <a href={safeHref(a.cv_url, '')} target="_blank" rel="noopener noreferrer" style="color:var(--blue-600);font-weight:600">عرض السيرة {icon('fa-arrow-up-right-from-square')}</a> : '-'}</td>
             <td style="max-width:250px; white-space:pre-wrap">{a.bio || '-'}</td>
             <td>{date}</td>
           </tr>

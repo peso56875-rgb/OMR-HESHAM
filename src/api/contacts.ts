@@ -3,7 +3,7 @@ import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
 import { getEmailConfig, sendInBackground, contactAlert, contactAck } from '../lib/email'
 import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
-import { cleanEmail, cleanMultiline, cleanPhone, cleanText, isValidEmail } from './sanitize'
+import { cleanEmail, cleanMultiline, cleanPhone, cleanText, isValidEmail, stripHtml } from './sanitize'
 
 export const contacts = new Hono()
 
@@ -19,10 +19,10 @@ contacts.post('/', rateLimiter(5, 60000, 'contact'), async (c) => {
     body = await c.req.parseBody()
   }
 
-  const name = cleanText(body.name, 120)
+  const name = stripHtml(body.name, 120)
   const email = cleanEmail(body.email)
   const phone = cleanPhone(body.phone)
-  const subject = cleanText(body.subject || 'استفسار عام', 160)
+  const subject = stripHtml(body.subject || 'استفسار عام', 160)
   const message = cleanMultiline(body.message, 2000)
 
   if (!name || !email || !message) {

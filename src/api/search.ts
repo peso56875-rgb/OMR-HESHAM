@@ -82,7 +82,7 @@ const staticPages: SearchResult[] = [
 ]
 
 searchApi.get('/', rateLimiter(30, 60000, 'search-api'), async (c) => {
-  const query = (c.req.query('q') || '').trim().toLowerCase()
+  const query = (c.req.query('q') || '').trim().toLowerCase().slice(0, 100)
   if (!query || query.length < 2) {
     return c.json({ results: [], query })
   }

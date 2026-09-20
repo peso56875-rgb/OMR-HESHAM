@@ -1,4 +1,5 @@
 import { icon, Layout, PageHero } from './shared'
+import { safeJsonStringify } from '../api/sanitize'
 import type { UserSession } from '../types'
 import { NotificationPrefsSection } from './Notifications'
 
@@ -613,9 +614,9 @@ export function Profile({ user, donations = [], volunteer }: { user: UserSession
         }
 
         // ── Volunteer approval welcome ──
-        const userRole = ${JSON.stringify(volunteer?.status === 'approved' && volunteer?.volunteer_code ? 'volunteer' : '')};
-        const volCode = ${JSON.stringify(volunteer?.volunteer_code || '')};
-        const volName = ${JSON.stringify(volunteer?.full_name || '')};
+        const userRole = ${safeJsonStringify(volunteer?.status === 'approved' && volunteer?.volunteer_code ? 'volunteer' : '')};
+        const volCode = ${safeJsonStringify(volunteer?.volunteer_code || '')};
+        const volName = ${safeJsonStringify(volunteer?.full_name || '')};
         const seenKey = 'vol_welcome_' + volCode;
 
         if (userRole === 'volunteer' && volCode && !localStorage.getItem(seenKey)) {

@@ -19,7 +19,7 @@ import {
 } from '../lib/notifications'
 import { buildReceipt, receiptPath } from '../lib/receipts'
 import { SITE_ORIGIN } from '../lib/seo'
-import { cleanEmail, cleanPhone, cleanText, isValidEmail } from './sanitize'
+import { cleanEmail, cleanPhone, cleanText, isValidEmail, stripHtml } from './sanitize'
 
 export const donations = new Hono()
 
@@ -74,7 +74,7 @@ donations.post('/', rateLimiter(10, 60000, 'donate'), async (c) => {
   const case_id = cleanText(body.case_id, 160)
   const case_code = cleanText(body.case_code, 80)
   const donation_purpose = cleanText(body.donation_purpose, 160)
-  const donor_name = cleanText(body.donor_name, 120)
+  const donor_name = stripHtml(body.donor_name, 120)
   const donor_phone = cleanPhone(body.donor_phone)
   const donor_email = cleanEmail(body.donor_email)
   const payment_method = cleanText(body.payment_method, 80)
@@ -221,7 +221,7 @@ donations.post('/add', rateLimiter(10, 60000, 'donate'), async (c) => {
   // بصمت (كانت 0 تنجح في فحص !amount؟ لا — بل كانت تُقبل لأن 0 || 0 = 0،
   // لكن القيم الضخمة/السالبة كانت تمر). نتحقق الآن من المدى بالكامل.
   const amount = Number.isFinite(amountRaw) ? amountRaw : NaN
-  const donor_name = cleanText(body.name || body.donor_name, 120)
+  const donor_name = stripHtml(body.name || body.donor_name, 120)
   const donor_phone = cleanPhone(body.phone || body.donor_phone)
   const donor_email = cleanEmail(body.email || body.donor_email) || null
   const payment_method = cleanText(body.method || body.payment_method || 'instapay', 80)

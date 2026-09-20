@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getFirestore } from '../lib/firebase-admin'
 import { authMiddleware } from './middleware'
+import { stripHtml } from './sanitize'
 
 export const profile = new Hono()
 
@@ -21,7 +22,7 @@ profile.post('/update', authMiddleware, async (c) => {
     return c.json({ error: 'بيانات غير صالحة' }, 400)
   }
 
-  const full_name = (body.full_name || body.name || '').toString().trim().slice(0, 100)
+  const full_name = stripHtml(body.full_name || body.name, 100)
   // Clean phone to allowed digits and + prefix only, capped at 20 characters
   const rawPhone = (body.phone || '').toString().trim()
   const phone = rawPhone.replace(/[^\d+]/g, '').slice(0, 20)

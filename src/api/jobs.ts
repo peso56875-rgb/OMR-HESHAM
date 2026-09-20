@@ -3,7 +3,7 @@ import { getFirestore } from '../lib/firebase-admin'
 import { adminMiddleware, rateLimiter } from './middleware'
 import { getEmailConfig, sendInBackground, jobApplicationAlert } from '../lib/email'
 import { notifyAdmins, notifyInBackground, dashLink } from '../lib/notifications'
-import { cleanEmail, cleanMultiline, cleanPhone, cleanText, cleanUrl, isValidEmail } from './sanitize'
+import { cleanEmail, cleanMultiline, cleanPhone, cleanText, cleanUrl, isValidEmail, stripHtml } from './sanitize'
 
 export const jobs = new Hono()
 
@@ -108,7 +108,7 @@ jobs.post('/apply', rateLimiter(5, 60000, 'job-apply'), async (c) => {
   }
 
   const job_id = cleanText(body.job_id, 160)
-  const full_name = cleanText(body.full_name, 120)
+  const full_name = stripHtml(body.full_name, 120)
   const email = cleanEmail(body.email)
   const phone = cleanPhone(body.phone)
   const bio = cleanMultiline(body.bio, 2000)

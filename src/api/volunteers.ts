@@ -29,7 +29,7 @@ import {
   rankChangeBody,
   dashLink
 } from '../lib/notifications'
-import { cleanEmail, cleanMultiline, cleanPhone, cleanText, cleanUrl, isValidEmail } from './sanitize'
+import { cleanEmail, cleanMultiline, cleanPhone, cleanText, cleanUrl, isValidEmail, stripHtml } from './sanitize'
 
 export const volunteers = new Hono()
 
@@ -580,7 +580,7 @@ volunteers.post('/', rateLimiter(5, 60000, 'volunteer-apply'), async (c) => {
     body = await c.req.parseBody()
   }
 
-  const full_name = cleanText(body.name || body.full_name, 120)
+  const full_name = stripHtml(body.name || body.full_name, 120)
   const phone = cleanPhone(body.phone)
   const age = body.age ? parseInt(cleanText(body.age, 8), 10) : null
   const city = cleanText(body.city, 120)

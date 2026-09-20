@@ -1,4 +1,5 @@
 import { icon } from './shared'
+import { safeJsonStringify } from '../api/sanitize'
 import type { Volunteer } from '../types'
 
 export function CertificateView({
@@ -435,7 +436,7 @@ export function CertificateView({
                 imageTimeout: 15000
               });
 
-              const rawName = ${JSON.stringify(volunteer.full_name || 'volunteer')};
+              const rawName = ${safeJsonStringify(volunteer.full_name || 'volunteer')};
               const safeName = rawName.replace(/[\\\\/:*?"<>|\\r\\n]+/g, '-').trim() || 'volunteer';
               const filename = 'شهادة-تطوع-' + safeName + '.png';
 

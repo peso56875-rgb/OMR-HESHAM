@@ -86,7 +86,7 @@ auth.post('/session', rateLimiter(10, 60000, 'session'), async (c) => {
     return c.json({ success: true, role, message: 'تم تسجيل الدخول بنجاح' })
   } catch (error: any) {
     console.error('[Session Auth Error]', error.message, error.stack)
-    return c.json({ error: `فشل تسجيل الدخول: ${error.message}` }, 401)
+    return c.json({ error: 'فشل تسجيل الدخول. يرجى التحقق من بياناتك وإعادة المحاولة.' }, 401)
   }
 })
 
