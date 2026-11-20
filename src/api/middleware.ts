@@ -1,7 +1,7 @@
 import { Context, Next } from 'hono'
 import { getCookie } from 'hono/cookie'
 import { getAuth, getFirestore } from '../lib/firebase-admin'
-import { isVerifiedPlatformAdmin } from '../lib/admin-check'
+import { isVerifiedPlatformAdminAsync } from '../lib/admin-check'
 
 /**
  * Authentication middleware — verifies user is logged in via Firebase session cookie.
@@ -35,7 +35,7 @@ export const authMiddleware = async (c: Context, next: Next) => {
     }
 
     const email = decodedClaims.email || ''
-    const isAdmin = isVerifiedPlatformAdmin(email, decodedClaims.uid, decodedClaims.email_verified === true)
+    const isAdmin = await isVerifiedPlatformAdminAsync(c, email, decodedClaims.uid, decodedClaims.email_verified === true)
 
     // Get user profile from Firestore to fetch role and full name (with graceful fallback)
     let profileData: any = null
@@ -47,7 +47,8 @@ export const authMiddleware = async (c: Context, next: Next) => {
       console.warn('[Auth Middleware] Firestore read bypassed:', dbErr.message)
     }
 
-    // SECURITY HARDENING: A user is an admin IF AND ONLY IF they are in the platform allowlist.
+    // SECURITY HARDENING: A user is an admin IF AND ONLY IF they are in the platform allowlist
+    // (seed admins OR appointed admins in Firestore).
     // An unwhitelisted profile stating role: 'admin' is demoted to 'donor'/'user' to prevent privilege escalation.
     const resolvedRole = isAdmin
       ? 'admin'
@@ -102,7 +103,7 @@ export const adminMiddleware = async (c: Context, next: Next) => {
     }
 
     const email = decodedClaims.email || ''
-    const isAdmin = isVerifiedPlatformAdmin(email, decodedClaims.uid, decodedClaims.email_verified === true)
+    const isAdmin = await isVerifiedPlatformAdminAsync(c, email, decodedClaims.uid, decodedClaims.email_verified === true)
 
     // SECURITY HARDENING: Root of trust for admin permissions is the verified platform allowlist
     if (!isAdmin) {
@@ -156,7 +157,7 @@ export const adminPageGuard = async (c: Context, next: Next) => {
     }
 
     const email = decodedClaims.email || ''
-    const isAdmin = isVerifiedPlatformAdmin(email, decodedClaims.uid, decodedClaims.email_verified === true)
+    const isAdmin = await isVerifiedPlatformAdminAsync(c, email, decodedClaims.uid, decodedClaims.email_verified === true)
 
     // SECURITY HARDENING: Redirect non-allowlisted users immediately
     if (!isAdmin) {

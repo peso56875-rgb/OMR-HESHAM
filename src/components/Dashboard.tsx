@@ -90,7 +90,7 @@ export function Dashboard({ view, data, user }: { view: string, data: any, user:
         {view === 'jobs' && <DashJobs list={data.list} />}
         {view === 'job_applications' && <DashJobApplications list={data.list} />}
         {view === 'newsletter' && <DashNewsletter list={data.list} />}
-        {view === 'users' && <DashUsers list={data.list} currentUserId={user.id} />}
+        {view === 'users' && <DashUsers list={data.list} currentUserId={user.id} query={data.query} />}
         {view === 'cases' && <DashCases groups={data.groups || []} cases={data.cases || []} stats={data.stats || {}} user={user} />}
         {view === 'medical' && <DashMedical equipment={data.equipment || []} requests={data.requests || []} stats={data.stats || {}} />}
         {view === 'audit' && <DashAudit list={data.list || []} />}
@@ -2045,55 +2045,227 @@ export function DashNewsletter({ list = [] }: { list: any[] }) {
   </section>
 }
 
-export function DashUsers({ list = [], currentUserId }: { list: any[], currentUserId: string }) {
-  return <section class="dash-table">
-    <header style="display:flex; justify-content:space-between; align-items:center">
-      <h3>المستخدمون والأدوار</h3>
-      <a href="/api/export/users" download class="export-excel-btn">
-        {icon('fa-file-excel')} تصدير Excel
-      </a>
-    </header>
-    <table>
-      <thead>
-        <tr>
-          <th>الاسم</th>
-          <th>البريد الإلكتروني</th>
-          <th>الهاتف</th>
-          <th>الدور الحالي</th>
-          <th>تغيير الدور</th>
-        </tr>
-      </thead>
-      <tbody>
-        {list.map((u: any) => {
-          const isAdmin = u.role === 'admin'
-          const isSelf = u.id === currentUserId
+export function DashUsers({ list = [], currentUserId, query = {} }: { list: any[], currentUserId: string, query?: any }) {
+  const totalUsers = list.length
+  const totalAdmins = list.filter((u: any) => u.role === 'admin' || u.is_seed_admin || u.is_appointed_admin).length
+  const totalDonors = totalUsers - totalAdmins
 
-          return <tr>
-            <td>
-              <b>{u.full_name}</b> {isSelf && <small style="color:var(--blue-600); font-weight:bold">(أنت)</small>}
-            </td>
-            <td>{u.email}</td>
-            <td>{u.phone || '-'}</td>
-            <td>
-              <span style={`padding:3px 10px; border-radius:12px; font-weight:bold; font-size:.85rem; background:${isAdmin ? 'rgba(214,166,75,.15)' : 'rgba(30,136,229,.15)'}; color:${isAdmin ? 'var(--gold-600)' : 'var(--blue-600)'}`}>
-                {isAdmin ? 'مشرف (Admin)' : 'عضو (Donor)'}
+  const successMsg = query?.success === 'admin_appointed'
+    ? 'تم تعيين المشرف بنجاح وإضافته لصلاحيات لوحة التحكم.'
+    : query?.success === 'role_updated'
+    ? 'تم تحديث صلاحيات الحساب بنجاح.'
+    : null
+
+  const errorMsg = query?.error === 'self_demotion'
+    ? 'لا يمكنك إزالة صلاحية المشرف عن نفسك.'
+    : query?.error === 'seed_admin_protected'
+    ? 'لا يمكن إزالة صلاحية المؤسسين الأساسيين للمنصة للحفاظ على أمان النظام.'
+    : query?.error === 'invalid_email'
+    ? 'يرجى إدخال بريد إلكتروني صحيح.'
+    : query?.error ? 'حدث خطأ أثناء تنفيذ الإجراء، يرجى المحاولة مرة أخرى.' : null
+
+  return <>
+    {/* بطاقات الإحصاءات */}
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; margin-bottom: 2rem">
+      <article style="background: var(--paper); border: 2px solid var(--gold-600); border-radius: 20px; padding: 1.3rem">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <span style="font-size:1.6rem; color:var(--gold-600)">{icon('fa-user-shield')}</span>
+          <small style="color:var(--muted); font-weight:700">المشرفون والمديرون</small>
+        </div>
+        <b style="font-size:1.8rem; display:block; margin-top:.6rem; color:var(--gold-600)">
+          {totalAdmins} مشرف
+        </b>
+        <small style="color:var(--muted); font-size:.8rem">يملكون كامل صلاحيات الإدارة</small>
+      </article>
+
+      <article style="background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 1.3rem">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <span style="font-size:1.6rem; color:var(--blue-600)">{icon('fa-users')}</span>
+          <small style="color:var(--muted); font-weight:700">الأعضاء والمتبرعون</small>
+        </div>
+        <b style="font-size:1.8rem; display:block; margin-top:.6rem; color:var(--blue-600)">
+          {totalDonors} عضو
+        </b>
+        <small style="color:var(--muted); font-size:.8rem">حسابات مانحين ومستخدمين</small>
+      </article>
+
+      <article style="background: var(--paper); border: 1px solid var(--emerald-600); border-radius: 20px; padding: 1.3rem">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <span style="font-size:1.6rem; color:var(--emerald-600)">{icon('fa-shield-halved')}</span>
+          <small style="color:var(--muted); font-weight:700">نظام الإشراف اللامركزي</small>
+        </div>
+        <b style="font-size:1.2rem; display:block; margin-top:.6rem; color:var(--emerald-600)">
+          أمان وتوثيق كامل
+        </b>
+        <small style="color:var(--muted); font-size:.8rem">إمكانية التعيين الفوري من اللوحة</small>
+      </article>
+    </div>
+
+    {/* رسائل التنبيه والنجاح */}
+    {successMsg && (
+      <div style="background:rgba(41,171,131,.12); border:1.5px solid var(--emerald-600); color:var(--emerald-600); padding:1rem 1.4rem; border-radius:14px; margin-bottom:1.5rem; font-weight:700; display:flex; align-items:center; gap:10px">
+        {icon('fa-circle-check')} {successMsg}
+      </div>
+    )}
+    {errorMsg && (
+      <div style="background:rgba(232,111,81,.12); border:1.5px solid #e86f51; color:#e86f51; padding:1rem 1.4rem; border-radius:14px; margin-bottom:1.5rem; font-weight:700; display:flex; align-items:center; gap:10px">
+        {icon('fa-triangle-exclamation')} {errorMsg}
+      </div>
+    )}
+
+    {/* قسم تعيين مشرف جديد بالبريد الإلكتروني */}
+    <section class="section-pad" style="padding-top:0; margin-bottom:2rem">
+      <div style="background:var(--surface); border:1.5px solid var(--gold-600); border-radius:20px; padding:1.8rem; box-shadow:0 4px 20px rgba(0,0,0,0.03)">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1rem">
+          <div>
+            <h3 style="color:var(--gold-600); font-size:1.3rem; font-weight:900; display:flex; align-items:center; gap:10px">
+              {icon('fa-user-shield')} تعيين مشرف جديد للنظام بالبريد الإلكتروني
+            </h3>
+            <p style="font-size:.86rem; color:var(--muted); margin-top:4px">
+              يمكن لأي مشرف حالي تعيين مشرفين جدد للمنصة. أدخل البريد الإلكتروني وسيتم منحه صلاحيات الإشراف فورًا أو عند أول تسجيل دخول له.
+            </p>
+          </div>
+        </div>
+
+        <form action="/api/users/appoint-email" method="post" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end">
+          <div style="flex:1; min-width:280px">
+            <label style="display:block; font-weight:700; font-size:.88rem; margin-bottom:6px">
+              البريد الإلكتروني للمشرف المراد تعيينه *
+            </label>
+            <div style="position:relative">
+              <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--muted)">
+                {icon('fa-envelope')}
               </span>
-            </td>
-            <td>
-              {!isSelf && (
-                <form action={`/api/users/role/${u.id}`} method="post" style="display:inline">
-                  <input type="hidden" name="role" value={isAdmin ? 'donor' : 'admin'} />
-                  <button type="submit" style={`background:${isAdmin ? '#e86f51' : 'var(--emerald-600)'}; color:#fff; border:none; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:600`}>
-                    {isAdmin ? 'تنزيل إلى عضو' : 'ترقية إلى مشرف'}
-                  </button>
-                </form>
-              )}
-            </td>
+              <input
+                type="email"
+                name="email"
+                required
+                placeholder="example@gmail.com"
+                style="width:100%; padding:12px 42px 12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--ivory); font-size:.92rem"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            class="primary-btn"
+            style="background:var(--gold-600); padding:12px 24px; border-radius:12px; font-weight:800; display:inline-flex; align-items:center; gap:8px"
+          >
+            {icon('fa-shield-halved')} تعيين كمشرف معتمد
+          </button>
+        </form>
+      </div>
+    </section>
+
+    {/* جدول المستخدمين والمشرفين */}
+    <section class="dash-table">
+      <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+        <div>
+          <h3>إدارة حسابات المستخدمين وصلاحيات الإشراف</h3>
+          <p style="color:var(--muted); font-size:.82rem; margin-top:2px">عرض كامل للأعضاء والمشرفين مع إمكانية الترقية أو سحب الإشراف فورياً.</p>
+        </div>
+        <a href="/api/export/users" download class="export-excel-btn">
+          {icon('fa-file-excel')} تصدير Excel
+        </a>
+      </header>
+      <table>
+        <thead>
+          <tr>
+            <th>المستخدم</th>
+            <th>البريد الإلكتروني</th>
+            <th>الهاتف</th>
+            <th>الصلاحية الحالية</th>
+            <th>تغيير الصلاحية</th>
           </tr>
-        })}
-      </tbody>
-    </table>
-  </section>
+        </thead>
+        <tbody>
+          {list.map((u: any) => {
+            const isAdmin = u.role === 'admin'
+            const isSelf = u.id === currentUserId
+            const isSeed = u.is_seed_admin === true
+            const appointedBy = u.admin_meta?.appointed_by_name
+
+            return <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:10px">
+                  <div style="width:36px; height:36px; border-radius:50%; background:var(--surface-2); display:grid; place-items:center; font-weight:bold; color:var(--gold-600); border:1px solid var(--border)">
+                    {u.avatar_url ? (
+                      <img src={u.avatar_url} alt="" style="width:100%; height:100%; border-radius:50%; object-fit:cover" />
+                    ) : (
+                      (u.full_name || u.email || 'ع')[0].toUpperCase()
+                    )}
+                  </div>
+                  <div>
+                    <b>{u.full_name || 'فاعل خير'}</b>
+                    {isSelf && <span style="margin-right:6px; color:var(--blue-600); font-size:.78rem; font-weight:800">(أنت)</span>}
+                  </div>
+                </div>
+              </td>
+              <td style="font-family:monospace; font-size:.88rem">{u.email}</td>
+              <td>{u.phone || '-'}</td>
+              <td>
+                {isSeed ? (
+                  <span style="display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:12px; font-weight:800; font-size:.82rem; background:rgba(214,166,75,.2); color:var(--gold-600); border:1px solid var(--gold-600)">
+                    {icon('fa-lock')} مؤسس النظام (محمي)
+                  </span>
+                ) : isAdmin ? (
+                  <div style="display:flex; flex-direction:column; gap:2px">
+                    <span style="display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:12px; font-weight:800; font-size:.82rem; background:rgba(214,166,75,.15); color:var(--gold-600)">
+                      {icon('fa-user-shield')} مشرف نظام (Admin)
+                    </span>
+                    {appointedBy && (
+                      <small style="color:var(--muted); font-size:.75rem">عُيّن بواسطة: {appointedBy}</small>
+                    )}
+                  </div>
+                ) : (
+                  <span style="display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:12px; font-weight:700; font-size:.82rem; background:rgba(30,136,229,.12); color:var(--blue-600)">
+                    {icon('fa-user')} عضو / متبرع
+                  </span>
+                )}
+              </td>
+              <td>
+                {isSeed ? (
+                  <span style="color:var(--muted); font-size:.82rem; font-weight:600">
+                    {icon('fa-shield-halved')} حساب مؤسس ثابت
+                  </span>
+                ) : isSelf ? (
+                  <span style="color:var(--blue-600); font-size:.82rem; font-weight:600">
+                    {icon('fa-user-check')} لا يمكن تغيير دور نفسك
+                  </span>
+                ) : (
+                  <form
+                    action={`/api/users/role/${u.id}`}
+                    method="post"
+                    class="dash-action-form"
+                    data-confirm={isAdmin ? `هل أنت متأكد من سحب صلاحيات المشرف عن ${u.full_name || u.email}؟` : `هل أنت متأكد من ترقية ${u.full_name || u.email} إلى مشرف كامل الصلاحيات؟`}
+                    style="display:inline"
+                  >
+                    <input type="hidden" name="role" value={isAdmin ? 'donor' : 'admin'} />
+                    <button
+                      type="submit"
+                      style={`background:${isAdmin ? '#e86f51' : 'var(--emerald-600)'}; color:#fff; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:700; font-size:.84rem; display:inline-flex; align-items:center; gap:6px; transition:opacity .2s`}
+                    >
+                      {isAdmin ? (
+                        <>{icon('fa-user-minus')} سحب الإشراف وتنزيل لعضو</>
+                      ) : (
+                        <>{icon('fa-user-shield')} ترقية إلى مشرف</>
+                      )}
+                    </button>
+                  </form>
+                )}
+              </td>
+            </tr>
+          })}
+          {list.length === 0 && (
+            <tr>
+              <td colspan={5} style="text-align:center; padding:2rem; color:var(--muted)">
+                لا يوجد مستخدمون مسجلون بعد.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </section>
+  </>
 }
 
 // =====================================================================

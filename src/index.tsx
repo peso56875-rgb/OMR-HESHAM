@@ -29,7 +29,7 @@ import { DonorStatement } from './components/DonorStatement'
 
 import { Receipt, ReceiptVerification } from './components/Receipt'
 import { defaultCampaigns, defaultNews } from './defaults'
-import { isPlatformAdmin } from './lib/admin-check'
+import { isPlatformAdmin, isPlatformAdminAsync, isSeedAdmin, normalizeEmail } from './lib/admin-check'
 
 import { api } from './api'
 import { rateLimiter } from './api/middleware'
@@ -71,7 +71,7 @@ app.use('*', async (c, next) => {
       }
 
       const email = decodedClaims.email || ''
-      const isAdmin = isPlatformAdmin(email, decodedClaims.uid)
+      const isAdmin = await isPlatformAdminAsync(c, email, decodedClaims.uid)
       // SECURITY HARDENING: A user is an admin ONLY if in the platform allowlist.
       // An unwhitelisted profile stating role: 'admin' cannot escalate privileges.
       const role = isAdmin
@@ -884,7 +884,7 @@ app.get('/dashboard', async (c) => {
     return c.redirect('/login?error=unauthorized')
   }
   // SECURITY HARDENING: Only users verified on the platform admin allowlist can access the dashboard
-  if (!isPlatformAdmin(user.email, user.id)) {
+  if (!(await isPlatformAdminAsync(c, user.email, user.id))) {
     return c.redirect('/profile?error=not_admin')
   }
   user.role = 'admin'
@@ -1032,10 +1032,34 @@ app.get('/dashboard', async (c) => {
         list: snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
       }
     } else if (view === 'users') {
-      const snap = await db.collection('profiles').orderBy('created_at', 'desc').get()
-      viewData = {
-        list: snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
-      }
+      const [snap, adminsSnap] = await Promise.all([
+        db.collection('profiles').orderBy('created_at', 'desc').get(),
+        db.collection('platform_admins').where('active', '==', true).get().catch(() => ({ docs: [] }))
+      ])
+
+      const activeAdminMap = new Map<string, any>()
+      adminsSnap.docs.forEach((doc: any) => {
+        const d = doc.data()
+        if (d.uid) activeAdminMap.set(d.uid, d)
+        if (d.email) activeAdminMap.set(normalizeEmail(d.email), d)
+      })
+
+      const list = snap.docs.map((doc: any) => {
+        const d = doc.data()
+        const cleanEmail = normalizeEmail(d.email || '')
+        const isSeed = isSeedAdmin(d.email, doc.id)
+        const isAppointed = activeAdminMap.has(doc.id) || activeAdminMap.has(cleanEmail)
+        const isAdm = d.role === 'admin' || isSeed || isAppointed
+        return {
+          id: doc.id,
+          ...d,
+          role: isAdm ? 'admin' : (d.role || 'donor'),
+          is_seed_admin: isSeed,
+          is_appointed_admin: isAppointed,
+          admin_meta: activeAdminMap.get(doc.id) || activeAdminMap.get(cleanEmail) || null
+        }
+      })
+      viewData = { list }
     } else if (view === 'cases') {
       const [groupsSnap, casesSnap] = await Promise.all([
         db.collection('beneficiary_groups').orderBy('created_at', 'desc').get().catch(() => ({ docs: [] })),
